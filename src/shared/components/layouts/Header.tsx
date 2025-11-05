@@ -1,12 +1,13 @@
 /**
  * Header Component
- * 
+ *
  * Header principal de l'application avec menu utilisateur
  */
 
 import { Menu, Bell, Search, User, Settings, LogOut, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { EstablishmentSwitcher } from '@/features/establishments/components/EstablishmentSwitcher';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -31,7 +32,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map((n) => n[0])
+      .map(n => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
@@ -40,12 +41,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Bouton menu mobile */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onMenuClick}
-        className="lg:hidden"
-      >
+      <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden">
         <Menu className="h-5 w-5" />
       </Button>
 
@@ -56,6 +52,11 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
           GestiHôtel
         </span>
       </Link>
+
+      {/* 🆕 ESTABLISHMENT SWITCHER*/}
+      <div className="hidden lg:block">
+        <EstablishmentSwitcher />
+      </div>
 
       {/* Barre de recherche */}
       <div className="flex-1">
@@ -93,9 +94,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
                 <p className="text-sm font-medium">{user?.displayName}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {user?.email}
-                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -112,10 +111,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={logout}
-              className="text-red-600 dark:text-red-400"
-            >
+            <DropdownMenuItem onClick={logout} className="text-red-600 dark:text-red-400">
               <LogOut className="mr-2 h-4 w-4" />
               Déconnexion
             </DropdownMenuItem>
