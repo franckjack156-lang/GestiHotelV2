@@ -1,11 +1,11 @@
 /**
  * Interventions Components Index
- * 
+ *
  * Export centralisé de tous les composants
  */
 
 // Badges
-export { StatusBadge } from './badges/StatusBadge';
+export { StatusBadge } from './badges/typenbadge';
 export { PriorityBadge } from './badges/PriorityBadge';
 
 // Cards

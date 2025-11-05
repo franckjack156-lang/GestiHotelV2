@@ -1,6 +1,6 @@
 /**
  * InterventionDetails Component
- * 
+ *
  * Affichage détaillé d'une intervention
  */
 
@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
-import { StatusBadge } from '../badges/StatusBadge';
+import { StatusBadge } from '../badges/typenbadge';
 import { PriorityBadge } from '../badges/PriorityBadge';
 import { INTERVENTION_TYPE_LABELS, CATEGORY_LABELS } from '@/shared/types/status.types';
 import type { Intervention } from '../../types/intervention.types';
@@ -115,18 +115,14 @@ export const InterventionDetails = ({
             </Button>
           )}
           <div className="flex items-start gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              {title}
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
             {isUrgent && (
               <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm font-semibold rounded-full">
                 URGENT
               </span>
             )}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Référence: {reference}
-          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Référence: {reference}</p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -136,7 +132,7 @@ export const InterventionDetails = ({
               Modifier
             </Button>
           )}
-          
+
           {canDelete && onDelete && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -149,16 +145,13 @@ export const InterventionDetails = ({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Êtes-vous sûr de vouloir supprimer cette intervention ? Cette action
-                    est irréversible.
+                    Êtes-vous sûr de vouloir supprimer cette intervention ? Cette action est
+                    irréversible.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={onDelete}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
+                  <AlertDialogAction onClick={onDelete} className="bg-red-600 hover:bg-red-700">
                     Supprimer
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -184,9 +177,7 @@ export const InterventionDetails = ({
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {description}
-              </p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{description}</p>
             </CardContent>
           </Card>
 
@@ -308,9 +299,7 @@ export const InterventionDetails = ({
                   <div className="flex items-start gap-3">
                     <User size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        Assigné à
-                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Assigné à</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {assignedTo}
                       </p>
@@ -383,9 +372,7 @@ export const InterventionDetails = ({
 
               {estimatedDuration && (
                 <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Durée estimée
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Durée estimée</p>
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {formatDuration(estimatedDuration)}
                   </p>
@@ -442,7 +429,7 @@ export const InterventionDetails = ({
             src={selectedPhoto}
             alt="Photo en grand"
             className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           />
         </div>
       )}

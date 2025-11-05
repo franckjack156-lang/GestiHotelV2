@@ -78,20 +78,27 @@ export const router = createBrowserRouter([
         path: 'dashboard',
         element: <DashboardPage />,
       },
-      // TODO: Ajouter les autres routes
-      // {
-      //   path: 'interventions',
-      //   children: [
-      //     {
-      //       index: true,
-      //       element: <InterventionsListPage />,
-      //     },
-      //     {
-      //       path: ':id',
-      //       element: <InterventionDetailsPage />,
-      //     },
-      //   ],
-      // },
+      {
+        path: '/app/interventions',
+        children: [
+          {
+            index: true,
+            element: <InterventionsPage />,
+          },
+          {
+            path: 'create',
+            element: <CreateInterventionPage />,
+          },
+          {
+            path: ':id',
+            element: <InterventionDetailsPage />,
+          },
+          {
+            path: ':id/edit',
+            element: <EditInterventionPage />,
+          },
+        ],
+      },
     ],
   },
 
@@ -105,22 +112,6 @@ export const router = createBrowserRouter([
   {
     path: '*',
     element: <NotFoundPage />,
-  },
-  {
-    path: '/interventions',
-    element: <InterventionsPage />,
-  },
-  {
-    path: '/interventions/new',
-    element: <CreateInterventionPage />,
-  },
-  {
-    path: '/interventions/:id',
-    element: <InterventionDetailsPage />,
-  },
-  {
-    path: '/interventions/:id/edit',
-    element: <EditInterventionPage />,
   },
 ]);
 

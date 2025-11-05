@@ -1,20 +1,14 @@
 /**
  * InterventionCard Component
- * 
+ *
  * Card pour afficher une intervention dans la liste
  */
 
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  MapPin,
-  User,
-  Calendar,
-  Image as ImageIcon,
-  Clock,
-} from 'lucide-react';
+import { MapPin, User, Calendar, Image as ImageIcon, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
-import { StatusBadge } from '../badges/StatusBadge';
+import { StatusBadge } from '../badges/typenbadge';
 import { PriorityBadge } from '../badges/PriorityBadge';
 import { INTERVENTION_TYPE_LABELS } from '@/shared/types/status.types';
 import type { Intervention } from '../../types/intervention.types';
@@ -76,7 +70,7 @@ export const InterventionCard = ({
               {INTERVENTION_TYPE_LABELS[type]}
             </p>
           </div>
-          
+
           <div className="flex flex-col items-end gap-1.5">
             <StatusBadge status={status} size="sm" />
             <PriorityBadge priority={priority} size="sm" />
@@ -86,11 +80,7 @@ export const InterventionCard = ({
         {/* Photo de couverture */}
         {showPhotos && coverPhoto && (
           <div className="relative w-full h-32 mb-3 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
-            <img
-              src={coverPhoto.url}
-              alt={title}
-              className="w-full h-full object-cover"
-            />
+            <img src={coverPhoto.url} alt={title} className="w-full h-full object-cover" />
             {photosCount > 1 && (
               <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                 <ImageIcon size={12} />
@@ -101,9 +91,7 @@ export const InterventionCard = ({
         )}
 
         {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
-          {description}
-        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">{description}</p>
 
         {/* Informations */}
         <div className="space-y-2">
@@ -127,8 +115,7 @@ export const InterventionCard = ({
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <Calendar size={14} className="flex-shrink-0" />
               <span>
-                Planifiée le{' '}
-                {format(scheduledAt.toDate(), 'dd MMM yyyy', { locale: fr })}
+                Planifiée le {format(scheduledAt.toDate(), 'dd MMM yyyy', { locale: fr })}
               </span>
             </div>
           )}
