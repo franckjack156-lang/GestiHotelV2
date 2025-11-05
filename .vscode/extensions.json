@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "PKief.material-icon-theme",
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    "vitest.explorer",
+    "ms-playwright.playwright",
+    "firebase.vscode-firebase-explorer",
+    "dsznajder.es7-react-js-snippets"
+  ]
+}

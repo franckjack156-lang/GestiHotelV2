@@ -1,0 +1,227 @@
+/**
+ * Intervention Types
+ * 
+ * Types complets pour la gestion des interventions
+ */
+
+import type { Timestamp } from 'firebase/firestore';
+import type { 
+  TimestampedDocument, 
+  Photo, 
+  HistoryEntry,
+  Tag 
+} from '@/shared/types/common.types';
+import type { 
+  InterventionStatus, 
+  InterventionPriority, 
+  InterventionType,
+  InterventionCategory 
+} from '@/shared/types/status.types';
+
+/**
+ * Intervention complète
+ */
+export interface Intervention extends TimestampedDocument {
+  // Établissement
+  establishmentId: string;
+  
+  // Informations de base
+  title: string;
+  description: string;
+  type: InterventionType;
+  category: InterventionCategory;
+  priority: InterventionPriority;
+  status: InterventionStatus;
+  
+  // Localisation
+  roomNumber?: string;
+  floor?: number;
+  location: string; // Description textuelle du lieu
+  building?: string;
+  
+  // Assignation
+  assignedTo?: string; // userId du technicien
+  assignedAt?: Timestamp;
+  createdBy: string; // userId du créateur
+  
+  // Dates et durées
+  scheduledAt?: Timestamp;
+  startedAt?: Timestamp;
+  completedAt?: Timestamp;
+  estimatedDuration?: number; // en minutes
+  actualDuration?: number; // en minutes
+  
+  // Photos
+  photos: Photo[];
+  photosCount: number;
+  
+  // Commentaires et notes
+  internalNotes?: string; // Notes internes (non visibles par le client)
+  resolutionNotes?: string; // Notes de résolution
+  
+  // Métadonnées
+  tags?: Tag[];
+  reference?: string; // Référence unique (ex: INT-2024-001)
+  externalReference?: string; // Référence externe (PMS, etc.)
+  
+  // Statut avancé
+  isUrgent: boolean;
+  isBlocking: boolean; // Bloque-t-elle la chambre ?
+  requiresValidation: boolean;
+  validatedBy?: string;
+  validatedAt?: Timestamp;
+  
+  // Statistiques
+  viewsCount: number;
+  lastViewedAt?: Timestamp;
+  lastViewedBy?: string;
+  
+  // Soft delete
+  isDeleted: boolean;
+  deletedAt?: Timestamp;
+  deletedBy?: string;
+}
+
+/**
+ * Données pour créer une intervention
+ */
+export interface CreateInterventionData {
+  title: string;
+  description: string;
+  type: InterventionType;
+  category: InterventionCategory;
+  priority: InterventionPriority;
+  location: string;
+  roomNumber?: string;
+  floor?: number;
+  building?: string;
+  assignedTo?: string;
+  scheduledAt?: Date;
+  estimatedDuration?: number;
+  internalNotes?: string;
+  tags?: Tag[];
+  isUrgent?: boolean;
+  isBlocking?: boolean;
+  photos?: File[];
+}
+
+/**
+ * Données pour mettre à jour une intervention
+ */
+export interface UpdateInterventionData {
+  title?: string;
+  description?: string;
+  type?: InterventionType;
+  category?: InterventionCategory;
+  priority?: InterventionPriority;
+  status?: InterventionStatus;
+  location?: string;
+  roomNumber?: string;
+  floor?: number;
+  building?: string;
+  assignedTo?: string;
+  scheduledAt?: Date;
+  estimatedDuration?: number;
+  internalNotes?: string;
+  resolutionNotes?: string;
+  tags?: Tag[];
+  isUrgent?: boolean;
+  isBlocking?: boolean;
+}
+
+/**
+ * Résumé d'intervention (pour listes)
+ */
+export interface InterventionSummary {
+  id: string;
+  title: string;
+  type: InterventionType;
+  category: InterventionCategory;
+  priority: InterventionPriority;
+  status: InterventionStatus;
+  location: string;
+  roomNumber?: string;
+  assignedTo?: string;
+  createdAt: Timestamp;
+  scheduledAt?: Timestamp;
+  isUrgent: boolean;
+  photosCount: number;
+}
+
+/**
+ * Filtres pour les interventions
+ */
+export interface InterventionFilters {
+  status?: InterventionStatus[];
+  priority?: InterventionPriority[];
+  type?: InterventionType;
+  category?: InterventionCategory;
+  assignedTo?: string;
+  createdBy?: string;
+  isUrgent?: boolean;
+  isBlocking?: boolean;
+  dateFrom?: Date;
+  dateTo?: Date;
+  search?: string; // Recherche dans titre, description, roomNumber
+  tags?: string[];
+}
+
+/**
+ * Options de tri
+ */
+export type InterventionSortField = 
+  | 'createdAt' 
+  | 'updatedAt' 
+  | 'scheduledAt' 
+  | 'priority' 
+  | 'status'
+  | 'title';
+
+export interface InterventionSortOptions {
+  field: InterventionSortField;
+  order: 'asc' | 'desc';
+}
+
+/**
+ * Statistiques des interventions
+ */
+export interface InterventionStats {
+  total: number;
+  byStatus: Record<InterventionStatus, number>;
+  byPriority: Record<InterventionPriority, number>;
+  byType: Record<InterventionType, number>;
+  urgent: number;
+  blocking: number;
+  averageCompletionTime: number; // en minutes
+  completionRate: number; // pourcentage
+}
+
+/**
+ * Changement de statut
+ */
+export interface StatusChangeData {
+  newStatus: InterventionStatus;
+  notes?: string;
+  completedAt?: Date;
+  resolutionNotes?: string;
+}
+
+/**
+ * Assignation
+ */
+export interface AssignmentData {
+  technicianId: string;
+  scheduledAt?: Date;
+  notes?: string;
+}
+
+/**
+ * Configuration d'affichage de liste
+ */
+export interface InterventionListConfig {
+  view: 'grid' | 'list' | 'compact';
+  itemsPerPage: number;
+  showPhotos: boolean;
+  showAssignee: boolean;
+  groupBy?: 'status' | 'priority' | 'type' | 'date';
+}
