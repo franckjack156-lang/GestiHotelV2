@@ -8,7 +8,7 @@
 
 import { Badge } from '@/shared/components/ui/badge';
 import { AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
-import type { InterventionPriority } from '@/shared/types/status.types';
+import { InterventionPriority, PRIORITY_LABELS } from '@/shared/types/status.types';
 
 interface PriorityBadgeProps {
   priority: InterventionPriority;
@@ -17,31 +17,38 @@ interface PriorityBadgeProps {
   className?: string;
 }
 
-const PRIORITY_CONFIG = {
-  critical: {
-    label: 'Critique',
+const PRIORITY_CONFIG: Record<
+  InterventionPriority,
+  {
+    label: string;
+    icon: any;
+    className: string;
+  }
+> = {
+  [InterventionPriority.CRITICAL]: {
+    label: PRIORITY_LABELS[InterventionPriority.CRITICAL],
     icon: AlertCircle,
     className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',
   },
-  high: {
-    label: 'Haute',
+  [InterventionPriority.HIGH]: {
+    label: PRIORITY_LABELS[InterventionPriority.HIGH],
     icon: ArrowUp,
     className:
       'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400',
   },
-  medium: {
-    label: 'Moyenne',
+  [InterventionPriority.MEDIUM]: {
+    label: PRIORITY_LABELS[InterventionPriority.MEDIUM],
     icon: Minus,
     className:
       'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400',
   },
-  low: {
-    label: 'Basse',
+  [InterventionPriority.LOW]: {
+    label: PRIORITY_LABELS[InterventionPriority.LOW],
     icon: ArrowDown,
     className:
       'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400',
   },
-} as const;
+};
 
 const SIZE_CLASSES = {
   sm: 'text-xs px-2 py-0.5',
@@ -61,7 +68,26 @@ export const PriorityBadge = ({
   size = 'md',
   className = '',
 }: PriorityBadgeProps) => {
+  // Vérifier que la priorité existe dans la configuration
   const config = PRIORITY_CONFIG[priority];
+
+  // Si la priorité n'est pas reconnue, utiliser MEDIUM comme fallback
+  if (!config) {
+    console.warn(`Priorité d'intervention non reconnue: "${priority}". Utilisation de MEDIUM.`);
+    const fallbackConfig = PRIORITY_CONFIG[InterventionPriority.MEDIUM];
+    const FallbackIcon = fallbackConfig.icon;
+
+    return (
+      <Badge
+        variant="secondary"
+        className={`${fallbackConfig.className} ${SIZE_CLASSES[size]} font-medium inline-flex items-center gap-1.5 ${className}`}
+      >
+        {showIcon && <FallbackIcon size={ICON_SIZES[size]} className="flex-shrink-0" />}
+        <span>{String(priority) || 'Non défini'}</span>
+      </Badge>
+    );
+  }
+
   const Icon = config.icon;
 
   return (

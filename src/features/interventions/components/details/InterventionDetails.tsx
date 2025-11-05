@@ -19,6 +19,7 @@ import {
   FileText,
   Image as ImageIcon,
   X,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -33,7 +34,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/shared/components/ui/alert-dialog';
-import { StatusBadge } from '../badges/typenbadge';
+import { StatusBadge } from '../badges/StatusBadge';
+import { TypeBadge } from '../badges/TypeBadge';
 import { PriorityBadge } from '../badges/PriorityBadge';
 import { INTERVENTION_TYPE_LABELS, CATEGORY_LABELS } from '@/shared/types/status.types';
 import type { Intervention } from '../../types/intervention.types';
@@ -73,8 +75,8 @@ export const InterventionDetails = ({
     scheduledAt,
     startedAt,
     completedAt,
-    assignedTo,
-    createdBy,
+    assignedToName,
+    createdByName,
     estimatedDuration,
     actualDuration,
     internalNotes,
@@ -105,39 +107,34 @@ export const InterventionDetails = ({
 
   return (
     <div className="space-y-6">
-      {/* Header avec actions */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
           {onBack && (
-            <Button variant="ghost" size="sm" onClick={onBack} className="mb-2">
-              <ArrowLeft size={16} className="mr-2" />
-              Retour
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft className="h-5 w-5" />
             </Button>
           )}
-          <div className="flex items-start gap-3 flex-wrap">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
-            {isUrgent && (
-              <span className="px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-sm font-semibold rounded-full">
-                URGENT
-              </span>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
+            {reference && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">Réf: {reference}</p>
             )}
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Référence: {reference}</p>
         </div>
 
         <div className="flex items-center gap-2">
           {canEdit && onEdit && (
             <Button variant="outline" size="sm" onClick={onEdit}>
-              <Edit size={16} className="mr-2" />
-              Modifier
+              <Edit className="h-4 w-4 mr-2" />
+              Éditer
             </Button>
           )}
-
           {canDelete && onDelete && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-red-600">
-                  <Trash2 size={16} className="mr-2" />
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Supprimer
                 </Button>
               </AlertDialogTrigger>
@@ -151,9 +148,7 @@ export const InterventionDetails = ({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete} className="bg-red-600 hover:bg-red-700">
-                    Supprimer
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={onDelete}>Supprimer</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -161,23 +156,35 @@ export const InterventionDetails = ({
         </div>
       </div>
 
-      {/* Badges de statut et priorité */}
-      <div className="flex items-center gap-3">
-        <StatusBadge status={status} size="lg" />
-        <PriorityBadge priority={priority} size="lg" />
+      {/* Badges */}
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge status={status} />
+        <TypeBadge type={type} />
+        <PriorityBadge priority={priority} />
+        {isUrgent && (
+          <span className="px-3 py-1 text-sm font-medium bg-red-100 text-red-800 rounded dark:bg-red-900/20 dark:text-red-400">
+            🚨 URGENT
+          </span>
+        )}
+        {isBlocking && (
+          <span className="px-3 py-1 text-sm font-medium bg-orange-100 text-orange-800 rounded dark:bg-orange-900/20 dark:text-orange-400">
+            🚫 Chambre bloquée
+          </span>
+        )}
       </div>
 
-      {/* Informations principales */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Colonne principale */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {/* Description */}
           <Card>
             <CardHeader>
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{description}</p>
+              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
+                {description}
+              </p>
             </CardContent>
           </Card>
 
@@ -186,7 +193,7 @@ export const InterventionDetails = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ImageIcon size={20} />
+                  <ImageIcon className="h-5 w-5" />
                   Photos ({photos.length})
                 </CardTitle>
               </CardHeader>
@@ -195,17 +202,14 @@ export const InterventionDetails = ({
                   {photos.map((photo, index) => (
                     <div
                       key={photo.id}
-                      className="relative group cursor-pointer"
+                      className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                       onClick={() => setSelectedPhoto(photo.url)}
                     >
                       <img
                         src={photo.url}
                         alt={`Photo ${index + 1}`}
-                        className="w-full h-40 object-cover rounded-lg"
+                        className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                        <span className="text-white text-sm">Voir en grand</span>
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -217,13 +221,10 @@ export const InterventionDetails = ({
           {internalNotes && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText size={20} />
-                  Notes internes
-                </CardTitle>
+                <CardTitle>Notes internes</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                   {internalNotes}
                 </p>
               </CardContent>
@@ -234,13 +235,10 @@ export const InterventionDetails = ({
           {resolutionNotes && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText size={20} />
-                  Notes de résolution
-                </CardTitle>
+                <CardTitle>Notes de résolution</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
                   {resolutionNotes}
                 </p>
               </CardContent>
@@ -248,73 +246,79 @@ export const InterventionDetails = ({
           )}
         </div>
 
-        {/* Colonne latérale - Détails */}
+        {/* Colonne latérale - Informations */}
         <div className="space-y-6">
-          {/* Informations générales */}
+          {/* Localisation */}
           <Card>
             <CardHeader>
-              <CardTitle>Informations</CardTitle>
+              <CardTitle>Localisation</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <MapPin size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Localisation</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {location}
+                  </p>
+                </div>
+              </div>
+
+              {roomNumber && (
                 <div className="flex items-start gap-3">
                   <Building2 size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Type</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Chambre</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {INTERVENTION_TYPE_LABELS[type]}
+                      {roomNumber}
                     </p>
                   </div>
                 </div>
+              )}
 
-                <div className="flex items-start gap-3">
-                  <FileText size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Catégorie</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {CATEGORY_LABELS[category]}
-                    </p>
-                  </div>
+              {floor !== undefined && floor !== null && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Étage</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{floor}</p>
                 </div>
+              )}
 
-                <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Localisation</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {roomNumber && `Ch. ${roomNumber} - `}
-                      {location}
-                    </p>
-                    {(floor !== undefined || building) && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {floor !== undefined && `Étage ${floor}`}
-                        {floor !== undefined && building && ' - '}
-                        {building}
-                      </p>
-                    )}
-                  </div>
+              {building && (
+                <div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Bâtiment</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{building}</p>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                {assignedTo && (
-                  <div className="flex items-start gap-3">
-                    <User size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Assigné à</p>
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {assignedTo}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {isBlocking && (
-                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                      ⚠️ Chambre/zone bloquée
-                    </p>
-                  </div>
-                )}
+          {/* Personnes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Personnes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-start gap-3">
+                <User size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Créé par</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {createdByName || 'Non spécifié'}
+                  </p>
+                </div>
               </div>
+
+              {assignedToName && (
+                <div className="flex items-start gap-3">
+                  <User size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Assigné à</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {assignedToName}
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -336,7 +340,7 @@ export const InterventionDetails = ({
 
               {scheduledAt && (
                 <div className="flex items-start gap-3">
-                  <Calendar size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                  <Clock size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Planifiée le</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -350,7 +354,7 @@ export const InterventionDetails = ({
                 <div className="flex items-start gap-3">
                   <Clock size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Démarrée le</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Débutée le</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {formatDate(startedAt)}
                     </p>
@@ -391,25 +395,19 @@ export const InterventionDetails = ({
           </Card>
 
           {/* Statistiques */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Statistiques</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Vues</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {viewsCount || 0}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">Dernière mise à jour</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">
-                  {formatDate(updatedAt, 'dd/MM/yyyy')}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+          {viewsCount !== undefined && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Statistiques</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <Eye size={16} />
+                  <span>{viewsCount} consultation{viewsCount !== 1 ? 's' : ''}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -419,17 +417,18 @@ export const InterventionDetails = ({
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setSelectedPhoto(null)}
         >
-          <button
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/10"
             onClick={() => setSelectedPhoto(null)}
           >
-            <X size={24} />
-          </button>
+            <X className="h-6 w-6" />
+          </Button>
           <img
             src={selectedPhoto}
-            alt="Photo en grand"
+            alt="Photo agrandie"
             className="max-w-full max-h-full object-contain"
-            onClick={e => e.stopPropagation()}
           />
         </div>
       )}

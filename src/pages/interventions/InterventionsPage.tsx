@@ -26,7 +26,7 @@ import { Card } from '@/shared/components/ui/card';
 import { useInterventions } from '@/features/interventions/hooks/useInterventions';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { usePermissions } from '@/shared/hooks/usePermissions';
-
+import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
 import { PriorityBadge } from '@/features/interventions/components/badges/PriorityBadge';
 import { TypeBadge } from '@/features/interventions/components/badges/TypeBadge';
 import {

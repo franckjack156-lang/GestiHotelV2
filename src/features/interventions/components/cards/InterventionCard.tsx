@@ -8,7 +8,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { MapPin, User, Calendar, Image as ImageIcon, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/shared/components/ui/card';
-import { StatusBadge } from '../badges/typenbadge';
+import { StatusBadge } from '../badges/StatusBadge';
+import { TypeBadge } from '../badges/TypeBadge';
 import { PriorityBadge } from '../badges/PriorityBadge';
 import { INTERVENTION_TYPE_LABELS } from '@/shared/types/status.types';
 import type { Intervention } from '../../types/intervention.types';
@@ -38,7 +39,7 @@ export const InterventionCard = ({
     roomNumber,
     createdAt,
     scheduledAt,
-    assignedTo,
+    assignedToName,
     photos,
     photosCount,
     isUrgent,
@@ -81,7 +82,7 @@ export const InterventionCard = ({
         {showPhotos && coverPhoto && (
           <div className="relative w-full h-32 mb-3 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800">
             <img src={coverPhoto.url} alt={title} className="w-full h-full object-cover" />
-            {photosCount > 1 && (
+            {photosCount && photosCount > 1 && (
               <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                 <ImageIcon size={12} />
                 <span>{photosCount}</span>
@@ -99,32 +100,31 @@ export const InterventionCard = ({
           <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
             <MapPin size={14} className="flex-shrink-0" />
             <span className="truncate">
-              {roomNumber ? `Ch. ${roomNumber} - ` : ''}
-              {location}
+              {roomNumber ? `Ch. ${roomNumber}` : location}
             </span>
           </div>
 
-          {/* Date de création */}
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <Clock size={14} className="flex-shrink-0" />
-            <span>Créée le {formattedDate}</span>
-          </div>
-
-          {/* Date planifiée */}
-          {scheduledAt && (
+          {/* Technicien assigné */}
+          {showAssignee && assignedToName && (
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <Calendar size={14} className="flex-shrink-0" />
-              <span>
-                Planifiée le {format(scheduledAt.toDate(), 'dd MMM yyyy', { locale: fr })}
-              </span>
+              <User size={14} className="flex-shrink-0" />
+              <span className="truncate">{assignedToName}</span>
             </div>
           )}
 
-          {/* Technicien assigné */}
-          {showAssignee && assignedTo && (
+          {/* Date */}
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <Calendar size={14} className="flex-shrink-0" />
+            <span>{formattedDate}</span>
+          </div>
+
+          {/* Planifiée */}
+          {scheduledAt && (
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <User size={14} className="flex-shrink-0" />
-              <span className="truncate">Assignée à {assignedTo}</span>
+              <Clock size={14} className="flex-shrink-0" />
+              <span>
+                Planifiée: {format(scheduledAt.toDate(), 'dd/MM à HH:mm', { locale: fr })}
+              </span>
             </div>
           )}
         </div>
@@ -132,10 +132,9 @@ export const InterventionCard = ({
         {/* Badge urgent */}
         {isUrgent && (
           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-1.5 text-xs text-red-600 dark:text-red-400 font-medium">
-              <Flame size={14} />
-              <span>Intervention urgente</span>
-            </div>
+            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded dark:bg-red-900/20 dark:text-red-400">
+              🚨 URGENT
+            </span>
           </div>
         )}
       </CardContent>

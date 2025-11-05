@@ -1,392 +1,202 @@
 /**
- * CreateInterventionPage
+ * CreateInterventionPage (Version Alternative)
  *
- * Page de création d'une nouvelle intervention
- * - Formulaire avec validation (React Hook Form + Zod)
- * - Upload photos
- * - Sélection assignation
+ * Page de création avec choix entre wizard et formulaire simple
  *
  * Destination: src/pages/interventions/CreateInterventionPage.tsx
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Wand2, FileText } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { Label } from '@/shared/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
-import { Checkbox } from '@/shared/components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import { InterventionWizard } from '@/features/interventions/components/wizard/InterventionWizard';
+import { InterventionForm } from '@/features/interventions/components/form/InterventionForm';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
-import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
-import {
-  INTERVENTION_TYPE_LABELS,
-  CATEGORY_LABELS,
-  PRIORITY_LABELS,
-  type InterventionType,
-  type InterventionCategory,
-  type InterventionPriority,
-} from '@/shared/types/status.types';
 
-// Schéma de validation
-const interventionSchema = z.object({
-  title: z.string().min(3, 'Le titre doit contenir au moins 3 caractères'),
-  description: z.string().min(10, 'La description doit contenir au moins 10 caractères'),
-  type: z.string().min(1, 'Le type est requis'),
-  category: z.string().min(1, 'La catégorie est requise'),
-  priority: z.string().min(1, 'La priorité est requise'),
-  location: z.string().min(1, 'La localisation est requise'),
-  roomNumber: z.string().optional(),
-  floor: z.string().optional(),
-  building: z.string().optional(),
-  isUrgent: z.boolean().default(false),
-  isBlocking: z.boolean().default(false),
-  internalNotes: z.string().optional(),
-});
-
-type InterventionFormData = z.infer<typeof interventionSchema>;
+type FormMode = 'wizard' | 'simple' | null;
 
 export const CreateInterventionPage = () => {
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
-  const { createIntervention, isCreating } = useInterventionActions(establishmentId || '');
+  const [mode, setMode] = useState<FormMode>(null);
 
-  const [photos, setPhotos] = useState<File[]>([]);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<InterventionFormData>({
-    resolver: zodResolver(interventionSchema),
-    defaultValues: {
-      isUrgent: false,
-      isBlocking: false,
-    },
-  });
-
-  // Gérer l'upload de photos
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setPhotos(prev => [...prev, ...files]);
+  /**
+   * Gérer le succès de la création
+   */
+  const handleSuccess = (interventionId: string) => {
+    navigate(`/app/interventions/${interventionId}`);
   };
 
-  const handlePhotoRemove = (index: number) => {
-    setPhotos(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Soumettre le formulaire
-  const onSubmit = async (data: InterventionFormData) => {
-    if (!establishmentId) {
-      alert('Aucun établissement sélectionné');
-      return;
-    }
-
-    try {
-      const interventionData = {
-        title: data.title,
-        description: data.description,
-        type: data.type as InterventionType,
-        category: data.category as InterventionCategory,
-        priority: data.priority as InterventionPriority,
-        location: data.location,
-        roomNumber: data.roomNumber,
-        floor: data.floor ? parseInt(data.floor) : undefined,
-        building: data.building,
-        isUrgent: data.isUrgent,
-        isBlocking: data.isBlocking,
-        internalNotes: data.internalNotes,
-        photos,
-      };
-
-      const interventionId = await createIntervention(interventionData);
-
-      if (interventionId) {
-        navigate(`/app/interventions/${interventionId}`);
-      }
-    } catch (error) {
-      console.error('Erreur création:', error);
+  /**
+   * Gérer l'annulation
+   */
+  const handleCancel = () => {
+    if (mode) {
+      // Si on est dans un formulaire, revenir au choix
+      setMode(null);
+    } else {
+      // Sinon retour à la liste
+      navigate('/app/interventions');
     }
   };
 
+  // Vérifier qu'un établissement est sélectionné
   if (!establishmentId) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-gray-500">Aucun établissement sélectionné</p>
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Aucun établissement sélectionné</p>
+          <Button variant="outline" onClick={() => navigate('/app/interventions')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour à la liste
+          </Button>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/app/interventions')}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+  // Afficher le choix du mode si aucun n'est sélectionné
+  if (!mode) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-5xl">
+        {/* Header */}
+        <div className="mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/app/interventions')}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Retour à la liste
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             Nouvelle intervention
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Créez une nouvelle demande d'intervention
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Choisissez le mode de création qui vous convient
+          </p>
+        </div>
+
+        {/* Choix du mode */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Mode Wizard */}
+          <Card
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-indigo-500"
+            onClick={() => setMode('wizard')}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/20 rounded-lg">
+                  <Wand2 className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <CardTitle>Formulaire guidé (Recommandé)</CardTitle>
+              </div>
+              <CardDescription>Création étape par étape avec validation</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>6 étapes claires et guidées</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Support multi-chambres</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Upload photos avec drag & drop</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Validation en temps réel</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Récapitulatif avant validation</span>
+                </li>
+              </ul>
+              <Button className="w-full mt-4">Commencer</Button>
+            </CardContent>
+          </Card>
+
+          {/* Mode Simple */}
+          <Card
+            className="cursor-pointer transition-all hover:shadow-lg hover:border-gray-500"
+            onClick={() => setMode('simple')}
+          >
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <FileText className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                </div>
+                <CardTitle>Formulaire rapide</CardTitle>
+              </div>
+              <CardDescription>Création rapide en une seule page</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Tous les champs sur une page</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Création plus rapide</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Idéal pour les utilisateurs expérimentés</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">✓</span>
+                  <span>Vue d'ensemble complète</span>
+                </li>
+              </ul>
+              <Button variant="outline" className="w-full mt-4">
+                Commencer
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Note */}
+        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-800 dark:text-blue-400">
+            💡 <strong>Conseil :</strong> Le formulaire guidé est recommandé pour les nouvelles
+            interventions complexes ou si vous devez gérer plusieurs chambres. Le formulaire rapide
+            est idéal pour les interventions simples.
           </p>
         </div>
       </div>
+    );
+  }
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Informations générales */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations générales</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Titre */}
-            <div>
-              <Label htmlFor="title">Titre *</Label>
-              <Input id="title" {...register('title')} placeholder="Ex: Fuite d'eau chambre 205" />
-              {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>}
-            </div>
-
-            {/* Description */}
-            <div>
-              <Label htmlFor="description">Description *</Label>
-              <Textarea
-                id="description"
-                {...register('description')}
-                placeholder="Décrivez le problème en détail..."
-                rows={4}
-              />
-              {errors.description && (
-                <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-              )}
-            </div>
-
-            {/* Type, Catégorie, Priorité */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <Label htmlFor="type">Type *</Label>
-                <Select onValueChange={value => setValue('type', value)} defaultValue="">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(INTERVENTION_TYPE_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="category">Catégorie *</Label>
-                <Select onValueChange={value => setValue('category', value)} defaultValue="">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.category && (
-                  <p className="mt-1 text-sm text-red-600">{errors.category.message}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="priority">Priorité *</Label>
-                <Select onValueChange={value => setValue('priority', value)} defaultValue="">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.priority && (
-                  <p className="mt-1 text-sm text-red-600">{errors.priority.message}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Localisation */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Localisation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="location">Lieu *</Label>
-              <Input
-                id="location"
-                {...register('location')}
-                placeholder="Ex: 2ème étage, couloir principal"
-              />
-              {errors.location && (
-                <p className="mt-1 text-sm text-red-600">{errors.location.message}</p>
-              )}
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <Label htmlFor="roomNumber">Numéro de chambre</Label>
-                <Input id="roomNumber" {...register('roomNumber')} placeholder="205" />
-              </div>
-
-              <div>
-                <Label htmlFor="floor">Étage</Label>
-                <Input id="floor" type="number" {...register('floor')} placeholder="2" />
-              </div>
-
-              <div>
-                <Label htmlFor="building">Bâtiment</Label>
-                <Input id="building" {...register('building')} placeholder="A" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Photos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Photos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="photos">Ajouter des photos</Label>
-              <div className="mt-2">
-                <label className="flex cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 hover:border-indigo-500">
-                  <div className="text-center">
-                    <Upload className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-600">
-                      Cliquez pour sélectionner des photos
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">JPG, PNG jusqu'à 5MB</p>
-                  </div>
-                  <input
-                    id="photos"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={handlePhotoSelect}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Preview photos */}
-            {photos.length > 0 && (
-              <div className="grid gap-4 md:grid-cols-3">
-                {photos.map((photo, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={URL.createObjectURL(photo)}
-                      alt={`Photo ${index + 1}`}
-                      className="h-32 w-full rounded-lg object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute right-2 top-2"
-                      onClick={() => handlePhotoRemove(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Options */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Options</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isUrgent"
-                checked={watch('isUrgent')}
-                onCheckedChange={checked => setValue('isUrgent', !!checked)}
-              />
-              <Label htmlFor="isUrgent" className="font-normal">
-                Intervention urgente
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isBlocking"
-                checked={watch('isBlocking')}
-                onCheckedChange={checked => setValue('isBlocking', !!checked)}
-              />
-              <Label htmlFor="isBlocking" className="font-normal">
-                Bloque la chambre
-              </Label>
-            </div>
-
-            <div>
-              <Label htmlFor="internalNotes">Notes internes</Label>
-              <Textarea
-                id="internalNotes"
-                {...register('internalNotes')}
-                placeholder="Notes visibles uniquement par l'équipe..."
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Actions */}
-        <div className="flex justify-end gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/app/interventions')}>
-            Annuler
-          </Button>
-          <Button type="submit" disabled={isCreating}>
-            {isCreating ? (
-              <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Création...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Créer l'intervention
-              </>
-            )}
-          </Button>
+  // Afficher le formulaire sélectionné
+  return (
+    <div className="container mx-auto py-8 px-4">
+      {mode === 'wizard' ? (
+        <InterventionWizard onSuccess={handleSuccess} onCancel={handleCancel} />
+      ) : (
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Button variant="ghost" size="sm" onClick={handleCancel} className="mb-4">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Changer de mode
+            </Button>
+          </div>
+          <InterventionForm mode="create" onSuccess={handleSuccess} onCancel={handleCancel} />
         </div>
-      </form>
+      )}
     </div>
   );
 };
