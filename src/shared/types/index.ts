@@ -1,20 +1,25 @@
 /**
- * Types Index
- * 
- * Point d'entrée centralisé pour tous les types de l'application
+ * Interventions Components Index
+ *
+ * Export centralisé de tous les composants
  */
 
-// Common types
-export * from './common.types';
+// Badges
+export { StatusBadge } from './badges/StatusBadge';
+export { TypeBadge } from './badges/TypeBadge';
+export { PriorityBadge } from './badges/PriorityBadge';
 
-// Role & Permission types
-export * from './roles.types';
+// Cards
+export { InterventionCard } from './cards/InterventionCard';
 
-// User types
-export * from './user.types';
+// Lists
+export { InterventionsList } from './lists/InterventionsList';
 
-// Establishment types
-export * from './establishment.types';
+// Filters
+export { InterventionFilters } from './filters/InterventionFilters';
 
-// Status & Priority types
-export * from './status.types';
+// Form
+export { InterventionForm } from './form/InterventionForm';
+
+// Details
+export { InterventionDetails } from './details/InterventionDetails';

@@ -1,0 +1,268 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    /**
+     * Vérifie si l'utilisateur est authentifié
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    /**
+     * Vérifie si l'utilisateur est propriétaire de la ressource
+     */
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Récupère le document utilisateur
+     */
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    /**
+     * Vérifie si l'utilisateur a un rôle spécifique
+     */
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    /**
+     * Vérifie si l'utilisateur est super admin
+     */
+    function isSuperAdmin() {
+      return hasRole('super_admin');
+    }
+    
+    /**
+     * Vérifie si l'utilisateur a accès à un établissement
+     */
+    function hasAccessToEstablishment(establishmentId) {
+      return isAuthenticated() && (
+        isSuperAdmin() ||
+        establishmentId in getUserData().establishmentIds
+      );
+    }
+    
+    /**
+     * Vérifie si l'utilisateur peut créer des interventions
+     */
+    function canCreateInterventions() {
+      let role = getUserData().role;
+      return role in ['super_admin', 'admin', 'manager', 'technician', 'receptionist'];
+    }
+    
+    /**
+     * Vérifie si l'utilisateur peut éditer une intervention
+     */
+    function canEditIntervention(intervention) {
+      let role = getUserData().role;
+      let userId = request.auth.uid;
+      
+      return isSuperAdmin() ||
+             role == 'admin' ||
+             role == 'manager' ||
+             intervention.createdBy == userId ||
+             intervention.assignedTo == userId;
+    }
+    
+    /**
+     * Vérifie si l'utilisateur peut supprimer une intervention
+     */
+    function canDeleteIntervention() {
+      let role = getUserData().role;
+      return role in ['super_admin', 'admin', 'manager'];
+    }
+    
+    // ============================================
+    // USERS COLLECTION
+    // ============================================
+    
+    match /users/{userId} {
+      // Lecture : l'utilisateur peut lire son propre profil ou être admin
+      allow read: if isOwner(userId) || 
+                     hasRole('admin') || 
+                     hasRole('manager') ||
+                     isSuperAdmin();
+      
+      // Création : seulement via Cloud Functions ou super admin
+      allow create: if isSuperAdmin();
+      
+      // Mise à jour : l'utilisateur peut modifier son propre profil (champs limités)
+      // ou admin/super_admin peut tout modifier
+      allow update: if (isOwner(userId) && 
+                       !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['role', 'establishmentIds', 'isActive'])) ||
+                       hasRole('admin') ||
+                       isSuperAdmin();
+      
+      // Suppression : seulement super admin
+      allow delete: if isSuperAdmin();
+    }
+    
+    // ============================================
+    // ESTABLISHMENTS COLLECTION
+    // ============================================
+    
+    match /establishments/{establishmentId} {
+      // Lecture : utilisateur doit avoir accès à l'établissement
+      allow read: if hasAccessToEstablishment(establishmentId);
+      
+      // Création : seulement super admin
+      allow create: if isSuperAdmin();
+      
+      // Mise à jour : super admin ou admin de l'établissement
+      allow update: if isSuperAdmin() || 
+                       (hasRole('admin') && hasAccessToEstablishment(establishmentId));
+      
+      // Suppression : seulement super admin
+      allow delete: if isSuperAdmin();
+      
+      // ============================================
+      // INTERVENTIONS SUB-COLLECTION
+      // ============================================
+      
+      match /interventions/{interventionId} {
+        // Lecture : utilisateur doit avoir accès à l'établissement
+        allow read: if hasAccessToEstablishment(establishmentId);
+        
+        // Création : utilisateur authentifié avec permission de créer
+        allow create: if hasAccessToEstablishment(establishmentId) && 
+                         canCreateInterventions() &&
+                         request.resource.data.establishmentId == establishmentId &&
+                         request.resource.data.createdBy == request.auth.uid;
+        
+        // Mise à jour : vérifier les permissions
+        allow update: if hasAccessToEstablishment(establishmentId) && 
+                         canEditIntervention(resource.data);
+        
+        // Suppression : soft delete seulement (isDeleted = true)
+        // ou hard delete pour admin/super_admin
+        allow delete: if hasAccessToEstablishment(establishmentId) && 
+                         canDeleteIntervention();
+      }
+      
+      // ============================================
+      // ROOMS SUB-COLLECTION
+      // ============================================
+      
+      match /rooms/{roomId} {
+        // Lecture : accès à l'établissement
+        allow read: if hasAccessToEstablishment(establishmentId);
+        
+        // Création : admin ou manager
+        allow create: if hasAccessToEstablishment(establishmentId) &&
+                         (isSuperAdmin() || hasRole('admin') || hasRole('manager'));
+        
+        // Mise à jour : admin ou manager
+        allow update: if hasAccessToEstablishment(establishmentId) &&
+                         (isSuperAdmin() || hasRole('admin') || hasRole('manager'));
+        
+        // Suppression : admin uniquement
+        allow delete: if hasAccessToEstablishment(establishmentId) &&
+                         (isSuperAdmin() || hasRole('admin'));
+      }
+      
+      // ============================================
+      // TEMPLATES SUB-COLLECTION
+      // ============================================
+      
+      match /templates/{templateId} {
+        // Lecture : accès à l'établissement
+        allow read: if hasAccessToEstablishment(establishmentId);
+        
+        // Création : admin ou manager
+        allow create: if hasAccessToEstablishment(establishmentId) &&
+                         (isSuperAdmin() || hasRole('admin') || hasRole('manager'));
+        
+        // Mise à jour : créateur ou admin
+        allow update: if hasAccessToEstablishment(establishmentId) &&
+                         (isSuperAdmin() || 
+                          hasRole('admin') || 
+                          resource.data.createdBy == request.auth.uid);
+        
+        // Suppression : créateur ou admin
+        allow delete: if hasAccessToEstablishment(establishmentId) &&
+                         (isSuperAdmin() || 
+                          hasRole('admin') || 
+                          resource.data.createdBy == request.auth.uid);
+      }
+    }
+    
+    // ============================================
+    // NOTIFICATIONS COLLECTION
+    // ============================================
+    
+    match /notifications/{notificationId} {
+      // Lecture : seulement ses propres notifications
+      allow read: if isAuthenticated() && 
+                     resource.data.userId == request.auth.uid;
+      
+      // Création : via Cloud Functions uniquement (pas de création directe)
+      allow create: if false;
+      
+      // Mise à jour : peut marquer comme lu
+      allow update: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['read', 'readAt']);
+      
+      // Suppression : ses propres notifications ou super admin
+      allow delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) ||
+                       isSuperAdmin();
+    }
+    
+    // ============================================
+    // MESSAGES COLLECTION (Messagerie interne)
+    // ============================================
+    
+    match /messages/{messageId} {
+      // Lecture : participants de la conversation
+      allow read: if isAuthenticated() && 
+                     request.auth.uid in resource.data.participants;
+      
+      // Création : utilisateur authentifié et est participant
+      allow create: if isAuthenticated() && 
+                       request.auth.uid in request.resource.data.participants &&
+                       request.resource.data.senderId == request.auth.uid;
+      
+      // Mise à jour : peut marquer comme lu
+      allow update: if isAuthenticated() && 
+                       request.auth.uid in resource.data.participants;
+      
+      // Suppression : expéditeur ou super admin
+      allow delete: if (isAuthenticated() && resource.data.senderId == request.auth.uid) ||
+                       isSuperAdmin();
+    }
+    
+    // ============================================
+    // ANALYTICS / REPORTS (Lecture seule pour users)
+    // ============================================
+    
+    match /reports/{reportId} {
+      // Lecture : admin, manager, super admin
+      allow read: if isSuperAdmin() || 
+                     hasRole('admin') || 
+                     hasRole('manager');
+      
+      // Création/Modification/Suppression : via Cloud Functions uniquement
+      allow write: if false;
+    }
+    
+    // ============================================
+    // DENY ALL - Toute autre collection est interdite
+    // ============================================
+    
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

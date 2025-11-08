@@ -1,102 +1,82 @@
 /**
- * PriorityBadge Component
+ * PriorityBadge Component - CORRIGÉ
  *
  * Badge pour afficher la priorité d'une intervention
- *
- * Destination: src/features/interventions/components/badges/PriorityBadge.tsx
  */
 
 import { Badge } from '@/shared/components/ui/badge';
-import { AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
+import { AlertCircle, ArrowUp, Minus, Flame } from 'lucide-react';
 import { InterventionPriority, PRIORITY_LABELS } from '@/shared/types/status.types';
 
 interface PriorityBadgeProps {
-  priority: InterventionPriority;
-  showIcon?: boolean;
+  priority: InterventionPriority | string;
   size?: 'sm' | 'md' | 'lg';
-  className?: string;
+  showIcon?: boolean;
 }
 
 const PRIORITY_CONFIG: Record<
   InterventionPriority,
   {
     label: string;
-    icon: any;
+    icon: typeof AlertCircle;
     className: string;
   }
 > = {
-  [InterventionPriority.CRITICAL]: {
-    label: PRIORITY_LABELS[InterventionPriority.CRITICAL],
-    icon: AlertCircle,
-    className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',
+  [InterventionPriority.LOW]: {
+    label: PRIORITY_LABELS[InterventionPriority.LOW],
+    icon: Minus,
+    className: 'bg-gray-100 text-gray-800 border-gray-300',
+  },
+  [InterventionPriority.NORMAL]: {
+    label: PRIORITY_LABELS[InterventionPriority.NORMAL],
+    icon: Minus,
+    className: 'bg-blue-100 text-blue-800 border-blue-300',
   },
   [InterventionPriority.HIGH]: {
     label: PRIORITY_LABELS[InterventionPriority.HIGH],
     icon: ArrowUp,
-    className:
-      'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400',
+    className: 'bg-orange-100 text-orange-800 border-orange-300',
   },
-  [InterventionPriority.MEDIUM]: {
-    label: PRIORITY_LABELS[InterventionPriority.MEDIUM],
-    icon: Minus,
-    className:
-      'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400',
+  [InterventionPriority.URGENT]: {
+    label: PRIORITY_LABELS[InterventionPriority.URGENT],
+    icon: AlertCircle,
+    className: 'bg-red-100 text-red-800 border-red-300',
   },
-  [InterventionPriority.LOW]: {
-    label: PRIORITY_LABELS[InterventionPriority.LOW],
-    icon: ArrowDown,
-    className:
-      'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400',
+  [InterventionPriority.CRITICAL]: {
+    label: PRIORITY_LABELS[InterventionPriority.CRITICAL],
+    icon: Flame,
+    className: 'bg-red-600 text-white border-red-700',
   },
 };
 
-const SIZE_CLASSES = {
-  sm: 'text-xs px-2 py-0.5',
-  md: 'text-sm px-2.5 py-1',
-  lg: 'text-base px-3 py-1.5',
-} as const;
+export const PriorityBadge = ({ priority, size = 'md', showIcon = true }: PriorityBadgeProps) => {
+  // Normaliser la priorité
+  const normalizedPriority = priority.toLowerCase() as InterventionPriority;
 
-const ICON_SIZES = {
-  sm: 12,
-  md: 14,
-  lg: 16,
-} as const;
-
-export const PriorityBadge = ({
-  priority,
-  showIcon = true,
-  size = 'md',
-  className = '',
-}: PriorityBadgeProps) => {
-  // Vérifier que la priorité existe dans la configuration
-  const config = PRIORITY_CONFIG[priority];
-
-  // Si la priorité n'est pas reconnue, utiliser MEDIUM comme fallback
-  if (!config) {
-    console.warn(`Priorité d'intervention non reconnue: "${priority}". Utilisation de MEDIUM.`);
-    const fallbackConfig = PRIORITY_CONFIG[InterventionPriority.MEDIUM];
-    const FallbackIcon = fallbackConfig.icon;
-
-    return (
-      <Badge
-        variant="secondary"
-        className={`${fallbackConfig.className} ${SIZE_CLASSES[size]} font-medium inline-flex items-center gap-1.5 ${className}`}
-      >
-        {showIcon && <FallbackIcon size={ICON_SIZES[size]} className="flex-shrink-0" />}
-        <span>{String(priority) || 'Non défini'}</span>
-      </Badge>
-    );
-  }
-
+  // Utiliser la config ou fallback sur NORMAL
+  const config =
+    PRIORITY_CONFIG[normalizedPriority] || PRIORITY_CONFIG[InterventionPriority.NORMAL];
   const Icon = config.icon;
+
+  const sizeClasses = {
+    sm: 'text-xs px-2 py-0.5',
+    md: 'text-sm px-2.5 py-0.5',
+    lg: 'text-base px-3 py-1',
+  };
+
+  const iconSizes = {
+    sm: 'h-3 w-3',
+    md: 'h-4 w-4',
+    lg: 'h-5 w-5',
+  };
 
   return (
     <Badge
-      variant="secondary"
-      className={`${config.className} ${SIZE_CLASSES[size]} font-medium inline-flex items-center gap-1.5 ${className}`}
+      variant="outline"
+      className={`inline-flex items-center gap-1.5 font-medium ${config.className} ${sizeClasses[size]}`}
     >
-      {showIcon && <Icon size={ICON_SIZES[size]} className="flex-shrink-0" />}
-      <span>{config.label}</span>
+      {showIcon && <Icon className={iconSizes[size]} />}
+      {config.label}
     </Badge>
   );
 };

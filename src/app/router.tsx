@@ -9,6 +9,7 @@ import { MainLayout } from '@/shared/components/layouts/MainLayout';
 import { AuthLayout } from '@/shared/components/layouts/AuthLayout';
 import { ProtectedRoute } from '@/shared/components/guards/ProtectedRoute';
 import { GuestRoute } from '@/shared/components/guards/GuestRoute';
+import ReferenceListsManager from '@/features/settings/components/ReferenceListsManager';
 
 // Pages
 import { LoginPage } from '@/pages/Login';
@@ -101,7 +102,11 @@ export const router = createBrowserRouter([
       },
     ],
   },
-
+  {
+    path: 'reference-lists',
+    element: <ReferenceListsManager />,
+    // Protège avec permissions admin
+  },
   // Redirection pour les anciennes routes
   {
     path: '/dashboard',

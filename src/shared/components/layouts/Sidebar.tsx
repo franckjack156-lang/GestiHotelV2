@@ -1,11 +1,21 @@
 /**
  * Sidebar Component
- * 
+ *
  * Barre latérale de navigation de l'application
  */
 
 import { NavLink } from 'react-router-dom';
-import { X, Home, ClipboardList, BarChart, Calendar, Building2, Users, Settings } from 'lucide-react';
+import {
+  X,
+  Home,
+  ClipboardList,
+  BarChart,
+  Calendar,
+  Building2,
+  Users,
+  Settings,
+  ListIcon,
+} from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { Button } from '@/shared/components/ui/button';
 
@@ -53,18 +63,19 @@ const navigationItems = [
     href: '/app/settings',
     icon: Settings,
   },
+  {
+    label: 'Listes de référence',
+    icon: ListIcon,
+    path: '/settings/reference-lists',
+    permission: 'admin', // Ou ton système de permissions
+  },
 ];
 
 export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   return (
     <>
       {/* Overlay mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={onClose} />}
 
       {/* Sidebar */}
       <aside
@@ -75,22 +86,15 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
       >
         {/* Header */}
         <div className="flex h-16 items-center justify-between border-b px-6 dark:border-gray-700">
-          <span className="text-lg font-semibold text-gray-900 dark:text-white">
-            Navigation
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="lg:hidden"
-          >
+          <span className="text-lg font-semibold text-gray-900 dark:text-white">Navigation</span>
+          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
             <X className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 p-4">
-          {navigationItems.map((item) => {
+          {navigationItems.map(item => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -120,9 +124,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
         {/* Footer */}
         <div className="border-t p-4 dark:border-gray-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            GestiHôtel v2.0.0
-          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">GestiHôtel v2.0.0</p>
         </div>
       </aside>
     </>

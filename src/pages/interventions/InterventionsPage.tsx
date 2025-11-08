@@ -46,7 +46,7 @@ export const InterventionsPage = () => {
   const { canCreateInterventions } = usePermissions();
 
   const { interventions, isLoading, error, filters, setFilters, resetFilters, stats } =
-    useInterventions(establishmentId || '');
+    useInterventions();
 
   const [searchQuery, setSearchQuery] = useState('');
 

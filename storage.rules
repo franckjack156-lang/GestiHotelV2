@@ -1,0 +1,257 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    /**
+     * Vérifie si l'utilisateur est authentifié
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    /**
+     * Vérifie si le fichier est une image
+     */
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    /**
+     * Vérifie si le fichier est un PDF
+     */
+    function isPDF() {
+      return request.resource.contentType == 'application/pdf';
+    }
+    
+    /**
+     * Vérifie si le fichier est un document autorisé
+     */
+    function isAllowedDocument() {
+      return request.resource.contentType.matches('application/pdf') ||
+             request.resource.contentType.matches('application/msword') ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*') ||
+             request.resource.contentType.matches('text/csv');
+    }
+    
+    /**
+     * Vérifie la taille du fichier (max 10MB)
+     */
+    function isValidSize() {
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+    
+    /**
+     * Vérifie la taille pour une image (max 5MB)
+     */
+    function isValidImageSize() {
+      return request.resource.size <= 5 * 1024 * 1024;
+    }
+    
+    /**
+     * Récupère le rôle de l'utilisateur depuis Firestore
+     */
+    function getUserRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    /**
+     * Vérifie si l'utilisateur a accès à un établissement
+     */
+    function hasAccessToEstablishment(establishmentId) {
+      let userData = firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+      return getUserRole() == 'super_admin' || establishmentId in userData.establishmentIds;
+    }
+    
+    // ============================================
+    // PHOTOS D'INTERVENTIONS
+    // Path: /establishments/{establishmentId}/interventions/{interventionId}/photos/{photoId}
+    // ============================================
+    
+    match /establishments/{establishmentId}/interventions/{interventionId}/photos/{photoId} {
+      // Lecture : utilisateur authentifié avec accès à l'établissement
+      allow read: if isAuthenticated() && 
+                     hasAccessToEstablishment(establishmentId);
+      
+      // Upload : utilisateur authentifié avec accès à l'établissement
+      // Fichier doit être une image et taille max 5MB
+      allow create: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       isImage() &&
+                       isValidImageSize();
+      
+      // Modification : non autorisée (upload de nouvelles versions seulement)
+      allow update: if false;
+      
+      // Suppression : utilisateur avec accès à l'établissement et rôle admin/manager
+      allow delete: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+    }
+    
+    // ============================================
+    // SIGNATURES ÉLECTRONIQUES
+    // Path: /establishments/{establishmentId}/interventions/{interventionId}/signatures/{signatureId}
+    // ============================================
+    
+    match /establishments/{establishmentId}/interventions/{interventionId}/signatures/{signatureId} {
+      // Lecture : utilisateur avec accès à l'établissement
+      allow read: if isAuthenticated() && 
+                     hasAccessToEstablishment(establishmentId);
+      
+      // Upload : image seulement, max 1MB
+      allow create: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       isImage() &&
+                       request.resource.size <= 1 * 1024 * 1024;
+      
+      // Modification : non autorisée
+      allow update: if false;
+      
+      // Suppression : seulement admin/super_admin
+      allow delete: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin']);
+    }
+    
+    // ============================================
+    // DOCUMENTS D'INTERVENTIONS
+    // Path: /establishments/{establishmentId}/interventions/{interventionId}/documents/{documentId}
+    // ============================================
+    
+    match /establishments/{establishmentId}/interventions/{interventionId}/documents/{documentId} {
+      // Lecture : utilisateur avec accès
+      allow read: if isAuthenticated() && 
+                     hasAccessToEstablishment(establishmentId);
+      
+      // Upload : documents autorisés (PDF, Word, Excel, CSV), max 10MB
+      allow create: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       isAllowedDocument() &&
+                       isValidSize();
+      
+      // Modification : non autorisée
+      allow update: if false;
+      
+      // Suppression : admin/manager
+      allow delete: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+    }
+    
+    // ============================================
+    // PHOTOS DE PROFIL UTILISATEURS
+    // Path: /users/{userId}/profile/{photoId}
+    // ============================================
+    
+    match /users/{userId}/profile/{photoId} {
+      // Lecture : tout le monde authentifié (pour afficher avatars)
+      allow read: if isAuthenticated();
+      
+      // Upload : seulement son propre profil, image uniquement, max 2MB
+      allow create: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       request.resource.size <= 2 * 1024 * 1024;
+      
+      // Modification : remplacer sa propre photo
+      allow update: if isAuthenticated() && 
+                       request.auth.uid == userId &&
+                       isImage() &&
+                       request.resource.size <= 2 * 1024 * 1024;
+      
+      // Suppression : soi-même ou admin
+      allow delete: if isAuthenticated() && 
+                       (request.auth.uid == userId || getUserRole() == 'super_admin');
+    }
+    
+    // ============================================
+    // LOGOS D'ÉTABLISSEMENTS
+    // Path: /establishments/{establishmentId}/logo/{logoId}
+    // ============================================
+    
+    match /establishments/{establishmentId}/logo/{logoId} {
+      // Lecture : tout le monde authentifié
+      allow read: if isAuthenticated();
+      
+      // Upload : admin de l'établissement, image uniquement, max 2MB
+      allow create: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin']) &&
+                       isImage() &&
+                       request.resource.size <= 2 * 1024 * 1024;
+      
+      // Modification : admin de l'établissement
+      allow update: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin']) &&
+                       isImage() &&
+                       request.resource.size <= 2 * 1024 * 1024;
+      
+      // Suppression : admin
+      allow delete: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin']);
+    }
+    
+    // ============================================
+    // EXPORTS (PDF, Excel)
+    // Path: /establishments/{establishmentId}/exports/{exportId}
+    // ============================================
+    
+    match /establishments/{establishmentId}/exports/{exportId} {
+      // Lecture : utilisateur avec accès (pour télécharger les exports générés)
+      allow read: if isAuthenticated() && 
+                     hasAccessToEstablishment(establishmentId);
+      
+      // Upload : via Cloud Functions uniquement (exports générés)
+      allow create: if false;
+      
+      // Modification : non autorisée
+      allow update: if false;
+      
+      // Suppression : auto-cleanup via Cloud Functions après 24h
+      allow delete: if false;
+    }
+    
+    // ============================================
+    // TEMPLATES (Modèles de documents)
+    // Path: /establishments/{establishmentId}/templates/{templateId}
+    // ============================================
+    
+    match /establishments/{establishmentId}/templates/{templateId} {
+      // Lecture : accès établissement
+      allow read: if isAuthenticated() && 
+                     hasAccessToEstablishment(establishmentId);
+      
+      // Upload : admin/manager, documents autorisés, max 5MB
+      allow create: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin', 'manager']) &&
+                       isAllowedDocument() &&
+                       request.resource.size <= 5 * 1024 * 1024;
+      
+      // Modification : admin/manager
+      allow update: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+      
+      // Suppression : admin/manager
+      allow delete: if isAuthenticated() && 
+                       hasAccessToEstablishment(establishmentId) &&
+                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+    }
+    
+    // ============================================
+    // DENY ALL - Tout autre chemin est interdit
+    // ============================================
+    
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

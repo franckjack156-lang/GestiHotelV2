@@ -1,6 +1,6 @@
 /**
  * Establishment Service
- * 
+ *
  * Service pour gérer les opérations CRUD des établissements dans Firestore
  */
 
@@ -26,6 +26,9 @@ import type {
   UpdateEstablishmentData,
   EstablishmentFilters,
   EstablishmentSummary,
+} from '@/shared/types/establishment.types';
+
+import {
   DEFAULT_ESTABLISHMENT_FEATURES,
   DEFAULT_ESTABLISHMENT_SETTINGS,
 } from '@/shared/types/establishment.types';
@@ -35,13 +38,9 @@ const ESTABLISHMENTS_COLLECTION = 'establishments';
 /**
  * Obtenir un établissement par son ID
  */
-export const getEstablishment = async (
-  establishmentId: string
-): Promise<Establishment | null> => {
+export const getEstablishment = async (establishmentId: string): Promise<Establishment | null> => {
   try {
-    const establishmentDoc = await getDoc(
-      doc(db, ESTABLISHMENTS_COLLECTION, establishmentId)
-    );
+    const establishmentDoc = await getDoc(doc(db, ESTABLISHMENTS_COLLECTION, establishmentId));
 
     if (!establishmentDoc.exists()) {
       return null;
@@ -97,7 +96,7 @@ export const getEstablishments = async (
     const snapshot = await getDocs(q);
 
     const establishments: Establishment[] = [];
-    snapshot.forEach((doc) => {
+    snapshot.forEach(doc => {
       establishments.push({
         id: doc.id,
         ...doc.data(),
@@ -108,7 +107,7 @@ export const getEstablishments = async (
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
       return establishments.filter(
-        (est) =>
+        est =>
           est.name.toLowerCase().includes(searchLower) ||
           est.displayName?.toLowerCase().includes(searchLower) ||
           est.address.city?.toLowerCase().includes(searchLower)
@@ -154,7 +153,7 @@ export const getUserEstablishments = async (
       );
 
       const snapshot = await getDocs(q);
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         establishments.push({
           id: doc.id,
           ...doc.data(),
@@ -186,41 +185,38 @@ export const createEstablishment = async (
       type: data.type,
       category: data.category,
       description: data.description,
-      
+
       // Adresse et contact
       address: data.address,
       contact: data.contact,
       website: data.website,
-      
+
       // Capacité
       totalRooms: data.totalRooms,
       totalFloors: data.totalFloors,
-      
+
       // Statut
       isActive: true,
-      
+
       // Configuration features (par défaut)
       features: DEFAULT_ESTABLISHMENT_FEATURES,
-      
+
       // Paramètres
       settings: {
         ...DEFAULT_ESTABLISHMENT_SETTINGS,
         timezone: data.timezone || 'Europe/Paris',
       },
-      
+
       // Métadonnées
       ownerId,
       managerIds: [ownerId],
-      
+
       // Timestamps
       createdAt: now,
       updatedAt: now,
     };
 
-    const docRef = await addDoc(
-      collection(db, ESTABLISHMENTS_COLLECTION),
-      establishmentData
-    );
+    const docRef = await addDoc(collection(db, ESTABLISHMENTS_COLLECTION), establishmentData);
 
     return docRef.id;
   } catch (error) {
@@ -242,10 +238,7 @@ export const updateEstablishment = async (
       updatedAt: serverTimestamp(),
     };
 
-    await updateDoc(
-      doc(db, ESTABLISHMENTS_COLLECTION, establishmentId),
-      updateData
-    );
+    await updateDoc(doc(db, ESTABLISHMENTS_COLLECTION, establishmentId), updateData);
   } catch (error) {
     console.error("Erreur lors de la mise à jour de l'établissement:", error);
     throw new Error("Impossible de mettre à jour l'établissement");
@@ -294,7 +287,7 @@ export const getEstablishmentsSummary = async (
       ? await getUserEstablishments('', establishmentIds)
       : await getEstablishments();
 
-    return establishments.map((est) => ({
+    return establishments.map(est => ({
       id: est.id,
       name: est.name,
       type: est.type,
@@ -372,7 +365,7 @@ export const removeManagerFromEstablishment = async (
       throw new Error('Établissement introuvable');
     }
 
-    const managerIds = (establishment.managerIds || []).filter((id) => id !== managerId);
+    const managerIds = (establishment.managerIds || []).filter(id => id !== managerId);
 
     await updateDoc(doc(db, ESTABLISHMENTS_COLLECTION, establishmentId), {
       managerIds,

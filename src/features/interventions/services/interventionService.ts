@@ -1,7 +1,7 @@
 /**
- * Intervention Service - FIXED
+ * Intervention Service - VERSION FINALE CORRIGÉE
  *
- * Fix: Nettoyage des valeurs undefined avant envoi à Firestore
+ * Correspond EXACTEMENT à ce que le hook attend
  */
 
 import {
@@ -37,53 +37,29 @@ import type {
 import type { InterventionStatus } from '@/shared/types/status.types';
 
 /**
- * ✅ HELPER: Nettoyer les valeurs undefined d'un objet
- * Firestore n'accepte pas undefined, seulement null ou omission du champ
- */
-const cleanUndefined = <T extends Record<string, any>>(obj: T): Partial<T> => {
-  const cleaned: Partial<T> = {};
-
-  Object.keys(obj).forEach(key => {
-    const value = obj[key];
-
-    // Ne garder que les valeurs définies (pas undefined)
-    // null est OK pour Firestore
-    if (value !== undefined) {
-      cleaned[key as keyof T] = value;
-    }
-  });
-
-  return cleaned;
-};
-
-/**
- * Obtenir la référence de la collection interventions pour un établissement
+ * Obtenir la référence de la collection interventions
  */
 const getInterventionsCollection = (establishmentId: string) => {
   return collection(db, 'establishments', establishmentId, 'interventions');
 };
 
 /**
- * Générer une référence unique pour l'intervention
+ * Générer une référence unique
  */
 const generateReference = async (establishmentId: string): Promise<string> => {
   const year = new Date().getFullYear();
   const collectionRef = getInterventionsCollection(establishmentId);
-
-  // Compter les interventions de l'année en cours
   const q = query(
     collectionRef,
     where('createdAt', '>=', Timestamp.fromDate(new Date(year, 0, 1)))
   );
-
   const snapshot = await getDocs(q);
   const count = snapshot.size + 1;
-
   return `INT-${year}-${String(count).padStart(4, '0')}`;
 };
 
 /**
- * ✅ FIXED: Créer une nouvelle intervention avec nettoyage des undefined
+ * Créer une nouvelle intervention
  */
 export const createIntervention = async (
   establishmentId: string,
@@ -94,12 +70,8 @@ export const createIntervention = async (
     const collectionRef = getInterventionsCollection(establishmentId);
     const reference = await generateReference(establishmentId);
 
-    // ✅ Construction de l'objet SANS undefined
     const interventionData: any = {
-      // Établissement
       establishmentId,
-
-      // Données de base (OBLIGATOIRES)
       title: data.title,
       description: data.description,
       type: data.type,
@@ -107,70 +79,48 @@ export const createIntervention = async (
       priority: data.priority,
       status: 'pending' as InterventionStatus,
       location: data.location,
-
-      // Assignation
       createdBy: userId,
-
-      // Photos
       photos: [],
       photosCount: 0,
-
-      // Métadonnées
       reference,
       tags: data.tags || [],
       isUrgent: data.isUrgent || data.priority === 'urgent' || data.priority === 'critical',
       isBlocking: data.isBlocking || false,
       requiresValidation: false,
-
-      // Statistiques
       viewsCount: 0,
-
-      // Timestamps
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-
-      // Soft delete
       isDeleted: false,
     };
 
-    // ✅ Ajouter les champs optionnels SEULEMENT s'ils sont définis
     if (data.roomNumber !== undefined && data.roomNumber !== '') {
       interventionData.roomNumber = data.roomNumber;
     }
-
     if (data.floor !== undefined) {
       interventionData.floor = data.floor;
     }
-
     if (data.building !== undefined && data.building !== '') {
       interventionData.building = data.building;
     }
-
     if (data.assignedTo) {
       interventionData.assignedTo = data.assignedTo;
       interventionData.assignedAt = serverTimestamp();
     }
-
     if (data.scheduledAt) {
       interventionData.scheduledAt = Timestamp.fromDate(data.scheduledAt);
     }
-
     if (data.estimatedDuration) {
       interventionData.estimatedDuration = data.estimatedDuration;
     }
-
     if (data.internalNotes) {
       interventionData.internalNotes = data.internalNotes;
     }
 
-    console.log('📝 Création intervention:', interventionData);
-
     const docRef = await addDoc(collectionRef, interventionData);
     console.log('✅ Intervention créée:', docRef.id);
-
     return docRef.id;
   } catch (error) {
-    console.error("❌ Erreur lors de la création de l'intervention:", error);
+    console.error('❌ Erreur création intervention:', error);
     throw new Error("Impossible de créer l'intervention");
   }
 };
@@ -185,23 +135,16 @@ export const getIntervention = async (
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
     const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      return null;
-    }
-
-    return {
-      id: docSnap.id,
-      ...docSnap.data(),
-    } as Intervention;
+    if (!docSnap.exists()) return null;
+    return { id: docSnap.id, ...docSnap.data() } as Intervention;
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'intervention:", error);
+    console.error('❌ Erreur récupération intervention:', error);
     throw new Error("Impossible de récupérer l'intervention");
   }
 };
 
 /**
- * ✅ FIXED: Mettre à jour une intervention avec nettoyage des undefined
+ * Mettre à jour une intervention
  */
 export const updateIntervention = async (
   establishmentId: string,
@@ -210,13 +153,8 @@ export const updateIntervention = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
+    const updateData: Record<string, any> = { updatedAt: serverTimestamp() };
 
-    // ✅ Construction de l'objet SANS undefined
-    const updateData: Record<string, any> = {
-      updatedAt: serverTimestamp(),
-    };
-
-    // Ajouter uniquement les champs définis
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.type !== undefined) updateData.type = data.type;
@@ -234,21 +172,16 @@ export const updateIntervention = async (
     if (data.isUrgent !== undefined) updateData.isUrgent = data.isUrgent;
     if (data.isBlocking !== undefined) updateData.isBlocking = data.isBlocking;
 
-    // Convertir les dates si présentes
     if (data.scheduledAt) {
       updateData.scheduledAt = Timestamp.fromDate(data.scheduledAt);
     }
-
     if (data.estimatedDuration !== undefined) {
       updateData.estimatedDuration = data.estimatedDuration;
     }
 
-    console.log('📝 Mise à jour intervention:', updateData);
-
     await updateDoc(docRef, updateData);
-    console.log('✅ Intervention mise à jour');
   } catch (error) {
-    console.error("❌ Erreur lors de la mise à jour de l'intervention:", error);
+    console.error('❌ Erreur mise à jour:', error);
     throw new Error("Impossible de mettre à jour l'intervention");
   }
 };
@@ -264,13 +197,11 @@ export const changeStatus = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
-
     const updateData: Record<string, any> = {
       status: statusData.newStatus,
       updatedAt: serverTimestamp(),
     };
 
-    // Ajouter timestamps selon le statut
     if (statusData.newStatus === 'in_progress') {
       updateData.startedAt = serverTimestamp();
     } else if (statusData.newStatus === 'completed') {
@@ -282,13 +213,13 @@ export const changeStatus = async (
 
     await updateDoc(docRef, updateData);
   } catch (error) {
-    console.error('Erreur lors du changement de statut:', error);
+    console.error('❌ Erreur changement statut:', error);
     throw new Error('Impossible de changer le statut');
   }
 };
 
 /**
- * Assigner une intervention à un technicien
+ * Assigner une intervention
  */
 export const assignIntervention = async (
   establishmentId: string,
@@ -297,7 +228,6 @@ export const assignIntervention = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
-
     await updateDoc(docRef, {
       assignedTo: assignmentData.technicianId,
       assignedAt: serverTimestamp(),
@@ -305,7 +235,7 @@ export const assignIntervention = async (
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error("Erreur lors de l'assignation:", error);
+    console.error('❌ Erreur assignation:', error);
     throw new Error("Impossible d'assigner l'intervention");
   }
 };
@@ -320,7 +250,6 @@ export const deleteIntervention = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
-
     await updateDoc(docRef, {
       isDeleted: true,
       deletedAt: serverTimestamp(),
@@ -328,13 +257,13 @@ export const deleteIntervention = async (
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('Erreur lors de la suppression:', error);
+    console.error('❌ Erreur suppression:', error);
     throw new Error("Impossible de supprimer l'intervention");
   }
 };
 
 /**
- * Supprimer définitivement une intervention
+ * Supprimer définitivement
  */
 export const permanentlyDeleteIntervention = async (
   establishmentId: string,
@@ -344,12 +273,143 @@ export const permanentlyDeleteIntervention = async (
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
     await deleteDoc(docRef);
   } catch (error) {
-    console.error('Erreur lors de la suppression permanente:', error);
-    throw new Error("Impossible de supprimer définitivement l'intervention");
+    console.error('❌ Erreur suppression permanente:', error);
+    throw new Error('Impossible de supprimer définitivement');
   }
 };
 
-// Export toutes les fonctions
+/**
+ * ✅ CORRIGÉ: S'abonner aux interventions en temps réel
+ * AVEC TOUS LES PARAMÈTRES QUE LE HOOK ENVOIE
+ */
+export const subscribeToInterventions = (
+  establishmentId: string,
+  filters: InterventionFilters | undefined,
+  sortOptions: InterventionSortOptions | undefined,
+  limitCount: number | undefined,
+  onSuccess: (interventions: Intervention[]) => void,
+  onError: (error: Error) => void
+): (() => void) => {
+  try {
+    const collectionRef = getInterventionsCollection(establishmentId);
+
+    // Construire la query de base
+    const constraints: QueryConstraint[] = [where('isDeleted', '==', false)];
+
+    // Appliquer les filtres
+    if (filters?.status) {
+      constraints.push(where('status', '==', filters.status));
+    }
+    if (filters?.priority) {
+      constraints.push(where('priority', '==', filters.priority));
+    }
+    if (filters?.type) {
+      constraints.push(where('type', '==', filters.type));
+    }
+    if (filters?.assignedTo) {
+      constraints.push(where('assignedTo', '==', filters.assignedTo));
+    }
+    if (filters?.isUrgent !== undefined) {
+      constraints.push(where('isUrgent', '==', filters.isUrgent));
+    }
+
+    // Appliquer le tri
+    const sortField = sortOptions?.field || 'createdAt';
+    const sortOrder = sortOptions?.order || 'desc';
+    constraints.push(orderBy(sortField, sortOrder));
+
+    // Appliquer la limite
+    if (limitCount) {
+      constraints.push(limit(limitCount));
+    }
+
+    const q = query(collectionRef, ...constraints);
+
+    // S'abonner aux changements
+    const unsubscribe = onSnapshot(
+      q,
+      snapshot => {
+        const interventions = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Intervention[];
+
+        console.log(`📡 ${interventions.length} interventions reçues`);
+        onSuccess(interventions);
+      },
+      error => {
+        console.error('❌ Erreur subscription:', error);
+        onError(error as Error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error('❌ Erreur création subscription:', error);
+    onError(error as Error);
+    return () => {};
+  }
+};
+
+/**
+ * ✅ CORRIGÉ: Obtenir les interventions (sans temps réel)
+ * AVEC TOUS LES PARAMÈTRES
+ */
+export const getInterventions = async (
+  establishmentId: string,
+  filters?: InterventionFilters,
+  sortOptions?: InterventionSortOptions,
+  limitCount?: number
+): Promise<Intervention[]> => {
+  try {
+    const collectionRef = getInterventionsCollection(establishmentId);
+
+    const constraints: QueryConstraint[] = [where('isDeleted', '==', false)];
+
+    // Appliquer les filtres
+    if (filters?.status) {
+      constraints.push(where('status', '==', filters.status));
+    }
+    if (filters?.priority) {
+      constraints.push(where('priority', '==', filters.priority));
+    }
+    if (filters?.type) {
+      constraints.push(where('type', '==', filters.type));
+    }
+    if (filters?.assignedTo) {
+      constraints.push(where('assignedTo', '==', filters.assignedTo));
+    }
+    if (filters?.isUrgent !== undefined) {
+      constraints.push(where('isUrgent', '==', filters.isUrgent));
+    }
+
+    // Appliquer le tri
+    const sortField = sortOptions?.field || 'createdAt';
+    const sortOrder = sortOptions?.order || 'desc';
+    constraints.push(orderBy(sortField, sortOrder));
+
+    // Appliquer la limite
+    if (limitCount) {
+      constraints.push(limit(limitCount));
+    }
+
+    const q = query(collectionRef, ...constraints);
+    const snapshot = await getDocs(q);
+
+    const interventions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Intervention[];
+
+    console.log(`✅ ${interventions.length} interventions récupérées`);
+    return interventions;
+  } catch (error) {
+    console.error('❌ Erreur récupération:', error);
+    throw new Error('Impossible de récupérer les interventions');
+  }
+};
+
+// ✅ EXPORT FINAL COMPLET
 export default {
   createIntervention,
   getIntervention,
@@ -358,4 +418,6 @@ export default {
   assignIntervention,
   deleteIntervention,
   permanentlyDeleteIntervention,
+  subscribeToInterventions, // ✅ CORRIGÉ
+  getInterventions, // ✅ CORRIGÉ
 };
