@@ -23,7 +23,7 @@ import { EditInterventionPage } from '@/pages/interventions/EditInterventionPage
 
 // Settings
 import { SettingsPage } from '@/pages/Settings';
-import ReferenceListsManager from '@/features/settings/components/ReferenceListsManager';
+import ReferenceListsOrchestrator from '@/features/settings/components/ReferenceListsOrchestrator';
 
 /**
  * Configuration des routes
@@ -117,7 +117,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'reference-lists',
-            element: <ReferenceListsManager />,
+            element: <ReferenceListsOrchestrator />,
           },
           // Placeholders pour les autres sections settings
           {
