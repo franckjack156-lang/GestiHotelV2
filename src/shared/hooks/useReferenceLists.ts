@@ -1,15 +1,11 @@
 /**
  * ============================================================================
- * REFERENCE LISTS HOOKS - COMPLET
+ * REFERENCE LISTS HOOKS - VERSION CORRIGÉE
  * ============================================================================
  *
  * Hooks React avec cache Zustand pour listes de référence
  *
- * Fonctionnalités:
- * ✅ Cache global multi-niveaux
- * ✅ Synchronisation temps réel
- * ✅ Hooks optimisés
- * ✅ Helpers pratiques
+ * ✅ CORRECTION: Utilise des objets simples au lieu de Maps/Sets
  *
  * Destination: src/shared/hooks/useReferenceLists.ts
  */
@@ -46,19 +42,21 @@ const useAuthStore = () => {
 };
 
 // ============================================================================
-// STORE ZUSTAND
+// STORE ZUSTAND - CORRIGÉ (Objets au lieu de Maps/Sets)
 // ============================================================================
 
 interface ReferenceListsState {
-  // Cache par établissement
-  cache: Map<string, EstablishmentReferenceLists>;
+  // Cache par établissement (Record au lieu de Map)
+  cache: Record<string, EstablishmentReferenceLists>;
 
-  // État de chargement
-  loading: Set<string>;
-  errors: Map<string, string>;
+  // État de chargement (Record au lieu de Set)
+  loading: Record<string, boolean>;
 
-  // Listeners temps réel
-  listeners: Map<string, () => void>;
+  // Erreurs (Record au lieu de Map)
+  errors: Record<string, string>;
+
+  // Listeners temps réel (Record au lieu de Map)
+  listeners: Record<string, () => void>;
 
   // Actions
   setLists: (establishmentId: string, lists: EstablishmentReferenceLists) => void;
@@ -74,21 +72,21 @@ const useReferenceListsStore = create<ReferenceListsState>()(
   devtools(
     persist(
       (set, get) => ({
-        cache: new Map(),
-        loading: new Set(),
-        errors: new Map(),
-        listeners: new Map(),
+        cache: {},
+        loading: {},
+        errors: {},
+        listeners: {},
 
         setLists: (establishmentId, lists) =>
           set(state => {
-            const newCache = new Map(state.cache);
-            newCache.set(establishmentId, lists);
+            const newCache = { ...state.cache };
+            newCache[establishmentId] = lists;
 
-            const newLoading = new Set(state.loading);
-            newLoading.delete(establishmentId);
+            const newLoading = { ...state.loading };
+            delete newLoading[establishmentId];
 
-            const newErrors = new Map(state.errors);
-            newErrors.delete(establishmentId);
+            const newErrors = { ...state.errors };
+            delete newErrors[establishmentId];
 
             return {
               cache: newCache,
@@ -99,67 +97,68 @@ const useReferenceListsStore = create<ReferenceListsState>()(
 
         setLoading: (establishmentId, isLoading) =>
           set(state => {
-            const newLoading = new Set(state.loading);
+            const newLoading = { ...state.loading };
             if (isLoading) {
-              newLoading.add(establishmentId);
+              newLoading[establishmentId] = true;
             } else {
-              newLoading.delete(establishmentId);
+              delete newLoading[establishmentId];
             }
             return { loading: newLoading };
           }),
 
         setError: (establishmentId, error) =>
           set(state => {
-            const newErrors = new Map(state.errors);
+            const newErrors = { ...state.errors };
+            const newLoading = { ...state.loading };
+
             if (error) {
-              newErrors.set(establishmentId, error);
+              newErrors[establishmentId] = error;
             } else {
-              newErrors.delete(establishmentId);
+              delete newErrors[establishmentId];
             }
 
-            const newLoading = new Set(state.loading);
-            newLoading.delete(establishmentId);
+            delete newLoading[establishmentId];
 
             return { errors: newErrors, loading: newLoading };
           }),
 
         addListener: (establishmentId, unsubscribe) =>
           set(state => {
-            const newListeners = new Map(state.listeners);
+            const newListeners = { ...state.listeners };
             // Cleanup old listener if exists
-            const oldListener = state.listeners.get(establishmentId);
+            const oldListener = state.listeners[establishmentId];
             if (oldListener) oldListener();
-            newListeners.set(establishmentId, unsubscribe);
+            newListeners[establishmentId] = unsubscribe;
             return { listeners: newListeners };
           }),
 
         removeListener: establishmentId =>
           set(state => {
-            const newListeners = new Map(state.listeners);
-            const listener = newListeners.get(establishmentId);
+            const newListeners = { ...state.listeners };
+            const listener = newListeners[establishmentId];
             if (listener) {
               listener();
-              newListeners.delete(establishmentId);
+              delete newListeners[establishmentId];
             }
             return { listeners: newListeners };
           }),
 
         clear: establishmentId =>
           set(state => {
-            const newCache = new Map(state.cache);
-            newCache.delete(establishmentId);
+            const newCache = { ...state.cache };
+            delete newCache[establishmentId];
 
-            const newLoading = new Set(state.loading);
-            newLoading.delete(establishmentId);
+            const newLoading = { ...state.loading };
+            delete newLoading[establishmentId];
 
-            const newErrors = new Map(state.errors);
-            newErrors.delete(establishmentId);
+            const newErrors = { ...state.errors };
+            delete newErrors[establishmentId];
 
             // Cleanup listener
-            const listener = state.listeners.get(establishmentId);
+            const listener = state.listeners[establishmentId];
             if (listener) listener();
-            const newListeners = new Map(state.listeners);
-            newListeners.delete(establishmentId);
+            const newListeners = { ...state.listeners };
+            delete newListeners[establishmentId];
 
             return {
               cache: newCache,
@@ -172,13 +171,13 @@ const useReferenceListsStore = create<ReferenceListsState>()(
         clearAll: () =>
           set(state => {
             // Cleanup all listeners
-            state.listeners.forEach(listener => listener());
+            Object.values(state.listeners).forEach(listener => listener());
 
             return {
-              cache: new Map(),
-              loading: new Set(),
-              errors: new Map(),
-              listeners: new Map(),
+              cache: {},
+              loading: {},
+              errors: {},
+              listeners: {},
             };
           }),
       }),
@@ -214,9 +213,10 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
   const addListener = useReferenceListsStore(state => state.addListener);
   const removeListener = useReferenceListsStore(state => state.removeListener);
 
-  const data = establishmentId ? cache.get(establishmentId) : undefined;
-  const isLoading = establishmentId ? loading.has(establishmentId) : false;
-  const error = establishmentId ? errors.get(establishmentId) : undefined;
+  // ✅ CORRECTION: Accès direct aux propriétés d'objet
+  const data = establishmentId ? cache[establishmentId] : undefined;
+  const isLoading = establishmentId ? !!loading[establishmentId] : false;
+  const error = establishmentId ? errors[establishmentId] : undefined;
 
   // Charger les données
   const load = useCallback(async () => {

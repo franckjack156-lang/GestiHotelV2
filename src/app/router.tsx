@@ -9,7 +9,6 @@ import { MainLayout } from '@/shared/components/layouts/MainLayout';
 import { AuthLayout } from '@/shared/components/layouts/AuthLayout';
 import { ProtectedRoute } from '@/shared/components/guards/ProtectedRoute';
 import { GuestRoute } from '@/shared/components/guards/GuestRoute';
-import ReferenceListsManager from '@/features/settings/components/ReferenceListsManager';
 
 // Pages
 import { LoginPage } from '@/pages/Login';
@@ -21,6 +20,10 @@ import { InterventionsPage } from '@/pages/interventions/InterventionsPage';
 import { CreateInterventionPage } from '@/pages/interventions/CreateInterventionPage';
 import { InterventionDetailsPage } from '@/pages/interventions/InterventionDetailsPage';
 import { EditInterventionPage } from '@/pages/interventions/EditInterventionPage';
+
+// Settings
+import { SettingsPage } from '@/pages/Settings';
+import ReferenceListsManager from '@/features/settings/components/ReferenceListsManager';
 
 /**
  * Configuration des routes
@@ -79,8 +82,10 @@ export const router = createBrowserRouter([
         path: 'dashboard',
         element: <DashboardPage />,
       },
+
+      // Interventions
       {
-        path: '/app/interventions',
+        path: 'interventions',
         children: [
           {
             index: true,
@@ -100,13 +105,66 @@ export const router = createBrowserRouter([
           },
         ],
       },
+
+      // Settings
+      {
+        path: 'settings',
+        element: <SettingsPage />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/app/settings/reference-lists" replace />,
+          },
+          {
+            path: 'reference-lists',
+            element: <ReferenceListsManager />,
+          },
+          // Placeholders pour les autres sections settings
+          {
+            path: 'establishment',
+            element: (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Section Établissement - À venir</p>
+              </div>
+            ),
+          },
+          {
+            path: 'users',
+            element: (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Section Utilisateurs - À venir</p>
+              </div>
+            ),
+          },
+          {
+            path: 'notifications',
+            element: (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Section Notifications - À venir</p>
+              </div>
+            ),
+          },
+          {
+            path: 'security',
+            element: (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Section Sécurité - À venir</p>
+              </div>
+            ),
+          },
+          {
+            path: 'appearance',
+            element: (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Section Apparence - À venir</p>
+              </div>
+            ),
+          },
+        ],
+      },
     ],
   },
-  {
-    path: 'reference-lists',
-    element: <ReferenceListsManager />,
-    // Protège avec permissions admin
-  },
+
   // Redirection pour les anciennes routes
   {
     path: '/dashboard',

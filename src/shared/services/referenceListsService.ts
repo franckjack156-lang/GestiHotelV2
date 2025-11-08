@@ -2,9 +2,9 @@
  * ============================================================================
  * REFERENCE LISTS SERVICE - COMPLET
  * ============================================================================
- * 
+ *
  * Service ultra-complet pour la gestion des listes de référence
- * 
+ *
  * Fonctionnalités:
  * ✅ CRUD complet
  * ✅ Import/Export (Excel, CSV, JSON)
@@ -16,7 +16,7 @@
  * ✅ Suggestions intelligentes
  * ✅ Validation stricte
  * ✅ Cache
- * 
+ *
  * Destination: src/shared/services/referenceListsService.ts
  */
 
@@ -139,9 +139,7 @@ export const getActiveItems = async (
   const list = await getList(establishmentId, listKey);
   if (!list) return [];
 
-  return list.items
-    .filter((item) => item.isActive)
-    .sort((a, b) => a.order - b.order);
+  return list.items.filter(item => item.isActive).sort((a, b) => a.order - b.order);
 };
 
 /**
@@ -274,7 +272,7 @@ export const addItem = async (
     if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
 
     if (!list.allowCustom) {
-      throw new Error('Cette liste ne permet pas d\'ajouter des valeurs');
+      throw new Error("Cette liste ne permet pas d'ajouter des valeurs");
     }
 
     // Valider
@@ -284,7 +282,7 @@ export const addItem = async (
     }
 
     // Vérifier doublons
-    const existingItem = list.items.find((i) => i.value === input.value);
+    const existingItem = list.items.find(i => i.value === input.value);
     if (existingItem) {
       throw new Error('Cette valeur existe déjà');
     }
@@ -293,7 +291,7 @@ export const addItem = async (
     const newItem: ReferenceItem = {
       ...input,
       id: `${input.value}_${Date.now()}`,
-      order: Math.max(...list.items.map((i) => i.order), 0) + 1,
+      order: Math.max(...list.items.map(i => i.order), 0) + 1,
       isActive: true,
       createdAt: new Date(),
       createdBy: userId,
@@ -339,7 +337,7 @@ export const updateItem = async (
     const list = allLists.lists[listKey];
     if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
 
-    const itemIndex = list.items.findIndex((i) => i.id === input.itemId);
+    const itemIndex = list.items.findIndex(i => i.id === input.itemId);
     if (itemIndex === -1) throw new Error('Item non trouvé');
 
     const oldItem = list.items[itemIndex];
@@ -367,7 +365,15 @@ export const updateItem = async (
       modifiedBy: userId,
     });
 
-    await logAudit(establishmentId, userId, 'UPDATE_ITEM', listKey, list.name, oldItem, updatedItem);
+    await logAudit(
+      establishmentId,
+      userId,
+      'UPDATE_ITEM',
+      listKey,
+      list.name,
+      oldItem,
+      updatedItem
+    );
 
     console.log(`✅ Item mis à jour: ${input.itemId}`);
   } catch (error) {
@@ -415,10 +421,10 @@ export const deleteItem = async (
     const list = allLists.lists[listKey];
     if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
 
-    const item = list.items.find((i) => i.id === itemId);
+    const item = list.items.find(i => i.id === itemId);
     if (!item) throw new Error('Item non trouvé');
 
-    const updatedItems = list.items.filter((i) => i.id !== itemId);
+    const updatedItems = list.items.filter(i => i.id !== itemId);
 
     const updatedList = {
       ...list,
@@ -457,7 +463,7 @@ export const reorderItems = async (
     const list = allLists.lists[listKey];
     if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
 
-    const updatedItems = list.items.map((item) => {
+    const updatedItems = list.items.map(item => {
       const newOrder = itemIds.indexOf(item.id);
       return {
         ...item,
@@ -477,7 +483,15 @@ export const reorderItems = async (
       modifiedBy: userId,
     });
 
-    await logAudit(establishmentId, userId, 'REORDER_ITEMS', listKey, list.name, list.items, updatedItems);
+    await logAudit(
+      establishmentId,
+      userId,
+      'REORDER_ITEMS',
+      listKey,
+      list.name,
+      list.items,
+      updatedItems
+    );
 
     console.log(`✅ Items réorganisés: ${listKey}`);
   } catch (error) {
@@ -509,11 +523,9 @@ export const exportToExcel = async (
       const list = allLists.lists[listKey];
       if (!list) continue;
 
-      const items = options.includeInactive
-        ? list.items
-        : list.items.filter((i) => i.isActive);
+      const items = options.includeInactive ? list.items : list.items.filter(i => i.isActive);
 
-      const data = items.map((item) => ({
+      const data = items.map(item => ({
         ID: item.id,
         Valeur: item.value,
         Label: item.label,
@@ -525,9 +537,7 @@ export const exportToExcel = async (
         ...(options.includeMetadata && item.usageCount !== undefined
           ? {
               'Nombre utilisations': item.usageCount,
-              'Dernière utilisation': item.lastUsed
-                ? item.lastUsed.toLocaleDateString()
-                : '',
+              'Dernière utilisation': item.lastUsed ? item.lastUsed.toLocaleDateString() : '',
             }
           : {}),
       }));
@@ -641,8 +651,8 @@ export const importFromFile = async (
     if (options.overwrite) {
       finalItems = items;
     } else if (options.merge) {
-      const existingValues = new Set(list.items.map((i) => i.value));
-      const newItems = items.filter((i) => !existingValues.has(i.value));
+      const existingValues = new Set(list.items.map(i => i.value));
+      const newItems = items.filter(i => !existingValues.has(i.value));
       finalItems = [...list.items, ...newItems];
       itemsUpdated = items.length - newItems.length;
     } else {
@@ -693,11 +703,11 @@ export const getListAnalytics = async (
     if (!list) return null;
 
     const totalItems = list.items.length;
-    const activeItems = list.items.filter((i) => i.isActive).length;
+    const activeItems = list.items.filter(i => i.isActive).length;
     const inactiveItems = totalItems - activeItems;
 
     // Statistiques par item
-    const itemStats: ItemAnalytics[] = list.items.map((item) => ({
+    const itemStats: ItemAnalytics[] = list.items.map(item => ({
       itemId: item.id,
       itemValue: item.value,
       itemLabel: item.label,
@@ -708,15 +718,13 @@ export const getListAnalytics = async (
     }));
 
     // Items jamais utilisés
-    const unusedItems = list.items
-      .filter((i) => !i.usageCount || i.usageCount === 0)
-      .map((i) => i.id);
+    const unusedItems = list.items.filter(i => !i.usageCount || i.usageCount === 0).map(i => i.id);
 
     // Items populaires (top 10)
     const popularItems = [...list.items]
       .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
       .slice(0, 10)
-      .map((i) => i.id);
+      .map(i => i.id);
 
     // Doublons potentiels (labels similaires)
     const duplicateCandidates: [string, string][] = [];
@@ -767,7 +775,7 @@ export const trackItemUsage = async (
     const list = allLists.lists[listKey];
     if (!list) return;
 
-    const itemIndex = list.items.findIndex((i) => i.value === itemValue);
+    const itemIndex = list.items.findIndex(i => i.value === itemValue);
     if (itemIndex === -1) return;
 
     const item = list.items[itemIndex];
@@ -859,7 +867,7 @@ export const getAuditHistory = async (
     }
 
     const snapshot = await getDocs(q);
-    const entries = snapshot.docs.map((doc) => ({
+    const entries = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       timestamp: doc.data().timestamp?.toDate(),
@@ -879,10 +887,7 @@ export const getAuditHistory = async (
 /**
  * Dupliquer les listes d'un établissement à un autre
  */
-export const duplicateLists = async (
-  userId: string,
-  input: DuplicateListsInput
-): Promise<void> => {
+export const duplicateLists = async (userId: string, input: DuplicateListsInput): Promise<void> => {
   try {
     const sourceLists = await getAllLists(input.fromEstablishmentId);
     if (!sourceLists) throw new Error('Listes source non trouvées');
@@ -1151,28 +1156,28 @@ export default {
   initializeEmptyLists,
   createList,
   deleteList,
-  
+
   // Items
   addItem,
   updateItem,
   deactivateItem,
   deleteItem,
   reorderItems,
-  
+
   // Import/Export
   exportToExcel,
   importFromFile,
-  
+
   // Analytics
   getListAnalytics,
   trackItemUsage,
-  
+
   // Audit
   getAuditHistory,
-  
+
   // Duplication
   duplicateLists,
-  
+
   // Validation
   validateItem,
   getSuggestions,

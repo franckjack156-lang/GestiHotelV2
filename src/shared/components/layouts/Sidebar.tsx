@@ -14,7 +14,6 @@ import {
   Building2,
   Users,
   Settings,
-  ListIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { Button } from '@/shared/components/ui/button';
@@ -62,12 +61,6 @@ const navigationItems = [
     name: 'Paramètres',
     href: '/app/settings',
     icon: Settings,
-  },
-  {
-    label: 'Listes de référence',
-    icon: ListIcon,
-    path: '/settings/reference-lists',
-    permission: 'admin', // Ou ton système de permissions
   },
 ];
 
