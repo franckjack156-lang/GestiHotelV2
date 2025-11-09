@@ -5,8 +5,6 @@
  *
  * Hooks React avec cache Zustand pour listes de référence
  *
- * ✅ CORRECTION: Utilise des objets simples au lieu de Maps/Sets
- *
  * Destination: src/shared/hooks/useReferenceLists.ts
  */
 
@@ -30,35 +28,19 @@ import type {
   SmartSuggestion,
   ValidationResult,
 } from '@/shared/types/reference-lists.types';
-
-// Placeholder pour établissement actuel
-// TODO: Adapter selon ton système d'auth
-const useCurrentEstablishment = () => {
-  return { currentEstablishment: { id: 'default' } };
-};
-
-const useAuthStore = () => {
-  return { user: { id: 'default-user' } };
-};
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
 // ============================================================================
-// STORE ZUSTAND - CORRIGÉ (Objets au lieu de Maps/Sets)
+// STORE ZUSTAND
 // ============================================================================
 
 interface ReferenceListsState {
-  // Cache par établissement (Record au lieu de Map)
   cache: Record<string, EstablishmentReferenceLists>;
-
-  // État de chargement (Record au lieu de Set)
   loading: Record<string, boolean>;
-
-  // Erreurs (Record au lieu de Map)
   errors: Record<string, string>;
-
-  // Listeners temps réel (Record au lieu de Map)
   listeners: Record<string, () => void>;
 
-  // Actions
   setLists: (establishmentId: string, lists: EstablishmentReferenceLists) => void;
   setLoading: (establishmentId: string, isLoading: boolean) => void;
   setError: (establishmentId: string, error: string | null) => void;
@@ -125,7 +107,6 @@ const useReferenceListsStore = create<ReferenceListsState>()(
         addListener: (establishmentId, unsubscribe) =>
           set(state => {
             const newListeners = { ...state.listeners };
-            // Cleanup old listener if exists
             const oldListener = state.listeners[establishmentId];
             if (oldListener) oldListener();
             newListeners[establishmentId] = unsubscribe;
@@ -154,7 +135,6 @@ const useReferenceListsStore = create<ReferenceListsState>()(
             const newErrors = { ...state.errors };
             delete newErrors[establishmentId];
 
-            // Cleanup listener
             const listener = state.listeners[establishmentId];
             if (listener) listener();
             const newListeners = { ...state.listeners };
@@ -170,7 +150,6 @@ const useReferenceListsStore = create<ReferenceListsState>()(
 
         clearAll: () =>
           set(state => {
-            // Cleanup all listeners
             Object.values(state.listeners).forEach(listener => listener());
 
             return {
@@ -183,7 +162,6 @@ const useReferenceListsStore = create<ReferenceListsState>()(
       }),
       {
         name: 'reference-lists-store',
-        // Ne pas persister les listeners
         partialize: state => ({
           cache: state.cache,
         }),
@@ -194,16 +172,12 @@ const useReferenceListsStore = create<ReferenceListsState>()(
 );
 
 // ============================================================================
-// HOOK PRINCIPAL - Charge TOUTES les listes
+// HOOK PRINCIPAL
 // ============================================================================
 
-/**
- * Hook pour charger TOUTES les listes (avec temps réel)
- */
 export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: boolean }) => {
   const { currentEstablishment } = useCurrentEstablishment();
   const establishmentId = currentEstablishment?.id;
-
   const cache = useReferenceListsStore(state => state.cache);
   const loading = useReferenceListsStore(state => state.loading);
   const errors = useReferenceListsStore(state => state.errors);
@@ -213,14 +187,15 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
   const addListener = useReferenceListsStore(state => state.addListener);
   const removeListener = useReferenceListsStore(state => state.removeListener);
 
-  // ✅ CORRECTION: Accès direct aux propriétés d'objet
   const data = establishmentId ? cache[establishmentId] : undefined;
   const isLoading = establishmentId ? !!loading[establishmentId] : false;
   const error = establishmentId ? errors[establishmentId] : undefined;
 
   // Charger les données
   const load = useCallback(async () => {
-    if (!establishmentId) return;
+    if (!establishmentId) {
+      return;
+    }
 
     try {
       setLoading(establishmentId, true);
@@ -234,15 +209,15 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
         setError(establishmentId, 'Listes non initialisées');
       }
     } catch (err) {
-      console.error('❌ Erreur chargement listes:', err);
       setError(establishmentId, err instanceof Error ? err.message : 'Erreur inconnue');
     }
   }, [establishmentId, setLists, setLoading, setError]);
 
   // Setup temps réel
   useEffect(() => {
-    if (!establishmentId || !options?.realtime) return;
-
+    if (!establishmentId || !options?.realtime) {
+      return;
+    }
     const docRef = doc(db, 'establishments', establishmentId, 'config', 'reference-lists');
 
     const unsubscribe = onSnapshot(
@@ -250,6 +225,7 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
       snapshot => {
         if (snapshot.exists()) {
           const data = snapshot.data();
+
           setLists(establishmentId, {
             ...data,
             lastModified: data.lastModified?.toDate(),
@@ -269,7 +245,7 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
         }
       },
       error => {
-        console.error('❌ Erreur listener temps réel:', error);
+        console.error('❌ [Snapshot] Erreur:', error);
         setError(establishmentId, error.message);
       }
     );
@@ -288,9 +264,6 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
     }
   }, [establishmentId, data, isLoading, load, options?.autoLoad]);
 
-  /**
-   * Obtenir une liste spécifique
-   */
   const getList = useCallback(
     (listKey: ListKey): ListConfig | undefined => {
       return data?.lists[listKey];
@@ -298,9 +271,6 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
     [data]
   );
 
-  /**
-   * Obtenir les items actifs d'une liste
-   */
   const getActiveItems = useCallback(
     (listKey: ListKey): ReferenceItem[] => {
       const list = getList(listKey);
@@ -311,9 +281,6 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
     [getList]
   );
 
-  /**
-   * Obtenir un item par sa valeur
-   */
   const getItemByValue = useCallback(
     (listKey: ListKey, value: string): ReferenceItem | undefined => {
       const list = getList(listKey);
@@ -322,9 +289,6 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
     [getList]
   );
 
-  /**
-   * Obtenir le label d'un item
-   */
   const getLabelByValue = useCallback(
     (listKey: ListKey, value: string): string => {
       const item = getItemByValue(listKey, value);
@@ -333,9 +297,6 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
     [getItemByValue]
   );
 
-  /**
-   * Vérifier si une liste existe
-   */
   const hasListKey = useCallback(
     (listKey: string): boolean => {
       return !!data?.lists[listKey];
@@ -344,22 +305,18 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
   );
 
   return {
-    // Données
     data,
     isLoading,
     error,
 
-    // Getters
     getList,
     getActiveItems,
     getItemByValue,
     getLabelByValue,
     hasListKey,
 
-    // Actions
     reload: load,
 
-    // État
     hasData: !!data,
     isInitialized: !!data || !!error,
   };
@@ -369,12 +326,9 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
 // HOOK POUR UNE LISTE SPÉCIFIQUE
 // ============================================================================
 
-/**
- * Hook pour une liste spécifique avec toutes les actions CRUD
- */
 export const useReferenceList = (listKey: ListKey) => {
   const { currentEstablishment } = useCurrentEstablishment();
-  const { user } = useAuthStore();
+  const { user } = useAuth(); // ✅ CORRIGÉ : useAuth au lieu de useAuthStore
 
   const {
     data,
@@ -390,9 +344,6 @@ export const useReferenceList = (listKey: ListKey) => {
   const listConfig = useMemo(() => getList(listKey), [getList, listKey]);
   const activeItems = useMemo(() => getActiveItems(listKey), [getActiveItems, listKey]);
 
-  /**
-   * Ajouter un item
-   */
   const addItem = useCallback(
     async (input: CreateItemInput) => {
       if (!currentEstablishment?.id || !user?.id) {
@@ -405,9 +356,6 @@ export const useReferenceList = (listKey: ListKey) => {
     [currentEstablishment?.id, user?.id, listKey, reload]
   );
 
-  /**
-   * Mettre à jour un item
-   */
   const updateItem = useCallback(
     async (itemId: string, updates: Partial<Omit<ReferenceItem, 'id'>>) => {
       if (!currentEstablishment?.id || !user?.id) {
@@ -423,9 +371,6 @@ export const useReferenceList = (listKey: ListKey) => {
     [currentEstablishment?.id, user?.id, listKey, reload]
   );
 
-  /**
-   * Désactiver un item
-   */
   const deactivateItem = useCallback(
     async (itemId: string) => {
       if (!currentEstablishment?.id || !user?.id) {
@@ -438,9 +383,6 @@ export const useReferenceList = (listKey: ListKey) => {
     [currentEstablishment?.id, user?.id, listKey, reload]
   );
 
-  /**
-   * Supprimer un item
-   */
   const deleteItem = useCallback(
     async (itemId: string) => {
       if (!currentEstablishment?.id || !user?.id) {
@@ -453,9 +395,6 @@ export const useReferenceList = (listKey: ListKey) => {
     [currentEstablishment?.id, user?.id, listKey, reload]
   );
 
-  /**
-   * Réorganiser les items
-   */
   const reorderItems = useCallback(
     async (itemIds: string[]) => {
       if (!currentEstablishment?.id || !user?.id) {
@@ -468,59 +407,44 @@ export const useReferenceList = (listKey: ListKey) => {
     [currentEstablishment?.id, user?.id, listKey, reload]
   );
 
-  /**
-   * Obtenir les analytics
-   */
   const getAnalytics = useCallback(async (): Promise<ListAnalytics | null> => {
     if (!currentEstablishment?.id) return null;
 
     return await referenceListsService.getListAnalytics(currentEstablishment.id, listKey);
   }, [currentEstablishment?.id, listKey]);
 
-  /**
-   * Valider un item
-   */
   const validate = useCallback((item: Partial<ReferenceItem>): ValidationResult => {
     return referenceListsService.validateItem(item);
   }, []);
 
-  /**
-   * Obtenir suggestions
-   */
   const getSuggestions = useCallback((item: Partial<ReferenceItem>): SmartSuggestion[] => {
     return referenceListsService.getSuggestions(item);
   }, []);
 
   return {
-    // Config
     listConfig,
     items: listConfig?.items || [],
     activeItems,
     isLoading,
     error,
+    establishmentId: currentEstablishment?.id,
 
-    // Getters
     getItemByValue: (value: string) => getItemByValue(listKey, value),
     getLabelByValue: (value: string) => getLabelByValue(listKey, value),
 
-    // Actions CRUD
     addItem,
     updateItem,
     deactivateItem,
     deleteItem,
     reorderItems,
 
-    // Analytics
     getAnalytics,
 
-    // Validation
     validate,
     getSuggestions,
 
-    // Actions générales
     reload,
 
-    // État
     hasData: !!listConfig,
     isEmpty: activeItems.length === 0,
     allowCustom: listConfig?.allowCustom || false,
@@ -533,17 +457,11 @@ export const useReferenceList = (listKey: ListKey) => {
 // HOOK POUR IMPORT/EXPORT
 // ============================================================================
 
-/**
- * Hook pour import/export
- */
 export const useImportExport = () => {
   const { currentEstablishment } = useCurrentEstablishment();
-  const { user } = useAuthStore();
+  const { user } = useAuth(); // ✅ CORRIGÉ : useAuth au lieu de useAuthStore
   const { reload } = useAllReferenceLists();
 
-  /**
-   * Exporter en Excel
-   */
   const exportToExcel = useCallback(
     async (options: ExportOptions): Promise<Blob> => {
       if (!currentEstablishment?.id) {
@@ -555,9 +473,6 @@ export const useImportExport = () => {
     [currentEstablishment?.id]
   );
 
-  /**
-   * Importer depuis fichier
-   */
   const importFromFile = useCallback(
     async (file: File, listKey: ListKey, options: ImportOptions): Promise<ImportResult> => {
       if (!currentEstablishment?.id || !user?.id) {
@@ -591,9 +506,6 @@ export const useImportExport = () => {
 // HOOK POUR TRACKING D'USAGE
 // ============================================================================
 
-/**
- * Hook pour tracker l'usage d'un item
- */
 export const useTrackItemUsage = () => {
   const { currentEstablishment } = useCurrentEstablishment();
 
@@ -617,9 +529,6 @@ export const useTrackItemUsage = () => {
 // HOOK POUR LISTES MULTIPLES
 // ============================================================================
 
-/**
- * Hook pour charger plusieurs listes à la fois
- */
 export const useMultipleReferenceLists = (listKeys: ListKey[]) => {
   const { getActiveItems, isLoading, error } = useAllReferenceLists({
     realtime: true,

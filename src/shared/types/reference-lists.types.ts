@@ -1,10 +1,15 @@
 /**
  * ============================================================================
- * REFERENCE LISTS - TYPES COMPLETS
+ * REFERENCE LISTS - TYPES OPTIMISÉS V2
  * ============================================================================
- * 
+ *
  * Système de listes de référence dynamiques pour GestiHôtel
- * 
+ *
+ * ✅ OPTIMISATIONS APPLIQUÉES:
+ * - Typage flexible avec Record<string, ListConfig>
+ * - Séparation PredefinedListKey / ListKey
+ * - Structure simplifiée pour établissements avec peu de listes
+ *
  * Fonctionnalités:
  * - CRUD complet
  * - Import/Export
@@ -14,7 +19,10 @@
  * - Analytics
  * - Templates
  * - Permissions
- * 
+ *
+ * Version: 2.0 (Optimisée)
+ * Date: 2025-11-08
+ *
  * Destination: src/shared/types/reference-lists.types.ts
  */
 
@@ -29,24 +37,24 @@ import { Timestamp } from 'firebase/firestore';
  */
 export interface ReferenceItem {
   id: string;
-  value: string;              // Valeur technique (ex: "plumbing")
-  label: string;              // Label affiché (ex: "Plomberie")
-  color?: string;             // Couleur Tailwind (ex: "blue")
-  icon?: string;              // Icône Lucide (ex: "Droplet")
-  order: number;              // Ordre d'affichage
-  isActive: boolean;          // Actif/Désactivé
-  description?: string;       // Description optionnelle
-  
+  value: string; // Valeur technique (ex: "plumbing")
+  label: string; // Label affiché (ex: "Plomberie")
+  color?: string; // Couleur Tailwind (ex: "blue")
+  icon?: string; // Icône Lucide (ex: "Droplet")
+  order: number; // Ordre d'affichage
+  isActive: boolean; // Actif/Désactivé
+  description?: string; // Description optionnelle
+
   // Multi-langue
-  labels?: Record<string, string>;  // { fr: "Plomberie", en: "Plumbing" }
-  
+  labels?: Record<string, string>; // { fr: "Plomberie", en: "Plumbing" }
+
   // Métadonnées
   metadata?: Record<string, any>;
-  
+
   // Usage stats
   usageCount?: number;
   lastUsed?: Date;
-  
+
   // Dates
   createdAt?: Date;
   createdBy?: string;
@@ -58,25 +66,25 @@ export interface ReferenceItem {
  * Configuration d'une liste
  */
 export interface ListConfig {
-  name: string;               // Nom de la liste
-  description?: string;       // Description
-  allowCustom: boolean;       // Permet d'ajouter des items custom
-  isRequired: boolean;        // Champ obligatoire dans les forms
-  isSystem: boolean;          // Liste système (non supprimable)
-  
+  name: string; // Nom de la liste
+  description?: string; // Description
+  allowCustom: boolean; // Permet d'ajouter des items custom
+  isRequired: boolean; // Champ obligatoire dans les forms
+  isSystem: boolean; // Liste système (non supprimable)
+
   // Items
   items: ReferenceItem[];
-  
+
   // Contraintes
-  minItems?: number;          // Nombre minimum d'items
-  maxItems?: number;          // Nombre maximum d'items
-  
+  minItems?: number; // Nombre minimum d'items
+  maxItems?: number; // Nombre maximum d'items
+
   // Dépendances (listes conditionnelles)
   dependsOn?: {
     listKey: string;
     rules: ConditionalRule[];
   };
-  
+
   // Multi-langue
   names?: Record<string, string>;
 }
@@ -85,13 +93,22 @@ export interface ListConfig {
  * Règle conditionnelle
  */
 export interface ConditionalRule {
-  when: string[];             // Valeurs qui déclenchent
-  show: string[];             // Items à afficher
-  hide?: string[];            // Items à masquer
+  when: string[]; // Valeurs qui déclenchent
+  show: string[]; // Items à afficher
+  hide?: string[]; // Items à masquer
 }
 
 /**
- * Document Firestore principal - TOUTES les listes
+ * ✅ OPTIMISÉ: Document Firestore principal - Structure flexible
+ *
+ * CHANGEMENT MAJEUR: `lists` est maintenant un Record<string, ListConfig>
+ * au lieu d'un objet avec toutes les clés prédéfinies obligatoires.
+ *
+ * Avantages:
+ * - Permet un nombre variable de listes (3 listes ou 30)
+ * - Pas besoin d'avoir les 20 listes prédéfinies
+ * - Supporte facilement les listes custom
+ * - Type plus simple et maintenable
  */
 export interface EstablishmentReferenceLists {
   // Meta
@@ -99,59 +116,55 @@ export interface EstablishmentReferenceLists {
   version: number;
   lastModified: Date;
   modifiedBy: string;
-  
-  // TOUTES les listes
-  lists: {
-    // Interventions
-    interventionTypes: ListConfig;
-    interventionPriorities: ListConfig;
-    interventionCategories: ListConfig;
-    interventionStatuses: ListConfig;
-    
-    // Équipements
-    equipmentTypes: ListConfig;
-    equipmentBrands: ListConfig;
-    equipmentLocations: ListConfig;
-    
-    // Chambres
-    roomTypes: ListConfig;
-    roomStatuses: ListConfig;
-    bedTypes: ListConfig;
-    
-    // Fournisseurs
-    supplierCategories: ListConfig;
-    supplierTypes: ListConfig;
-    
-    // Maintenance
-    maintenanceFrequencies: ListConfig;
-    maintenanceTypes: ListConfig;
-    
-    // Documents
-    documentCategories: ListConfig;
-    documentTypes: ListConfig;
-    
-    // Finances
-    expenseCategories: ListConfig;
-    paymentMethods: ListConfig;
-    
-    // Staff
-    staffRoles: ListConfig;
-    staffDepartments: ListConfig;
-    
-    // Custom lists
-    [key: string]: ListConfig;
-  };
+
+  // ✅ OPTIMISATION: Record simple et flexible
+  lists: Record<string, ListConfig>;
 }
 
 /**
- * Clés de listes typées
+ * ✅ OPTIMISÉ: Clés de listes prédéfinies (pour l'autocomplétion)
+ * Type séparé pour une meilleure flexibilité
  */
-export type ListKey = keyof EstablishmentReferenceLists['lists'];
+export type PredefinedListKey =
+  // Interventions
+  | 'interventionTypes'
+  | 'interventionPriorities'
+  | 'interventionCategories'
+  | 'interventionStatuses'
+  // Équipements
+  | 'equipmentTypes'
+  | 'equipmentBrands'
+  | 'equipmentLocations'
+  // Chambres
+  | 'roomTypes'
+  | 'roomStatuses'
+  | 'bedTypes'
+  // Fournisseurs
+  | 'supplierCategories'
+  | 'supplierTypes'
+  // Maintenance
+  | 'maintenanceFrequencies'
+  | 'maintenanceTypes'
+  // Documents
+  | 'documentCategories'
+  | 'documentTypes'
+  // Finances
+  | 'expenseCategories'
+  | 'paymentMethods'
+  // Staff
+  | 'staffRoles'
+  | 'staffDepartments';
 
 /**
- * Clés de listes prédéfinies
+ * ✅ OPTIMISÉ: Union type pour listes (prédéfinies + custom)
+ * Permet d'utiliser des clés prédéfinies OU n'importe quelle string
  */
-export const PREDEFINED_LIST_KEYS: ListKey[] = [
+export type ListKey = PredefinedListKey | string;
+
+/**
+ * ✅ NOUVEAU: Constantes pour l'autocomplétion et les boucles
+ */
+export const PREDEFINED_LIST_KEYS: PredefinedListKey[] = [
   'interventionTypes',
   'interventionPriorities',
   'interventionCategories',
@@ -187,18 +200,18 @@ export interface AuditEntry {
   userId: string;
   userName: string;
   userRole: string;
-  
+
   action: AuditAction;
-  
+
   listKey: string;
   listName: string;
   itemId?: string;
-  
+
   before: any;
   after: any;
-  
+
   comment?: string;
-  
+
   // Métadonnées techniques
   ipAddress?: string;
   userAgent?: string;
@@ -301,11 +314,11 @@ export interface ListTemplate {
   category: 'hospitality' | 'student' | 'corporate' | 'custom';
   lists: Record<string, ListConfig>;
   isPublic: boolean;
-  
+
   // Usage
   usageCount: number;
   rating: number;
-  
+
   // Dates
   createdAt: Date;
   createdBy: string;
@@ -322,18 +335,18 @@ export interface ListTemplate {
 export interface ListAnalytics {
   listKey: string;
   listName: string;
-  
+
   totalItems: number;
   activeItems: number;
   inactiveItems: number;
-  
+
   itemStats: ItemAnalytics[];
-  
+
   // Suggestions
   unusedItems: string[];
   popularItems: string[];
   duplicateCandidates: [string, string][];
-  
+
   // Tendances
   usageTrend: 'up' | 'down' | 'stable';
   lastAnalyzed: Date;
@@ -346,11 +359,11 @@ export interface ItemAnalytics {
   itemId: string;
   itemValue: string;
   itemLabel: string;
-  
+
   usageCount: number;
   lastUsed?: Date;
   trendingUp: boolean;
-  
+
   usageByMonth: {
     month: string;
     count: number;
@@ -457,15 +470,15 @@ export interface ListDraft {
   id: string;
   establishmentId: string;
   listKey: string;
-  
+
   changes: ListConfig;
-  
+
   status: 'draft' | 'pending_review' | 'approved' | 'rejected';
-  
+
   createdAt: Date;
   createdBy: string;
   updatedAt?: Date;
-  
+
   reviewedAt?: Date;
   reviewedBy?: string;
   reviewComment?: string;
@@ -497,7 +510,7 @@ export interface ItemUsage {
   itemId: string;
   itemValue: string;
   listKey: string;
-  
+
   usedAt: Date;
   usedBy: string;
   context: 'intervention' | 'room' | 'equipment' | 'other';
@@ -555,17 +568,33 @@ export interface DuplicateListsInput {
  * Couleurs autorisées (Tailwind)
  */
 export const ALLOWED_COLORS = [
-  'gray', 'red', 'orange', 'amber', 'yellow', 'lime', 'green',
-  'emerald', 'teal', 'cyan', 'sky', 'blue', 'indigo', 'violet',
-  'purple', 'fuchsia', 'pink', 'rose'
+  'gray',
+  'red',
+  'orange',
+  'amber',
+  'yellow',
+  'lime',
+  'green',
+  'emerald',
+  'teal',
+  'cyan',
+  'sky',
+  'blue',
+  'indigo',
+  'violet',
+  'purple',
+  'fuchsia',
+  'pink',
+  'rose',
 ] as const;
 
-export type AllowedColor = typeof ALLOWED_COLORS[number];
+export type AllowedColor = (typeof ALLOWED_COLORS)[number];
 
 /**
- * Labels français des listes
+ * ✅ OPTIMISÉ: Labels français des listes
+ * Utilise maintenant PredefinedListKey pour le typage
  */
-export const LIST_LABELS: Record<ListKey | string, string> = {
+export const LIST_LABELS: Record<PredefinedListKey, string> = {
   interventionTypes: "Types d'intervention",
   interventionPriorities: 'Priorités',
   interventionCategories: "Catégories d'intervention",

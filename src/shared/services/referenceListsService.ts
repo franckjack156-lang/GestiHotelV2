@@ -1,21 +1,11 @@
 /**
  * ============================================================================
- * REFERENCE LISTS SERVICE - COMPLET
+ * REFERENCE LISTS SERVICE - VERSION CORRIGÉE
  * ============================================================================
  *
  * Service ultra-complet pour la gestion des listes de référence
  *
- * Fonctionnalités:
- * ✅ CRUD complet
- * ✅ Import/Export (Excel, CSV, JSON)
- * ✅ Analytics & statistiques
- * ✅ Audit trail
- * ✅ Versionning
- * ✅ Duplication entre établissements
- * ✅ Templates
- * ✅ Suggestions intelligentes
- * ✅ Validation stricte
- * ✅ Cache
+ * ✅ CORRECTION: DEFAULT_VALIDATION_RULES défini localement
  *
  * Destination: src/shared/services/referenceListsService.ts
  */
@@ -58,8 +48,31 @@ import type {
   ListDraft,
   ListTemplate,
   DuplicateListsInput,
-  DEFAULT_VALIDATION_RULES,
 } from '@/shared/types/reference-lists.types';
+
+// ============================================================================
+// RÈGLES DE VALIDATION (définies localement)
+// ============================================================================
+
+const DEFAULT_VALIDATION_RULES = {
+  value: {
+    pattern: /^[a-z0-9_]+$/,
+    minLength: 2,
+    maxLength: 50,
+    reserved: ['id', 'name', 'type', 'value', 'label'],
+  },
+  label: {
+    required: true,
+    minLength: 2,
+    maxLength: 100,
+  },
+  color: {
+    allowed: ['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'],
+  },
+  description: {
+    maxLength: 500,
+  },
+};
 
 // ============================================================================
 // PATHS FIRESTORE
@@ -76,6 +89,62 @@ const getVersionsCollectionPath = (establishmentId: string) =>
 
 const getDraftsCollectionPath = (establishmentId: string) =>
   collection(db, 'establishments', establishmentId, 'config', 'reference-lists-drafts');
+
+// ============================================================================
+// BATCH OPERATIONS
+// ============================================================================
+
+async function performListOperation<T>(
+  establishmentId: string,
+  userId: string,
+  listKey: ListKey,
+  operation: (list: ListConfig) => T,
+  auditAction: AuditAction,
+  auditData?: { itemId?: string; before?: any; after?: any }
+): Promise<T> {
+  const allLists = await getAllLists(establishmentId);
+  if (!allLists) throw new Error('Listes non trouvées');
+  const list = allLists.lists[listKey];
+  if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
+
+  const before = auditData?.before || JSON.parse(JSON.stringify(list));
+  const result = operation(list);
+  const after = auditData?.after || JSON.parse(JSON.stringify(list));
+
+  const batch = writeBatch(db);
+
+  batch.update(getListsDocPath(establishmentId), {
+    [`lists.${listKey}`]: list,
+    lastModified: serverTimestamp(),
+    modifiedBy: userId,
+  });
+
+  const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
+
+  // ✅ CORRECTION : Créer l'objet sans valeurs undefined
+  const auditEntry: Record<string, any> = {
+    id: auditRef.id,
+    timestamp: serverTimestamp(),
+    userId,
+    userName: 'User',
+    userRole: 'admin',
+    action: auditAction,
+    listKey,
+    listName: list.name,
+    before,
+    after,
+  };
+
+  // Ajouter itemId seulement s'il existe
+  if (auditData?.itemId) {
+    auditEntry.itemId = auditData.itemId;
+  }
+
+  batch.set(auditRef, auditEntry);
+
+  await batch.commit();
+  return result;
+}
 
 // ============================================================================
 // CRUD DE BASE
@@ -157,7 +226,7 @@ export const initializeEmptyLists = async (
       version: 1,
       lastModified: new Date(),
       modifiedBy: userId,
-      lists: {} as any, // VIDE au départ
+      lists: {} as any,
     };
 
     await setDoc(docRef, {
@@ -232,7 +301,6 @@ export const deleteList = async (
       throw new Error('Impossible de supprimer une liste système');
     }
 
-    // Créer une copie sans la liste
     const { [listKey]: removed, ...remainingLists } = allLists.lists;
 
     const docRef = getListsDocPath(establishmentId);
@@ -265,56 +333,35 @@ export const addItem = async (
   input: CreateItemInput
 ): Promise<string> => {
   try {
-    const allLists = await getAllLists(establishmentId);
-    if (!allLists) throw new Error('Listes non trouvées');
+    return await performListOperation(
+      establishmentId,
+      userId,
+      listKey,
+      list => {
+        if (!list.allowCustom) throw new Error("Cette liste ne permet pas d'ajouter des valeurs");
 
-    const list = allLists.lists[listKey];
-    if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
+        const validation = validateItem(input);
+        if (!validation.isValid) throw new Error(validation.errors.join(', '));
 
-    if (!list.allowCustom) {
-      throw new Error("Cette liste ne permet pas d'ajouter des valeurs");
-    }
+        if (list.items.find(i => i.value === input.value)) {
+          throw new Error('Cette valeur existe déjà');
+        }
 
-    // Valider
-    const validation = validateItem(input);
-    if (!validation.isValid) {
-      throw new Error(validation.errors.join(', '));
-    }
+        const newItem: ReferenceItem = {
+          ...input,
+          id: `${input.value}_${Date.now()}`,
+          order: Math.max(...list.items.map(i => i.order), 0) + 1,
+          isActive: true,
+          createdAt: new Date(),
+          createdBy: userId,
+          usageCount: 0,
+        };
 
-    // Vérifier doublons
-    const existingItem = list.items.find(i => i.value === input.value);
-    if (existingItem) {
-      throw new Error('Cette valeur existe déjà');
-    }
-
-    // Créer l'item
-    const newItem: ReferenceItem = {
-      ...input,
-      id: `${input.value}_${Date.now()}`,
-      order: Math.max(...list.items.map(i => i.order), 0) + 1,
-      isActive: true,
-      createdAt: new Date(),
-      createdBy: userId,
-      usageCount: 0,
-    };
-
-    // Update
-    const updatedList = {
-      ...list,
-      items: [...list.items, newItem],
-    };
-
-    const docRef = getListsDocPath(establishmentId);
-    await updateDoc(docRef, {
-      [`lists.${listKey}`]: updatedList,
-      lastModified: serverTimestamp(),
-      modifiedBy: userId,
-    });
-
-    await logAudit(establishmentId, userId, 'ADD_ITEM', listKey, list.name, null, newItem);
-
-    console.log(`✅ Item ajouté: ${newItem.id}`);
-    return newItem.id;
+        list.items.push(newItem);
+        return newItem.id;
+      },
+      'ADD_ITEM'
+    );
   } catch (error) {
     console.error('❌ Erreur ajout item:', error);
     throw error;
@@ -331,51 +378,27 @@ export const updateItem = async (
   input: UpdateItemInput
 ): Promise<void> => {
   try {
-    const allLists = await getAllLists(establishmentId);
-    if (!allLists) throw new Error('Listes non trouvées');
-
-    const list = allLists.lists[listKey];
-    if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
-
-    const itemIndex = list.items.findIndex(i => i.id === input.itemId);
-    if (itemIndex === -1) throw new Error('Item non trouvé');
-
-    const oldItem = list.items[itemIndex];
-
-    // Mise à jour
-    const updatedItem = {
-      ...oldItem,
-      ...input,
-      updatedAt: new Date(),
-      updatedBy: userId,
-    };
-
-    const updatedItems = [...list.items];
-    updatedItems[itemIndex] = updatedItem;
-
-    const updatedList = {
-      ...list,
-      items: updatedItems,
-    };
-
-    const docRef = getListsDocPath(establishmentId);
-    await updateDoc(docRef, {
-      [`lists.${listKey}`]: updatedList,
-      lastModified: serverTimestamp(),
-      modifiedBy: userId,
-    });
-
-    await logAudit(
+    await performListOperation(
       establishmentId,
       userId,
-      'UPDATE_ITEM',
       listKey,
-      list.name,
-      oldItem,
-      updatedItem
-    );
+      list => {
+        const itemIndex = list.items.findIndex(i => i.id === input.itemId);
+        if (itemIndex === -1) throw new Error('Item non trouvé');
 
-    console.log(`✅ Item mis à jour: ${input.itemId}`);
+        const oldItem = list.items[itemIndex];
+        list.items[itemIndex] = {
+          ...oldItem,
+          ...input,
+          updatedAt: new Date(),
+          updatedBy: userId,
+        };
+
+        return { before: oldItem, after: list.items[itemIndex] };
+      },
+      'UPDATE_ITEM',
+      { itemId: input.itemId }
+    );
   } catch (error) {
     console.error('❌ Erreur mise à jour item:', error);
     throw error;
@@ -407,7 +430,6 @@ export const deleteItem = async (
   itemId: string
 ): Promise<void> => {
   try {
-    // Vérifier usage avant suppression
     const usage = await checkItemUsage(establishmentId, listKey, itemId);
     if (usage.count > 0) {
       throw new Error(
@@ -415,32 +437,20 @@ export const deleteItem = async (
       );
     }
 
-    const allLists = await getAllLists(establishmentId);
-    if (!allLists) throw new Error('Listes non trouvées');
+    await performListOperation(
+      establishmentId,
+      userId,
+      listKey,
+      list => {
+        const item = list.items.find(i => i.id === itemId);
+        if (!item) throw new Error('Item non trouvé');
 
-    const list = allLists.lists[listKey];
-    if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
-
-    const item = list.items.find(i => i.id === itemId);
-    if (!item) throw new Error('Item non trouvé');
-
-    const updatedItems = list.items.filter(i => i.id !== itemId);
-
-    const updatedList = {
-      ...list,
-      items: updatedItems,
-    };
-
-    const docRef = getListsDocPath(establishmentId);
-    await updateDoc(docRef, {
-      [`lists.${listKey}`]: updatedList,
-      lastModified: serverTimestamp(),
-      modifiedBy: userId,
-    });
-
-    await logAudit(establishmentId, userId, 'DELETE_ITEM', listKey, list.name, item, null);
-
-    console.log(`✅ Item supprimé: ${itemId}`);
+        list.items = list.items.filter(i => i.id !== itemId);
+        return { before: item, after: null };
+      },
+      'DELETE_ITEM',
+      { itemId }
+    );
   } catch (error) {
     console.error('❌ Erreur suppression item:', error);
     throw error;
@@ -457,43 +467,20 @@ export const reorderItems = async (
   itemIds: string[]
 ): Promise<void> => {
   try {
-    const allLists = await getAllLists(establishmentId);
-    if (!allLists) throw new Error('Listes non trouvées');
-
-    const list = allLists.lists[listKey];
-    if (!list) throw new Error(`Liste "${listKey}" non trouvée`);
-
-    const updatedItems = list.items.map(item => {
-      const newOrder = itemIds.indexOf(item.id);
-      return {
-        ...item,
-        order: newOrder >= 0 ? newOrder : item.order,
-      };
-    });
-
-    const updatedList = {
-      ...list,
-      items: updatedItems,
-    };
-
-    const docRef = getListsDocPath(establishmentId);
-    await updateDoc(docRef, {
-      [`lists.${listKey}`]: updatedList,
-      lastModified: serverTimestamp(),
-      modifiedBy: userId,
-    });
-
-    await logAudit(
+    await performListOperation(
       establishmentId,
       userId,
-      'REORDER_ITEMS',
       listKey,
-      list.name,
-      list.items,
-      updatedItems
+      list => {
+        const before = [...list.items];
+        list.items = list.items.map(item => ({
+          ...item,
+          order: itemIds.indexOf(item.id) >= 0 ? itemIds.indexOf(item.id) : item.order,
+        }));
+        return { before, after: list.items };
+      },
+      'REORDER_ITEMS'
     );
-
-    console.log(`✅ Items réorganisés: ${listKey}`);
   } catch (error) {
     console.error('❌ Erreur réorganisation:', error);
     throw error;
@@ -543,7 +530,7 @@ export const exportToExcel = async (
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(data);
-      XLSX.utils.book_append_sheet(workbook, worksheet, listKey.substring(0, 31)); // Max 31 chars
+      XLSX.utils.book_append_sheet(workbook, worksheet, listKey.substring(0, 31));
     }
 
     const excelBuffer = XLSX.write(workbook, {
@@ -571,13 +558,11 @@ export const importFromFile = async (
   options: ImportOptions
 ): Promise<ImportResult> => {
   try {
-    // Lire le fichier
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(worksheet);
 
-    // Valider et convertir
     const items: ReferenceItem[] = [];
     const errors: any[] = [];
     let itemsImported = 0;
@@ -599,7 +584,6 @@ export const importFromFile = async (
           description: row.Description || row.description,
         };
 
-        // Valider
         if (options.validate) {
           const validation = validateItem(item);
           if (!validation.isValid) {
@@ -627,7 +611,6 @@ export const importFromFile = async (
       }
     }
 
-    // Si dry run, ne pas sauvegarder
     if (options.dryRun) {
       return {
         success: true,
@@ -639,7 +622,6 @@ export const importFromFile = async (
       };
     }
 
-    // Sauvegarder
     const allLists = await getAllLists(establishmentId);
     if (!allLists) throw new Error('Listes non trouvées');
 
@@ -706,27 +688,23 @@ export const getListAnalytics = async (
     const activeItems = list.items.filter(i => i.isActive).length;
     const inactiveItems = totalItems - activeItems;
 
-    // Statistiques par item
     const itemStats: ItemAnalytics[] = list.items.map(item => ({
       itemId: item.id,
       itemValue: item.value,
       itemLabel: item.label,
       usageCount: item.usageCount || 0,
       lastUsed: item.lastUsed,
-      trendingUp: false, // TODO: calculer tendance
-      usageByMonth: [], // TODO: calculer historique
+      trendingUp: false,
+      usageByMonth: [],
     }));
 
-    // Items jamais utilisés
     const unusedItems = list.items.filter(i => !i.usageCount || i.usageCount === 0).map(i => i.id);
 
-    // Items populaires (top 10)
     const popularItems = [...list.items]
       .sort((a, b) => (b.usageCount || 0) - (a.usageCount || 0))
       .slice(0, 10)
       .map(i => i.id);
 
-    // Doublons potentiels (labels similaires)
     const duplicateCandidates: [string, string][] = [];
     for (let i = 0; i < list.items.length; i++) {
       for (let j = i + 1; j < list.items.length; j++) {
@@ -820,27 +798,28 @@ const logAudit = async (
   comment?: string
 ): Promise<void> => {
   try {
-    const auditEntry: Omit<AuditEntry, 'id'> = {
-      timestamp: new Date(),
+    // ✅ Créer l'objet de base sans valeurs undefined
+    const auditEntry: Record<string, any> = {
+      timestamp: serverTimestamp(),
       userId,
-      userName: 'User', // TODO: obtenir depuis auth
-      userRole: 'admin', // TODO: obtenir depuis auth
+      userName: 'User',
+      userRole: 'admin',
       action,
       listKey,
       listName,
       before,
       after,
-      comment,
     };
 
+    // Ajouter comment seulement s'il existe
+    if (comment) {
+      auditEntry.comment = comment;
+    }
+
     const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
-    await setDoc(auditRef, {
-      ...auditEntry,
-      timestamp: serverTimestamp(),
-    });
+    await setDoc(auditRef, auditEntry);
   } catch (error) {
     console.error('❌ Erreur log audit:', error);
-    // Ne pas throw pour ne pas bloquer l'opération principale
   }
 };
 
@@ -957,6 +936,8 @@ export const validateItem = (item: Partial<ReferenceItem>): ValidationResult => 
     if (rules.value.reserved.includes(item.value)) {
       errors.push('Cette valeur est réservée');
     }
+  } else {
+    errors.push('La valeur est obligatoire');
   }
 
   // Label
@@ -979,7 +960,12 @@ export const validateItem = (item: Partial<ReferenceItem>): ValidationResult => 
 
   // Icône
   if (item.icon && !(LucideIcons as any)[item.icon]) {
-    errors.push(`L'icône "${item.icon}" n'existe pas dans Lucide`);
+    warnings.push(`L'icône "${item.icon}" n'existe pas dans Lucide`);
+  }
+
+  // Description
+  if (item.description && item.description.length > rules.description.maxLength) {
+    warnings.push(`La description est très longue (max ${rules.description.maxLength} caractères)`);
   }
 
   return {
@@ -1090,7 +1076,7 @@ const suggestValue = (label: string): string => {
   return label
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '');
 };

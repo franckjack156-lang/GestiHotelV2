@@ -35,7 +35,7 @@ import {
   Upload,
   Settings,
   BarChart3,
-  FileTemplate,
+  FileText,
   AlertCircle,
   CheckCircle2,
   Loader2,
@@ -237,7 +237,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
             onClick={() => setIsTemplateDialogOpen(true)}
             disabled={isLoading}
           >
-            <FileTemplate className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
             Templates
           </Button>
 

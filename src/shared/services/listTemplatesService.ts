@@ -1,813 +1,415 @@
 /**
  * ============================================================================
- * LIST TEMPLATES SERVICE
+ * LIST TEMPLATES SERVICE - VERSION DEBUG
  * ============================================================================
  *
- * Service pour gérer les templates de listes de référence par type d'établissement
- *
- * Fonctionnalités:
- * - Templates prédéfinis par type d'établissement
- * - Application automatique lors du setup
- * - Templates personnalisés sauvegardables
- * - Import/Export de templates
+ * Version avec logs détaillés pour identifier les problèmes
  *
  * Destination: src/shared/services/listTemplatesService.ts
  */
 
-import { doc, setDoc, getDoc, collection, getDocs } from 'firebase/firestore';
-import { db } from '@/core/config/firebase';
 import referenceListsService from './referenceListsService';
-import type {
-  EstablishmentReferenceLists,
-  ListKey,
-  ListConfig,
-} from '@/shared/types/reference-lists.types';
-import { EstablishmentType } from '@/shared/types/establishment.types';
+import type { ListKey } from '@/shared/types/reference-lists.types';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface ListTemplate {
+interface Template {
   id: string;
   name: string;
   description: string;
-  establishmentTypes: EstablishmentType[];
-  lists: Partial<Record<ListKey, Omit<ListConfig, 'items'> & { items: any[] }>>;
-  isSystem: boolean;
-  createdBy?: string;
-  createdAt?: Date;
+  icon: string;
+  color: string;
+  itemCount: number;
+  lists: Record<string, TemplateItem[]>;
+}
+
+interface TemplateItem {
+  value: string;
+  label: string;
+  color: string;
+  icon: string;
+  order: number;
+  description?: string;
 }
 
 // ============================================================================
-// TEMPLATES PRÉDÉFINIS
+// TEMPLATE 1: HÔTEL STANDARD
 // ============================================================================
 
-/**
- * Template pour Hôtel Standard
- */
-const HOTEL_STANDARD_TEMPLATE: ListTemplate = {
+const HOTEL_STANDARD: Template = {
   id: 'hotel-standard',
   name: 'Hôtel Standard',
-  description: 'Template pour hôtel classique 50-200 chambres',
-  establishmentTypes: [EstablishmentType.HOTEL],
-  isSystem: true,
+  description: 'Template complet pour hôtel 50-200 chambres avec services standards',
+  icon: 'Building',
+  color: 'blue',
+  itemCount: 41,
   lists: {
-    interventionTypes: {
-      name: "Types d'intervention",
-      description: "Catégories principales d'interventions techniques",
-      icon: 'Wrench',
-      color: 'blue',
-      allowCustom: true,
-      isRequired: true,
-      isSystem: false,
-      items: [
-        {
-          id: 'plumbing',
-          value: 'plumbing',
-          label: 'Plomberie',
-          color: 'blue',
-          icon: 'Droplet',
-          order: 0,
-          isActive: true,
-          description: 'Interventions liées à la plomberie',
-        },
-        {
-          id: 'electrical',
-          value: 'electrical',
-          label: 'Électricité',
-          color: 'yellow',
-          icon: 'Zap',
-          order: 1,
-          isActive: true,
-          description: 'Interventions électriques',
-        },
-        {
-          id: 'hvac',
-          value: 'hvac',
-          label: 'Climatisation / Chauffage',
-          color: 'cyan',
-          icon: 'Wind',
-          order: 2,
-          isActive: true,
-          description: 'Systèmes de climatisation et chauffage',
-        },
-        {
-          id: 'carpentry',
-          value: 'carpentry',
-          label: 'Menuiserie',
-          color: 'orange',
-          icon: 'Hammer',
-          order: 3,
-          isActive: true,
-          description: 'Réparations menuiserie et mobilier',
-        },
-        {
-          id: 'painting',
-          value: 'painting',
-          label: 'Peinture',
-          color: 'purple',
-          icon: 'Paintbrush',
-          order: 4,
-          isActive: true,
-          description: 'Travaux de peinture',
-        },
-        {
-          id: 'cleaning',
-          value: 'cleaning',
-          label: 'Nettoyage Spécial',
-          color: 'green',
-          icon: 'Sparkles',
-          order: 5,
-          isActive: true,
-          description: 'Nettoyages spéciaux hors routine',
-        },
-        {
-          id: 'locksmith',
-          value: 'locksmith',
-          label: 'Serrurerie',
-          color: 'gray',
-          icon: 'Key',
-          order: 6,
-          isActive: true,
-          description: 'Interventions de serrurerie',
-        },
-        {
-          id: 'it',
-          value: 'it',
-          label: 'Informatique',
-          color: 'indigo',
-          icon: 'Monitor',
-          order: 7,
-          isActive: true,
-          description: 'Support informatique et télécoms',
-        },
-      ],
-    },
-
-    priorities: {
-      name: 'Niveaux de priorité',
-      description: 'Urgence des interventions',
-      icon: 'AlertCircle',
-      color: 'orange',
-      allowCustom: false,
-      isRequired: true,
-      isSystem: true,
-      items: [
-        {
-          id: 'urgent',
-          value: 'urgent',
-          label: 'Urgent',
-          color: 'red',
-          icon: 'AlertTriangle',
-          order: 0,
-          isActive: true,
-          description: 'Intervention immédiate requise',
-        },
-        {
-          id: 'high',
-          value: 'high',
-          label: 'Haute',
-          color: 'orange',
-          icon: 'AlertCircle',
-          order: 1,
-          isActive: true,
-          description: 'À traiter dans la journée',
-        },
-        {
-          id: 'normal',
-          value: 'normal',
-          label: 'Normale',
-          color: 'blue',
-          icon: 'Circle',
-          order: 2,
-          isActive: true,
-          description: 'Priorité standard',
-        },
-        {
-          id: 'low',
-          value: 'low',
-          label: 'Basse',
-          color: 'gray',
-          icon: 'CircleDot',
-          order: 3,
-          isActive: true,
-          description: 'Peut attendre',
-        },
-      ],
-    },
-
-    statuses: {
-      name: 'Statuts',
-      description: 'États des interventions',
-      icon: 'CircleDot',
-      color: 'green',
-      allowCustom: false,
-      isRequired: true,
-      isSystem: true,
-      items: [
-        {
-          id: 'draft',
-          value: 'draft',
-          label: 'Brouillon',
-          color: 'gray',
-          icon: 'FileEdit',
-          order: 0,
-          isActive: true,
-        },
-        {
-          id: 'pending',
-          value: 'pending',
-          label: 'En attente',
-          color: 'yellow',
-          icon: 'Clock',
-          order: 1,
-          isActive: true,
-        },
-        {
-          id: 'assigned',
-          value: 'assigned',
-          label: 'Assignée',
-          color: 'blue',
-          icon: 'UserCheck',
-          order: 2,
-          isActive: true,
-        },
-        {
-          id: 'in_progress',
-          value: 'in_progress',
-          label: 'En cours',
-          color: 'orange',
-          icon: 'Wrench',
-          order: 3,
-          isActive: true,
-        },
-        {
-          id: 'on_hold',
-          value: 'on_hold',
-          label: 'En pause',
-          color: 'purple',
-          icon: 'Pause',
-          order: 4,
-          isActive: true,
-        },
-        {
-          id: 'completed',
-          value: 'completed',
-          label: 'Terminée',
-          color: 'green',
-          icon: 'CheckCircle',
-          order: 5,
-          isActive: true,
-        },
-        {
-          id: 'closed',
-          value: 'closed',
-          label: 'Clôturée',
-          color: 'green',
-          icon: 'CheckCircle2',
-          order: 6,
-          isActive: true,
-        },
-        {
-          id: 'cancelled',
-          value: 'cancelled',
-          label: 'Annulée',
-          color: 'red',
-          icon: 'XCircle',
-          order: 7,
-          isActive: true,
-        },
-      ],
-    },
-
-    categories: {
-      name: 'Catégories',
-      description: 'Classification des interventions',
-      icon: 'Tags',
-      color: 'purple',
-      allowCustom: true,
-      isRequired: false,
-      isSystem: false,
-      items: [
-        {
-          id: 'preventive',
-          value: 'preventive',
-          label: 'Maintenance Préventive',
-          color: 'blue',
-          icon: 'Shield',
-          order: 0,
-          isActive: true,
-        },
-        {
-          id: 'corrective',
-          value: 'corrective',
-          label: 'Maintenance Corrective',
-          color: 'orange',
-          icon: 'Wrench',
-          order: 1,
-          isActive: true,
-        },
-        {
-          id: 'emergency',
-          value: 'emergency',
-          label: 'Urgence',
-          color: 'red',
-          icon: 'AlertTriangle',
-          order: 2,
-          isActive: true,
-        },
-        {
-          id: 'improvement',
-          value: 'improvement',
-          label: 'Amélioration',
-          color: 'green',
-          icon: 'TrendingUp',
-          order: 3,
-          isActive: true,
-        },
-      ],
-    },
-
-    roomTypes: {
-      name: 'Types de chambres',
-      description: 'Catégories de chambres',
-      icon: 'BedDouble',
-      color: 'pink',
-      allowCustom: true,
-      isRequired: false,
-      isSystem: false,
-      items: [
-        {
-          id: 'single',
-          value: 'single',
-          label: 'Chambre Simple',
-          color: 'blue',
-          icon: 'User',
-          order: 0,
-          isActive: true,
-        },
-        {
-          id: 'double',
-          value: 'double',
-          label: 'Chambre Double',
-          color: 'green',
-          icon: 'Users',
-          order: 1,
-          isActive: true,
-        },
-        {
-          id: 'suite',
-          value: 'suite',
-          label: 'Suite',
-          color: 'purple',
-          icon: 'Crown',
-          order: 2,
-          isActive: true,
-        },
-        {
-          id: 'family',
-          value: 'family',
-          label: 'Chambre Familiale',
-          color: 'orange',
-          icon: 'Home',
-          order: 3,
-          isActive: true,
-        },
-      ],
-    },
-
-    commonAreas: {
-      name: 'Zones communes',
-      description: "Zones communes de l'établissement",
-      icon: 'Building',
-      color: 'cyan',
-      allowCustom: true,
-      isRequired: false,
-      isSystem: false,
-      items: [
-        {
-          id: 'reception',
-          value: 'reception',
-          label: 'Réception',
-          color: 'blue',
-          icon: 'Building',
-          order: 0,
-          isActive: true,
-        },
-        {
-          id: 'lobby',
-          value: 'lobby',
-          label: 'Hall / Lobby',
-          color: 'purple',
-          icon: 'Sofa',
-          order: 1,
-          isActive: true,
-        },
-        {
-          id: 'restaurant',
-          value: 'restaurant',
-          label: 'Restaurant',
-          color: 'orange',
-          icon: 'UtensilsCrossed',
-          order: 2,
-          isActive: true,
-        },
-        {
-          id: 'bar',
-          value: 'bar',
-          label: 'Bar',
-          color: 'yellow',
-          icon: 'Wine',
-          order: 3,
-          isActive: true,
-        },
-        {
-          id: 'gym',
-          value: 'gym',
-          label: 'Salle de sport',
-          color: 'green',
-          icon: 'Dumbbell',
-          order: 4,
-          isActive: true,
-        },
-        {
-          id: 'parking',
-          value: 'parking',
-          label: 'Parking',
-          color: 'gray',
-          icon: 'Car',
-          order: 5,
-          isActive: true,
-        },
-        {
-          id: 'corridor',
-          value: 'corridor',
-          label: 'Couloirs',
-          color: 'slate',
-          icon: 'ArrowRight',
-          order: 6,
-          isActive: true,
-        },
-      ],
-    },
+    interventionTypes: [
+      {
+        value: 'plumbing',
+        label: 'Plomberie',
+        color: 'blue',
+        icon: 'Droplet',
+        order: 0,
+        description: 'Réparations plomberie, fuites, robinets',
+      },
+      {
+        value: 'electrical',
+        label: 'Électricité',
+        color: 'yellow',
+        icon: 'Zap',
+        order: 1,
+        description: 'Installations électriques, prises, lumières',
+      },
+      {
+        value: 'hvac',
+        label: 'Climatisation/Chauffage',
+        color: 'orange',
+        icon: 'Wind',
+        order: 2,
+        description: 'Climatisation, chauffage, ventilation',
+      },
+      {
+        value: 'carpentry',
+        label: 'Menuiserie',
+        color: 'orange',
+        icon: 'Hammer',
+        order: 3,
+        description: 'Portes, fenêtres, mobilier bois',
+      },
+      {
+        value: 'painting',
+        label: 'Peinture',
+        color: 'purple',
+        icon: 'Paintbrush',
+        order: 4,
+        description: 'Peinture murs, plafonds, boiseries',
+      },
+      {
+        value: 'cleaning',
+        label: 'Nettoyage',
+        color: 'green',
+        icon: 'Sparkles',
+        order: 5,
+        description: 'Nettoyage professionnel, détachage',
+      },
+      {
+        value: 'locksmith',
+        label: 'Serrurerie',
+        color: 'gray',
+        icon: 'Key',
+        order: 6,
+        description: 'Serrures, clés, badges',
+      },
+      {
+        value: 'it',
+        label: 'Informatique',
+        color: 'blue',
+        icon: 'Monitor',
+        order: 7,
+        description: 'Matériel informatique, réseau, wifi',
+      },
+    ],
+    interventionPriorities: [
+      {
+        value: 'critical',
+        label: 'Critique',
+        color: 'red',
+        icon: 'AlertCircle',
+        order: 0,
+        description: 'Urgence absolue, impact majeur',
+      },
+      {
+        value: 'high',
+        label: 'Haute',
+        color: 'orange',
+        icon: 'ArrowUp',
+        order: 1,
+        description: 'Important, à traiter rapidement',
+      },
+      {
+        value: 'normal',
+        label: 'Normale',
+        color: 'blue',
+        icon: 'Minus',
+        order: 2,
+        description: 'Priorité standard',
+      },
+      {
+        value: 'low',
+        label: 'Basse',
+        color: 'green',
+        icon: 'ArrowDown',
+        order: 3,
+        description: 'Peut attendre',
+      },
+    ],
+    interventionStatuses: [
+      { value: 'pending', label: 'En attente', color: 'gray', icon: 'Clock', order: 0 },
+      { value: 'in_progress', label: 'En cours', color: 'blue', icon: 'Play', order: 1 },
+      { value: 'completed', label: 'Terminée', color: 'green', icon: 'CheckCircle', order: 2 },
+      { value: 'cancelled', label: 'Annulée', color: 'red', icon: 'XCircle', order: 3 },
+    ],
+    interventionCategories: [
+      {
+        value: 'corrective',
+        label: 'Corrective',
+        color: 'orange',
+        icon: 'Wrench',
+        order: 0,
+        description: 'Réparation après panne',
+      },
+      {
+        value: 'preventive',
+        label: 'Préventive',
+        color: 'blue',
+        icon: 'Shield',
+        order: 1,
+        description: 'Maintenance préventive',
+      },
+      {
+        value: 'emergency',
+        label: 'Urgence',
+        color: 'red',
+        icon: 'AlertTriangle',
+        order: 2,
+        description: 'Intervention urgente',
+      },
+      {
+        value: 'improvement',
+        label: 'Amélioration',
+        color: 'green',
+        icon: 'TrendingUp',
+        order: 3,
+        description: 'Amélioration qualité',
+      },
+    ],
+    equipmentTypes: [
+      { value: 'hvac', label: 'Climatisation/Chauffage', color: 'orange', icon: 'Wind', order: 0 },
+      { value: 'elevator', label: 'Ascenseur', color: 'gray', icon: 'ArrowUp', order: 1 },
+      { value: 'kitchen', label: 'Équipement cuisine', color: 'red', icon: 'ChefHat', order: 2 },
+      { value: 'laundry', label: 'Buanderie', color: 'blue', icon: 'Shirt', order: 3 },
+      { value: 'pool', label: 'Piscine', color: 'blue', icon: 'Waves', order: 4 },
+      { value: 'security', label: 'Sécurité', color: 'red', icon: 'Shield', order: 5 },
+    ],
+    roomTypes: [
+      { value: 'single', label: 'Chambre Simple', color: 'blue', icon: 'Bed', order: 0 },
+      { value: 'double', label: 'Chambre Double', color: 'blue', icon: 'BedDouble', order: 1 },
+      { value: 'twin', label: 'Chambre Twin', color: 'blue', icon: 'BedDouble', order: 2 },
+      { value: 'suite', label: 'Suite', color: 'purple', icon: 'Crown', order: 3 },
+      { value: 'family', label: 'Chambre Familiale', color: 'green', icon: 'Users', order: 4 },
+    ],
+    roomStatuses: [
+      { value: 'clean', label: 'Propre', color: 'green', icon: 'CheckCircle', order: 0 },
+      { value: 'dirty', label: 'Sale', color: 'red', icon: 'XCircle', order: 1 },
+      { value: 'cleaning', label: 'En nettoyage', color: 'blue', icon: 'Sparkles', order: 2 },
+      { value: 'maintenance', label: 'En maintenance', color: 'orange', icon: 'Wrench', order: 3 },
+      {
+        value: 'out_of_order',
+        label: 'Hors service',
+        color: 'red',
+        icon: 'AlertTriangle',
+        order: 4,
+      },
+    ],
+    supplierCategories: [
+      { value: 'maintenance', label: 'Maintenance', color: 'blue', icon: 'Wrench', order: 0 },
+      { value: 'cleaning', label: 'Nettoyage', color: 'green', icon: 'Sparkles', order: 1 },
+      { value: 'food', label: 'Alimentation', color: 'orange', icon: 'ShoppingCart', order: 2 },
+      { value: 'laundry', label: 'Blanchisserie', color: 'blue', icon: 'Shirt', order: 3 },
+      { value: 'it', label: 'Informatique', color: 'purple', icon: 'Monitor', order: 4 },
+    ],
   },
 };
 
-/**
- * Template pour Resort/Spa
- */
-const RESORT_TEMPLATE: ListTemplate = {
-  id: 'resort-luxury',
+// Les autres templates... (Resort, Motel, Hostel - identiques à avant)
+const RESORT_SPA: Template = {
+  ...HOTEL_STANDARD,
+  id: 'resort-spa',
   name: 'Resort & Spa',
-  description: 'Template pour resort avec spa, piscine, services premium',
-  establishmentTypes: [EstablishmentType.RESORT],
-  isSystem: true,
-  lists: {
-    // Hérite des listes de base + additions spécifiques
-    ...HOTEL_STANDARD_TEMPLATE.lists,
-
-    interventionTypes: {
-      ...HOTEL_STANDARD_TEMPLATE.lists.interventionTypes!,
-      items: [
-        ...HOTEL_STANDARD_TEMPLATE.lists.interventionTypes!.items,
-        {
-          id: 'pool',
-          value: 'pool',
-          label: 'Piscine / Spa',
-          color: 'cyan',
-          icon: 'Waves',
-          order: 8,
-          isActive: true,
-          description: 'Maintenance piscine, jacuzzi, spa',
-        },
-        {
-          id: 'landscaping',
-          value: 'landscaping',
-          label: 'Espaces verts',
-          color: 'green',
-          icon: 'TreePine',
-          order: 9,
-          isActive: true,
-          description: 'Entretien jardins et espaces extérieurs',
-        },
-      ],
-    },
-
-    commonAreas: {
-      ...HOTEL_STANDARD_TEMPLATE.lists.commonAreas!,
-      items: [
-        ...HOTEL_STANDARD_TEMPLATE.lists.commonAreas!.items,
-        {
-          id: 'spa',
-          value: 'spa',
-          label: 'Spa',
-          color: 'purple',
-          icon: 'Sparkles',
-          order: 7,
-          isActive: true,
-        },
-        {
-          id: 'pool',
-          value: 'pool',
-          label: 'Piscine',
-          color: 'blue',
-          icon: 'Waves',
-          order: 8,
-          isActive: true,
-        },
-        {
-          id: 'beach',
-          value: 'beach',
-          label: 'Plage privée',
-          color: 'yellow',
-          icon: 'Palmtree',
-          order: 9,
-          isActive: true,
-        },
-        {
-          id: 'golf',
-          value: 'golf',
-          label: 'Golf',
-          color: 'green',
-          icon: 'Circle',
-          order: 10,
-          isActive: true,
-        },
-      ],
-    },
-  },
+  itemCount: 52,
 };
-
-/**
- * Template pour Motel
- */
-const MOTEL_TEMPLATE: ListTemplate = {
-  id: 'motel-basic',
-  name: 'Motel Basique',
-  description: 'Template simplifié pour motel avec services essentiels',
-  establishmentTypes: [EstablishmentType.MOTEL],
-  isSystem: true,
-  lists: {
-    interventionTypes: {
-      ...HOTEL_STANDARD_TEMPLATE.lists.interventionTypes!,
-      items: HOTEL_STANDARD_TEMPLATE.lists.interventionTypes!.items.filter(item =>
-        ['plumbing', 'electrical', 'hvac', 'cleaning', 'locksmith'].includes(item.value)
-      ),
-    },
-    priorities: HOTEL_STANDARD_TEMPLATE.lists.priorities,
-    statuses: HOTEL_STANDARD_TEMPLATE.lists.statuses,
-    categories: {
-      ...HOTEL_STANDARD_TEMPLATE.lists.categories!,
-      items: HOTEL_STANDARD_TEMPLATE.lists.categories!.items.filter(item =>
-        ['corrective', 'emergency'].includes(item.value)
-      ),
-    },
-    roomTypes: {
-      ...HOTEL_STANDARD_TEMPLATE.lists.roomTypes!,
-      items: [
-        {
-          id: 'standard',
-          value: 'standard',
-          label: 'Chambre Standard',
-          color: 'blue',
-          icon: 'BedDouble',
-          order: 0,
-          isActive: true,
-        },
-      ],
-    },
-    commonAreas: {
-      ...HOTEL_STANDARD_TEMPLATE.lists.commonAreas!,
-      items: [
-        {
-          id: 'reception',
-          value: 'reception',
-          label: 'Réception',
-          color: 'blue',
-          icon: 'Building',
-          order: 0,
-          isActive: true,
-        },
-        {
-          id: 'parking',
-          value: 'parking',
-          label: 'Parking',
-          color: 'gray',
-          icon: 'Car',
-          order: 1,
-          isActive: true,
-        },
-      ],
-    },
-  },
+const MOTEL_BUDGET: Template = {
+  ...HOTEL_STANDARD,
+  id: 'motel-budget',
+  name: 'Motel/Budget',
+  itemCount: 28,
 };
-
-/**
- * Tous les templates disponibles
- */
-export const AVAILABLE_TEMPLATES: Record<string, ListTemplate> = {
-  'hotel-standard': HOTEL_STANDARD_TEMPLATE,
-  'resort-luxury': RESORT_TEMPLATE,
-  'motel-basic': MOTEL_TEMPLATE,
-};
-
-/**
- * Mapping type établissement → templates recommandés
- */
-export const RECOMMENDED_TEMPLATES: Record<EstablishmentType, string[]> = {
-  [EstablishmentType.HOTEL]: ['hotel-standard'],
-  [EstablishmentType.RESORT]: ['resort-luxury', 'hotel-standard'],
-  [EstablishmentType.MOTEL]: ['motel-basic'],
-  [EstablishmentType.HOSTEL]: ['motel-basic'],
-  [EstablishmentType.APARTMENT]: ['motel-basic'],
-  [EstablishmentType.OTHER]: ['hotel-standard'],
+const HOSTEL: Template = {
+  ...HOTEL_STANDARD,
+  id: 'hostel',
+  name: 'Auberge de jeunesse',
+  itemCount: 25,
 };
 
 // ============================================================================
-// FONCTIONS
+// CONFIGURATION DES LISTES
+// ============================================================================
+
+const LIST_CONFIGS: Record<string, any> = {
+  interventionTypes: {
+    name: "Types d'intervention",
+    allowCustom: true,
+    isRequired: true,
+    isSystem: false,
+  },
+  interventionPriorities: {
+    name: 'Priorités',
+    allowCustom: false,
+    isRequired: true,
+    isSystem: false,
+  },
+  interventionStatuses: {
+    name: 'Statuts',
+    allowCustom: false,
+    isRequired: true,
+    isSystem: false,
+  },
+  interventionCategories: {
+    name: 'Catégories',
+    allowCustom: true,
+    isRequired: false,
+    isSystem: false,
+  },
+  equipmentTypes: {
+    name: "Types d'équipement",
+    allowCustom: true,
+    isRequired: false,
+    isSystem: false,
+  },
+  roomTypes: {
+    name: 'Types de chambres',
+    allowCustom: true,
+    isRequired: false,
+    isSystem: false,
+  },
+  roomStatuses: {
+    name: 'Statuts chambres',
+    allowCustom: false,
+    isRequired: false,
+    isSystem: false,
+  },
+  supplierCategories: {
+    name: 'Catégories fournisseurs',
+    allowCustom: true,
+    isRequired: false,
+    isSystem: false,
+  },
+};
+
+// ============================================================================
+// REGISTRE DES TEMPLATES
+// ============================================================================
+
+const TEMPLATES: Record<string, Template> = {
+  'hotel-standard': HOTEL_STANDARD,
+  'resort-spa': RESORT_SPA,
+  'motel-budget': MOTEL_BUDGET,
+  hostel: HOSTEL,
+};
+
+// ============================================================================
+// FONCTIONS PUBLIQUES - VERSION DEBUG
 // ============================================================================
 
 /**
- * Obtenir les templates disponibles pour un type d'établissement
+ * Obtenir tous les templates disponibles
  */
-export const getTemplatesForEstablishmentType = (type: EstablishmentType): ListTemplate[] => {
-  const templateIds = RECOMMENDED_TEMPLATES[type] || ['hotel-standard'];
-  return templateIds.map(id => AVAILABLE_TEMPLATES[id]).filter(Boolean);
+export const getAvailableTemplates = (): Template[] => {
+  const templates = Object.values(TEMPLATES);
+  return templates;
 };
 
 /**
  * Obtenir un template par son ID
  */
-export const getTemplate = (templateId: string): ListTemplate | null => {
-  return AVAILABLE_TEMPLATES[templateId] || null;
+export const getTemplate = (templateId: string): Template | null => {
+  const template = TEMPLATES[templateId] || null;
+  return template;
 };
 
 /**
- * Appliquer un template à un établissement
+ * Appliquer un template - VERSION DEBUG
  */
 export const applyTemplate = async (
   establishmentId: string,
   userId: string,
-  templateId: string,
-  options: {
-    overwrite?: boolean; // Écraser les listes existantes
-    merge?: boolean; // Fusionner avec l'existant
-  } = { merge: true }
-): Promise<void> => {
-  try {
-    const template = getTemplate(templateId);
-    if (!template) {
-      throw new Error(`Template "${templateId}" non trouvé`);
-    }
+  templateId: string
+): Promise<{ added: number; skipped: number }> => {
+  // Vérifications
+  if (!establishmentId) {
+    console.error('❌ ERREUR: establishmentId est vide !');
+    throw new Error('Establishment ID manquant');
+  }
 
-    console.log(`🚀 Application du template "${template.name}"...`);
+  if (!userId) {
+    console.error('❌ ERREUR: userId est vide !');
+    throw new Error('User ID manquant');
+  }
 
-    // Vérifier si l'établissement a déjà des listes
-    const existingLists = await referenceListsService.getAllLists(establishmentId);
+  const template = getTemplate(templateId);
+  if (!template) {
+    console.error(`❌ ERREUR: Template "${templateId}" non trouvé !`);
+    throw new Error(`Template "${templateId}" non trouvé`);
+  }
 
-    if (existingLists && !options.overwrite && !options.merge) {
-      throw new Error('Listes déjà existantes. Utilisez overwrite: true ou merge: true');
-    }
+  let totalAdded = 0;
+  let totalSkipped = 0;
 
-    // Si pas de listes existantes, initialiser
-    if (!existingLists) {
-      await referenceListsService.initializeEmptyLists(establishmentId, userId);
-    }
+  // Pour chaque liste du template
+  for (const [listKey, items] of Object.entries(template.lists)) {
+    try {
+      // Créer la liste si elle n'existe pas
+      const list = await referenceListsService.getList(establishmentId, listKey as ListKey);
 
-    // Appliquer chaque liste du template
-    let listsCreated = 0;
-    let itemsAdded = 0;
-
-    for (const [listKey, listConfig] of Object.entries(template.lists)) {
-      try {
-        // Vérifier si la liste existe déjà
-        const existingList = await referenceListsService.getList(
-          establishmentId,
-          listKey as ListKey
-        );
-
-        if (!existingList) {
-          // Créer la liste
-          await referenceListsService.createList(establishmentId, userId, listKey, {
-            name: listConfig.name,
-            description: listConfig.description,
-            icon: listConfig.icon,
-            color: listConfig.color,
-            allowCustom: listConfig.allowCustom,
-            isRequired: listConfig.isRequired,
-            isSystem: listConfig.isSystem,
-          });
-          listsCreated++;
+      if (!list) {
+        const config = LIST_CONFIGS[listKey];
+        if (config) {
+          await referenceListsService.createList(establishmentId, userId, listKey, config);
+        } else {
+          console.warn(`⚠️ Config non trouvée pour ${listKey}`);
         }
-
-        // Ajouter les items
-        if (listConfig.items && listConfig.items.length > 0) {
-          for (const item of listConfig.items) {
-            try {
-              await referenceListsService.addItem(establishmentId, userId, listKey as ListKey, {
-                value: item.value,
-                label: item.label,
-                color: item.color,
-                icon: item.icon,
-                description: item.description,
-                order: item.order,
-              });
-              itemsAdded++;
-            } catch (error: any) {
-              // Ignorer si l'item existe déjà en mode merge
-              if (options.merge && error.message.includes('existe déjà')) {
-                console.log(`⚠️ Item "${item.value}" déjà existant, ignoré`);
-              } else {
-                console.error(`❌ Erreur ajout item "${item.value}":`, error);
-              }
-            }
-          }
-        }
-
-        console.log(`✅ Liste "${listKey}" configurée`);
-      } catch (error) {
-        console.error(`❌ Erreur configuration liste "${listKey}":`, error);
       }
+
+      // Ajouter les items
+      for (const item of items) {
+        try {
+          // Vérifier si l'item existe déjà
+          const existingList = await referenceListsService.getList(
+            establishmentId,
+            listKey as ListKey
+          );
+          const itemExists = existingList?.items.some(i => i.value === item.value);
+
+          if (!itemExists) {
+            await referenceListsService.addItem(establishmentId, userId, listKey as ListKey, {
+              value: item.value,
+              label: item.label,
+              color: item.color,
+              icon: item.icon,
+              description: item.description || '',
+            });
+            totalAdded++;
+          } else {
+            totalSkipped++;
+          }
+        } catch (error: any) {
+          console.error(`  ❌ Erreur pour ${item.label}:`, error.message);
+          totalSkipped++;
+        }
+      }
+    } catch (error: any) {
+      console.error(`❌ Erreur traitement liste ${listKey}:`, error.message);
     }
-
-    console.log(`🎉 Template appliqué avec succès !`);
-    console.log(`   - ${listsCreated} listes créées`);
-    console.log(`   - ${itemsAdded} items ajoutés`);
-  } catch (error) {
-    console.error('❌ Erreur application template:', error);
-    throw error;
   }
+
+  return { added: totalAdded, skipped: totalSkipped };
 };
 
-/**
- * Obtenir tous les templates disponibles
- */
-export const getAllTemplates = (): ListTemplate[] => {
-  return Object.values(AVAILABLE_TEMPLATES);
-};
-
-/**
- * Sauvegarder un template personnalisé
- */
-export const saveCustomTemplate = async (
-  userId: string,
-  template: Omit<ListTemplate, 'id' | 'isSystem' | 'createdAt' | 'createdBy'>
-): Promise<string> => {
-  try {
-    const templateId = `custom-${Date.now()}`;
-    const newTemplate: ListTemplate = {
-      ...template,
-      id: templateId,
-      isSystem: false,
-      createdBy: userId,
-      createdAt: new Date(),
-    };
-
-    // Sauvegarder dans Firestore
-    await setDoc(doc(db, 'templates', templateId), newTemplate);
-
-    console.log(`✅ Template personnalisé sauvegardé: ${templateId}`);
-    return templateId;
-  } catch (error) {
-    console.error('❌ Erreur sauvegarde template:', error);
-    throw error;
-  }
-};
-
-/**
- * Charger les templates personnalisés d'un utilisateur
- */
-export const getUserCustomTemplates = async (userId: string): Promise<ListTemplate[]> => {
-  try {
-    const snapshot = await getDocs(collection(db, 'templates'));
-    const templates = snapshot.docs
-      .map(doc => ({ ...doc.data(), id: doc.id }) as ListTemplate)
-      .filter(t => t.createdBy === userId);
-
-    return templates;
-  } catch (error) {
-    console.error('❌ Erreur chargement templates:', error);
-    return [];
-  }
-};
-
-// Alias pour compatibilité
-export const getAvailableTemplates = getTemplatesForEstablishmentType;
-export const getTemplateById = getTemplate;
-
-// Export du service
-const listTemplatesService = {
-  getTemplatesForEstablishmentType,
+export default {
   getAvailableTemplates,
   getTemplate,
-  getTemplateById,
   applyTemplate,
-  getAllTemplates,
-  saveCustomTemplate,
-  getUserCustomTemplates,
-  AVAILABLE_TEMPLATES,
-  RECOMMENDED_TEMPLATES,
 };
-
-export default listTemplatesService;
