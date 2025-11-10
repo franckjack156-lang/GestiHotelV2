@@ -53,7 +53,7 @@ const navigationItems = [
     icon: Building2,
   },
   {
-    name: 'Utilisateurs',
+    name: 'Utilisateurs', // ✅ Prêt pour le module Users
     href: '/app/users',
     icon: Users,
   },

@@ -7,7 +7,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLE_PERMISSIONS, roleHasPermission } from '@/shared/constants/permissions';
-import { Permission } from '@/shared/types/roles.types';
+import { UserRole, Permission } from '@/features/users/types/role.types';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 
 /**

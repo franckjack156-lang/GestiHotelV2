@@ -21,6 +21,11 @@ import { CreateInterventionPage } from '@/pages/interventions/CreateIntervention
 import { InterventionDetailsPage } from '@/pages/interventions/InterventionDetailsPage';
 import { EditInterventionPage } from '@/pages/interventions/EditInterventionPage';
 
+// Users
+import { UsersPage } from '@/pages/users/UsersPage';
+import { CreateUserPage } from '@/pages/users/CreateUserPage';
+import { UserDetailsPage } from '@/pages/users/UserDetailsPage';
+
 // Settings
 import { SettingsPage } from '@/pages/Settings';
 import ReferenceListsOrchestrator from '@/features/settings/components/ReferenceListsOrchestrator';
@@ -102,6 +107,25 @@ export const router = createBrowserRouter([
           {
             path: ':id/edit',
             element: <EditInterventionPage />,
+          },
+        ],
+      },
+
+      // Users
+      {
+        path: 'users',
+        children: [
+          {
+            index: true,
+            element: <UsersPage />,
+          },
+          {
+            path: 'create',
+            element: <CreateUserPage />,
+          },
+          {
+            path: ':id',
+            element: <UserDetailsPage />,
           },
         ],
       },
