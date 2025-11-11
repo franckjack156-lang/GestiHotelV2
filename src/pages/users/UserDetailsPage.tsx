@@ -6,14 +6,8 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import {
-  useUser,
-  useUserActions,
-  UserAvatar,
-  RoleBadge,
-  StatusBadge,
-  UserDeleteDialog,
-} from '@/features/users/components';
+import { UserAvatar, RoleBadge, StatusBadge, UserDeleteDialog } from '@/features/users/components';
+import { useUser, useUserActions } from '@/features/users/hooks/useUsers';
 import { ArrowLeft, Edit, Trash2, Power, PowerOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -85,10 +79,12 @@ export const UserDetailsPage = () => {
               </>
             )}
           </Button>
+
           <Button variant="outline" onClick={() => navigate(`/app/users/${user.id}/edit`)}>
             <Edit className="mr-2 h-4 w-4" />
             Modifier
           </Button>
+
           <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Supprimer
@@ -96,69 +92,63 @@ export const UserDetailsPage = () => {
         </div>
       </div>
 
-      {/* Infos principales */}
+      {/* Profil */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-6">
-            <UserAvatar
-              photoURL={user.photoURL}
-              displayName={user.displayName}
-              size="xl"
-              showOnline
-              isOnline={user.isActive}
-            />
-
-            <div className="flex-1 space-y-4">
-              <div>
+        <CardHeader className="pb-4">
+          <div className="flex items-start gap-4">
+            <UserAvatar user={user} size="xl" />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
                 <h2 className="text-2xl font-bold">{user.displayName}</h2>
-                <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+                <StatusBadge status={user.isActive ? 'active' : 'inactive'} />
               </div>
-
-              <div className="flex flex-wrap gap-2">
+              <p className="text-gray-600 dark:text-gray-400">{user.email}</p>
+              <div className="flex items-center gap-2 mt-2">
                 <RoleBadge role={user.role} />
-                <StatusBadge status={user.status} />
+                {user.jobTitle && <span className="text-sm text-gray-500">• {user.jobTitle}</span>}
               </div>
+            </div>
+          </div>
+        </CardHeader>
 
-              {user.jobTitle && (
-                <div>
-                  <span className="text-sm font-medium">Poste:</span>
-                  <span className="ml-2 text-sm text-gray-600">{user.jobTitle}</span>
-                </div>
-              )}
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Téléphone</p>
+              <p className="font-medium">{user.phoneNumber || 'Non renseigné'}</p>
+            </div>
 
-              {user.phoneNumber && (
-                <div>
-                  <span className="text-sm font-medium">Téléphone:</span>
-                  <span className="ml-2 text-sm text-gray-600">{user.phoneNumber}</span>
-                </div>
-              )}
+            <div>
+              <p className="text-sm text-gray-500">Département</p>
+              <p className="font-medium">{user.department || 'Non renseigné'}</p>
+            </div>
 
-              {user.lastLoginAt && (
-                <div>
-                  <span className="text-sm font-medium">Dernière connexion:</span>
-                  <span className="ml-2 text-sm text-gray-600">
-                    {format(
-                      user.lastLoginAt instanceof Date
-                        ? user.lastLoginAt
-                        : user.lastLoginAt.toDate(),
-                      'dd MMMM yyyy à HH:mm',
-                      { locale: fr }
-                    )}
-                  </span>
-                </div>
-              )}
+            <div>
+              <p className="text-sm text-gray-500">Membre depuis</p>
+              <p className="font-medium">
+                {user.createdAt ? format(user.createdAt.toDate(), 'PPP', { locale: fr }) : '-'}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Dernière connexion</p>
+              <p className="font-medium">
+                {user.lastLoginAt
+                  ? format(user.lastLoginAt.toDate(), 'PPP à HH:mm', { locale: fr })
+                  : 'Jamais'}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Dialog suppression */}
+      {/* Dialog de suppression */}
       <UserDeleteDialog
-        open={showDeleteDialog}
-        user={user}
-        isDeleting={isDeleting}
+        isOpen={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDelete}
+        userName={user.displayName}
+        isDeleting={isDeleting}
       />
     </div>
   );

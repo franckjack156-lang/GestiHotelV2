@@ -1,5 +1,5 @@
 /**
- * AuthProvider - VERSION DÉFINITIVE
+ * AuthProvider - VERSION CORRIGÉE
  *
  * Initialise le listener Firebase Auth au niveau module (pas dans useEffect)
  */
@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/core/config/firebase';
 import { useAuthStore } from '../stores/authStore';
-import { getUserById } from '@/features/users/services/userService';
+import userService from '@/features/users/services/userService';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -39,7 +39,8 @@ const initAuthListener = () => {
         setFirebaseUser(firebaseUser);
         console.log('🔵 AuthListener: Chargement profil...');
 
-        const userData = await getUserById(firebaseUser.uid);
+        // ✅ CORRECTION: Utiliser userService.getUser au lieu de getUserById
+        const userData = await userService.getUser(firebaseUser.uid);
 
         if (userData) {
           console.log('✅ AuthListener: Profil chargé', userData);

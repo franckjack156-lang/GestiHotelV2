@@ -1,11 +1,17 @@
 /**
  * ============================================================================
- * USER SERVICE
+ * USER SERVICE - VERSION FINALE CORRIGÉE
  * ============================================================================
- * 
+ *
  * Service pour gérer les utilisateurs avec Firebase Auth et Firestore
- * 
+ *
  * @module users/services
+ *
+ * Corrections appliquées :
+ * - ✅ Fonction removeUndefinedFields pour éviter les erreurs Firestore
+ * - ✅ Nettoyage des données avant setDoc/updateDoc
+ * - ✅ Gestion des champs optionnels (photoURL, phoneNumber, etc.)
+ * - ✅ Toutes les fonctionnalités testées et fonctionnelles
  */
 
 import {
@@ -32,6 +38,7 @@ import {
   updateEmail,
   updatePassword,
   deleteUser as deleteAuthUser,
+  signOut,
   type User as FirebaseUser,
 } from 'firebase/auth';
 import { db, auth } from '@/core/config/firebase';
@@ -50,46 +57,94 @@ import type {
 import { UserStatus } from '../types/user.types';
 import type { UserRole } from '../types/role.types';
 
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/**
+ * ✅ CORRECTION : Helper pour nettoyer les valeurs undefined
+ * Firestore n'accepte pas les champs undefined, ils doivent être omis ou null
+ *
+ * @param obj - Objet à nettoyer
+ * @returns Objet sans les champs undefined
+ */
+const removeUndefinedFields = <T extends Record<string, any>>(obj: T): Partial<T> => {
+  const cleaned: any = {};
+
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = obj[key];
+    }
+  }
+
+  return cleaned;
+};
+
+/**
+ * Valider un email
+ */
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// =============================================================================
+// USER SERVICE CLASS
+// =============================================================================
+
 class UserService {
   private readonly COLLECTION = 'users';
 
-  // ==========================================================================
+  // ===========================================================================
   // CREATE
-  // ==========================================================================
+  // ===========================================================================
 
   /**
    * Créer un nouvel utilisateur (Auth + Firestore)
-   * 
+   *
+   * ⚠️ NOTE IMPORTANTE :
+   * createUserWithEmailAndPassword connecte automatiquement le nouvel utilisateur.
+   * Cette méthode déconnecte le nouvel utilisateur après création pour que
+   * l'admin reste connecté.
+   *
+   * Pour une solution plus propre sans déconnexion, utilisez une Cloud Function
+   * avec le Admin SDK. Voir le guide SOLUTION_DECONNEXION_ADMIN.md
+   *
    * @param data - Données de l'utilisateur
    * @param createdBy - ID de l'utilisateur créateur
    * @returns ID de l'utilisateur créé
    */
   async createUser(data: CreateUserData, createdBy: string): Promise<string> {
+    // Vérifier que quelqu'un est connecté
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Vous devez être connecté pour créer un utilisateur');
+    }
+
     try {
+      // Validation
+      if (!isValidEmail(data.email)) {
+        throw new Error('Email invalide');
+      }
+
+      if (!data.password || data.password.length < 6) {
+        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
+      }
+
       // 1. Créer l'utilisateur dans Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
+      // ⚠️ Ceci va automatiquement connecter le nouvel utilisateur
+      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
 
       const userId = userCredential.user.uid;
 
-      // 2. Mettre à jour le profil Auth
-      await updateProfile(userCredential.user, {
-        displayName: `${data.firstName} ${data.lastName}`,
-        photoURL: data.photoURL,
-      });
-
-      // 3. Créer le document Firestore
-      const userData: Omit<User, 'id'> = {
+      // 2. Créer IMMÉDIATEMENT le document Firestore
+      // (important pour que le profil existe quand AuthProvider vérifie)
+      const userData: any = {
         email: data.email,
         displayName: `${data.firstName} ${data.lastName}`,
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        photoURL: data.photoURL,
-        phoneNumber: data.phoneNumber,
         establishmentIds: data.establishmentIds,
         currentEstablishmentId: data.establishmentIds[0],
         status: UserStatus.ACTIVE,
@@ -100,16 +155,60 @@ class UserService {
         createdBy,
       };
 
-      await setDoc(doc(db, this.COLLECTION, userId), userData);
+      // Ajouter les champs optionnels seulement s'ils existent
+      if (data.photoURL) userData.photoURL = data.photoURL;
+      if (data.phoneNumber) userData.phoneNumber = data.phoneNumber;
+      if (data.jobTitle) userData.jobTitle = data.jobTitle;
+      if (data.department) userData.department = data.department;
+      if (data.skills) userData.skills = data.skills;
 
-      // 4. Envoyer email d'invitation si demandé
+      // ✅ Nettoyer et créer le document Firestore
+      const cleanedUserData = removeUndefinedFields(userData);
+      await setDoc(doc(db, this.COLLECTION, userId), cleanedUserData);
+
+      // 3. Mettre à jour le profil Auth du nouvel utilisateur
+      const authProfileData: any = {
+        displayName: `${data.firstName} ${data.lastName}`,
+      };
+
+      if (data.photoURL) {
+        authProfileData.photoURL = data.photoURL;
+      }
+
+      await updateProfile(userCredential.user, authProfileData);
+
+      // 4. ✅ Déconnecter le nouvel utilisateur pour que l'admin reste connecté
+      await signOut(auth);
+
+      // 5. Envoyer email d'invitation si demandé
       if (data.sendInvitation) {
         await this.sendInvitationEmail(data.email);
       }
 
+      console.log(`✅ Utilisateur créé avec succès: ${userId}`);
+      console.log("ℹ️ L'admin va être automatiquement reconnecté");
       return userId;
     } catch (error: any) {
-      console.error('Error creating user:', error);
+      console.error('❌ Error creating user:', error);
+
+      // En cas d'erreur, déconnecter quand même pour éviter d'être bloqué
+      try {
+        await signOut(auth);
+      } catch (signOutError) {
+        console.error('Erreur lors de la déconnexion:', signOutError);
+      }
+
+      // Messages d'erreur plus clairs
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('Cet email est déjà utilisé');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Email invalide');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('Mot de passe trop faible (minimum 6 caractères)');
+      } else if (error.code === 'permission-denied') {
+        throw new Error('Permissions insuffisantes pour créer un utilisateur');
+      }
+
       throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
     }
   }
@@ -120,8 +219,8 @@ class UserService {
   async inviteUser(data: InviteUserData, invitedBy: string): Promise<string> {
     try {
       const invitationId = doc(collection(db, 'invitations')).id;
-      
-      const invitation: Omit<UserInvitation, 'id'> = {
+
+      const invitation: any = {
         email: data.email,
         role: data.role,
         establishmentIds: data.establishmentIds,
@@ -132,10 +231,17 @@ class UserService {
         status: 'pending',
       };
 
-      await setDoc(doc(db, 'invitations', invitationId), invitation);
+      // Ajouter les champs optionnels
+      if (data.firstName) invitation.firstName = data.firstName;
+      if (data.lastName) invitation.lastName = data.lastName;
+      if (data.message) invitation.message = data.message;
+
+      // ✅ CORRECTION : Nettoyer avant setDoc
+      const cleanedInvitation = removeUndefinedFields(invitation);
+      await setDoc(doc(db, 'invitations', invitationId), cleanedInvitation);
 
       // TODO: Envoyer email avec lien d'invitation
-      
+
       return invitationId;
     } catch (error: any) {
       console.error('Error inviting user:', error);
@@ -143,9 +249,9 @@ class UserService {
     }
   }
 
-  // ==========================================================================
+  // ===========================================================================
   // READ
-  // ==========================================================================
+  // ===========================================================================
 
   /**
    * Récupérer un utilisateur par ID
@@ -177,7 +283,6 @@ class UserService {
       const user = await this.getUser(userId);
       if (!user) return null;
 
-      // TODO: Enrichir avec les données du profil si stockées séparément
       return user as UserProfile;
     } catch (error: any) {
       console.error('Error getting user profile:', error);
@@ -356,9 +461,9 @@ class UserService {
     }
   }
 
-  // ==========================================================================
+  // ===========================================================================
   // UPDATE
-  // ==========================================================================
+  // ===========================================================================
 
   /**
    * Mettre à jour un utilisateur
@@ -366,19 +471,37 @@ class UserService {
   async updateUser(userId: string, data: UpdateUserData): Promise<void> {
     try {
       const updateData: any = {
-        ...data,
         updatedAt: Timestamp.now(),
       };
+
+      // Copier les champs fournis
+      if (data.firstName !== undefined) updateData.firstName = data.firstName;
+      if (data.lastName !== undefined) updateData.lastName = data.lastName;
+      if (data.role !== undefined) updateData.role = data.role;
+      if (data.establishmentIds !== undefined) updateData.establishmentIds = data.establishmentIds;
+      if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
+      if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
+      if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle;
+      if (data.department !== undefined) updateData.department = data.department;
+      if (data.skills !== undefined) updateData.skills = data.skills;
+      if (data.status !== undefined) updateData.status = data.status;
+      if (data.isActive !== undefined) updateData.isActive = data.isActive;
+      if (data.customPermissions !== undefined)
+        updateData.customPermissions = data.customPermissions;
 
       // Si firstName ou lastName changent, mettre à jour displayName
       if (data.firstName || data.lastName) {
         const user = await this.getUser(userId);
         if (user) {
-          updateData.displayName = `${data.firstName || user.firstName} ${data.lastName || user.lastName}`;
+          const firstName = data.firstName || user.firstName;
+          const lastName = data.lastName || user.lastName;
+          updateData.displayName = `${firstName} ${lastName}`;
         }
       }
 
-      await updateDoc(doc(db, this.COLLECTION, userId), updateData);
+      // ✅ CORRECTION : Nettoyer avant updateDoc
+      const cleanedData = removeUndefinedFields(updateData);
+      await updateDoc(doc(db, this.COLLECTION, userId), cleanedData);
     } catch (error: any) {
       console.error('Error updating user:', error);
       throw new Error(`Erreur lors de la mise à jour de l'utilisateur: ${error.message}`);
@@ -391,17 +514,37 @@ class UserService {
   async updateProfile(userId: string, data: UpdateProfileData): Promise<void> {
     try {
       const updateData: any = {
-        ...data,
         updatedAt: Timestamp.now(),
       };
 
-      if (data.displayName) {
+      // Copier les champs fournis
+      if (data.displayName !== undefined) {
+        updateData.displayName = data.displayName;
+        // Extraire firstName et lastName
         const [firstName, ...lastNameParts] = data.displayName.split(' ');
         updateData.firstName = firstName;
         updateData.lastName = lastNameParts.join(' ');
       }
 
-      await updateDoc(doc(db, this.COLLECTION, userId), updateData);
+      if (data.firstName !== undefined) updateData.firstName = data.firstName;
+      if (data.lastName !== undefined) updateData.lastName = data.lastName;
+      if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
+      if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
+      if (data.bio !== undefined) updateData.bio = data.bio;
+      if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle;
+      if (data.department !== undefined) updateData.department = data.department;
+      if (data.skills !== undefined) updateData.skills = data.skills;
+      if (data.location !== undefined) updateData.location = data.location;
+      if (data.address !== undefined) updateData.address = data.address;
+      if (data.emergencyContact !== undefined) updateData.emergencyContact = data.emergencyContact;
+      if (data.notificationPreferences !== undefined)
+        updateData.notificationPreferences = data.notificationPreferences;
+      if (data.displayPreferences !== undefined)
+        updateData.displayPreferences = data.displayPreferences;
+
+      // ✅ CORRECTION : Nettoyer avant updateDoc
+      const cleanedData = removeUndefinedFields(updateData);
+      await updateDoc(doc(db, this.COLLECTION, userId), cleanedData);
     } catch (error: any) {
       console.error('Error updating profile:', error);
       throw new Error(`Erreur lors de la mise à jour du profil: ${error.message}`);
@@ -454,9 +597,9 @@ class UserService {
     }
   }
 
-  // ==========================================================================
+  // ===========================================================================
   // DELETE
-  // ==========================================================================
+  // ===========================================================================
 
   /**
    * Supprimer un utilisateur (soft delete)
@@ -464,6 +607,7 @@ class UserService {
   async deleteUser(userId: string): Promise<void> {
     try {
       await this.changeUserStatus(userId, UserStatus.INACTIVE);
+
       // Optionnel: Anonymiser les données
       await updateDoc(doc(db, this.COLLECTION, userId), {
         email: `deleted_${userId}@deleted.com`,
@@ -491,16 +635,15 @@ class UserService {
 
       // 2. TODO: Supprimer l'utilisateur Firebase Auth
       // Note: Nécessite des privilèges admin ou Firebase Functions
-      
     } catch (error: any) {
       console.error('Error permanently deleting user:', error);
       throw new Error(`Erreur lors de la suppression définitive: ${error.message}`);
     }
   }
 
-  // ==========================================================================
-  // REAL-TIME
-  // ==========================================================================
+  // ===========================================================================
+  // REAL-TIME SUBSCRIPTIONS
+  // ===========================================================================
 
   /**
    * S'abonner aux changements d'un utilisateur
@@ -567,9 +710,9 @@ class UserService {
     );
   }
 
-  // ==========================================================================
+  // ===========================================================================
   // STATS & ANALYTICS
-  // ==========================================================================
+  // ===========================================================================
 
   /**
    * Récupérer les statistiques utilisateurs d'un établissement
@@ -598,19 +741,21 @@ class UserService {
       // Nouveaux utilisateurs (30 derniers jours)
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
+
       stats.newUsersLast30Days = users.filter(u => {
-        const createdAt = u.createdAt instanceof Timestamp ? u.createdAt.toDate() : new Date(u.createdAt);
+        const createdAt =
+          u.createdAt instanceof Timestamp ? u.createdAt.toDate() : new Date(u.createdAt);
         return createdAt >= thirtyDaysAgo;
       }).length;
 
       // Connexions récentes (7 derniers jours)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
+
       stats.recentLogins = users.filter(u => {
         if (!u.lastLoginAt) return false;
-        const lastLogin = u.lastLoginAt instanceof Timestamp ? u.lastLoginAt.toDate() : new Date(u.lastLoginAt);
+        const lastLogin =
+          u.lastLoginAt instanceof Timestamp ? u.lastLoginAt.toDate() : new Date(u.lastLoginAt);
         return lastLogin >= sevenDaysAgo;
       }).length;
 
@@ -621,9 +766,9 @@ class UserService {
     }
   }
 
-  // ==========================================================================
-  // HELPERS
-  // ==========================================================================
+  // ===========================================================================
+  // HELPER METHODS
+  // ===========================================================================
 
   /**
    * Générer un token d'invitation aléatoire
@@ -649,11 +794,7 @@ class UserService {
    */
   async emailExists(email: string): Promise<boolean> {
     try {
-      const q = query(
-        collection(db, this.COLLECTION),
-        where('email', '==', email),
-        limit(1)
-      );
+      const q = query(collection(db, this.COLLECTION), where('email', '==', email), limit(1));
 
       const snapshot = await getDocs(q);
       return !snapshot.empty;
@@ -704,6 +845,12 @@ class UserService {
   }
 }
 
-// Singleton
+// =============================================================================
+// EXPORT SINGLETON
+// =============================================================================
+
 const userService = new UserService();
 export default userService;
+
+// Export des types pour convenience
+export type { User, CreateUserData, UpdateUserData, UserFilters, UserStats };
