@@ -1,7 +1,10 @@
 /**
- * Router Configuration
+ * Router Configuration - VERSION CORRIGÉE
  *
  * Configuration des routes de l'application avec React Router
+ *
+ * ✅ Corrections :
+ * - Ajout de la route d'édition utilisateur (/app/users/:id/edit)
  */
 
 import { createBrowserRouter, Navigate } from 'react-router-dom';
@@ -25,6 +28,7 @@ import { EditInterventionPage } from '@/pages/interventions/EditInterventionPage
 import { UsersPage } from '@/pages/users/UsersPage';
 import { CreateUserPage } from '@/pages/users/CreateUserPage';
 import { UserDetailsPage } from '@/pages/users/UserDetailsPage';
+import { EditUserPage } from '@/pages/users/EditUserPage'; // ✅ AJOUTÉ
 
 // Settings
 import { SettingsPage } from '@/pages/Settings';
@@ -126,6 +130,11 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: <UserDetailsPage />,
+          },
+          // ✅ ROUTE D'ÉDITION AJOUTÉE
+          {
+            path: ':id/edit',
+            element: <EditUserPage />,
           },
         ],
       },

@@ -1,12 +1,15 @@
 /**
- * AuthProvider - VERSION CORRIGÉE
+ * AuthProvider - VERSION CORRIGÉE V2
  *
- * Initialise le listener Firebase Auth au niveau module (pas dans useEffect)
+ * Corrections :
+ * - ✅ Initialise le listener Firebase Auth au niveau module
+ * - ✅ Met à jour lastLoginAt lors de la connexion
  */
 
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/core/config/firebase';
+import { doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { auth, db } from '@/core/config/firebase';
 import { useAuthStore } from '../stores/authStore';
 import userService from '@/features/users/services/userService';
 
@@ -46,6 +49,17 @@ const initAuthListener = () => {
           console.log('✅ AuthListener: Profil chargé', userData);
           setUser(userData);
           setError(null);
+
+          // ✅ NOUVEAU: Mettre à jour lastLoginAt
+          try {
+            await updateDoc(doc(db, 'users', firebaseUser.uid), {
+              lastLoginAt: Timestamp.now(),
+            });
+            console.log('✅ AuthListener: lastLoginAt mis à jour');
+          } catch (updateError) {
+            console.warn('⚠️ AuthListener: Impossible de mettre à jour lastLoginAt', updateError);
+            // Ne pas bloquer la connexion si la mise à jour échoue
+          }
         } else {
           console.error('❌ AuthListener: Profil introuvable');
           setUser(null);

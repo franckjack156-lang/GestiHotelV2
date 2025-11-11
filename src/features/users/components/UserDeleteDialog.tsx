@@ -1,7 +1,12 @@
 /**
  * ============================================================================
- * USER DELETE DIALOG COMPONENT
+ * USER DELETE DIALOG COMPONENT - VERSION CORRIGÉE
  * ============================================================================
+ *
+ * Corrections :
+ * - ✅ Suppression de AlertDialogDescription (génère un <p>)
+ * - ✅ Structure HTML valide (pas de <div>, <p>, <ul> dans un <p>)
+ * - ✅ Contenu dans un simple <div>
  */
 
 import React from 'react';
@@ -10,7 +15,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -49,34 +53,26 @@ export const UserDeleteDialog: React.FC<UserDeleteDialogProps> = ({
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
               <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
             </div>
-            <AlertDialogTitle className="text-xl">
-              Supprimer l'utilisateur
-            </AlertDialogTitle>
+            <AlertDialogTitle className="text-xl">Supprimer l'utilisateur</AlertDialogTitle>
           </div>
 
-          <AlertDialogDescription className="text-left space-y-4 pt-4">
+          {/* ✅ CORRECTION : Utiliser un <div> au lieu de AlertDialogDescription */}
+          {/* AlertDialogDescription génère un <p> qui ne peut pas contenir de <div>, <p>, <ul> */}
+          <div className="text-sm text-muted-foreground text-left space-y-4 pt-4">
             {/* Utilisateur */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <UserAvatar
-                photoURL={user.photoURL}
-                displayName={user.displayName}
-                size="md"
-              />
+              <UserAvatar photoURL={user.photoURL} displayName={user.displayName} size="md" />
               <div>
                 <div className="font-semibold text-gray-900 dark:text-white">
                   {user.displayName}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {user.email}
-                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{user.email}</div>
               </div>
             </div>
 
             {/* Avertissement */}
-            <div className="text-sm space-y-2">
-              <p>
-                Êtes-vous sûr de vouloir supprimer cet utilisateur ?
-              </p>
+            <div className="space-y-2">
+              <p>Êtes-vous sûr de vouloir supprimer cet utilisateur ?</p>
               <p className="text-red-600 dark:text-red-400 font-medium">
                 Cette action est irréversible et entraînera :
               </p>
@@ -86,16 +82,15 @@ export const UserDeleteDialog: React.FC<UserDeleteDialogProps> = ({
                 <li>L'anonymisation des données personnelles</li>
               </ul>
               <p className="text-sm text-gray-500 mt-3">
-                Note : Les interventions et actions effectuées par cet utilisateur seront conservées pour l'historique.
+                Note : Les interventions et actions effectuées par cet utilisateur seront conservées
+                pour l'historique.
               </p>
             </div>
-          </AlertDialogDescription>
+          </div>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>
-            Annuler
-          </AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}

@@ -1,7 +1,12 @@
 /**
  * ============================================================================
- * USER AVATAR COMPONENT
+ * USER AVATAR COMPONENT - VERSION CORRIGÉE
  * ============================================================================
+ *
+ * Corrections :
+ * - ✅ Protection contre displayName undefined
+ * - ✅ Gestion des valeurs null/undefined
+ * - ✅ Valeurs par défaut si données manquantes
  */
 
 import React from 'react';
@@ -13,7 +18,7 @@ interface UserAvatarProps {
   /** URL de la photo */
   photoURL?: string | null;
   /** Nom complet pour les initiales */
-  displayName: string;
+  displayName?: string | null;
   /** Taille (sm, md, lg, xl) */
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Classe CSS additionnelle */
@@ -33,18 +38,37 @@ const sizeClasses = {
 
 /**
  * Obtenir les initiales d'un nom
+ * ✅ CORRECTION : Gère les valeurs undefined/null
  */
-function getInitials(name: string): string {
-  const parts = name.trim().split(' ');
-  if (parts.length === 0) return '??';
-  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+function getInitials(name?: string | null): string {
+  // ✅ Protection contre undefined/null/empty
+  if (!name || typeof name !== 'string') {
+    return '??';
+  }
+
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    return '??';
+  }
+
+  const parts = trimmedName.split(' ').filter(part => part.length > 0);
+
+  if (parts.length === 0) {
+    return '??';
+  }
+
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 /**
  * Générer une couleur de fond basée sur le nom
+ * ✅ CORRECTION : Gère les valeurs undefined/null
  */
-function getColorFromName(name: string): string {
+function getColorFromName(name?: string | null): string {
   const colors = [
     'bg-red-500',
     'bg-orange-500',
@@ -65,6 +89,11 @@ function getColorFromName(name: string): string {
     'bg-rose-500',
   ];
 
+  // ✅ Protection contre undefined/null
+  if (!name || typeof name !== 'string') {
+    return colors[0]; // Rouge par défaut
+  }
+
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   return colors[hash % colors.length];
 }
@@ -77,13 +106,15 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   showOnline = false,
   isOnline = false,
 }) => {
-  const initials = getInitials(displayName);
-  const bgColor = getColorFromName(displayName);
+  // ✅ CORRECTION : Fournir une valeur par défaut
+  const safeName = displayName || 'Utilisateur';
+  const initials = getInitials(safeName);
+  const bgColor = getColorFromName(safeName);
 
   return (
     <div className={cn('relative', className)}>
       <Avatar className={cn(sizeClasses[size])}>
-        <AvatarImage src={photoURL || undefined} alt={displayName} />
+        {photoURL && <AvatarImage src={photoURL} alt={safeName} />}
         <AvatarFallback className={cn(bgColor, 'text-white font-semibold')}>
           {initials}
         </AvatarFallback>

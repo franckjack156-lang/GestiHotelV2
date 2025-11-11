@@ -121,6 +121,8 @@ class UserService {
       throw new Error('Vous devez être connecté pour créer un utilisateur');
     }
 
+    console.log('🔵 [1/6] Début création utilisateur:', data.email);
+
     try {
       // Validation
       if (!isValidEmail(data.email)) {
@@ -133,9 +135,11 @@ class UserService {
 
       // 1. Créer l'utilisateur dans Firebase Auth
       // ⚠️ Ceci va automatiquement connecter le nouvel utilisateur
+      console.log('🔵 [2/6] Création dans Firebase Auth...');
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
 
       const userId = userCredential.user.uid;
+      console.log('✅ [2/6] Utilisateur Auth créé avec UID:', userId);
 
       // 2. Créer IMMÉDIATEMENT le document Firestore
       // (important pour que le profil existe quand AuthProvider vérifie)
@@ -164,9 +168,46 @@ class UserService {
 
       // ✅ Nettoyer et créer le document Firestore
       const cleanedUserData = removeUndefinedFields(userData);
-      await setDoc(doc(db, this.COLLECTION, userId), cleanedUserData);
+
+      console.log('🔵 [3/6] Création du document Firestore...');
+      console.log('📄 Données nettoyées:', Object.keys(cleanedUserData));
+
+      try {
+        await setDoc(doc(db, this.COLLECTION, userId), cleanedUserData);
+        console.log('✅ [3/6] Document Firestore créé');
+      } catch (firestoreError: any) {
+        console.error('❌ [3/6] ERREUR lors de la création du document Firestore:', firestoreError);
+        console.error('Code:', firestoreError.code);
+        console.error('Message:', firestoreError.message);
+
+        // Erreur de permissions Firestore
+        if (firestoreError.code === 'permission-denied') {
+          throw new Error(
+            'Permissions Firestore insuffisantes. Vérifiez vos règles Firestore. ' +
+              'Le document users/{userId} doit permettre "allow create: if isOwner(userId) || isAdmin()"'
+          );
+        }
+
+        throw firestoreError;
+      }
+
+      // Vérification : le document existe-t-il vraiment ?
+      console.log('🔵 [4/6] Vérification de la création...');
+      try {
+        const verificationDoc = await getDoc(doc(db, this.COLLECTION, userId));
+        if (verificationDoc.exists()) {
+          console.log('✅ [4/6] Vérification OK : Document bien présent dans Firestore');
+        } else {
+          console.error('❌ [4/6] ALERTE : Document introuvable après création !');
+          throw new Error("Le document Firestore n'a pas été créé correctement");
+        }
+      } catch (verifyError) {
+        console.error('❌ [4/6] Erreur lors de la vérification:', verifyError);
+        // On continue quand même, l'erreur sera gérée à la connexion
+      }
 
       // 3. Mettre à jour le profil Auth du nouvel utilisateur
+      console.log('🔵 [5/6] Mise à jour du profil Auth...');
       const authProfileData: any = {
         displayName: `${data.firstName} ${data.lastName}`,
       };
@@ -176,24 +217,36 @@ class UserService {
       }
 
       await updateProfile(userCredential.user, authProfileData);
+      console.log('✅ [5/6] Profil Auth mis à jour');
 
       // 4. ✅ Déconnecter le nouvel utilisateur pour que l'admin reste connecté
+      console.log('🔵 [6/6] Déconnexion du nouvel utilisateur...');
       await signOut(auth);
+      console.log('✅ [6/6] Déconnexion effectuée');
 
       // 5. Envoyer email d'invitation si demandé
       if (data.sendInvitation) {
         await this.sendInvitationEmail(data.email);
       }
 
+      console.log('✅ ========================================');
       console.log(`✅ Utilisateur créé avec succès: ${userId}`);
-      console.log("ℹ️ L'admin va être automatiquement reconnecté");
+      console.log('✅ Email:', data.email);
+      console.log('✅ Rôle:', data.role);
+      console.log("ℹ️  L'admin va être automatiquement reconnecté");
+      console.log('✅ ========================================');
+
       return userId;
     } catch (error: any) {
-      console.error('❌ Error creating user:', error);
+      console.error('❌ ========================================');
+      console.error('❌ ERREUR lors de la création utilisateur');
+      console.error('❌ ========================================');
+      console.error('Erreur complète:', error);
 
       // En cas d'erreur, déconnecter quand même pour éviter d'être bloqué
       try {
         await signOut(auth);
+        console.log('🔄 Déconnexion effectuée après erreur');
       } catch (signOutError) {
         console.error('Erreur lors de la déconnexion:', signOutError);
       }
@@ -206,7 +259,10 @@ class UserService {
       } else if (error.code === 'auth/weak-password') {
         throw new Error('Mot de passe trop faible (minimum 6 caractères)');
       } else if (error.code === 'permission-denied') {
-        throw new Error('Permissions insuffisantes pour créer un utilisateur');
+        throw new Error(
+          'Permissions Firestore insuffisantes. ' +
+            'Consultez le guide SOLUTION_PROFIL_INTROUVABLE.md pour corriger les règles Firestore.'
+        );
       }
 
       throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
