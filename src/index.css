@@ -24,6 +24,11 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 238.7 83.5% 66.7%;
     --radius: 0.5rem;
+
+    /* Variables de couleur pour le thème */
+    --theme-primary: var(--primary);
+    --theme-primary-dark: 238.7 83.5% 56%;
+    --theme-primary-light: 238.7 83.5% 76%;
   }
 
   .dark {
@@ -46,6 +51,11 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 238.7 83.5% 66.7%;
+
+    /* Variables de couleur pour le thème en mode sombre */
+    --theme-primary: var(--primary);
+    --theme-primary-dark: 238.7 83.5% 56%;
+    --theme-primary-light: 238.7 83.5% 76%;
   }
 }
 
@@ -56,4 +66,189 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Application des couleurs de thème aux éléments interactifs */
+@layer components {
+  /* Boutons primary utilisent la couleur du thème */
+  button[class*="bg-primary"],
+  .bg-primary {
+    background-color: hsl(var(--theme-primary)) !important;
+  }
+
+  button[class*="bg-primary"]:hover,
+  .bg-primary:hover {
+    background-color: hsl(var(--theme-primary-dark)) !important;
+  }
+
+  /* Texte avec couleur primary */
+  .text-primary {
+    color: hsl(var(--theme-primary)) !important;
+  }
+
+  /* Bordures avec couleur primary */
+  .border-primary {
+    border-color: hsl(var(--theme-primary)) !important;
+  }
+
+  /* Ring focus avec couleur du thème */
+  *:focus-visible {
+    --tw-ring-color: hsl(var(--theme-primary)) !important;
+  }
+
+  /* Links avec la couleur du thème */
+  a[class*="text-primary"] {
+    color: hsl(var(--theme-primary-dark)) !important;
+  }
+
+  a[class*="text-primary"]:hover {
+    color: hsl(var(--theme-primary)) !important;
+  }
+
+  /* Badges et indicateurs */
+  .badge-primary {
+    background-color: hsl(var(--theme-primary-light) / 0.2);
+    color: hsl(var(--theme-primary-dark));
+  }
+}
+
+/* Densité de l'interface */
+/* Densité compacte - Espaces réduits */
+.density-compact {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.density-compact .space-y-6 > * + *,
+.density-compact [class*="space-y-6"] > * + * {
+  margin-top: 0.75rem !important;
+}
+
+.density-compact .space-y-4 > * + *,
+.density-compact [class*="space-y-4"] > * + * {
+  margin-top: 0.5rem !important;
+}
+
+.density-compact .space-y-2 > * + *,
+.density-compact [class*="space-y-2"] > * + * {
+  margin-top: 0.25rem !important;
+}
+
+.density-compact .p-6,
+.density-compact [class*="p-6"] {
+  padding: 0.75rem !important;
+}
+
+.density-compact .p-4,
+.density-compact [class*="p-4"] {
+  padding: 0.5rem !important;
+}
+
+.density-compact .gap-6,
+.density-compact [class*="gap-6"] {
+  gap: 0.75rem !important;
+}
+
+.density-compact .gap-4,
+.density-compact [class*="gap-4"] {
+  gap: 0.5rem !important;
+}
+
+.density-compact main {
+  padding: 1rem !important;
+}
+
+.density-compact button,
+.density-compact .btn {
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+  font-size: 0.875rem !important;
+  min-height: 32px;
+}
+
+.density-compact h1 {
+  font-size: 1.5rem !important;
+}
+
+.density-compact h2 {
+  font-size: 1.25rem !important;
+}
+
+.density-compact h3 {
+  font-size: 1.1rem !important;
+}
+
+/* Densité confortable - Espaces standards (par défaut) */
+.density-comfortable {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Densité espacée - Plus d'espace */
+.density-spacious {
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.density-spacious .space-y-6 > * + *,
+.density-spacious [class*="space-y-6"] > * + * {
+  margin-top: 2.5rem !important;
+}
+
+.density-spacious .space-y-4 > * + *,
+.density-spacious [class*="space-y-4"] > * + * {
+  margin-top: 1.75rem !important;
+}
+
+.density-spacious .space-y-2 > * + *,
+.density-spacious [class*="space-y-2"] > * + * {
+  margin-top: 1rem !important;
+}
+
+.density-spacious .p-6,
+.density-spacious [class*="p-6"] {
+  padding: 2.5rem !important;
+}
+
+.density-spacious .p-4,
+.density-spacious [class*="p-4"] {
+  padding: 1.75rem !important;
+}
+
+.density-spacious .gap-6,
+.density-spacious [class*="gap-6"] {
+  gap: 2.5rem !important;
+}
+
+.density-spacious .gap-4,
+.density-spacious [class*="gap-4"] {
+  gap: 1.75rem !important;
+}
+
+.density-spacious main {
+  padding: 2rem !important;
+}
+
+.density-spacious button,
+.density-spacious .btn {
+  padding-top: 0.875rem !important;
+  padding-bottom: 0.875rem !important;
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+  font-size: 1.125rem !important;
+  min-height: 44px;
+}
+
+.density-spacious h1 {
+  font-size: 2.5rem !important;
+}
+
+.density-spacious h2 {
+  font-size: 2rem !important;
+}
+
+.density-spacious h3 {
+  font-size: 1.5rem !important;
 }

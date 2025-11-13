@@ -25,18 +25,31 @@ export type EstablishmentCategory = 1 | 2 | 3 | 4 | 5;
 
 /**
  * Configuration des features d'un établissement
+ * Chaque feature peut être activée/désactivée par établissement
  */
 export interface EstablishmentFeatures {
+  // Core features
   interventions: FeatureConfig;
   rooms: FeatureConfig;
   planning: FeatureConfig;
   analytics: FeatureConfig;
-  qrcodes: FeatureConfig;
-  templates: FeatureConfig;
+
+  // Communication features
   messaging: FeatureConfig;
   notifications: FeatureConfig;
+  pushNotifications: FeatureConfig;
+
+  // Data management features
   exports: FeatureConfig;
+  tags: FeatureConfig;
+  photos: FeatureConfig;
+
+  // Advanced features
+  qrcodes: FeatureConfig;
+  templates: FeatureConfig;
   signatures: FeatureConfig;
+  validation: FeatureConfig;
+  advancedAnalytics: FeatureConfig;
 }
 
 /**
@@ -222,17 +235,170 @@ export const ESTABLISHMENT_TYPE_LABELS: Record<EstablishmentType, string> = {
  * Configuration par défaut des features
  */
 export const DEFAULT_ESTABLISHMENT_FEATURES: EstablishmentFeatures = {
+  // Core features (activées par défaut)
   interventions: { enabled: true },
   rooms: { enabled: true },
   planning: { enabled: true },
   analytics: { enabled: true },
-  qrcodes: { enabled: false },
-  templates: { enabled: false },
+
+  // Communication features
   messaging: { enabled: true },
   notifications: { enabled: true },
+  pushNotifications: { enabled: false }, // Nécessite configuration supplémentaire
+
+  // Data management features
   exports: { enabled: true },
+  tags: { enabled: true },
+  photos: { enabled: true },
+
+  // Advanced features (désactivées par défaut)
+  qrcodes: { enabled: false },
+  templates: { enabled: false },
   signatures: { enabled: false },
+  validation: { enabled: true },
+  advancedAnalytics: { enabled: false },
 };
+
+/**
+ * Métadonnées des features (labels, descriptions, icônes)
+ */
+export interface FeatureMetadata {
+  key: keyof EstablishmentFeatures;
+  label: string;
+  description: string;
+  icon: string; // Lucide icon name
+  category: 'core' | 'communication' | 'data' | 'advanced';
+  requiresConfig?: boolean;
+  dependsOn?: (keyof EstablishmentFeatures)[];
+}
+
+/**
+ * Catalogue des features disponibles
+ */
+export const FEATURES_CATALOG: FeatureMetadata[] = [
+  // Core features
+  {
+    key: 'interventions',
+    label: 'Interventions',
+    description: 'Gestion des interventions de maintenance',
+    icon: 'ClipboardList',
+    category: 'core',
+  },
+  {
+    key: 'rooms',
+    label: 'Chambres',
+    description: 'Gestion des chambres et espaces',
+    icon: 'DoorClosed',
+    category: 'core',
+  },
+  {
+    key: 'planning',
+    label: 'Planning',
+    description: 'Calendrier et planification des interventions',
+    icon: 'Calendar',
+    category: 'core',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'analytics',
+    label: 'Analytics de base',
+    description: 'Statistiques et rapports simples',
+    icon: 'BarChart3',
+    category: 'core',
+  },
+
+  // Communication features
+  {
+    key: 'messaging',
+    label: 'Messagerie',
+    description: 'Commentaires et discussions sur les interventions',
+    icon: 'MessageSquare',
+    category: 'communication',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'notifications',
+    label: 'Notifications',
+    description: 'Notifications dans l\'application',
+    icon: 'Bell',
+    category: 'communication',
+  },
+  {
+    key: 'pushNotifications',
+    label: 'Notifications Push',
+    description: 'Notifications push sur appareils mobiles',
+    icon: 'BellRing',
+    category: 'communication',
+    requiresConfig: true,
+    dependsOn: ['notifications'],
+  },
+
+  // Data management features
+  {
+    key: 'exports',
+    label: 'Export de données',
+    description: 'Export en Excel, PDF, CSV',
+    icon: 'Download',
+    category: 'data',
+  },
+  {
+    key: 'tags',
+    label: 'Gestion des tags',
+    description: 'Étiquettes personnalisées pour les interventions',
+    icon: 'Tag',
+    category: 'data',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'photos',
+    label: 'Photos',
+    description: 'Photos attachées aux interventions',
+    icon: 'Camera',
+    category: 'data',
+    dependsOn: ['interventions'],
+  },
+
+  // Advanced features
+  {
+    key: 'qrcodes',
+    label: 'QR Codes',
+    description: 'Génération et scan de QR codes',
+    icon: 'QrCode',
+    category: 'advanced',
+  },
+  {
+    key: 'templates',
+    label: 'Templates',
+    description: 'Modèles d\'interventions pré-remplis',
+    icon: 'FileText',
+    category: 'advanced',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'signatures',
+    label: 'Signatures',
+    description: 'Signature électronique des interventions',
+    icon: 'PenTool',
+    category: 'advanced',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'validation',
+    label: 'Validation',
+    description: 'Workflow de validation des interventions',
+    icon: 'CheckCircle',
+    category: 'advanced',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'advancedAnalytics',
+    label: 'Analytics avancées',
+    description: 'Rapports détaillés et analytics personnalisées',
+    icon: 'TrendingUp',
+    category: 'advanced',
+    dependsOn: ['analytics'],
+  },
+];
 
 /**
  * Paramètres par défaut

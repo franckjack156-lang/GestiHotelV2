@@ -28,6 +28,7 @@ import {
 } from '@/shared/components/ui/select';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
 import { getIntervention } from '@/features/interventions/services/interventionService';
@@ -221,56 +222,38 @@ export const EditInterventionPage = () => {
             <div className="grid gap-4 md:grid-cols-3">
               <div>
                 <Label htmlFor="type">Type *</Label>
-                <Select value={watch('type')} onValueChange={value => setValue('type', value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(INTERVENTION_TYPE_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <DynamicListSelect
+                  listKey="interventionTypes"
+                  value={watch('type')}
+                  onChange={value => setValue('type', value)}
+                  placeholder="Sélectionner un type"
+                  showIcons
+                  showColors
+                />
               </div>
 
               <div>
                 <Label htmlFor="category">Catégorie *</Label>
-                <Select
+                <DynamicListSelect
+                  listKey="interventionCategories"
                   value={watch('category')}
-                  onValueChange={value => setValue('category', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={value => setValue('category', value)}
+                  placeholder="Sélectionner une catégorie"
+                  showIcons
+                  showColors
+                />
               </div>
 
               <div>
                 <Label htmlFor="priority">Priorité *</Label>
-                <Select
+                <DynamicListSelect
+                  listKey="interventionPriorities"
                   value={watch('priority')}
-                  onValueChange={value => setValue('priority', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
-                      <SelectItem key={key} value={key}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={value => setValue('priority', value)}
+                  placeholder="Sélectionner une priorité"
+                  showIcons
+                  showColors
+                />
               </div>
             </div>
           </CardContent>

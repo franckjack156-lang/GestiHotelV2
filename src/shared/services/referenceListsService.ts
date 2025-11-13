@@ -75,6 +75,28 @@ const DEFAULT_VALIDATION_RULES = {
 };
 
 // ============================================================================
+// UTILS
+// ============================================================================
+
+/**
+ * Nettoyer un objet de toutes ses propriétés undefined
+ * Firestore n'accepte pas les valeurs undefined
+ */
+const removeUndefined = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(removeUndefined);
+  if (typeof obj !== 'object') return obj;
+
+  const cleaned: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      cleaned[key] = removeUndefined(obj[key]);
+    }
+  }
+  return cleaned;
+};
+
+// ============================================================================
 // PATHS FIRESTORE
 // ============================================================================
 
@@ -113,11 +135,12 @@ async function performListOperation<T>(
 
   const batch = writeBatch(db);
 
-  batch.update(getListsDocPath(establishmentId), {
+  // Nettoyer les valeurs undefined avant d'envoyer à Firestore
+  batch.update(getListsDocPath(establishmentId), removeUndefined({
     [`lists.${listKey}`]: list,
     lastModified: serverTimestamp(),
     modifiedBy: userId,
-  });
+  }));
 
   const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
 
@@ -167,7 +190,7 @@ export const getAllLists = async (
     const data = docSnap.data();
     return {
       ...data,
-      lastModified: data.lastModified?.toDate(),
+      lastModified: data.lastModified?.toDate ? data.lastModified.toDate() : (data.lastModified || new Date()),
       lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
         acc[key] = {
           ...config,
@@ -347,9 +370,11 @@ export const addItem = async (
           throw new Error('Cette valeur existe déjà');
         }
 
-        const newItem: ReferenceItem = {
-          ...input,
+        // Construire l'item avec uniquement les champs définis (pas undefined)
+        const newItem: any = {
           id: `${input.value}_${Date.now()}`,
+          value: input.value,
+          label: input.label,
           order: Math.max(...list.items.map(i => i.order), 0) + 1,
           isActive: true,
           createdAt: new Date(),
@@ -357,7 +382,14 @@ export const addItem = async (
           usageCount: 0,
         };
 
-        list.items.push(newItem);
+        // Ajouter les champs optionnels uniquement s'ils sont définis et non undefined
+        if (input.color !== undefined) newItem.color = input.color;
+        if (input.icon !== undefined) newItem.icon = input.icon;
+        if (input.description !== undefined) newItem.description = input.description;
+        if (input.labels !== undefined) newItem.labels = input.labels;
+        if (input.metadata !== undefined) newItem.metadata = input.metadata;
+
+        list.items.push(newItem as ReferenceItem);
         return newItem.id;
       },
       'ADD_ITEM'
@@ -387,11 +419,26 @@ export const updateItem = async (
         if (itemIndex === -1) throw new Error('Item non trouvé');
 
         const oldItem = list.items[itemIndex];
-        list.items[itemIndex] = {
-          ...oldItem,
-          ...input,
+
+        // Ne mettre à jour que les champs définis
+        const updates: Partial<ReferenceItem> = {
           updatedAt: new Date(),
           updatedBy: userId,
+        };
+
+        if (input.value !== undefined) updates.value = input.value;
+        if (input.label !== undefined) updates.label = input.label;
+        if (input.color !== undefined) updates.color = input.color;
+        if (input.icon !== undefined) updates.icon = input.icon;
+        if (input.description !== undefined) updates.description = input.description;
+        if (input.labels !== undefined) updates.labels = input.labels;
+        if (input.metadata !== undefined) updates.metadata = input.metadata;
+        if (input.isActive !== undefined) updates.isActive = input.isActive;
+        if (input.order !== undefined) updates.order = input.order;
+
+        list.items[itemIndex] = {
+          ...oldItem,
+          ...updates,
         };
 
         return { before: oldItem, after: list.items[itemIndex] };

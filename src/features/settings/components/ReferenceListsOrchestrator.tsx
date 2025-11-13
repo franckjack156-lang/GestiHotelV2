@@ -39,7 +39,16 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  MoreVertical,
+  Sparkles,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 // Composants existants
@@ -199,126 +208,119 @@ export const ReferenceListsOrchestrator: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* ========================================================================
-          HEADER & ACTIONS RAPIDES
+          MODERN HEADER WITH GRADIENT
           ======================================================================== */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Listes de Référence</h1>
-          <p className="text-muted-foreground mt-1">
-            Gérez les listes déroulantes pour {currentEstablishment.name}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {/* Export */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportAll}
-            disabled={isExporting || isLoading}
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Export...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Exporter
-              </>
-            )}
-          </Button>
-
-          {/* Templates */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsTemplateDialogOpen(true)}
-            disabled={isLoading}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Templates
-          </Button>
-
-          {/* Duplication */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsDuplicateDialogOpen(true)}
-            disabled={isLoading || !establishments || establishments.length < 2}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Dupliquer
-          </Button>
-        </div>
-      </div>
-
-      {/* ========================================================================
-          STATS CARDS
-          ======================================================================== */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Listes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalLists}</div>
-            <p className="text-xs text-muted-foreground mt-1">Configurées pour cet établissement</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Items Totaux</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalItems}</div>
-            <p className="text-xs text-muted-foreground mt-1">Toutes listes confondues</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Items Actifs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-baseline gap-2">
-              <div className="text-2xl font-bold text-green-600">{stats.activeItems}</div>
-              <Badge variant="outline" className="text-xs">
-                {stats.totalItems > 0
-                  ? Math.round((stats.activeItems / stats.totalItems) * 100)
-                  : 0}
-                %
-              </Badge>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-violet-500 to-purple-600 p-8 shadow-lg">
+        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]" />
+        <div className="relative">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
+                  <FileText className="h-6 w-6 text-white" />
+                </div>
+                <h1 className="text-3xl font-bold text-white">Listes de Référence</h1>
+              </div>
+              <p className="text-blue-100 text-base max-w-2xl">
+                Gérez les listes déroulantes pour {currentEstablishment.name}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Visibles dans l'application</p>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Dernière Modif.</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.lastModified
-                ? new Date(stats.lastModified).toLocaleDateString('fr-FR', {
-                    day: '2-digit',
-                    month: 'short',
-                  })
-                : 'N/A'}
+            {/* Actions Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white shadow-lg"
+                  disabled={isLoading}
+                >
+                  <MoreVertical className="h-4 w-4 mr-2" />
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={handleExportAll} disabled={isExporting || isLoading}>
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Export...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-4 w-4" />
+                      Exporter en Excel
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setIsTemplateDialogOpen(true)}
+                  disabled={isLoading}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Appliquer un template
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setIsDuplicateDialogOpen(true)}
+                  disabled={isLoading || !establishments || establishments.length < 2}
+                >
+                  <Copy className="mr-2 h-4 w-4" />
+                  Dupliquer vers...
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Compact Stats Row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-blue-100">Listes</span>
+                <Sparkles className="h-3.5 w-3.5 text-blue-200" />
+              </div>
+              <div className="text-2xl font-bold text-white">{stats.totalLists}</div>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.lastModified
-                ? new Date(stats.lastModified).toLocaleTimeString('fr-FR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })
-                : 'Jamais modifié'}
-            </p>
-          </CardContent>
-        </Card>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-blue-100">Items</span>
+                <BarChart3 className="h-3.5 w-3.5 text-blue-200" />
+              </div>
+              <div className="text-2xl font-bold text-white">{stats.totalItems}</div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-blue-100">Actifs</span>
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-300" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-white">{stats.activeItems}</span>
+                <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                  {stats.totalItems > 0
+                    ? Math.round((stats.activeItems / stats.totalItems) * 100)
+                    : 0}%
+                </Badge>
+              </div>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-blue-100">Modifié</span>
+                <Settings className="h-3.5 w-3.5 text-blue-200" />
+              </div>
+              <div className="text-lg font-bold text-white">
+                {stats.lastModified
+                  ? new Date(stats.lastModified).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                    })
+                  : 'N/A'}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ========================================================================

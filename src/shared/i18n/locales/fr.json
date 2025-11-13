@@ -1,0 +1,149 @@
+{
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "interventions": "Interventions",
+    "rooms": "Chambres",
+    "planning": "Planning",
+    "notifications": "Notifications",
+    "settings": "Paramètres"
+  },
+  "header": {
+    "search": "Rechercher...",
+    "profile": "Profil",
+    "logout": "Déconnexion"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue",
+    "statistics": "Statistiques",
+    "recent_activities": "Activités récentes"
+  },
+  "interventions": {
+    "title": "Interventions",
+    "create": "Créer une intervention",
+    "edit": "Modifier l'intervention",
+    "details": "Détails de l'intervention",
+    "list": "Liste des interventions",
+    "status": "Statut",
+    "priority": "Priorité",
+    "type": "Type",
+    "room": "Chambre",
+    "description": "Description",
+    "assigned_to": "Assigné à",
+    "created_at": "Créé le",
+    "updated_at": "Mis à jour le"
+  },
+  "rooms": {
+    "title": "Chambres",
+    "create": "Ajouter une chambre",
+    "edit": "Modifier la chambre",
+    "details": "Détails de la chambre",
+    "list": "Liste des chambres",
+    "number": "Numéro",
+    "floor": "Étage",
+    "type": "Type",
+    "status": "Statut",
+    "capacity": "Capacité"
+  },
+  "planning": {
+    "title": "Planning",
+    "calendar": "Calendrier",
+    "day": "Jour",
+    "week": "Semaine",
+    "month": "Mois"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_as_read": "Marquer comme lu",
+    "mark_all_as_read": "Tout marquer comme lu",
+    "no_notifications": "Aucune notification"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "notifications": "Notifications",
+    "security": "Sécurité",
+    "preferences": "Préférences",
+    "users": "Utilisateurs",
+    "establishments": "Établissements",
+    "reference_lists": "Listes de référence",
+    "about": "À propos",
+    "theme": "Thème",
+    "theme_color": "Couleur du thème",
+    "density": "Densité",
+    "language": "Langue",
+    "sidebar_collapsed": "Réduire le menu latéral",
+    "light": "Clair",
+    "dark": "Sombre",
+    "auto": "Auto",
+    "compact": "Compact",
+    "comfortable": "Confortable",
+    "spacious": "Espacé",
+    "date_format": "Format de date",
+    "time_format": "Format de l'heure",
+    "default_view": "Vue par défaut",
+    "items_per_page": "Éléments par page"
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "create": "Créer un utilisateur",
+    "edit": "Modifier l'utilisateur",
+    "details": "Détails de l'utilisateur",
+    "list": "Liste des utilisateurs",
+    "name": "Nom",
+    "email": "Email",
+    "role": "Rôle",
+    "status": "Statut",
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "establishments": {
+    "title": "Établissements",
+    "create": "Créer un établissement",
+    "edit": "Modifier l'établissement",
+    "details": "Détails de l'établissement",
+    "list": "Liste des établissements",
+    "name": "Nom",
+    "address": "Adresse",
+    "phone": "Téléphone",
+    "features": "Fonctionnalités"
+  },
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "create": "Créer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "actions": "Actions",
+    "view": "Voir",
+    "download": "Télécharger",
+    "upload": "Téléverser",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "submit": "Soumettre",
+    "reset": "Réinitialiser"
+  },
+  "footer": {
+    "version": "GestiHôtel v2.0.0",
+    "copyright": "© 2025 Tous droits réservés"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "email": "Email invalide",
+    "min_length": "Minimum {{count}} caractères",
+    "max_length": "Maximum {{count}} caractères"
+  }
+}

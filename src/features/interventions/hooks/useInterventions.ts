@@ -7,11 +7,13 @@
 import { useEffect, useCallback } from 'react';
 import { useInterventionStore } from '../stores/interventionStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
+import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import interventionService from '../services/interventionService';
 import type { InterventionFilters, InterventionSortOptions } from '../types/intervention.types';
 
 export const useInterventions = () => {
   const { user } = useAuthStore();
+  const { currentEstablishment } = useEstablishmentStore();
   const {
     interventions,
     isLoading,
@@ -31,7 +33,7 @@ export const useInterventions = () => {
     updateStats,
   } = useInterventionStore();
 
-  const establishmentId = user?.currentEstablishmentId || user?.establishmentIds[0];
+  const establishmentId = currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
 
   /**
    * Charger les interventions avec temps réel

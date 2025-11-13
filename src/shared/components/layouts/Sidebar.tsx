@@ -1,123 +1,181 @@
 /**
- * Sidebar Component
+ * Sidebar Component - VERSION SIMPLIFIÉE
  *
- * Barre latérale de navigation de l'application
+ * Menu de navigation latéral
+ * Mode réduit = icônes seulement (64px) | Mode normal = icônes + labels (256px)
  */
 
-import { NavLink } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
-  X,
-  Home,
+  LayoutDashboard,
   ClipboardList,
-  BarChart,
-  Calendar,
   Building2,
-  Users,
+  DoorClosed,
+  Calendar,
+  Bell,
   Settings,
 } from 'lucide-react';
-import { cn } from '@/shared/utils/cn';
-import { Button } from '@/shared/components/ui/button';
+import { cn } from '@/shared/lib/utils';
+import { useMemo } from 'react';
+import { useFeatureFlags } from '@/shared/hooks/useFeatureFlag';
+import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
 
 interface SidebarProps {
   isOpen: boolean;
-  onClose: () => void;
+  isCollapsed?: boolean;
+  onClose?: () => void;
 }
 
-/**
- * Items de navigation
- */
-const navigationItems = [
-  {
-    name: 'Dashboard',
-    href: '/app/dashboard',
-    icon: Home,
-  },
-  {
-    name: 'Interventions',
-    href: '/app/interventions',
-    icon: ClipboardList,
-  },
-  {
-    name: 'Analytics',
-    href: '/app/analytics',
-    icon: BarChart,
-  },
-  {
-    name: 'Planning',
-    href: '/app/planning',
-    icon: Calendar,
-  },
-  {
-    name: 'Établissements',
-    href: '/app/establishments',
-    icon: Building2,
-  },
-  {
-    name: 'Utilisateurs', // ✅ Prêt pour le module Users
-    href: '/app/users',
-    icon: Users,
-  },
-  {
-    name: 'Paramètres',
-    href: '/app/settings',
-    icon: Settings,
-  },
-];
+interface NavItem {
+  translationKey: string; // Clé de traduction (ex: "dashboard")
+  href: string;
+  icon: React.ElementType;
+  requiredFeature?: keyof EstablishmentFeatures;
+  alwaysVisible?: boolean;
+}
 
-export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
+export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) => {
+  const location = useLocation();
+  const { t } = useTranslation();
+
+  // Récupérer les features actives
+  const features = useFeatureFlags([
+    'interventions',
+    'rooms',
+    'planning',
+    'notifications',
+  ]);
+
+  /**
+   * Navigation items
+   */
+  const allNavItems: NavItem[] = [
+    {
+      translationKey: 'dashboard',
+      href: '/app/dashboard',
+      icon: LayoutDashboard,
+      alwaysVisible: true,
+    },
+    {
+      translationKey: 'interventions',
+      href: '/app/interventions',
+      icon: ClipboardList,
+      requiredFeature: 'interventions',
+    },
+    {
+      translationKey: 'rooms',
+      href: '/app/rooms',
+      icon: DoorClosed,
+      requiredFeature: 'rooms',
+    },
+    {
+      translationKey: 'planning',
+      href: '/app/planning',
+      icon: Calendar,
+      requiredFeature: 'planning',
+    },
+    {
+      translationKey: 'notifications',
+      href: '/app/notifications',
+      icon: Bell,
+      requiredFeature: 'notifications',
+    },
+    {
+      translationKey: 'settings',
+      href: '/app/settings',
+      icon: Settings,
+      alwaysVisible: true,
+    },
+  ];
+
+  /**
+   * Filtrer selon features activées
+   */
+  const navItems = useMemo(() => {
+    return allNavItems.filter(item => {
+      if (item.alwaysVisible) return true;
+      if (!item.requiredFeature) return true;
+      return features[item.requiredFeature] === true;
+    });
+  }, [features]);
+
+  /**
+   * Vérifier si un lien est actif
+   */
+  const isActive = (href: string) => {
+    if (href === '/app/dashboard') {
+      return location.pathname === href;
+    }
+    return location.pathname.startsWith(href);
+  };
+
   return (
     <>
       {/* Overlay mobile */}
-      {isOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={onClose} />}
+      {isOpen && (
+        <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={onClose} />
+      )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 w-64 transform bg-white transition-transform duration-200 ease-in-out dark:bg-gray-800 lg:relative lg:translate-x-0',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          'fixed left-0 top-0 z-30 h-full border-r bg-white transition-all duration-300 dark:bg-gray-800 dark:border-gray-700 lg:sticky lg:translate-x-0',
+          isOpen ? 'translate-x-0' : '-translate-x-full',
+          isCollapsed ? 'w-16' : 'w-64'
         )}
       >
-        {/* Header */}
-        <div className="flex h-16 items-center justify-between border-b px-6 dark:border-gray-700">
-          <span className="text-lg font-semibold text-gray-900 dark:text-white">Navigation</span>
-          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden">
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <div className="flex h-full flex-col">
+          {/* Logo mobile */}
+          <div className="flex h-16 items-center gap-2 border-b px-6 lg:hidden dark:border-gray-700">
+            <Building2 className="h-6 w-6" style={{ color: 'hsl(var(--theme-primary))' }} />
+            {!isCollapsed && (
+              <span className="font-bold text-gray-900 dark:text-white">GestiHôtel</span>
+            )}
+          </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 p-4">
-          {navigationItems.map(item => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                onClick={() => {
-                  // Fermer la sidebar sur mobile après clic
-                  if (window.innerWidth < 1024) {
-                    onClose();
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={onClose}
+                  className={cn(
+                    'flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                    'hover:bg-gray-100 dark:hover:bg-gray-700',
+                    isCollapsed ? 'justify-center' : 'gap-3'
+                  )}
+                  style={
+                    active
+                      ? {
+                          backgroundColor: 'hsl(var(--theme-primary-light) / 0.15)',
+                          color: 'hsl(var(--theme-primary-dark))',
+                        }
+                      : undefined
                   }
-                }}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
-                  )
-                }
-              >
-                <Icon className="h-5 w-5" />
-                {item.name}
-              </NavLink>
-            );
-          })}
-        </nav>
+                  title={isCollapsed ? t(`nav.${item.translationKey}`) : undefined}
+                >
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {!isCollapsed && <span>{t(`nav.${item.translationKey}`)}</span>}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Footer */}
-        <div className="border-t p-4 dark:border-gray-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400">GestiHôtel v2.0.0</p>
+          {/* Footer */}
+          {!isCollapsed && (
+            <div className="border-t p-4 dark:border-gray-700">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="font-medium">{t('footer.version')}</p>
+                <p className="mt-1">{t('footer.copyright')}</p>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>

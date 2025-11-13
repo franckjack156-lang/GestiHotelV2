@@ -9,6 +9,7 @@
 import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useUserStore } from '../stores/userStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
+import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import userService from '../services/userService';
 import type {
   User,
@@ -28,6 +29,7 @@ import { UserStatus } from '../types/user.types';
  */
 export const useUsers = () => {
   const { user } = useAuthStore();
+  const { currentEstablishment } = useEstablishmentStore();
   const {
     users,
     isLoading,
@@ -52,7 +54,7 @@ export const useUsers = () => {
   } = useUserStore();
 
   // Établissement actuel
-  const establishmentId = user?.currentEstablishmentId || user?.establishmentIds?.[0];
+  const establishmentId = currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
 
   /**
    * Charger les utilisateurs avec temps réel

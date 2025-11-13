@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "interventions": "Interventions",
+    "rooms": "Rooms",
+    "planning": "Planning",
+    "notifications": "Notifications",
+    "settings": "Settings"
+  },
+  "header": {
+    "search": "Search...",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "settings": {
+    "title": "Settings",
+    "profile": "Profile",
+    "notifications": "Notifications",
+    "security": "Security",
+    "preferences": "Preferences",
+    "users": "Users",
+    "establishments": "Establishments",
+    "reference_lists": "Reference Lists",
+    "about": "About",
+    "theme": "Theme",
+    "theme_color": "Theme Color",
+    "density": "Density",
+    "language": "Language",
+    "sidebar_collapsed": "Collapse Sidebar",
+    "light": "Light",
+    "dark": "Dark",
+    "auto": "Auto",
+    "compact": "Compact",
+    "comfortable": "Comfortable",
+    "spacious": "Spacious"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "footer": {
+    "version": "GestiHôtel v2.0.0",
+    "copyright": "© 2025 All rights reserved"
+  }
+}

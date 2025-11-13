@@ -2,65 +2,21 @@
  * PriorityBadge Component
  *
  * Badge pour afficher la priorité d'une intervention
+ * Utilise maintenant les listes de référence dynamiques
  *
  * Destination: src/features/interventions/components/badges/PriorityBadge.tsx
  */
 
-import { Badge } from '@/shared/components/ui/badge';
-import { AlertCircle, ArrowUp, Minus, ArrowDown } from 'lucide-react';
-import { InterventionPriority, PRIORITY_LABELS } from '@/shared/types/status.types';
+import { DynamicBadge } from '@/shared/components/ui/DynamicBadge';
+import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
+import { InterventionPriority } from '@/shared/types/status.types';
 
 interface PriorityBadgeProps {
-  priority: InterventionPriority;
+  priority: InterventionPriority | string;
   showIcon?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
-
-const PRIORITY_CONFIG: Record<
-  InterventionPriority,
-  {
-    label: string;
-    icon: any;
-    className: string;
-  }
-> = {
-  [InterventionPriority.CRITICAL]: {
-    label: PRIORITY_LABELS[InterventionPriority.CRITICAL],
-    icon: AlertCircle,
-    className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',
-  },
-  [InterventionPriority.HIGH]: {
-    label: PRIORITY_LABELS[InterventionPriority.HIGH],
-    icon: ArrowUp,
-    className:
-      'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400',
-  },
-  [InterventionPriority.MEDIUM]: {
-    label: PRIORITY_LABELS[InterventionPriority.MEDIUM],
-    icon: Minus,
-    className:
-      'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400',
-  },
-  [InterventionPriority.LOW]: {
-    label: PRIORITY_LABELS[InterventionPriority.LOW],
-    icon: ArrowDown,
-    className:
-      'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400',
-  },
-};
-
-const SIZE_CLASSES = {
-  sm: 'text-xs px-2 py-0.5',
-  md: 'text-sm px-2.5 py-1',
-  lg: 'text-base px-3 py-1.5',
-} as const;
-
-const ICON_SIZES = {
-  sm: 12,
-  md: 14,
-  lg: 16,
-} as const;
 
 export const PriorityBadge = ({
   priority,
@@ -68,35 +24,18 @@ export const PriorityBadge = ({
   size = 'md',
   className = '',
 }: PriorityBadgeProps) => {
-  // Vérifier que la priorité existe dans la configuration
-  const config = PRIORITY_CONFIG[priority];
+  const { getItemByValue } = useAllReferenceLists({ realtime: false, autoLoad: true });
 
-  // Si la priorité n'est pas reconnue, utiliser MEDIUM comme fallback
-  if (!config) {
-    console.warn(`Priorité d'intervention non reconnue: "${priority}". Utilisation de MEDIUM.`);
-    const fallbackConfig = PRIORITY_CONFIG[InterventionPriority.MEDIUM];
-    const FallbackIcon = fallbackConfig.icon;
-
-    return (
-      <Badge
-        variant="secondary"
-        className={`${fallbackConfig.className} ${SIZE_CLASSES[size]} font-medium inline-flex items-center gap-1.5 ${className}`}
-      >
-        {showIcon && <FallbackIcon size={ICON_SIZES[size]} className="flex-shrink-0" />}
-        <span>{String(priority) || 'Non défini'}</span>
-      </Badge>
-    );
-  }
-
-  const Icon = config.icon;
+  // Récupérer l'item de la liste de référence
+  const priorityItem = getItemByValue('interventionPriorities', priority);
 
   return (
-    <Badge
-      variant="secondary"
-      className={`${config.className} ${SIZE_CLASSES[size]} font-medium inline-flex items-center gap-1.5 ${className}`}
-    >
-      {showIcon && <Icon size={ICON_SIZES[size]} className="flex-shrink-0" />}
-      <span>{config.label}</span>
-    </Badge>
+    <DynamicBadge
+      item={priorityItem}
+      showIcon={showIcon}
+      size={size}
+      className={className}
+      fallbackLabel={String(priority) || 'Non défini'}
+    />
   );
 };

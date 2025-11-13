@@ -1,10 +1,8 @@
 /**
- * Router Configuration - VERSION CORRIGÉE
+ * Router Configuration - VERSION COMPLÈTE
  *
  * Configuration des routes de l'application avec React Router
- *
- * ✅ Corrections :
- * - Ajout de la route d'édition utilisateur (/app/users/:id/edit)
+ * Inclut toutes les nouvelles pages créées
  */
 
 import { createBrowserRouter, Navigate } from 'react-router-dom';
@@ -12,13 +10,17 @@ import { MainLayout } from '@/shared/components/layouts/MainLayout';
 import { AuthLayout } from '@/shared/components/layouts/AuthLayout';
 import { ProtectedRoute } from '@/shared/components/guards/ProtectedRoute';
 import { GuestRoute } from '@/shared/components/guards/GuestRoute';
+import { FeatureGuard } from '@/shared/components/guards/FeatureGuard';
 
-// Pages
+// Auth Pages
 import { LoginPage } from '@/pages/Login';
 import { RegisterPage } from '@/pages/Register';
 import { ResetPasswordPage } from '@/pages/ResetPassword';
+
+// Dashboard
 import { DashboardPage } from '@/pages/Dashboard';
-import { NotFoundPage } from '@/pages/NotFound';
+
+// Interventions
 import { InterventionsPage } from '@/pages/interventions/InterventionsPage';
 import { CreateInterventionPage } from '@/pages/interventions/CreateInterventionPage';
 import { InterventionDetailsPage } from '@/pages/interventions/InterventionDetailsPage';
@@ -28,17 +30,38 @@ import { EditInterventionPage } from '@/pages/interventions/EditInterventionPage
 import { UsersPage } from '@/pages/users/UsersPage';
 import { CreateUserPage } from '@/pages/users/CreateUserPage';
 import { UserDetailsPage } from '@/pages/users/UserDetailsPage';
-import { EditUserPage } from '@/pages/users/EditUserPage'; // ✅ AJOUTÉ
+import { EditUserPage } from '@/pages/users/EditUserPage';
+
+// 🆕 Establishments (nouvelles pages)
+import {
+  EstablishmentsListPage,
+  CreateEstablishmentPage,
+  EditEstablishmentPage,
+} from '@/pages/establishments/EstablishmentsPages';
+
+// 🆕 Rooms (nouvelles pages)
+import { RoomsListPage, CreateRoomPage } from '@/pages/rooms/RoomsPages';
+
+// 🆕 Planning (nouvelle page)
+import { PlanningPage } from '@/pages/PlanningPage';
+
+// 🆕 Notification Center (nouvelle page)
+import { NotificationCenterPage } from '@/pages/NotificationCenterPage';
 
 // Settings
 import { SettingsPage } from '@/pages/Settings';
-import ReferenceListsOrchestrator from '@/features/settings/components/ReferenceListsOrchestrator';
+import { EstablishmentFeaturesPage } from '@/pages/settings/EstablishmentFeaturesPage';
+
+// 404
+import { NotFoundPage } from '@/pages/NotFound';
 
 /**
  * Configuration des routes
  */
 export const router = createBrowserRouter([
-  // Routes publiques (authentification)
+  // ============================================================================
+  // ROUTES PUBLIQUES (Authentification)
+  // ============================================================================
   {
     path: '/',
     element: <AuthLayout />,
@@ -74,7 +97,9 @@ export const router = createBrowserRouter([
     ],
   },
 
-  // Routes protégées (application)
+  // ============================================================================
+  // ROUTES PROTÉGÉES (Application)
+  // ============================================================================
   {
     path: '/app',
     element: (
@@ -83,39 +108,64 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      // Redirection par défaut
       {
         index: true,
         element: <Navigate to="/app/dashboard" replace />,
       },
+
+      // ----------------------------------------------------------------------------
+      // DASHBOARD
+      // ----------------------------------------------------------------------------
       {
         path: 'dashboard',
         element: <DashboardPage />,
       },
 
-      // Interventions
+      // ----------------------------------------------------------------------------
+      // INTERVENTIONS
+      // ----------------------------------------------------------------------------
       {
         path: 'interventions',
         children: [
           {
             index: true,
-            element: <InterventionsPage />,
+            element: (
+              <FeatureGuard feature="interventions">
+                <InterventionsPage />
+              </FeatureGuard>
+            ),
           },
           {
             path: 'create',
-            element: <CreateInterventionPage />,
+            element: (
+              <FeatureGuard feature="interventions">
+                <CreateInterventionPage />
+              </FeatureGuard>
+            ),
           },
           {
             path: ':id',
-            element: <InterventionDetailsPage />,
+            element: (
+              <FeatureGuard feature="interventions">
+                <InterventionDetailsPage />
+              </FeatureGuard>
+            ),
           },
           {
             path: ':id/edit',
-            element: <EditInterventionPage />,
+            element: (
+              <FeatureGuard feature="interventions">
+                <EditInterventionPage />
+              </FeatureGuard>
+            ),
           },
         ],
       },
 
-      // Users
+      // ----------------------------------------------------------------------------
+      // USERS
+      // ----------------------------------------------------------------------------
       {
         path: 'users',
         children: [
@@ -131,7 +181,6 @@ export const router = createBrowserRouter([
             path: ':id',
             element: <UserDetailsPage />,
           },
-          // ✅ ROUTE D'ÉDITION AJOUTÉE
           {
             path: ':id/edit',
             element: <EditUserPage />,
@@ -139,72 +188,101 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Settings
+      // ----------------------------------------------------------------------------
+      // 🆕 ESTABLISHMENTS (Établissements)
+      // ----------------------------------------------------------------------------
       {
-        path: 'settings',
-        element: <SettingsPage />,
+        path: 'establishments',
         children: [
           {
             index: true,
-            element: <Navigate to="/app/settings/reference-lists" replace />,
+            element: <EstablishmentsListPage />,
           },
           {
-            path: 'reference-lists',
-            element: <ReferenceListsOrchestrator />,
+            path: 'create',
+            element: <CreateEstablishmentPage />,
           },
-          // Placeholders pour les autres sections settings
           {
-            path: 'establishment',
+            path: ':id/edit',
+            element: <EditEstablishmentPage />,
+          },
+        ],
+      },
+
+      // ----------------------------------------------------------------------------
+      // 🆕 ROOMS (Chambres)
+      // ----------------------------------------------------------------------------
+      {
+        path: 'rooms',
+        children: [
+          {
+            index: true,
             element: (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Section Établissement - À venir</p>
-              </div>
+              <FeatureGuard feature="rooms">
+                <RoomsListPage />
+              </FeatureGuard>
             ),
           },
           {
-            path: 'users',
+            path: 'create',
             element: (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Section Utilisateurs - À venir</p>
-              </div>
-            ),
-          },
-          {
-            path: 'notifications',
-            element: (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Section Notifications - À venir</p>
-              </div>
-            ),
-          },
-          {
-            path: 'security',
-            element: (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Section Sécurité - À venir</p>
-              </div>
-            ),
-          },
-          {
-            path: 'appearance',
-            element: (
-              <div className="text-center py-12">
-                <p className="text-gray-500">Section Apparence - À venir</p>
-              </div>
+              <FeatureGuard feature="rooms">
+                <CreateRoomPage />
+              </FeatureGuard>
             ),
           },
         ],
       },
+
+      // ----------------------------------------------------------------------------
+      // 🆕 PLANNING (Calendrier)
+      // ----------------------------------------------------------------------------
+      {
+        path: 'planning',
+        element: (
+          <FeatureGuard feature="planning">
+            <PlanningPage />
+          </FeatureGuard>
+        ),
+      },
+
+      // ----------------------------------------------------------------------------
+      // 🆕 NOTIFICATIONS (Centre de notifications)
+      // ----------------------------------------------------------------------------
+      {
+        path: 'notifications',
+        element: (
+          <FeatureGuard feature="notifications">
+            <NotificationCenterPage />
+          </FeatureGuard>
+        ),
+      },
+
+      // ----------------------------------------------------------------------------
+      // SETTINGS (Paramètres)
+      // ----------------------------------------------------------------------------
+      {
+        path: 'settings',
+        element: <SettingsPage />,
+      },
+      {
+        path: 'settings/features',
+        element: <EstablishmentFeaturesPage />,
+      },
     ],
   },
 
-  // Redirection pour les anciennes routes
+  // ============================================================================
+  // REDIRECTIONS POUR ANCIENNES ROUTES
+  // ============================================================================
   {
     path: '/dashboard',
     element: <Navigate to="/app/dashboard" replace />,
   },
 
-  // Page 404
+  // ============================================================================
+  // PAGE 404
+  // ============================================================================
   {
     path: '*',
     element: <NotFoundPage />,

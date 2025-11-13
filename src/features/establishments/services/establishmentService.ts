@@ -178,22 +178,19 @@ export const createEstablishment = async (
   try {
     const now = Timestamp.now();
 
-    const establishmentData: Omit<Establishment, 'id'> = {
+    // Build establishment data, excluding undefined optional fields
+    const establishmentData: any = {
       // Informations de base
       name: data.name,
       displayName: data.name,
       type: data.type,
-      category: data.category,
-      description: data.description,
 
       // Adresse et contact
       address: data.address,
       contact: data.contact,
-      website: data.website,
 
       // Capacité
       totalRooms: data.totalRooms,
-      totalFloors: data.totalFloors,
 
       // Statut
       isActive: true,
@@ -215,6 +212,20 @@ export const createEstablishment = async (
       createdAt: now,
       updatedAt: now,
     };
+
+    // Add optional fields only if they have values
+    if (data.category !== undefined) {
+      establishmentData.category = data.category;
+    }
+    if (data.description !== undefined) {
+      establishmentData.description = data.description;
+    }
+    if (data.website !== undefined) {
+      establishmentData.website = data.website;
+    }
+    if (data.totalFloors !== undefined) {
+      establishmentData.totalFloors = data.totalFloors;
+    }
 
     const docRef = await addDoc(collection(db, ESTABLISHMENTS_COLLECTION), establishmentData);
 

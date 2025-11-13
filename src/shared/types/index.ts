@@ -1,25 +1,60 @@
 /**
- * Interventions Components Index
+ * Shared Types Index
  *
- * Export centralisé de tous les composants
+ * Export centralisé de tous les types partagés
  */
 
-// Badges
-export { StatusBadge } from './badges/StatusBadge';
-export { TypeBadge } from './badges/TypeBadge';
-export { PriorityBadge } from './badges/PriorityBadge';
+// Common types
+export * from './common.types';
 
-// Cards
-export { InterventionCard } from './cards/InterventionCard';
+// Status types
+export * from './status.types';
 
-// Lists
-export { InterventionsList } from './lists/InterventionsList';
+// Establishment types
+export * from './establishment.types';
 
-// Filters
-export { InterventionFilters } from './filters/InterventionFilters';
+// Reference lists types
+export * from './reference-lists.types';
 
-// Form
-export { InterventionForm } from './form/InterventionForm';
+// Re-export user/auth types from features
+export { UserStatus } from '@/features/users/types/user.types';
 
-// Details
-export { InterventionDetails } from './details/InterventionDetails';
+export type {
+  User,
+  UserProfile,
+  CreateUserData,
+  UpdateUserData,
+  UpdateProfileData,
+  UserFilters,
+  UserSortOptions,
+  UserInvitation,
+  UserStats,
+  UserActivity,
+  UserSession,
+  AuthCredentials,
+  PasswordResetData,
+  ChangePasswordData,
+  NotificationPreferences,
+  DisplayPreferences,
+  Address,
+  EmergencyContact,
+} from '@/features/users/types/user.types';
+
+// Re-export role types and enums as values (not just types)
+export {
+  UserRole,
+  Permission,
+  ROLE_PERMISSIONS,
+  ROLE_LABELS,
+  ROLE_DESCRIPTIONS,
+  ROLE_COLORS,
+  ROLE_HIERARCHY,
+  PERMISSION_GROUPS,
+  roleHasPermission,
+  roleHasAllPermissions,
+  roleHasAnyPermission,
+  getRolePermissions,
+  isAdminRole,
+  isSuperAdminRole,
+  compareRoles,
+} from '@/features/users/types/role.types';

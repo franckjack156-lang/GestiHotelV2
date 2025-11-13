@@ -189,6 +189,9 @@ export interface DisplayPreferences {
   /** Thème (light, dark, auto) */
   theme: 'light' | 'dark' | 'auto';
 
+  /** Couleur du thème */
+  themeColor?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'pink';
+
   /** Densité UI (compact, comfortable, spacious) */
   density: 'compact' | 'comfortable' | 'spacious';
 

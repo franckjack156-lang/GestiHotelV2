@@ -80,18 +80,39 @@ service cloud.firestore {
     // ============================================================================
     // ESTABLISHMENTS COLLECTION
     // ============================================================================
-    
+
     match /establishments/{establishmentId} {
       allow read: if isAuthenticated();
       allow create: if isSuperAdmin();
       allow update: if isAdmin();
       allow delete: if isSuperAdmin();
+
+      // Interventions subcollection
+      match /interventions/{interventionId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAdmin();
+      }
+
+      // Config subcollection (reference lists, settings, etc.)
+      match /config/{configDoc} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      // Audit subcollection (logs for reference lists changes)
+      match /audit/{auditId} {
+        allow read: if isAdmin();
+        allow create: if isAuthenticated();
+        allow update, delete: if isAdmin();
+      }
     }
-    
+
     // ============================================================================
-    // INTERVENTIONS COLLECTION
+    // INTERVENTIONS COLLECTION (Legacy - if any exist at root level)
     // ============================================================================
-    
+
     match /interventions/{interventionId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
@@ -124,18 +145,52 @@ service cloud.firestore {
     // ============================================================================
     // REFERENCE LISTS COLLECTION
     // ============================================================================
-    
+
     match /referenceLists/{listId} {
       allow read: if isAuthenticated();
       allow create: if isAdmin();
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
-    
+
+    // ============================================================================
+    // COMMENTS COLLECTION
+    // ============================================================================
+
+    match /comments/{commentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      // Allow update only if owner or admin
+      allow update: if isAuthenticated() && (
+        isOwner(resource.data.authorId) ||
+        isAdmin()
+      );
+      // Allow delete only if owner or admin
+      allow delete: if isAuthenticated() && (
+        isOwner(resource.data.authorId) ||
+        isAdmin()
+      );
+    }
+
+    // ============================================================================
+    // NOTIFICATIONS COLLECTION
+    // ============================================================================
+
+    match /notifications/{notificationId} {
+      // Users can only read their own notifications
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Only system/admins can create notifications
+      allow create: if isAdmin();
+      // Users can update their own notifications (mark as read)
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      // Only admins can delete notifications
+      allow delete: if isAdmin();
+    }
+
     // ============================================================================
     // DEFAULT : Tout le reste est interdit
     // ============================================================================
-    
+
     match /{document=**} {
       allow read, write: if false;
     }

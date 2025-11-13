@@ -1,0 +1,59 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "interventions": "Intervenciones",
+    "rooms": "Habitaciones",
+    "planning": "Planificación",
+    "notifications": "Notificaciones",
+    "settings": "Configuración"
+  },
+  "header": {
+    "search": "Buscar...",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión"
+  },
+  "settings": {
+    "title": "Configuración",
+    "profile": "Perfil",
+    "notifications": "Notificaciones",
+    "security": "Seguridad",
+    "preferences": "Preferencias",
+    "users": "Usuarios",
+    "establishments": "Establecimientos",
+    "reference_lists": "Listas de referencia",
+    "about": "Acerca de",
+    "theme": "Tema",
+    "theme_color": "Color del tema",
+    "density": "Densidad",
+    "language": "Idioma",
+    "sidebar_collapsed": "Contraer menú lateral",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "auto": "Auto",
+    "compact": "Compacto",
+    "comfortable": "Cómodo",
+    "spacious": "Espacioso"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Añadir",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "export": "Exportar",
+    "import": "Importar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  },
+  "footer": {
+    "version": "GestiHôtel v2.0.0",
+    "copyright": "© 2025 Todos los derechos reservados"
+  }
+}

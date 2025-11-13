@@ -228,7 +228,7 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
 
           setLists(establishmentId, {
             ...data,
-            lastModified: data.lastModified?.toDate(),
+            lastModified: data.lastModified?.toDate ? data.lastModified.toDate() : (data.lastModified || new Date()),
             lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
               acc[key] = {
                 ...config,

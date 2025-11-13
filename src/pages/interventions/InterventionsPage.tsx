@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, Download, RefreshCw } from 'lucide-react';
+import { Plus, Search, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import {
@@ -26,6 +26,7 @@ import { Card } from '@/shared/components/ui/card';
 import { useInterventions } from '@/features/interventions/hooks/useInterventions';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { usePermissions } from '@/shared/hooks/usePermissions';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
 import { PriorityBadge } from '@/features/interventions/components/badges/PriorityBadge';
 import { TypeBadge } from '@/features/interventions/components/badges/TypeBadge';
@@ -39,16 +40,25 @@ import {
 } from '@/shared/types/status.types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { ImportDialog } from '@/shared/components/import/ImportDialog';
+import { useImportInterventions } from '@/shared/hooks/useImport';
+import { downloadInterventionsTemplate } from '@/shared/services/exportService';
+import { toast } from 'sonner';
 
 export const InterventionsPage = () => {
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
   const { canCreateInterventions } = usePermissions();
+  const { user } = useAuth();
 
   const { interventions, isLoading, error, filters, setFilters, resetFilters, stats } =
     useInterventions();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+
+  // Hook d'import
+  const importHook = useImportInterventions(establishmentId || '', user?.id || '');
 
   // Gérer la recherche
   const handleSearch = () => {
@@ -99,6 +109,21 @@ export const InterventionsPage = () => {
     window.location.reload();
   };
 
+  // Gestion de l'import
+  const handleImportConfirm = async (data: any[]) => {
+    try {
+      await importHook.handleConfirm(data);
+      toast.success('Import réussi', {
+        description: `${data.length} intervention(s) importée(s)`,
+      });
+      setImportDialogOpen(false);
+    } catch (error) {
+      toast.error('Erreur lors de l\'import', {
+        description: error instanceof Error ? error.message : 'Une erreur est survenue',
+      });
+    }
+  };
+
   // Vérifier si des filtres sont actifs
   const hasActiveFilters = filters.status || filters.priority || filters.type || filters.search;
 
@@ -126,10 +151,16 @@ export const InterventionsPage = () => {
             Actualiser
           </Button>
           {canCreateInterventions && (
-            <Button onClick={handleCreateIntervention}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle intervention
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Importer
+              </Button>
+              <Button onClick={handleCreateIntervention}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nouvelle intervention
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -320,6 +351,46 @@ export const InterventionsPage = () => {
           </p>
         </div>
       )}
+
+      {/* Dialog d'import */}
+      <ImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        title="Importer des interventions"
+        description="Importez plusieurs interventions depuis un fichier Excel"
+        templateDownloadFn={downloadInterventionsTemplate}
+        onImport={importHook.handleImport}
+        onConfirm={handleImportConfirm}
+        renderPreview={(data) => (
+          <div className="max-h-60 overflow-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th className="px-3 py-2 text-left">Titre</th>
+                  <th className="px-3 py-2 text-left">Type</th>
+                  <th className="px-3 py-2 text-left">Priorité</th>
+                  <th className="px-3 py-2 text-left">Localisation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.slice(0, 5).map((row: any, idx) => (
+                  <tr key={idx} className="border-t border-gray-200 dark:border-gray-700">
+                    <td className="px-3 py-2">{row.titre}</td>
+                    <td className="px-3 py-2">{row.type}</td>
+                    <td className="px-3 py-2">{row.priorite}</td>
+                    <td className="px-3 py-2">{row.localisation || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {data.length > 5 && (
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                ... et {data.length - 5} autre(s) ligne(s)
+              </p>
+            )}
+          </div>
+        )}
+      />
     </div>
   );
 };
