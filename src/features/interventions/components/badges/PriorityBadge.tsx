@@ -30,14 +30,19 @@ const PRIORITY_CONFIG: Record<
     icon: AlertCircle,
     className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',
   },
+  [InterventionPriority.URGENT]: {
+    label: PRIORITY_LABELS[InterventionPriority.URGENT],
+    icon: AlertCircle,
+    className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',
+  },
   [InterventionPriority.HIGH]: {
     label: PRIORITY_LABELS[InterventionPriority.HIGH],
     icon: ArrowUp,
     className:
       'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400',
   },
-  [InterventionPriority.MEDIUM]: {
-    label: PRIORITY_LABELS[InterventionPriority.MEDIUM],
+  [InterventionPriority.NORMAL]: {
+    label: PRIORITY_LABELS[InterventionPriority.NORMAL],
     icon: Minus,
     className:
       'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400',
@@ -71,10 +76,10 @@ export const PriorityBadge = ({
   // Vérifier que la priorité existe dans la configuration
   const config = PRIORITY_CONFIG[priority];
 
-  // Si la priorité n'est pas reconnue, utiliser MEDIUM comme fallback
+  // Si la priorité n'est pas reconnue, utiliser NORMAL comme fallback
   if (!config) {
-    console.warn(`Priorité d'intervention non reconnue: "${priority}". Utilisation de MEDIUM.`);
-    const fallbackConfig = PRIORITY_CONFIG[InterventionPriority.MEDIUM];
+    console.warn(`Priorité d'intervention non reconnue: "${priority}". Utilisation de NORMAL.`);
+    const fallbackConfig = PRIORITY_CONFIG[InterventionPriority.NORMAL];
     const FallbackIcon = fallbackConfig.icon;
 
     return (

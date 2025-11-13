@@ -63,7 +63,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
     // Notifications
     Permission.NOTIFICATIONS_VIEW,
-    Permission.NOTIFICATIONS_MANAGE,
+    Permission.NOTIFICATIONS_CONFIGURE,
 
     // Paramètres
     Permission.SETTINGS_VIEW,
@@ -118,7 +118,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 
     // Notifications
     Permission.NOTIFICATIONS_VIEW,
-    Permission.NOTIFICATIONS_MANAGE,
+    Permission.NOTIFICATIONS_CONFIGURE,
 
     // Paramètres
     Permission.SETTINGS_VIEW,

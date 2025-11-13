@@ -100,6 +100,10 @@ export enum Permission {
   INTERVENTIONS_EXPORT = 'interventions.export',
   /** Voir l'historique */
   INTERVENTIONS_VIEW_HISTORY = 'interventions.view_history',
+  /** Clôturer une intervention */
+  INTERVENTIONS_CLOSE = 'interventions.close',
+  /** Valider une intervention */
+  INTERVENTIONS_VALIDATE = 'interventions.validate',
 
   // ========== USERS ==========
   /** Voir les utilisateurs */
@@ -164,6 +168,8 @@ export enum Permission {
   SETTINGS_REFERENCE_LISTS = 'settings.reference_lists',
 
   // ========== NOTIFICATIONS ==========
+  /** Voir les notifications */
+  NOTIFICATIONS_VIEW = 'notifications.view',
   /** Envoyer des notifications */
   NOTIFICATIONS_SEND = 'notifications.send',
   /** Configurer les notifications */

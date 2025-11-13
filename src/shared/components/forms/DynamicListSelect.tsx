@@ -329,13 +329,3 @@ export const CommonAreaSelect: React.FC<
 // ============================================================================
 
 export default DynamicListSelect;
-
-// Export des variantes
-export {
-  InterventionTypeSelect,
-  CategorySelect,
-  PrioritySelect,
-  StatusSelect,
-  RoomTypeSelect,
-  CommonAreaSelect,
-};

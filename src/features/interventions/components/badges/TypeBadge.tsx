@@ -7,7 +7,24 @@
  */
 
 import { Badge } from '@/shared/components/ui/badge';
-import { Wrench, Zap, Droplet, Wind, Wifi, Settings, AlertTriangle } from 'lucide-react';
+import {
+  Wrench,
+  Zap,
+  Droplet,
+  Wind,
+  Wifi,
+  Settings,
+  AlertTriangle,
+  Hammer,
+  Paintbrush,
+  Sparkles,
+  Lock,
+  Square,
+  Shirt,
+  Shield,
+  Trees,
+  Waves
+} from 'lucide-react';
 import { InterventionType, INTERVENTION_TYPE_LABELS } from '@/shared/types/status.types';
 
 interface TypeBadgeProps {
@@ -25,43 +42,85 @@ const TYPE_CONFIG: Record<
     className: string;
   }
 > = {
-  [InterventionType.MAINTENANCE]: {
-    label: INTERVENTION_TYPE_LABELS[InterventionType.MAINTENANCE],
-    icon: Wrench,
-    className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400',
-  },
-  [InterventionType.ELECTRICAL]: {
-    label: INTERVENTION_TYPE_LABELS[InterventionType.ELECTRICAL],
-    icon: Zap,
-    className:
-      'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400',
-  },
   [InterventionType.PLUMBING]: {
     label: INTERVENTION_TYPE_LABELS[InterventionType.PLUMBING],
     icon: Droplet,
     className: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400',
   },
-  [InterventionType.HVAC]: {
-    label: INTERVENTION_TYPE_LABELS[InterventionType.HVAC],
+  [InterventionType.ELECTRICITY]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.ELECTRICITY],
+    icon: Zap,
+    className: 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400',
+  },
+  [InterventionType.HEATING]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.HEATING],
+    icon: Wind,
+    className: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400',
+  },
+  [InterventionType.AIR_CONDITIONING]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.AIR_CONDITIONING],
     icon: Wind,
     className: 'bg-teal-100 text-teal-800 border-teal-200 dark:bg-teal-900/20 dark:text-teal-400',
+  },
+  [InterventionType.CARPENTRY]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.CARPENTRY],
+    icon: Hammer,
+    className: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400',
+  },
+  [InterventionType.PAINTING]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.PAINTING],
+    icon: Paintbrush,
+    className: 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/20 dark:text-pink-400',
+  },
+  [InterventionType.CLEANING]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.CLEANING],
+    icon: Sparkles,
+    className: 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/20 dark:text-sky-400',
+  },
+  [InterventionType.LOCKSMITH]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.LOCKSMITH],
+    icon: Lock,
+    className: 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-900/20 dark:text-slate-400',
+  },
+  [InterventionType.GLAZING]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.GLAZING],
+    icon: Square,
+    className: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400',
+  },
+  [InterventionType.MASONRY]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.MASONRY],
+    icon: Wrench,
+    className: 'bg-stone-100 text-stone-800 border-stone-200 dark:bg-stone-900/20 dark:text-stone-400',
+  },
+  [InterventionType.APPLIANCE]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.APPLIANCE],
+    icon: Settings,
+    className: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400',
+  },
+  [InterventionType.FURNITURE]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.FURNITURE],
+    icon: Shirt,
+    className: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400',
   },
   [InterventionType.IT]: {
     label: INTERVENTION_TYPE_LABELS[InterventionType.IT],
     icon: Wifi,
-    className:
-      'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400',
+    className: 'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400',
   },
-  [InterventionType.EQUIPMENT]: {
-    label: INTERVENTION_TYPE_LABELS[InterventionType.EQUIPMENT],
-    icon: Settings,
-    className:
-      'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400',
-  },
-  [InterventionType.EMERGENCY]: {
-    label: INTERVENTION_TYPE_LABELS[InterventionType.EMERGENCY],
-    icon: AlertTriangle,
+  [InterventionType.SECURITY]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.SECURITY],
+    icon: Shield,
     className: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',
+  },
+  [InterventionType.GARDEN]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.GARDEN],
+    icon: Trees,
+    className: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400',
+  },
+  [InterventionType.POOL]: {
+    label: INTERVENTION_TYPE_LABELS[InterventionType.POOL],
+    icon: Waves,
+    className: 'bg-cyan-100 text-cyan-800 border-cyan-200 dark:bg-cyan-900/20 dark:text-cyan-400',
   },
   [InterventionType.OTHER]: {
     label: INTERVENTION_TYPE_LABELS[InterventionType.OTHER],

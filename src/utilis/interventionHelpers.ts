@@ -10,7 +10,7 @@ import type { Timestamp } from 'firebase/firestore';
 import type {
   Intervention,
   InterventionFilters,
-} from '../types/intervention.types';
+} from '@/features/interventions/types/intervention.types';
 import {
   InterventionStatus,
   InterventionPriority,

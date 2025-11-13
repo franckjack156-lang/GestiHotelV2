@@ -97,6 +97,15 @@ export interface User {
 
   /** Tokens FCM pour notifications push */
   fcmTokens?: string[];
+
+  /** Titre / Poste */
+  jobTitle?: string;
+
+  /** Département */
+  department?: string;
+
+  /** Compétences (pour techniciens) */
+  skills?: string[];
 }
 
 // ============================================================================
