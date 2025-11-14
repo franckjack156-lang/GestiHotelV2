@@ -12,7 +12,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, RefreshCw, Upload } from 'lucide-react';
+import { Plus, Search, RefreshCw, Upload, Grid3x3, List } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import {
@@ -44,6 +44,9 @@ import { ImportDialog } from '@/shared/components/import/ImportDialog';
 import { useImportInterventions } from '@/shared/hooks/useImport';
 import { downloadInterventionsTemplate } from '@/shared/services/exportService';
 import { toast } from 'sonner';
+import { InterventionCard } from '@/features/interventions/components/cards/InterventionCard';
+import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
+import { ConfirmDialog } from '@/shared/components/ui-extended';
 
 export const InterventionsPage = () => {
   const navigate = useNavigate();
@@ -56,9 +59,14 @@ export const InterventionsPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [interventionToDelete, setInterventionToDelete] = useState<string | null>(null);
 
   // Hook d'import
   const importHook = useImportInterventions(establishmentId || '', user?.id || '');
+
+  // Hook d'actions
+  const { deleteIntervention, isDeleting } = useInterventionActions();
 
   // Gérer la recherche
   const handleSearch = () => {
@@ -104,6 +112,27 @@ export const InterventionsPage = () => {
     navigate(`/app/interventions/${id}`);
   };
 
+  const handleEdit = (id: string) => {
+    navigate(`/app/interventions/${id}/edit`);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setInterventionToDelete(id);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!interventionToDelete) return;
+
+    try {
+      await deleteIntervention(interventionToDelete);
+      toast.success('Intervention supprimée avec succès');
+      setInterventionToDelete(null);
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+      console.error(error);
+    }
+  };
+
   const handleRefresh = () => {
     // Le hook recharge automatiquement grâce au temps réel
     window.location.reload();
@@ -146,6 +175,26 @@ export const InterventionsPage = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Toggle view mode */}
+          <div className="flex border rounded-lg">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => setViewMode('grid')}
+              className="rounded-r-none"
+            >
+              <Grid3x3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => setViewMode('list')}
+              className="rounded-l-none"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+
           <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Actualiser
@@ -289,56 +338,22 @@ export const InterventionsPage = () => {
           )}
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div
+          className={
+            viewMode === 'grid'
+              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
+              : 'space-y-4'
+          }
+        >
           {interventions.map(intervention => (
-            <Card
+            <InterventionCard
               key={intervention.id}
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+              intervention={intervention}
               onClick={() => handleInterventionClick(intervention.id)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  {/* Header */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {intervention.title}
-                    </h3>
-                    {intervention.isUrgent && (
-                      <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded dark:bg-red-900/20 dark:text-red-400">
-                        URGENT
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-                    {intervention.description}
-                  </p>
-
-                  {/* Badges */}
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <StatusBadge status={intervention.status} size="sm" />
-                    <PriorityBadge priority={intervention.priority} size="sm" />
-                    <TypeBadge type={intervention.type} size="sm" />
-                  </div>
-
-                  {/* Meta */}
-                  <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                    <span>📍 {intervention.location}</span>
-                    {intervention.roomNumber && <span>🚪 Chambre {intervention.roomNumber}</span>}
-                    <span>
-                      📅{' '}
-                      {format(intervention.createdAt.toDate(), 'dd MMM yyyy', {
-                        locale: fr,
-                      })}
-                    </span>
-                    {intervention.photosCount > 0 && (
-                      <span>📷 {intervention.photosCount} photo(s)</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card>
+              onEdit={() => handleEdit(intervention.id)}
+              onDelete={() => handleDeleteClick(intervention.id)}
+              showPhotos={viewMode === 'grid'}
+            />
           ))}
         </div>
       )}
@@ -390,6 +405,18 @@ export const InterventionsPage = () => {
             )}
           </div>
         )}
+      />
+
+      {/* Dialog de confirmation de suppression */}
+      <ConfirmDialog
+        isOpen={!!interventionToDelete}
+        onClose={() => setInterventionToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Supprimer l'intervention"
+        description="Êtes-vous sûr de vouloir supprimer cette intervention ? Cette action est irréversible et supprimera également toutes les photos et commentaires associés."
+        confirmLabel="Supprimer définitivement"
+        variant="danger"
+        isLoading={isDeleting}
       />
     </div>
   );
