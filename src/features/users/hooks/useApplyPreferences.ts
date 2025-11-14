@@ -56,24 +56,18 @@ export const useApplyPreferences = () => {
 
   useEffect(() => {
     if (!displayPreferences) {
-      console.log('❌ No display preferences found');
       return;
     }
-
-    console.log('🎨 Applying preferences:', displayPreferences);
 
     const root = document.documentElement;
 
     // Appliquer le thème (clair/sombre/auto)
     const { theme } = displayPreferences;
-    console.log('Theme:', theme);
 
     if (theme === 'dark') {
       root.classList.add('dark');
-      console.log('✅ Applied dark theme');
     } else if (theme === 'light') {
       root.classList.remove('dark');
-      console.log('✅ Applied light theme');
     } else if (theme === 'auto') {
       const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (isDark) {
@@ -81,28 +75,23 @@ export const useApplyPreferences = () => {
       } else {
         root.classList.remove('dark');
       }
-      console.log('✅ Applied auto theme (system:', isDark ? 'dark' : 'light', ')');
     }
 
     // Appliquer la couleur du thème
     const color = displayPreferences.themeColor || 'blue';
     const colorValues = THEME_COLORS[color];
-    console.log('Color:', color, colorValues);
 
     root.style.setProperty('--primary', colorValues.primary);
     root.style.setProperty('--ring', colorValues.ring);
     root.style.setProperty('--theme-primary', colorValues.primary);
     root.style.setProperty('--theme-primary-dark', colorValues.primaryDark);
     root.style.setProperty('--theme-primary-light', colorValues.primaryLight);
-    console.log('✅ Applied color theme:', color);
 
     // Appliquer la densité
     const { density } = displayPreferences;
-    console.log('Density:', density);
 
     root.classList.remove('density-compact', 'density-comfortable', 'density-spacious');
     root.classList.add(`density-${density}`);
-    console.log('✅ Applied density:', density, '- Classes:', root.classList.toString());
 
     // Appliquer la langue
     const language = displayPreferences.language;
@@ -111,7 +100,6 @@ export const useApplyPreferences = () => {
     // Ne changer la langue que si elle est différente (éviter la boucle infinie)
     if (i18n.language !== language) {
       i18n.changeLanguage(language);
-      console.log('✅ Applied language:', language);
     }
 
     // Écouter les changements de préférences système pour le mode auto

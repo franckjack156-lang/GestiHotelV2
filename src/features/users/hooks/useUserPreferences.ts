@@ -60,9 +60,6 @@ export const useUserPreferences = () => {
     ...userDisplayPrefs,
   };
 
-  console.log('👤 User display prefs from DB:', userDisplayPrefs);
-  console.log('✨ Final display preferences:', displayPreferences);
-
   const notificationPreferences: NotificationPreferences = {
     email: {
       ...defaultNotificationPreferences.email,

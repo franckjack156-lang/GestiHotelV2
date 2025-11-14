@@ -23,16 +23,12 @@ let initialLoadComplete = false;
 
 const initAuthListener = () => {
   if (listenerInitialized) {
-    console.log('🔵 AuthListener: Déjà initialisé');
     return;
   }
 
-  console.log('🔵 AuthListener: Initialisation');
   listenerInitialized = true;
 
   onAuthStateChanged(auth, async firebaseUser => {
-    console.log('🔵 AuthListener: Auth state changed', firebaseUser?.uid || 'null');
-
     const { setUser, setFirebaseUser, setLoading, setError } = useAuthStore.getState();
 
     setLoading(true);
@@ -40,43 +36,34 @@ const initAuthListener = () => {
     try {
       if (firebaseUser) {
         setFirebaseUser(firebaseUser);
-        console.log('🔵 AuthListener: Chargement profil...');
 
-        // ✅ CORRECTION: Utiliser userService.getUser au lieu de getUserById
         const userData = await userService.getUser(firebaseUser.uid);
 
         if (userData) {
-          console.log('✅ AuthListener: Profil chargé', userData);
           setUser(userData);
           setError(null);
 
-          // ✅ NOUVEAU: Mettre à jour lastLoginAt
+          // Mettre à jour lastLoginAt
           try {
             await updateDoc(doc(db, 'users', firebaseUser.uid), {
               lastLoginAt: Timestamp.now(),
             });
-            console.log('✅ AuthListener: lastLoginAt mis à jour');
           } catch (updateError) {
-            console.warn('⚠️ AuthListener: Impossible de mettre à jour lastLoginAt', updateError);
             // Ne pas bloquer la connexion si la mise à jour échoue
           }
         } else {
-          console.error('❌ AuthListener: Profil introuvable');
           setUser(null);
           setError('Profil utilisateur introuvable');
         }
       } else {
-        console.log("🔵 AuthListener: Pas d'utilisateur");
         setFirebaseUser(null);
         setUser(null);
         setError(null);
       }
     } catch (error) {
-      console.error('❌ AuthListener: Erreur', error);
       setUser(null);
       setError('Erreur lors du chargement du profil');
     } finally {
-      console.log('🔵 AuthListener: Fin chargement');
       setLoading(false);
       initialLoadComplete = true;
     }
@@ -90,27 +77,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [ready, setReady] = useState(initialLoadComplete);
 
   useEffect(() => {
-    // Attendre que le chargement initial soit terminé
     if (initialLoadComplete) {
-      console.log('✅ AuthProvider: Déjà chargé');
       setReady(true);
       return;
     }
 
-    console.log('🔵 AuthProvider: Attente du chargement initial...');
-
-    // Vérifier toutes les 100ms si le chargement est terminé
     const checkInterval = setInterval(() => {
       if (initialLoadComplete) {
-        console.log('✅ AuthProvider: Chargement terminé');
         setReady(true);
         clearInterval(checkInterval);
       }
     }, 100);
 
-    // Timeout de sécurité : 5 secondes max
     const timeout = setTimeout(() => {
-      console.warn("⚠️ AuthProvider: Timeout atteint, forcer l'affichage");
       setReady(true);
       clearInterval(checkInterval);
     }, 5000);

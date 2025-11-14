@@ -105,12 +105,12 @@ export const appVersion = import.meta.env.VITE_APP_VERSION || '2.0.0';
 export const appName = import.meta.env.VITE_APP_NAME || 'GestiHôtel';
 
 // Log de configuration (seulement en dev)
-if (isDevelopment) {
-  console.log('🔥 Firebase initialized:', {
-    projectId: firebaseConfig.projectId,
-    environment: import.meta.env.VITE_APP_ENV || 'development',
-    version: appVersion,
-  });
-}
+// if (isDevelopment) {
+//   console.log('🔥 Firebase initialized:', {
+//     projectId: firebaseConfig.projectId,
+//     environment: import.meta.env.VITE_APP_ENV || 'development',
+//     version: appVersion,
+//   });
+// }
 
 export default app;
