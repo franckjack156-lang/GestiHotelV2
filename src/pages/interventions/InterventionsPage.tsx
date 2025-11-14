@@ -352,6 +352,7 @@ export const InterventionsPage = () => {
               onClick={() => handleInterventionClick(intervention.id)}
               onEdit={() => handleEdit(intervention.id)}
               onDelete={() => handleDeleteClick(intervention.id)}
+              viewMode={viewMode}
               showPhotos={viewMode === 'grid'}
             />
           ))}

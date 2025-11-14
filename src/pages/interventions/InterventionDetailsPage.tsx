@@ -1,19 +1,18 @@
 /**
  * ============================================================================
- * INTERVENTION DETAILS PAGE - COMPLET
+ * INTERVENTION DETAILS PAGE - VERSION MODERNE & ERGONOMIQUE
  * ============================================================================
  *
- * Page de détails d'une intervention avec :
- * - Informations complètes
- * - Galerie photos (lightbox)
- * - Historique complet (timeline)
+ * Page de détails d'une intervention repensée pour une meilleure UX :
+ * - Header épuré avec actions contextuelles
+ * - Layout moderne en 2 colonnes
+ * - Cartes d'information claires
+ * - Galerie photos responsive
+ * - Timeline interactive
  * - Messagerie intégrée
- * - Actions rapides (15+ actions)
- * - Export PDF
- * - Temps écoulé/SLA
  */
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -26,20 +25,24 @@ import {
   User,
   Calendar,
   CheckCircle2,
-  XCircle,
   PlayCircle,
   PauseCircle,
   AlertCircle,
   MessageSquare,
-  Paperclip,
-  Send,
   Image as ImageIcon,
   MoreVertical,
+  Info,
+  History,
+  FileText,
+  Send,
+  Zap,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Textarea } from '@/shared/components/ui/textarea';
-import { Input } from '@/shared/components/ui/input';
+import { Badge } from '@/shared/components/ui/badge';
+import { Separator } from '@/shared/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +55,6 @@ import {
   ImageLightbox,
   ConfirmDialog,
   UserAvatar,
-  StatusIndicator,
   LoadingSkeleton,
 } from '@/shared/components/ui-extended';
 import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
@@ -170,11 +172,11 @@ export const InterventionDetailsPage = () => {
   if (error || !intervention) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <AlertCircle className="mx-auto mb-4 text-red-500" size={48} />
-            <h3 className="text-lg font-semibold mb-2">Intervention introuvable</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
+        <Card className="max-w-md">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="mx-auto mb-4 text-red-500 h-12 w-12" />
+            <h3 className="text-xl font-semibold mb-2">Intervention introuvable</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Cette intervention n'existe pas ou a été supprimée
             </p>
             <Button onClick={() => navigate('/app/interventions')}>Retour aux interventions</Button>
@@ -185,180 +187,251 @@ export const InterventionDetailsPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/app/interventions')}>
-            <ArrowLeft size={16} className="mr-2" />
-            Retour
-          </Button>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold">{intervention.title}</h1>
-              {intervention.isUrgent && (
-                <span className="text-red-500">
-                  <AlertCircle size={20} />
-                </span>
-              )}
+    <div className="space-y-6 pb-8">
+      {/* ========================================================================
+          HEADER MODERNE
+          ======================================================================== */}
+      <div className="flex flex-col gap-4">
+        {/* Breadcrumb */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/app/interventions')}
+          className="self-start"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Retour aux interventions
+        </Button>
+
+        {/* Titre et actions */}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                    {intervention.title}
+                  </h1>
+                  {intervention.isUrgent && (
+                    <Badge variant="destructive" className="gap-1">
+                      <Zap className="h-3 w-3" />
+                      URGENT
+                    </Badge>
+                  )}
+                  {intervention.isBlocking && (
+                    <Badge variant="warning" className="gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      BLOQUANT
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Réf: <span className="font-mono">{intervention.reference}</span> • Créée{' '}
+                  {elapsedTime}
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Réf: {intervention.reference} • Créée {elapsedTime}
-            </p>
+
+            {/* Badges de statut */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <StatusBadge status={intervention.status} />
+              <PriorityBadge priority={intervention.priority} />
+              <TypeBadge type={intervention.type} />
+            </div>
           </div>
-        </div>
 
-        <div className="flex gap-2">
-          {/* Actions rapides */}
-          {canStart && (
-            <Button onClick={() => handleStatusChange('in_progress')}>
-              <PlayCircle size={16} className="mr-2" />
-              Démarrer
-            </Button>
-          )}
-
-          {canComplete && (
-            <Button onClick={() => handleStatusChange('completed')}>
-              <CheckCircle2 size={16} className="mr-2" />
-              Terminer
-            </Button>
-          )}
-
-          {canValidate && (
-            <Button onClick={() => handleStatusChange('validated')}>
-              <CheckCircle2 size={16} className="mr-2" />
-              Valider
-            </Button>
-          )}
-
-          {canEdit && (
-            <Button
-              variant="outline"
-              onClick={() => navigate(`/app/interventions/${intervention.id}/edit`)}
-            >
-              <Edit size={16} className="mr-2" />
-              Modifier
-            </Button>
-          )}
-
-          {/* Menu actions */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
-                <MoreVertical size={16} />
+          {/* Actions principales */}
+          <div className="flex gap-2 flex-wrap">
+            {/* Actions contextuelles selon le statut */}
+            {canStart && (
+              <Button onClick={() => handleStatusChange('in_progress')} size="lg">
+                <PlayCircle className="mr-2 h-4 w-4" />
+                Démarrer
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPDF}>
-                <Download size={16} className="mr-2" />
-                Exporter PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleShare}>
-                <Share2 size={16} className="mr-2" />
-                Partager
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {intervention.status === 'in_progress' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('on_hold')}>
-                  <PauseCircle size={16} className="mr-2" />
-                  Mettre en pause
+            )}
+
+            {canComplete && (
+              <Button onClick={() => handleStatusChange('completed')} size="lg">
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Terminer
+              </Button>
+            )}
+
+            {canValidate && (
+              <Button onClick={() => handleStatusChange('validated')} size="lg">
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Valider
+              </Button>
+            )}
+
+            {canEdit && (
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/app/interventions/${intervention.id}/edit`)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
+            )}
+
+            {/* Menu actions secondaires */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter PDF
                 </DropdownMenuItem>
-              )}
-              {intervention.status === 'on_hold' && (
-                <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
-                  <PlayCircle size={16} className="mr-2" />
-                  Reprendre
+                <DropdownMenuItem onClick={handleShare}>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Partager
                 </DropdownMenuItem>
-              )}
-              {canDelete && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="text-red-600"
-                  >
-                    <Trash2 size={16} className="mr-2" />
-                    Supprimer
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {intervention.status === 'in_progress' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleStatusChange('on_hold')}>
+                      <PauseCircle className="mr-2 h-4 w-4" />
+                      Mettre en pause
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {intervention.status === 'on_hold' && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
+                      <PlayCircle className="mr-2 h-4 w-4" />
+                      Reprendre
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {canDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setShowDeleteDialog(true)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
 
-      {/* Contenu principal */}
+      <Separator />
+
+      {/* ========================================================================
+          CONTENU PRINCIPAL - LAYOUT 2 COLONNES
+          ======================================================================== */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Colonne principale */}
+        {/* COLONNE PRINCIPALE (2/3) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Informations principales */}
+          {/* Description */}
           <Card>
-            <CardHeader>
-              <CardTitle>Informations</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Info className="h-5 w-5 text-indigo-500" />
+                Description
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <StatusBadge status={intervention.status} />
-                <PriorityBadge priority={intervention.priority} />
-                <TypeBadge type={intervention.type} />
-                {intervention.isUrgent && (
-                  <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-xs rounded-full">
-                    Urgent
-                  </span>
-                )}
-                {intervention.isBlocking && (
-                  <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 text-xs rounded-full">
-                    Bloquant
-                  </span>
-                )}
-              </div>
+            <CardContent>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {intervention.description}
+              </p>
+            </CardContent>
+          </Card>
 
-              {/* Description */}
-              <div>
-                <h4 className="font-medium mb-2">Description</h4>
-                <p className="text-gray-700 dark:text-gray-300">{intervention.description}</p>
-              </div>
-
-              {/* Détails */}
-              <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
-                <div className="flex items-center gap-3">
-                  <MapPin size={16} className="text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Localisation</p>
-                    <p className="font-medium">{intervention.location}</p>
+          {/* Détails clés */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <FileText className="h-5 w-5 text-indigo-500" />
+                Informations clés
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Localisation */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Localisation
+                    </p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
+                      {intervention.location}
+                    </p>
+                    {intervention.roomNumber && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {intervention.roomNumber}
+                      </p>
+                    )}
                   </div>
                 </div>
 
+                {/* Assigné à */}
                 {intervention.assignedTo && (
-                  <div className="flex items-center gap-3">
-                    <User size={16} className="text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-500">Assigné à</p>
-                      <p className="font-medium">{intervention.assignedToName || 'Technicien'}</p>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                      <User className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Assigné à
+                      </p>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {intervention.assignedToName || 'Technicien'}
+                      </p>
                     </div>
                   </div>
                 )}
 
-                <div className="flex items-center gap-3">
-                  <Calendar size={16} className="text-gray-400" />
-                  <div>
-                    <p className="text-xs text-gray-500">Créée le</p>
-                    <p className="font-medium">
+                {/* Date de création */}
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                    <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                      Créée le
+                    </p>
+                    <p className="font-semibold text-gray-900 dark:text-white">
                       {intervention.createdAt &&
-                        format(intervention.createdAt.toDate(), 'dd/MM/yyyy à HH:mm', {
+                        format(intervention.createdAt.toDate(), 'dd MMM yyyy', {
+                          locale: fr,
+                        })}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {intervention.createdAt &&
+                        format(intervention.createdAt.toDate(), 'HH:mm', {
                           locale: fr,
                         })}
                     </p>
                   </div>
                 </div>
 
+                {/* Durée estimée */}
                 {intervention.estimatedDuration && (
-                  <div className="flex items-center gap-3">
-                    <Clock size={16} className="text-gray-400" />
-                    <div>
-                      <p className="text-xs text-gray-500">Durée estimée</p>
-                      <p className="font-medium">{intervention.estimatedDuration} min</p>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Durée estimée
+                      </p>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        {intervention.estimatedDuration} min
+                      </p>
                     </div>
                   </div>
                 )}
@@ -366,26 +439,34 @@ export const InterventionDetailsPage = () => {
 
               {/* Notes internes */}
               {intervention.internalNotes && (
-                <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-2 text-orange-600 dark:text-orange-400">
-                    Notes internes
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {intervention.internalNotes}
-                  </p>
-                </div>
+                <>
+                  <Separator className="my-4" />
+                  <div className="p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                    <h4 className="font-semibold text-orange-900 dark:text-orange-400 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Notes internes
+                    </h4>
+                    <p className="text-sm text-orange-800 dark:text-orange-300">
+                      {intervention.internalNotes}
+                    </p>
+                  </div>
+                </>
               )}
 
               {/* Notes de résolution */}
               {intervention.resolutionNotes && (
-                <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-2 text-green-600 dark:text-green-400">
-                    Notes de résolution
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {intervention.resolutionNotes}
-                  </p>
-                </div>
+                <>
+                  <Separator className="my-4" />
+                  <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <h4 className="font-semibold text-green-900 dark:text-green-400 mb-2 flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Notes de résolution
+                    </h4>
+                    <p className="text-sm text-green-800 dark:text-green-300">
+                      {intervention.resolutionNotes}
+                    </p>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -393,26 +474,28 @@ export const InterventionDetailsPage = () => {
           {/* Galerie photos */}
           {intervention.photos && intervention.photos.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ImageIcon size={20} />
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ImageIcon className="h-5 w-5 text-indigo-500" />
                   Photos ({intervention.photos.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                   {intervention.photos.map((photo, index) => (
                     <div
                       key={photo.id}
                       onClick={() => setSelectedImageIndex(index)}
-                      className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg"
+                      className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all"
                     >
                       <img
                         src={photo.thumbnailUrl || photo.url}
                         alt={photo.filename}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                        <Eye className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -422,10 +505,15 @@ export const InterventionDetailsPage = () => {
 
           {/* Messagerie */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare size={20} />
-                Messagerie
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MessageSquare className="h-5 w-5 text-indigo-500" />
+                Commentaires{' '}
+                {intervention.comments && intervention.comments.length > 0 && (
+                  <span className="text-sm font-normal text-gray-500">
+                    ({intervention.comments.length})
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -433,15 +521,15 @@ export const InterventionDetailsPage = () => {
               {intervention.comments && intervention.comments.length > 0 ? (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {intervention.comments.map(comment => (
-                    <div key={comment.id} className="flex gap-3">
+                    <div key={comment.id} className="flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                       <UserAvatar
                         name={comment.userName || 'User'}
                         photoURL={comment.userPhotoURL}
                         size="sm"
                       />
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">
+                          <span className="font-semibold text-sm text-gray-900 dark:text-white">
                             {comment.userName || 'Utilisateur'}
                           </span>
                           <span className="text-xs text-gray-500">
@@ -451,13 +539,18 @@ export const InterventionDetailsPage = () => {
                               })}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{comment.text}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
+                          {comment.text}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-8">Aucun message</p>
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">Aucun commentaire</p>
+                </div>
               )}
 
               {/* Formulaire nouveau message */}
@@ -466,46 +559,68 @@ export const InterventionDetailsPage = () => {
                   <Textarea
                     value={messageText}
                     onChange={e => setMessageText(e.target.value)}
-                    placeholder="Écrire un message..."
+                    placeholder="Ajouter un commentaire..."
                     rows={2}
                     className="flex-1"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                        handleSendMessage();
+                      }
+                    }}
                   />
                   <Button
                     onClick={handleSendMessage}
                     disabled={!messageText.trim() || isSendingMessage}
+                    size="icon"
                   >
-                    <Send size={16} />
+                    <Send className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Ctrl+Entrée pour envoyer rapidement
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Sidebar */}
+        {/* SIDEBAR (1/3) */}
         <div className="space-y-6">
           {/* Temps & SLA */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Temps & SLA</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Clock className="h-4 w-4 text-indigo-500" />
+                Temps & Durée
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Temps écoulé</p>
-                <p className="text-lg font-semibold">{elapsedTime}</p>
+            <CardContent className="space-y-4">
+              <div className="p-4 bg-indigo-50 dark:bg-indigo-950/20 rounded-lg">
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 mb-1 font-medium uppercase tracking-wide">
+                  Temps écoulé
+                </p>
+                <p className="text-2xl font-bold text-indigo-900 dark:text-indigo-100">
+                  {elapsedTime}
+                </p>
               </div>
 
               {intervention.actualDuration && (
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">Durée réelle</p>
-                  <p className="text-lg font-semibold">{intervention.actualDuration} min</p>
+                <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                  <p className="text-xs text-green-600 dark:text-green-400 mb-1 font-medium uppercase tracking-wide">
+                    Durée réelle
+                  </p>
+                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                    {intervention.actualDuration} min
+                  </p>
                 </div>
               )}
 
               {intervention.status === 'in_progress' && intervention.startedAt && (
-                <div>
-                  <p className="text-xs text-gray-500 mb-1">En cours depuis</p>
-                  <p className="text-sm">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1 font-medium uppercase tracking-wide">
+                    En cours depuis
+                  </p>
+                  <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
                     {formatDistanceToNow(intervention.startedAt.toDate(), {
                       locale: fr,
                       addSuffix: true,
@@ -518,8 +633,11 @@ export const InterventionDetailsPage = () => {
 
           {/* Historique */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Historique</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-4 w-4 text-indigo-500" />
+                Historique
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {intervention.history && intervention.history.length > 0 ? (
@@ -535,32 +653,44 @@ export const InterventionDetailsPage = () => {
                   }))}
                 />
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">Aucun historique</p>
+                <div className="text-center py-6">
+                  <History className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Aucun historique</p>
+                </div>
               )}
             </CardContent>
           </Card>
 
           {/* Métadonnées */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Métadonnées</CardTitle>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Info className="h-4 w-4 text-indigo-500" />
+                Métadonnées
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">ID</span>
-                <span className="font-mono text-xs">{intervention.id.substring(0, 8)}...</span>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 dark:text-gray-400">ID</span>
+                <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                  {intervention.id.substring(0, 8)}...
+                </code>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Créée par</span>
-                <span>{intervention.createdByName || 'Utilisateur'}</span>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 dark:text-gray-400">Créée par</span>
+                <span className="font-medium">{intervention.createdByName || 'Utilisateur'}</span>
               </div>
               {intervention.updatedAt && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Modifiée</span>
-                  <span>
-                    {format(intervention.updatedAt.toDate(), 'dd/MM/yyyy', { locale: fr })}
-                  </span>
-                </div>
+                <>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 dark:text-gray-400">Modifiée</span>
+                    <span className="font-medium">
+                      {format(intervention.updatedAt.toDate(), 'dd/MM/yyyy', { locale: fr })}
+                    </span>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -590,8 +720,8 @@ export const InterventionDetailsPage = () => {
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDelete}
         title="Supprimer l'intervention"
-        description="Êtes-vous sûr de vouloir supprimer cette intervention ? Cette action est irréversible."
-        confirmLabel="Supprimer"
+        description="Êtes-vous sûr de vouloir supprimer cette intervention ? Cette action est irréversible et supprimera également toutes les photos et commentaires associés."
+        confirmLabel="Supprimer définitivement"
         variant="danger"
         isLoading={isDeleting}
       />
