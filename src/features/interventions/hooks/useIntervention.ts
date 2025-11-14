@@ -1,23 +1,23 @@
 /**
  * Single Intervention Hook
  *
- * Hook pour charger et gérer une intervention spécifique
+ * Hook pour charger et gÃ©rer une intervention spÃ©cifique
  */
 
 import { useState, useEffect } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
+import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import type { Intervention } from '../types/intervention.types';
 
-const COLLECTION_NAME = 'interventions';
-
 /**
- * Hook pour charger une intervention spécifique
+ * Hook pour charger une intervention spÃ©cifique
  *
  * @param interventionId - ID de l'intervention
  * @returns Intervention data, loading state, and error
  */
 export const useIntervention = (interventionId: string) => {
+  const { currentEstablishment } = useEstablishmentStore();
   const [intervention, setIntervention] = useState<Intervention | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -30,10 +30,18 @@ export const useIntervention = (interventionId: string) => {
       return;
     }
 
+    if (!currentEstablishment?.id) {
+      setIntervention(null);
+      setIsLoading(false);
+      setError(new Error('No establishment selected'));
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
-    const docRef = doc(db, COLLECTION_NAME, interventionId);
+    // Utiliser la mÃªme structure que le service : establishments/{establishmentId}/interventions/{interventionId}
+    const docRef = doc(db, 'establishments', currentEstablishment.id, 'interventions', interventionId);
 
     const unsubscribe = onSnapshot(
       docRef,
@@ -58,7 +66,7 @@ export const useIntervention = (interventionId: string) => {
     );
 
     return () => unsubscribe();
-  }, [interventionId]);
+  }, [interventionId, currentEstablishment?.id]);
 
   return {
     intervention,

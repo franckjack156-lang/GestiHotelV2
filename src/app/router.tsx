@@ -55,6 +55,9 @@ import { MessagingPage } from '@/pages/MessagingPage';
 import { SettingsPage } from '@/pages/Settings';
 import { EstablishmentFeaturesPage } from '@/pages/settings/EstablishmentFeaturesPage';
 
+// 🔍 Diagnostic
+import { DiagnosticPage } from '@/pages/DiagnosticPage';
+
 // 404
 import { NotFoundPage } from '@/pages/NotFound';
 
@@ -283,6 +286,14 @@ export const router = createBrowserRouter([
       {
         path: 'settings/features',
         element: <EstablishmentFeaturesPage />,
+      },
+
+      // ----------------------------------------------------------------------------
+      // 🔍 DIAGNOSTIC
+      // ----------------------------------------------------------------------------
+      {
+        path: 'diagnostic',
+        element: <DiagnosticPage />,
       },
     ],
   },
