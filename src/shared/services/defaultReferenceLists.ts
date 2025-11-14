@@ -138,6 +138,20 @@ const interventionStatusesDefault: ListConfig = {
 };
 
 /**
+ * Localisations d'intervention
+ */
+const interventionLocationsDefault: ListConfig = {
+  name: "Localisations d'intervention",
+  description: 'Lieux où se déroulent les interventions',
+  allowCustom: true,
+  isRequired: true,
+  isSystem: false,
+  items: [
+    createItem('chambre', 'Chambre', 1, { color: 'blue', icon: 'DoorClosed' }),
+  ],
+};
+
+/**
  * Types de chambres
  */
 const roomTypesDefault: ListConfig = {
@@ -240,6 +254,7 @@ export const DEFAULT_REFERENCE_LISTS: Record<string, ListConfig> = {
   interventionPriorities: interventionPrioritiesDefault,
   interventionCategories: interventionCategoriesDefault,
   interventionStatuses: interventionStatusesDefault,
+  interventionLocations: interventionLocationsDefault,
 
   // Chambres (si feature activée)
   roomTypes: roomTypesDefault,
@@ -260,6 +275,7 @@ export const getEssentialLists = (): Record<string, ListConfig> => {
     interventionPriorities: interventionPrioritiesDefault,
     interventionCategories: interventionCategoriesDefault,
     interventionStatuses: interventionStatusesDefault,
+    interventionLocations: interventionLocationsDefault,
   };
 };
 

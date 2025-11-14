@@ -41,8 +41,10 @@ export interface Intervention extends TimestampedDocument {
   
   // Assignation
   assignedTo?: string; // userId du technicien
+  assignedToName?: string; // Nom du technicien (dénormalisé)
   assignedAt?: Timestamp;
   createdBy: string; // userId du créateur
+  createdByName?: string; // Nom du créateur (dénormalisé)
   
   // Dates et durées
   scheduledAt?: Timestamp;
@@ -224,4 +226,157 @@ export interface InterventionListConfig {
   showPhotos: boolean;
   showAssignee: boolean;
   groupBy?: 'status' | 'priority' | 'type' | 'date';
+}
+
+// ============================================================================
+// NOUVEAUX TYPES POUR FICHE INTERVENTION TECHNICIEN
+// ============================================================================
+
+/**
+ * Catégorie de photo
+ */
+export type PhotoCategory = 'before' | 'during' | 'after';
+
+/**
+ * Photo catégorisée pour intervention
+ */
+export interface CategorizedPhoto extends Photo {
+  category: PhotoCategory;
+  caption?: string;
+  uploadedBy: string;
+  uploadedByName: string;
+}
+
+/**
+ * Commentaire d'intervention
+ */
+export interface InterventionComment {
+  id: string;
+  interventionId: string;
+  authorId: string;
+  authorName: string;
+  authorRole?: string;
+  content: string;
+  mentions?: string[]; // IDs des utilisateurs mentionnés
+  attachments?: Photo[];
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+  isEdited: boolean;
+  isInternal: boolean; // Commentaire interne (non visible par le client)
+}
+
+/**
+ * Données pour créer un commentaire
+ */
+export interface CreateCommentData {
+  content: string;
+  mentions?: string[];
+  attachments?: File[];
+  isInternal?: boolean;
+}
+
+/**
+ * Statut de pièce à commander
+ */
+export type PartStatus = 'to_order' | 'ordered' | 'received' | 'installed';
+
+/**
+ * Pièce détachée / matériel à commander
+ */
+export interface InterventionPart {
+  id: string;
+  interventionId: string;
+  name: string;
+  reference?: string;
+  quantity: number;
+  unitPrice?: number;
+  supplier?: string;
+  status: PartStatus;
+  orderedAt?: Timestamp;
+  receivedAt?: Timestamp;
+  installedAt?: Timestamp;
+  notes?: string;
+  addedBy: string;
+  addedByName: string;
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+/**
+ * Données pour créer une pièce
+ */
+export interface CreatePartData {
+  name: string;
+  reference?: string;
+  quantity: number;
+  unitPrice?: number;
+  supplier?: string;
+  notes?: string;
+}
+
+/**
+ * Données pour mettre à jour une pièce
+ */
+export interface UpdatePartData {
+  name?: string;
+  reference?: string;
+  quantity?: number;
+  unitPrice?: number;
+  supplier?: string;
+  status?: PartStatus;
+  notes?: string;
+}
+
+/**
+ * Mode de suivi du temps
+ */
+export type TimeTrackingMode = 'manual' | 'timer';
+
+/**
+ * Session de temps (pour chronomètre)
+ */
+export interface TimeSession {
+  id: string;
+  interventionId: string;
+  technicianId: string;
+  technicianName: string;
+  startedAt: Timestamp;
+  endedAt?: Timestamp;
+  duration: number; // en minutes
+  notes?: string;
+  createdAt: Timestamp;
+}
+
+/**
+ * Données pour créer une session de temps
+ */
+export interface CreateTimeSessionData {
+  startedAt: Date;
+  endedAt?: Date;
+  duration?: number;
+  notes?: string;
+}
+
+/**
+ * Résumé du temps passé
+ */
+export interface TimeTrackingSummary {
+  totalMinutes: number;
+  sessionsCount: number;
+  sessions: TimeSession[];
+  estimatedMinutes?: number;
+  variance?: number; // différence entre estimé et réel en %
+}
+
+/**
+ * Email pour commande de pièces
+ */
+export interface PartsOrderEmail {
+  interventionId: string;
+  interventionTitle: string;
+  parts: InterventionPart[];
+  totalAmount: number;
+  recipientEmail: string;
+  recipientName?: string;
+  message?: string;
 }

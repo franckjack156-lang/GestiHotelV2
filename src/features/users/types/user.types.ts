@@ -285,6 +285,15 @@ export interface CreateUserData {
   /** Compétences */
   skills?: string[];
 
+  /** Est un technicien (peut recevoir des assignations d'interventions) */
+  isTechnician?: boolean;
+
+  /** Spécialités techniques (pour techniciens) */
+  specialties?: string[];
+
+  /** Niveau d'expérience (pour techniciens) */
+  experienceLevel?: 'junior' | 'intermediate' | 'senior' | 'expert';
+
   /** Envoyer email d'invitation */
   sendInvitation?: boolean;
 }
@@ -319,6 +328,15 @@ export interface UpdateUserData {
 
   /** Compétences */
   skills?: string[];
+
+  /** Est un technicien (peut recevoir des assignations d'interventions) */
+  isTechnician?: boolean;
+
+  /** Spécialités techniques (pour techniciens) */
+  specialties?: string[];
+
+  /** Niveau d'expérience (pour techniciens) */
+  experienceLevel?: 'junior' | 'intermediate' | 'senior' | 'expert';
 
   /** Statut */
   status?: UserStatus;

@@ -78,19 +78,8 @@ export const EditUserPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <UserForm
-            mode="edit"
-            initialData={{
-              email: user.email,
-              firstName: user.firstName,
-              lastName: user.lastName,
-              role: user.role,
-              photoURL: user.photoURL || undefined,
-              phoneNumber: user.phoneNumber || undefined,
-              jobTitle: user.jobTitle || undefined,
-              department: user.department || undefined,
-              establishmentIds: user.establishmentIds,
-              skills: user.skills || [],
-            }}
+            user={user}
+            establishmentIds={user.establishmentIds}
             onSubmit={handleSubmit}
             onCancel={() => navigate(`/app/users/${id}`)}
             isSubmitting={isUpdating}

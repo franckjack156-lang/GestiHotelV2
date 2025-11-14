@@ -21,6 +21,8 @@ import {
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Separator } from '@/shared/components/ui/separator';
+import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
+import { DynamicListMultiSelect } from '@/shared/components/forms/DynamicListMultiSelect';
 import {
   UserRole,
   ROLE_LABELS,
@@ -47,8 +49,8 @@ const userSchema = z.object({
   phoneNumber: z.string().optional(),
   jobTitle: z.string().optional(),
   department: z.string().optional(),
-  skills: z.string().optional(), // Sera converti en array
-  specialties: z.string().optional(), // Sera converti en array
+  skills: z.array(z.string()).optional(), // Tableau de compétences
+  specialties: z.array(z.string()).optional(), // Tableau de spécialités
   experienceLevel: z.enum(['junior', 'intermediate', 'senior', 'expert']).optional(),
   photoURL: z.string().url('URL invalide').optional().or(z.literal('')),
   sendInvitation: z.boolean().optional(),
@@ -100,8 +102,8 @@ export const UserForm: React.FC<UserFormProps> = ({
           phoneNumber: user.phoneNumber || '',
           jobTitle: user.jobTitle || '',
           department: user.department || '',
-          skills: user.skills?.join(', ') || '',
-          specialties: user.specialties?.join(', ') || '',
+          skills: user.skills || [],
+          specialties: user.specialties || [],
           experienceLevel: user.experienceLevel || undefined,
           photoURL: user.photoURL || '',
         }
@@ -109,6 +111,8 @@ export const UserForm: React.FC<UserFormProps> = ({
           role: UserRole.TECHNICIAN,
           isTechnician: false,
           sendInvitation: true,
+          skills: [],
+          specialties: [],
         },
   });
 
@@ -120,52 +124,26 @@ export const UserForm: React.FC<UserFormProps> = ({
    * Gérer la soumission
    */
   const handleFormSubmit = (data: UserFormData) => {
-    const skills = data.skills
-      ?.split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const specialties = data.specialties
-      ?.split(',')
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     if (isEditMode) {
       // Mode édition
-      const updateData: UpdateUserData & {
-        isTechnician?: boolean;
-        specialties?: string[];
-        experienceLevel?: string;
-      } = {
+      const updateData: UpdateUserData = {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
         phoneNumber: data.phoneNumber || undefined,
         jobTitle: data.jobTitle || undefined,
         department: data.department || undefined,
-        skills: skills,
+        skills: data.skills && data.skills.length > 0 ? data.skills : undefined,
         photoURL: data.photoURL || undefined,
+        isTechnician: data.isTechnician,
+        specialties: data.isTechnician && data.specialties && data.specialties.length > 0 ? data.specialties : undefined,
+        experienceLevel: data.isTechnician && data.experienceLevel ? data.experienceLevel : undefined,
       };
-
-      // Ajouter les champs technicien si applicable
-      if (data.isTechnician !== undefined) {
-        updateData.isTechnician = data.isTechnician;
-      }
-      if (data.isTechnician && specialties) {
-        updateData.specialties = specialties;
-      }
-      if (data.isTechnician && data.experienceLevel) {
-        updateData.experienceLevel = data.experienceLevel;
-      }
 
       onSubmit(updateData);
     } else {
       // Mode création
-      const createData: CreateUserData & {
-        isTechnician?: boolean;
-        specialties?: string[];
-        experienceLevel?: string;
-      } = {
+      const createData: CreateUserData = {
         email: data.email,
         password: data.password || 'ChangeMe123!', // Mot de passe par défaut
         firstName: data.firstName,
@@ -175,21 +153,13 @@ export const UserForm: React.FC<UserFormProps> = ({
         phoneNumber: data.phoneNumber || undefined,
         jobTitle: data.jobTitle || undefined,
         department: data.department || undefined,
-        skills: skills,
+        skills: data.skills && data.skills.length > 0 ? data.skills : undefined,
         photoURL: data.photoURL || undefined,
         sendInvitation: data.sendInvitation,
+        isTechnician: data.isTechnician,
+        specialties: data.isTechnician && data.specialties && data.specialties.length > 0 ? data.specialties : undefined,
+        experienceLevel: data.isTechnician && data.experienceLevel ? data.experienceLevel : undefined,
       };
-
-      // Ajouter les champs technicien si applicable
-      if (data.isTechnician !== undefined) {
-        createData.isTechnician = data.isTechnician;
-      }
-      if (data.isTechnician && specialties) {
-        createData.specialties = specialties;
-      }
-      if (data.isTechnician && data.experienceLevel) {
-        createData.experienceLevel = data.experienceLevel;
-      }
 
       onSubmit(createData);
     }
@@ -374,10 +344,12 @@ export const UserForm: React.FC<UserFormProps> = ({
           {/* Département */}
           <div>
             <Label htmlFor="department">Département</Label>
-            <Input
-              id="department"
-              {...register('department')}
-              placeholder="Maintenance"
+            <DynamicListSelect
+              listKey="staffDepartments"
+              value={watch('department') || ''}
+              onValueChange={(value) => setValue('department', value)}
+              placeholder="Sélectionner un département"
+              allowCustom={true}
             />
           </div>
         </div>
@@ -385,15 +357,13 @@ export const UserForm: React.FC<UserFormProps> = ({
         {/* Compétences */}
         <div>
           <Label htmlFor="skills">Compétences</Label>
-          <Textarea
-            id="skills"
-            {...register('skills')}
-            placeholder="Plomberie, Électricité, Climatisation (séparées par des virgules)"
-            rows={3}
+          <DynamicListMultiSelect
+            listKey="staffSkills"
+            value={watch('skills') || []}
+            onChange={(values) => setValue('skills', values)}
+            placeholder="Sélectionner des compétences"
+            allowCustom={true}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Séparer les compétences par des virgules
-          </p>
         </div>
 
         {/* Champs supplémentaires pour techniciens */}
@@ -402,15 +372,13 @@ export const UserForm: React.FC<UserFormProps> = ({
             {/* Spécialités */}
             <div>
               <Label htmlFor="specialties">Spécialités techniques</Label>
-              <Textarea
-                id="specialties"
-                {...register('specialties')}
-                placeholder="CVC, Domotique, Plomberie sanitaire (séparées par des virgules)"
-                rows={2}
+              <DynamicListMultiSelect
+                listKey="technicalSpecialties"
+                value={watch('specialties') || []}
+                onChange={(values) => setValue('specialties', values)}
+                placeholder="Sélectionner des spécialités techniques"
+                allowCustom={true}
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Domaines d'expertise spécifiques
-              </p>
             </div>
 
             {/* Niveau d'expérience */}

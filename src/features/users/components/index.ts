@@ -18,6 +18,7 @@ export { UsersTable } from './UsersTable';
 
 // Formulaires et édition
 export { UserForm } from './UserForm';
+export { TechnicianSelect } from './TechnicianSelect';
 
 // Filtres et recherche
 export { UsersFilters } from './UsersFilters';

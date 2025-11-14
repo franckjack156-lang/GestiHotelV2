@@ -15,12 +15,12 @@
  * - Suggestions intelligentes
  */
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, ArrowRight, Check, Upload, X, Save, Wand2, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Upload, X, Save, Wand2, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
@@ -33,8 +33,11 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Alert } from '@/shared/components/ui/alert';
 import { FileUpload } from '@/shared/components/ui-extended';
 import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
+import { TechnicianSelect } from '@/features/users/components';
+import { RoomAutocomplete } from '@/features/rooms/components';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
 import { useLocalStorage } from '@/shared/hooks/utilityHooks';
@@ -54,20 +57,18 @@ import {
 // ============================================================================
 
 const interventionSchema = z.object({
-  title: z.string().min(3, 'Le titre doit contenir au moins 3 caractères'),
-  description: z.string().min(10, 'La description doit contenir au moins 10 caractères'),
-  type: z.string(),
-  category: z.string(),
-  priority: z.string(),
-  location: z.string().min(3, 'La localisation est requise'),
+  title: z.string().min(1, 'Le titre est requis'),
+  description: z.string().optional(),
+  assignedTo: z.array(z.string()).optional(), // Tableau d'IDs de techniciens
+  type: z.string().optional(),
+  category: z.string().optional(),
+  priority: z.string().optional(),
+  location: z.string().min(1, 'La localisation est requise'),
   roomNumber: z.string().optional(),
   floor: z.coerce.number().optional(),
   building: z.string().optional(),
-  assignedTo: z.string().optional(),
   estimatedDuration: z.coerce.number().optional(),
   internalNotes: z.string().optional(),
-  isUrgent: z.boolean().default(false),
-  isBlocking: z.boolean().default(false),
 });
 
 type FormData = z.infer<typeof interventionSchema>;
@@ -85,8 +86,12 @@ type WizardStep = 1 | 2 | 3 | 4 | 5;
 
 export const CreateInterventionPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { establishmentId } = useCurrentEstablishment();
   const { createIntervention, isCreating } = useInterventionActions();
+
+  // Ref pour détecter si c'est le premier montage
+  const isFirstMount = useRef(true);
 
   // Mode formulaire
   const [mode, setMode] = useState<FormMode>(null);
@@ -101,10 +106,10 @@ export const CreateInterventionPage = () => {
   // Brouillon auto-save
   const [draft, setDraft] = useLocalStorage<Partial<FormData>>('intervention-draft', {});
 
-  // Form
+  // Form - initialiser avec des valeurs vides, le draft sera chargé manuellement
   const form = useForm<FormData>({
     resolver: zodResolver(interventionSchema),
-    defaultValues: draft,
+    defaultValues: {},
   });
 
   const {
@@ -114,6 +119,46 @@ export const CreateInterventionPage = () => {
     setValue,
     formState: { errors },
   } = form;
+
+  // Réinitialiser le formulaire quand on navigue vers la page
+  useEffect(() => {
+    // Vérifier si le brouillon a été explicitement supprimé
+    const wasDraftCleared = window.localStorage.getItem('intervention-draft-cleared') === 'true';
+
+    if (wasDraftCleared) {
+      // Le brouillon a été supprimé: ne rien charger et retirer le flag
+      window.localStorage.removeItem('intervention-draft-cleared');
+      form.reset({});
+      setSelectedFiles([]);
+      setFilePreviews([]);
+      setCurrentStep(1);
+      setMode(null);
+      return;
+    }
+
+    if (isFirstMount.current) {
+      // Premier montage: charger le brouillon s'il existe
+      isFirstMount.current = false;
+      if (Object.keys(draft).length > 0) {
+        form.reset(draft);
+      }
+    } else {
+      // Navigation suivante: toujours réinitialiser complètement
+      form.reset({});
+      setSelectedFiles([]);
+      setFilePreviews([]);
+      setCurrentStep(1);
+      setMode(null);
+
+      // Charger le brouillon si présent après reset
+      if (Object.keys(draft).length > 0) {
+        setTimeout(() => {
+          form.reset(draft);
+        }, 50);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]); // Ne PAS inclure draft pour éviter les réinitialisations intempestives
 
   // Auto-save brouillon toutes les 30s
   useEffect(() => {
@@ -126,7 +171,8 @@ export const CreateInterventionPage = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, setDraft]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Pas de dépendances pour éviter les re-créations de subscription
 
   // Gérer l'upload de fichiers
   const handleFilesSelected = (files: File[]) => {
@@ -150,6 +196,9 @@ export const CreateInterventionPage = () => {
   // Soumettre le formulaire
   const onSubmit = async (data: FormData) => {
     try {
+      console.log('🔍 [onSubmit] Form data received:', data);
+      console.log('🔍 [onSubmit] data.type:', data.type, 'is undefined?', data.type === undefined);
+
       const interventionData: CreateInterventionData = {
         ...data,
         type: data.type as InterventionType,
@@ -158,11 +207,32 @@ export const CreateInterventionPage = () => {
         photos: selectedFiles,
       };
 
+      console.log('🔍 [onSubmit] Prepared interventionData:', interventionData);
+      console.log('🔍 [onSubmit] interventionData.type:', interventionData.type);
+
       const id = await createIntervention(interventionData);
 
       if (id) {
         toast.success('Intervention créée avec succès');
-        setDraft({}); // Clear draft
+
+        console.log('🔍 [onSubmit] Avant suppression draft - localStorage:', window.localStorage.getItem('intervention-draft'));
+
+        // Supprimer complètement le brouillon du localStorage
+        window.localStorage.removeItem('intervention-draft');
+
+        // IMPORTANT: Mettre à jour l'état du hook useLocalStorage aussi
+        setDraft({});
+
+        console.log('🔍 [onSubmit] Après suppression draft - localStorage:', window.localStorage.getItem('intervention-draft'));
+        console.log('🔍 [onSubmit] setDraft({}) appelé');
+
+        // Réinitialiser le formulaire et tous les états
+        form.reset({});
+        setSelectedFiles([]);
+        setFilePreviews([]);
+        setCurrentStep(1);
+
+        console.log('🔍 [onSubmit] Draft supprimé, navigation vers intervention');
         navigate(`/app/interventions/${id}`);
       }
     } catch (error) {
@@ -172,7 +242,7 @@ export const CreateInterventionPage = () => {
 
   // Navigation wizard
   const nextStep = () => {
-    if (currentStep < 5) setCurrentStep((currentStep + 1) as WizardStep);
+    if (currentStep < 4) setCurrentStep((currentStep + 1) as WizardStep);
   };
 
   const previousStep = () => {
@@ -194,6 +264,36 @@ export const CreateInterventionPage = () => {
     );
   }
 
+  // Vérifier si un brouillon existe
+  const hasDraft = Object.keys(draft).length > 0;
+
+  // Fonction pour effacer le brouillon
+  const clearDraft = () => {
+    console.log('🔍 [clearDraft] Avant suppression - localStorage:', window.localStorage.getItem('intervention-draft'));
+
+    // Supprimer complètement le brouillon du localStorage
+    window.localStorage.removeItem('intervention-draft');
+
+    // IMPORTANT: Mettre à jour l'état du hook useLocalStorage aussi
+    setDraft({});
+
+    console.log('🔍 [clearDraft] Après suppression - localStorage:', window.localStorage.getItem('intervention-draft'));
+    console.log('🔍 [clearDraft] setDraft({}) appelé');
+
+    // Marquer explicitement que le brouillon a été supprimé
+    window.localStorage.setItem('intervention-draft-cleared', 'true');
+
+    // Réinitialiser le formulaire et tous les états
+    form.reset({});
+    setSelectedFiles([]);
+    setFilePreviews([]);
+    setCurrentStep(1);
+    setMode(null);
+
+    console.log('🔍 [clearDraft] Draft supprimé, form reset, états réinitialisés');
+    toast.success('Brouillon supprimé');
+  };
+
   // Écran de sélection du mode
   if (!mode) {
     return (
@@ -204,6 +304,26 @@ export const CreateInterventionPage = () => {
             Retour
           </Button>
         </div>
+
+        {/* Alerte brouillon */}
+        {hasDraft && (
+          <div className="mb-6">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <div className="flex items-center justify-between flex-1">
+                <div>
+                  <h4 className="font-semibold">Brouillon détecté</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Un brouillon d'intervention a été sauvegardé. Voulez-vous continuer ou recommencer ?
+                  </p>
+                </div>
+                <Button variant="outline" size="sm" onClick={clearDraft}>
+                  Supprimer le brouillon
+                </Button>
+              </div>
+            </Alert>
+          </div>
+        )}
 
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">Créer une intervention</h1>
@@ -287,8 +407,7 @@ export const CreateInterventionPage = () => {
       { number: 1, title: 'Informations' },
       { number: 2, title: 'Localisation' },
       { number: 3, title: 'Photos' },
-      { number: 4, title: 'Assignation' },
-      { number: 5, title: 'Récapitulatif' },
+      { number: 4, title: 'Récapitulatif' },
     ];
 
     return (
@@ -348,23 +467,32 @@ export const CreateInterventionPage = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description *</Label>
+                    <Label htmlFor="description">Description (optionnel)</Label>
                     <Textarea
                       {...register('description')}
                       placeholder="Décrivez le problème en détail"
                       rows={4}
                     />
-                    {errors.description && (
-                      <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
-                    )}
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="assignedTo">Technicien(s) assigné(s) (optionnel)</Label>
+                    <TechnicianSelect
+                      value={watch('assignedTo') || []}
+                      onChange={(value) => setValue('assignedTo', value as string[])}
+                      multiple={true}
+                      placeholder="Sélectionner un ou plusieurs techniciens"
+                      showSkills={true}
+                      showAvatars={true}
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="type">Type *</Label>
+                      <Label htmlFor="type">Type (optionnel)</Label>
                       <DynamicListSelect
                         listKey="interventionTypes"
-                        value={watch('type')}
+                        value={watch('type') || ''}
                         onChange={value => setValue('type', value)}
                         placeholder="Sélectionner un type"
                         showIcons
@@ -373,52 +501,30 @@ export const CreateInterventionPage = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="category">Catégorie *</Label>
+                      <Label htmlFor="category">Catégorie (optionnel)</Label>
                       <DynamicListSelect
                         listKey="interventionCategories"
-                        value={watch('category')}
+                        value={watch('category') || ''}
                         onChange={value => setValue('category', value)}
                         placeholder="Sélectionner une catégorie"
                         showIcons
                         showColors
                       />
                     </div>
-                  </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="priority">Priorité *</Label>
+                      <Label htmlFor="priority">Priorité (optionnel)</Label>
                       <DynamicListSelect
                         listKey="interventionPriorities"
-                        value={watch('priority')}
+                        value={watch('priority') || ''}
                         onChange={value => setValue('priority', value)}
                         placeholder="Sélectionner une priorité"
                         showIcons
                         showColors
                       />
                     </div>
-
-                    <div>
-                      <Label htmlFor="estimatedDuration">Durée estimée (min)</Label>
-                      <Input
-                        type="number"
-                        {...register('estimatedDuration')}
-                        placeholder="Ex: 60"
-                      />
-                    </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" {...register('isUrgent')} className="rounded" />
-                      <span className="text-sm">Urgent</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" {...register('isBlocking')} className="rounded" />
-                      <span className="text-sm">Bloquant</span>
-                    </label>
-                  </div>
                 </div>
               )}
 
@@ -429,28 +535,74 @@ export const CreateInterventionPage = () => {
 
                   <div>
                     <Label htmlFor="location">Localisation *</Label>
-                    <Input {...register('location')} placeholder="Ex: Chambre 301, Salle de bain" />
+                    <DynamicListSelect
+                      listKey="interventionLocations"
+                      value={watch('location') || ''}
+                      onChange={(value) => setValue('location', value)}
+                      placeholder="Sélectionner une localisation"
+                      allowCustom={true}
+                    />
                     {errors.location && (
                       <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>
                     )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      Par défaut, "Chambre" est disponible dans la liste
+                    </p>
                   </div>
 
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="roomNumber">Numéro chambre</Label>
-                      <Input {...register('roomNumber')} placeholder="Ex: 301" />
-                    </div>
+                  {/* Champs conditionnels si localisation = Chambre */}
+                  {watch('location')?.toLowerCase() === 'chambre' && (
+                    <div className="space-y-4 border-l-4 border-indigo-500 pl-4 bg-indigo-50 dark:bg-indigo-950/20 p-4 rounded-r-lg">
+                      <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                        Sélectionner une chambre
+                      </p>
 
-                    <div>
-                      <Label htmlFor="floor">Étage</Label>
-                      <Input type="number" {...register('floor')} placeholder="Ex: 3" />
-                    </div>
+                      <div>
+                        <Label htmlFor="roomNumber">Chambre</Label>
+                        <RoomAutocomplete
+                          value={watch('roomNumber') || ''}
+                          onChange={(room) => {
+                            if (room) {
+                              setValue('roomNumber', room.number);
+                              setValue('floor', room.floor);
+                              setValue('building', room.building || '');
+                            } else {
+                              setValue('roomNumber', '');
+                              setValue('floor', undefined);
+                              setValue('building', '');
+                            }
+                          }}
+                          placeholder="Rechercher ou créer une chambre..."
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          L'étage et le bâtiment seront remplis automatiquement
+                        </p>
+                      </div>
 
-                    <div>
-                      <Label htmlFor="building">Bâtiment</Label>
-                      <Input {...register('building')} placeholder="Ex: A" />
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="floor">Étage</Label>
+                          <Input
+                            type="number"
+                            value={watch('floor') ?? ''}
+                            placeholder="Auto-rempli"
+                            disabled
+                            className="bg-gray-100 dark:bg-gray-800"
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="building">Bâtiment</Label>
+                          <Input
+                            value={watch('building') || ''}
+                            placeholder="Auto-rempli"
+                            disabled
+                            className="bg-gray-100 dark:bg-gray-800"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
@@ -490,37 +642,8 @@ export const CreateInterventionPage = () => {
                 </div>
               )}
 
-              {/* Step 4: Assignation */}
+              {/* Step 4: Récapitulatif */}
               {currentStep === 4 && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold mb-4">Assignation (optionnel)</h2>
-
-                  <div>
-                    <Label htmlFor="assignedTo">Assigner à</Label>
-                    <Select onValueChange={value => setValue('assignedTo', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un technicien" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="tech1">Jean Martin</SelectItem>
-                        <SelectItem value="tech2">Marie Dupont</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="internalNotes">Notes internes</Label>
-                    <Textarea
-                      {...register('internalNotes')}
-                      placeholder="Notes visibles uniquement par l'équipe"
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Step 5: Récapitulatif */}
-              {currentStep === 5 && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold mb-4">Récapitulatif</h2>
 
@@ -569,7 +692,7 @@ export const CreateInterventionPage = () => {
                   Précédent
                 </Button>
 
-                {currentStep < 5 ? (
+                {currentStep < 4 ? (
                   <Button type="button" onClick={nextStep}>
                     Suivant
                     <ArrowRight size={16} className="ml-2" />
@@ -609,26 +732,35 @@ export const CreateInterventionPage = () => {
 
               <div>
                 <Label htmlFor="title">Titre *</Label>
-                <Input {...register('title')} />
+                <Input {...register('title')} placeholder="Ex: Fuite d'eau chambre 301" />
                 {errors.title && (
                   <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="description">Description *</Label>
-                <Textarea {...register('description')} rows={4} />
-                {errors.description && (
-                  <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
-                )}
+                <Label htmlFor="description">Description (optionnel)</Label>
+                <Textarea {...register('description')} rows={4} placeholder="Décrivez le problème en détail" />
+              </div>
+
+              <div>
+                <Label htmlFor="assignedTo">Technicien(s) assigné(s) (optionnel)</Label>
+                <TechnicianSelect
+                  value={watch('assignedTo') || []}
+                  onChange={(value) => setValue('assignedTo', value as string[])}
+                  multiple={true}
+                  placeholder="Sélectionner un ou plusieurs techniciens"
+                  showSkills={true}
+                  showAvatars={true}
+                />
               </div>
 
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <Label>Type *</Label>
+                  <Label>Type (optionnel)</Label>
                   <DynamicListSelect
                     listKey="interventionTypes"
-                    value={watch('type')}
+                    value={watch('type') || ''}
                     onChange={value => setValue('type', value)}
                     placeholder="Sélectionner un type"
                     showIcons
@@ -637,10 +769,10 @@ export const CreateInterventionPage = () => {
                 </div>
 
                 <div>
-                  <Label>Catégorie *</Label>
+                  <Label>Catégorie (optionnel)</Label>
                   <DynamicListSelect
                     listKey="interventionCategories"
-                    value={watch('category')}
+                    value={watch('category') || ''}
                     onChange={value => setValue('category', value)}
                     placeholder="Sélectionner une catégorie"
                     showIcons
@@ -649,10 +781,10 @@ export const CreateInterventionPage = () => {
                 </div>
 
                 <div>
-                  <Label>Priorité *</Label>
+                  <Label>Priorité (optionnel)</Label>
                   <DynamicListSelect
                     listKey="interventionPriorities"
-                    value={watch('priority')}
+                    value={watch('priority') || ''}
                     onChange={value => setValue('priority', value)}
                     placeholder="Sélectionner une priorité"
                     showIcons
@@ -668,61 +800,106 @@ export const CreateInterventionPage = () => {
 
               <div>
                 <Label>Localisation *</Label>
-                <Input {...register('location')} />
+                <DynamicListSelect
+                  listKey="interventionLocations"
+                  value={watch('location') || ''}
+                  onChange={(value) => setValue('location', value)}
+                  placeholder="Sélectionner une localisation"
+                  allowCustom={true}
+                />
+                {errors.location && (
+                  <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Par défaut, "Chambre" est disponible dans la liste
+                </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <Label>Chambre</Label>
-                  <Input {...register('roomNumber')} />
+              {/* Champs conditionnels si localisation = Chambre */}
+              {watch('location')?.toLowerCase() === 'chambre' && (
+                <div className="space-y-4 border-l-4 border-indigo-500 pl-4 bg-indigo-50 dark:bg-indigo-950/20 p-4 rounded-r-lg">
+                  <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                    Sélectionner une chambre
+                  </p>
+
+                  <div>
+                    <Label htmlFor="roomNumber">Chambre</Label>
+                    <RoomAutocomplete
+                      value={watch('roomNumber') || ''}
+                      onChange={(room) => {
+                        if (room) {
+                          setValue('roomNumber', room.number);
+                          setValue('floor', room.floor);
+                          setValue('building', room.building || '');
+                        } else {
+                          setValue('roomNumber', '');
+                          setValue('floor', undefined);
+                          setValue('building', '');
+                        }
+                      }}
+                      placeholder="Rechercher ou créer une chambre..."
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      L'étage et le bâtiment seront remplis automatiquement
+                    </p>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="floor">Étage</Label>
+                      <Input
+                        type="number"
+                        value={watch('floor') ?? ''}
+                        placeholder="Auto-rempli"
+                        disabled
+                        className="bg-gray-100 dark:bg-gray-800"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="building">Bâtiment</Label>
+                      <Input
+                        value={watch('building') || ''}
+                        placeholder="Auto-rempli"
+                        disabled
+                        className="bg-gray-100 dark:bg-gray-800"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label>Étage</Label>
-                  <Input type="number" {...register('floor')} />
-                </div>
-                <div>
-                  <Label>Bâtiment</Label>
-                  <Input {...register('building')} />
-                </div>
-              </div>
+              )}
             </div>
 
             {/* Photos */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Photos</h3>
-              <FileUpload onFilesSelected={handleFilesSelected} />
+              <h3 className="text-lg font-semibold">Photos (optionnel)</h3>
+              <FileUpload
+                onFilesSelected={handleFilesSelected}
+                accept="image/*"
+                multiple
+                maxFiles={10}
+                maxSize={10}
+              />
               {filePreviews.length > 0 && (
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {filePreviews.map((preview, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={preview}
                         alt={`Preview ${index}`}
-                        className="w-full h-24 object-cover rounded"
+                        className="w-full h-32 object-cover rounded-lg"
                       />
                       <button
                         type="button"
                         onClick={() => handleRemoveFile(index)}
-                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100"
+                        className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <X size={14} />
+                        <X size={16} />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Options */}
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register('isUrgent')} className="rounded" />
-                <span>Urgent</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" {...register('isBlocking')} className="rounded" />
-                <span>Bloquant</span>
-              </label>
             </div>
 
             {/* Actions */}

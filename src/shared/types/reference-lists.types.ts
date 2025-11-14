@@ -131,6 +131,7 @@ export type PredefinedListKey =
   | 'interventionPriorities'
   | 'interventionCategories'
   | 'interventionStatuses'
+  | 'interventionLocations'
   // Équipements
   | 'equipmentTypes'
   | 'equipmentBrands'
@@ -153,7 +154,9 @@ export type PredefinedListKey =
   | 'paymentMethods'
   // Staff
   | 'staffRoles'
-  | 'staffDepartments';
+  | 'staffDepartments'
+  | 'staffSkills'
+  | 'technicalSpecialties';
 
 /**
  * ✅ OPTIMISÉ: Union type pour listes (prédéfinies + custom)
@@ -169,6 +172,7 @@ export const PREDEFINED_LIST_KEYS: PredefinedListKey[] = [
   'interventionPriorities',
   'interventionCategories',
   'interventionStatuses',
+  'interventionLocations',
   'equipmentTypes',
   'equipmentBrands',
   'equipmentLocations',
@@ -185,6 +189,8 @@ export const PREDEFINED_LIST_KEYS: PredefinedListKey[] = [
   'paymentMethods',
   'staffRoles',
   'staffDepartments',
+  'staffSkills',
+  'technicalSpecialties',
 ];
 
 // ============================================================================
@@ -599,6 +605,7 @@ export const LIST_LABELS: Record<PredefinedListKey, string> = {
   interventionPriorities: 'Priorités',
   interventionCategories: "Catégories d'intervention",
   interventionStatuses: "Statuts d'intervention",
+  interventionLocations: "Localisations d'intervention",
   equipmentTypes: "Types d'équipement",
   equipmentBrands: "Marques d'équipement",
   equipmentLocations: "Emplacements d'équipement",
@@ -615,6 +622,8 @@ export const LIST_LABELS: Record<PredefinedListKey, string> = {
   paymentMethods: 'Moyens de paiement',
   staffRoles: 'Rôles du personnel',
   staffDepartments: 'Départements',
+  staffSkills: 'Compétences',
+  technicalSpecialties: 'Spécialités techniques',
 };
 
 /**

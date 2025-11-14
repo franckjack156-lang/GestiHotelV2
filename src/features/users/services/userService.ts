@@ -165,6 +165,9 @@ class UserService {
       if (data.jobTitle) userData.jobTitle = data.jobTitle;
       if (data.department) userData.department = data.department;
       if (data.skills) userData.skills = data.skills;
+      if (data.isTechnician !== undefined) userData.isTechnician = data.isTechnician;
+      if (data.specialties) userData.specialties = data.specialties;
+      if (data.experienceLevel) userData.experienceLevel = data.experienceLevel;
 
       // ✅ Nettoyer et créer le document Firestore
       const cleanedUserData = removeUndefinedFields(userData);
@@ -540,6 +543,9 @@ class UserService {
       if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle;
       if (data.department !== undefined) updateData.department = data.department;
       if (data.skills !== undefined) updateData.skills = data.skills;
+      if (data.isTechnician !== undefined) updateData.isTechnician = data.isTechnician;
+      if (data.specialties !== undefined) updateData.specialties = data.specialties;
+      if (data.experienceLevel !== undefined) updateData.experienceLevel = data.experienceLevel;
       if (data.status !== undefined) updateData.status = data.status;
       if (data.isActive !== undefined) updateData.isActive = data.isActive;
       if (data.customPermissions !== undefined)

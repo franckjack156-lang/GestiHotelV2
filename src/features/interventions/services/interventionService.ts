@@ -25,6 +25,7 @@ import {
   increment,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
+import { enrichInterventions } from '../utils/enrichInterventions';
 import type {
   Intervention,
   CreateInterventionData,
@@ -70,16 +71,26 @@ export const createIntervention = async (
     const collectionRef = getInterventionsCollection(establishmentId);
     const reference = await generateReference(establishmentId);
 
+    // Récupérer le nom du créateur
+    let createdByName = 'Inconnu';
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        createdByName = userData.displayName || userData.email || 'Inconnu';
+      }
+    } catch (error) {
+      console.warn('⚠️ Impossible de récupérer le nom du créateur:', error);
+    }
+
+    // Base data - only required fields
     const interventionData: any = {
       establishmentId,
       title: data.title,
-      description: data.description,
-      type: data.type,
-      category: data.category,
-      priority: data.priority,
       status: 'pending' as InterventionStatus,
       location: data.location,
       createdBy: userId,
+      createdByName, // Ajouter le nom du créateur
       photos: [],
       photosCount: 0,
       reference,
@@ -93,6 +104,20 @@ export const createIntervention = async (
       isDeleted: false,
     };
 
+    // Add optional fields only if they are defined and not empty
+    if (data.description !== undefined && data.description !== '') {
+      interventionData.description = data.description;
+    }
+    if (data.type !== undefined && data.type !== '') {
+      interventionData.type = data.type;
+    }
+    if (data.category !== undefined && data.category !== '') {
+      interventionData.category = data.category;
+    }
+    if (data.priority !== undefined && data.priority !== '') {
+      interventionData.priority = data.priority;
+    }
+
     if (data.roomNumber !== undefined && data.roomNumber !== '') {
       interventionData.roomNumber = data.roomNumber;
     }
@@ -103,8 +128,36 @@ export const createIntervention = async (
       interventionData.building = data.building;
     }
     if (data.assignedTo) {
-      interventionData.assignedTo = data.assignedTo;
+      // Gérer le cas où assignedTo peut être une string ou un array
+      const assignedToIds = Array.isArray(data.assignedTo) ? data.assignedTo : [data.assignedTo];
+
+      // Pour l'instant, on stocke seulement le premier technicien dans assignedTo
+      // TODO: Créer un champ assignedToIds pour stocker tous les IDs
+      interventionData.assignedTo = assignedToIds[0];
       interventionData.assignedAt = serverTimestamp();
+
+      // Récupérer les noms de tous les techniciens assignés
+      try {
+        const techNames: string[] = [];
+
+        for (const techId of assignedToIds) {
+          const techDoc = await getDoc(doc(db, 'users', techId));
+
+          if (techDoc.exists()) {
+            const techData = techDoc.data();
+            const techName = techData.displayName || techData.email || 'Inconnu';
+            techNames.push(techName);
+          } else {
+            techNames.push('Inconnu');
+          }
+        }
+
+        // Joindre les noms avec une virgule
+        interventionData.assignedToName = techNames.join(', ');
+      } catch (error) {
+        console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+        interventionData.assignedToName = 'Inconnu';
+      }
     }
     if (data.scheduledAt) {
       interventionData.scheduledAt = Timestamp.fromDate(data.scheduledAt);
@@ -227,9 +280,22 @@ export const assignIntervention = async (
   assignmentData: AssignmentData
 ): Promise<void> => {
   try {
+    // Récupérer le nom du technicien assigné
+    let assignedToName = 'Inconnu';
+    try {
+      const techDoc = await getDoc(doc(db, 'users', assignmentData.technicianId));
+      if (techDoc.exists()) {
+        const techData = techDoc.data();
+        assignedToName = techData.displayName || techData.email || 'Inconnu';
+      }
+    } catch (error) {
+      console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+    }
+
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
     await updateDoc(docRef, {
       assignedTo: assignmentData.technicianId,
+      assignedToName, // Ajouter le nom du technicien
       assignedAt: serverTimestamp(),
       status: 'assigned',
       updatedAt: serverTimestamp(),
@@ -328,14 +394,17 @@ export const subscribeToInterventions = (
     // S'abonner aux changements
     const unsubscribe = onSnapshot(
       q,
-      snapshot => {
+      async snapshot => {
         const interventions = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         })) as Intervention[];
 
         console.log(`📡 ${interventions.length} interventions reçues`);
-        onSuccess(interventions);
+
+        // Enrichir les interventions avec les noms manquants
+        const enriched = await enrichInterventions(interventions);
+        onSuccess(enriched);
       },
       error => {
         console.error('❌ Erreur subscription:', error);
@@ -402,7 +471,10 @@ export const getInterventions = async (
     })) as Intervention[];
 
     console.log(`✅ ${interventions.length} interventions récupérées`);
-    return interventions;
+
+    // Enrichir les interventions avec les noms manquants
+    const enriched = await enrichInterventions(interventions);
+    return enriched;
   } catch (error) {
     console.error('❌ Erreur récupération:', error);
     throw new Error('Impossible de récupérer les interventions');

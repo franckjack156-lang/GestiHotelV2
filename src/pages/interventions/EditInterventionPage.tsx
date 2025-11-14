@@ -29,6 +29,8 @@ import {
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
+import { TechnicianSelect } from '@/features/users/components';
+import { RoomAutocomplete } from '@/features/rooms/components';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
 import { getIntervention } from '@/features/interventions/services/interventionService';
@@ -53,8 +55,7 @@ const interventionSchema = z.object({
   roomNumber: z.string().optional(),
   floor: z.string().optional(),
   building: z.string().optional(),
-  isUrgent: z.boolean().default(false),
-  isBlocking: z.boolean().default(false),
+  assignedTo: z.array(z.string()).optional(),
   internalNotes: z.string().optional(),
   resolutionNotes: z.string().optional(),
 });
@@ -103,8 +104,7 @@ export const EditInterventionPage = () => {
           roomNumber: data.roomNumber || '',
           floor: data.floor?.toString() || '',
           building: data.building || '',
-          isUrgent: data.isUrgent,
-          isBlocking: data.isBlocking,
+          assignedTo: data.assignedTo || [],
           internalNotes: data.internalNotes || '',
           resolutionNotes: data.resolutionNotes || '',
         });
@@ -143,8 +143,7 @@ export const EditInterventionPage = () => {
         roomNumber: data.roomNumber,
         floor: data.floor ? parseInt(data.floor) : undefined,
         building: data.building,
-        isUrgent: data.isUrgent,
-        isBlocking: data.isBlocking,
+        assignedTo: data.assignedTo,
         internalNotes: data.internalNotes,
         resolutionNotes: data.resolutionNotes,
       };
@@ -267,25 +266,93 @@ export const EditInterventionPage = () => {
           <CardContent className="space-y-4">
             <div>
               <Label htmlFor="location">Lieu *</Label>
-              <Input id="location" {...register('location')} />
+              <DynamicListSelect
+                listKey="interventionLocations"
+                value={watch('location') || ''}
+                onChange={(value) => setValue('location', value)}
+                placeholder="Sélectionner une localisation"
+                allowCustom={true}
+              />
+              {errors.location && (
+                <p className="text-sm text-red-600 mt-1">{errors.location.message}</p>
+              )}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <Label htmlFor="roomNumber">Numéro de chambre</Label>
-                <Input id="roomNumber" {...register('roomNumber')} />
+            {/* Champs conditionnels si localisation = Chambre */}
+            {watch('location')?.toLowerCase() === 'chambre' && (
+              <div className="space-y-4 border-l-4 border-blue-500 pl-4">
+                <p className="text-sm text-gray-600">
+                  Informations sur la chambre
+                </p>
+
+                <div>
+                  <Label htmlFor="roomNumber">Numéro de chambre *</Label>
+                  <RoomAutocomplete
+                    value={watch('roomNumber') || ''}
+                    onChange={(room) => {
+                      if (room) {
+                        setValue('roomNumber', room.number);
+                        setValue('floor', room.floor.toString());
+                        setValue('building', room.building || '');
+                      } else {
+                        setValue('roomNumber', '');
+                        setValue('floor', '');
+                        setValue('building', '');
+                      }
+                    }}
+                    placeholder="Rechercher par numéro de chambre..."
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="floor">Étage</Label>
+                    <Input
+                      {...register('floor')}
+                      placeholder="Auto-rempli"
+                      disabled
+                      className="bg-gray-50"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="building">Bâtiment</Label>
+                    <Input
+                      {...register('building')}
+                      placeholder="Auto-rempli"
+                      disabled
+                      className="bg-gray-50"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="floor">Étage</Label>
-                <Input id="floor" type="number" {...register('floor')} />
-              </div>
-              <div>
-                <Label htmlFor="building">Bâtiment</Label>
-                <Input id="building" {...register('building')} />
-              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Assignation */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Assignation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label htmlFor="assignedTo">Assigner à des techniciens</Label>
+              <TechnicianSelect
+                value={watch('assignedTo') || []}
+                onChange={(value) => setValue('assignedTo', value as string[])}
+                multiple={true}
+                placeholder="Sélectionner un ou plusieurs techniciens"
+                showSkills={true}
+                showAvatars={true}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Vous pouvez assigner l'intervention à un ou plusieurs techniciens
+              </p>
             </div>
           </CardContent>
         </Card>
+
 
         {/* Photos existantes */}
         {intervention.photos && intervention.photos.length > 0 && (
@@ -355,34 +422,12 @@ export const EditInterventionPage = () => {
           </CardContent>
         </Card>
 
-        {/* Options */}
+        {/* Notes */}
         <Card>
           <CardHeader>
-            <CardTitle>Options</CardTitle>
+            <CardTitle>Notes</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isUrgent"
-                checked={watch('isUrgent')}
-                onCheckedChange={checked => setValue('isUrgent', !!checked)}
-              />
-              <Label htmlFor="isUrgent" className="font-normal">
-                Intervention urgente
-              </Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isBlocking"
-                checked={watch('isBlocking')}
-                onCheckedChange={checked => setValue('isBlocking', !!checked)}
-              />
-              <Label htmlFor="isBlocking" className="font-normal">
-                Bloque la chambre
-              </Label>
-            </div>
-
             <div>
               <Label htmlFor="internalNotes">Notes internes</Label>
               <Textarea id="internalNotes" {...register('internalNotes')} rows={3} />

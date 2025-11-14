@@ -357,6 +357,7 @@ export const downloadRoomsTemplate = (): void => {
     {
       Numero: '101',
       Nom: 'Chambre 101',
+      Batiment: 'A',
       Etage: '1',
       Type: 'double',
       Capacite: '2',

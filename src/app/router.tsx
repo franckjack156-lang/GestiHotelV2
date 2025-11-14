@@ -42,6 +42,8 @@ import {
 
 // 🆕 Rooms (nouvelles pages)
 import { RoomsListPage, CreateRoomPage } from '@/pages/rooms/RoomsPages';
+import { RoomDetailPage } from '@/pages/rooms/RoomDetailPage';
+import { EditRoomPage } from '@/pages/rooms/EditRoomPage';
 
 // 🆕 Planning (nouvelle page)
 import { PlanningPage } from '@/pages/PlanningPage';
@@ -239,6 +241,22 @@ export const router = createBrowserRouter([
             element: (
               <FeatureGuard feature="rooms">
                 <CreateRoomPage />
+              </FeatureGuard>
+            ),
+          },
+          {
+            path: ':roomId',
+            element: (
+              <FeatureGuard feature="rooms">
+                <RoomDetailPage />
+              </FeatureGuard>
+            ),
+          },
+          {
+            path: ':roomId/edit',
+            element: (
+              <FeatureGuard feature="rooms">
+                <EditRoomPage />
               </FeatureGuard>
             ),
           },

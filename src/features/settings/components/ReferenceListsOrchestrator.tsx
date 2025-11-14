@@ -62,6 +62,7 @@ import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurr
 
 // Services
 import { getAvailableTemplates, applyTemplate } from '@/shared/services/listTemplatesService';
+import { addMissingLists } from '@/features/establishments/services/establishmentInitService';
 import type { ListTemplate } from '@/shared/services/listTemplatesService';
 import type { ListKey } from '@/shared/types/reference-lists.types';
 
@@ -94,6 +95,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // ============================================================================
   // STATS
@@ -161,12 +163,12 @@ export const ReferenceListsOrchestrator: React.FC = () => {
 
   const handleApplyTemplate = useCallback(
     async (templateId: string) => {
-      if (!currentEstablishment?.id || !currentEstablishment?.createdBy) return;
+      if (!currentEstablishment?.id || !currentEstablishment?.ownerId) return;
 
       try {
         toast.loading('Application du template...');
 
-        await applyTemplate(currentEstablishment.id, currentEstablishment.createdBy, templateId);
+        await applyTemplate(currentEstablishment.id, currentEstablishment.ownerId, templateId);
         await reload();
 
         toast.dismiss();
@@ -180,6 +182,45 @@ export const ReferenceListsOrchestrator: React.FC = () => {
     },
     [currentEstablishment, reload]
   );
+
+  const handleSyncMissingLists = useCallback(async () => {
+    console.log('🔵 handleSyncMissingLists appelé');
+    console.log('🔵 currentEstablishment:', currentEstablishment);
+
+    if (!currentEstablishment?.id || !currentEstablishment?.ownerId) {
+      console.warn('⚠️ Establishment ID ou ownerId manquant');
+      console.log('⚠️ ID:', currentEstablishment?.id);
+      console.log('⚠️ ownerId:', currentEstablishment?.ownerId);
+      return;
+    }
+
+    try {
+      console.log('🟢 Démarrage de la synchronisation');
+      setIsSyncing(true);
+      toast.loading('Synchronisation des listes...');
+
+      console.log('🟢 Appel addMissingLists avec:', {
+        establishmentId: currentEstablishment.id,
+        userId: currentEstablishment.ownerId,
+      });
+
+      await addMissingLists(currentEstablishment.id, currentEstablishment.ownerId);
+
+      console.log('🟢 addMissingLists terminé, rechargement...');
+      await reload();
+
+      toast.dismiss();
+      toast.success('Listes synchronisées avec succès !');
+      console.log('✅ Synchronisation réussie');
+    } catch (error) {
+      console.error('❌ Erreur synchronisation:', error);
+      toast.dismiss();
+      toast.error('Erreur lors de la synchronisation');
+    } finally {
+      setIsSyncing(false);
+      console.log('🔵 handleSyncMissingLists terminé');
+    }
+  }, [currentEstablishment, reload]);
 
   // ============================================================================
   // TEMPLATES DISPONIBLES
@@ -239,7 +280,27 @@ export const ReferenceListsOrchestrator: React.FC = () => {
                   Actions
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    console.log('🟡 DropdownMenuItem onClick déclenché', e);
+                    handleSyncMissingLists();
+                  }}
+                  disabled={isSyncing || isLoading}
+                >
+                  {isSyncing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Synchronisation...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Synchroniser les listes
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleExportAll} disabled={isExporting || isLoading}>
                   {isExporting ? (
                     <>

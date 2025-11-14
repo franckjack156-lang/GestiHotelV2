@@ -135,4 +135,91 @@ export const resetEstablishmentLists = async (
 };
 
 // Importer getDoc qui manquait
-import { getDoc } from 'firebase/firestore';
+import { getDoc, updateDoc } from 'firebase/firestore';
+import { getEssentialLists } from '@/shared/services/defaultReferenceLists';
+
+/**
+ * Ajouter les listes manquantes à un établissement existant
+ * Utile pour les migrations après ajout de nouvelles listes essentielles
+ *
+ * @param establishmentId - ID de l'établissement
+ * @param userId - ID de l'utilisateur
+ */
+/**
+ * Nettoyer les données pour Firestore (convertir Date en Timestamp)
+ */
+const cleanForFirestore = (obj: any): any => {
+  if (obj === null || obj === undefined) {
+    return null;
+  }
+
+  if (obj instanceof Date) {
+    return obj; // Firestore convertira automatiquement
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanForFirestore(item));
+  }
+
+  if (typeof obj === 'object') {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(obj)) {
+      // Skip undefined values
+      if (value !== undefined) {
+        cleaned[key] = cleanForFirestore(value);
+      }
+    }
+    return cleaned;
+  }
+
+  return obj;
+};
+
+export const addMissingLists = async (
+  establishmentId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const docRef = doc(db, 'establishments', establishmentId, 'config', 'reference-lists');
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      // Si le document n'existe pas, initialiser complètement
+      await initializeEstablishmentLists(establishmentId, userId);
+      return;
+    }
+
+    const currentData = docSnap.data() as EstablishmentReferenceLists;
+    const essentialLists = getEssentialLists();
+    const missingLists: Record<string, any> = {};
+
+    // Vérifier quelles listes essentielles manquent
+    for (const [key, config] of Object.entries(essentialLists)) {
+      if (!currentData.lists[key]) {
+        // Nettoyer la config pour Firestore
+        missingLists[key] = cleanForFirestore(config);
+        console.log(`➕ Ajout de la liste manquante: ${key}`);
+      }
+    }
+
+    // Si des listes manquent, les ajouter
+    if (Object.keys(missingLists).length > 0) {
+      await updateDoc(docRef, {
+        lists: {
+          ...currentData.lists,
+          ...missingLists,
+        },
+        lastModified: serverTimestamp(),
+        modifiedBy: userId,
+        version: (currentData.version || 1) + 1,
+      });
+
+      console.log(`✅ ${Object.keys(missingLists).length} liste(s) ajoutée(s) pour l'établissement ${establishmentId}`);
+    } else {
+      console.log(`✅ Aucune liste manquante pour l'établissement ${establishmentId}`);
+    }
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'ajout des listes manquantes:', error);
+    throw error;
+  }
+};

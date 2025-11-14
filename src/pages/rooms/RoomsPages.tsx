@@ -84,7 +84,7 @@ const roomSchema = z.object({
   description: z.string().optional(),
 });
 
-type RoomFormData = z.infer<typeof roomSchema>;
+export type RoomFormData = z.infer<typeof roomSchema>;
 
 // Types de chambres
 const ROOM_TYPES = {
@@ -251,18 +251,35 @@ export const RoomsListPage = () => {
       label: 'Actions',
       width: '200px',
       render: (item: Room) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/app/rooms/${item.id}`)}>
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/app/rooms/${item.id}`);
+            }}
+          >
             <Eye size={16} />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/app/rooms/${item.id}/edit`)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/app/rooms/${item.id}/edit`);
+            }}
+          >
             <Edit size={16} />
           </Button>
           {item.isBlocked ? (
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handleUnblock(item.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleUnblock(item.id);
+              }}
               className="text-green-600"
             >
               <Unlock size={16} />
@@ -271,7 +288,10 @@ export const RoomsListPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBlockDialogRoom(item)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setBlockDialogRoom(item);
+              }}
               className="text-orange-600"
             >
               <Lock size={16} />
@@ -280,7 +300,10 @@ export const RoomsListPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setDeleteId(item.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteId(item.id);
+            }}
             className="text-red-600"
           >
             <Trash2 size={16} />
@@ -518,7 +541,7 @@ interface RoomFormProps {
   isLoading?: boolean;
 }
 
-const RoomForm = ({ room, onSubmit, isLoading }: RoomFormProps) => {
+export const RoomForm = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   const navigate = useNavigate();
 
   const form = useForm<RoomFormData>({

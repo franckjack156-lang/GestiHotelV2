@@ -38,7 +38,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         console.error(`Error setting localStorage key "${key}":`, error);
       }
     },
-    [key, storedValue]
+    [key]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   );
 
   return [storedValue, setValue] as const;

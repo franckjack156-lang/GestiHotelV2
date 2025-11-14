@@ -70,12 +70,22 @@ const InterventionImportSchema = z.object({
  */
 const RoomImportSchema = z.object({
   numero: z.string().min(1, 'Le numéro de chambre est requis'),
-  nom: z.string().optional().default(''),
-  etage: z.string().min(1, "L'étage est requis"),
-  type: z.string().min(1, 'Le type de chambre est requis'),
-  capacite: z.coerce.number().int().positive('La capacité doit être un nombre positif'),
-  prix: z.coerce.number().positive('Le prix doit être un nombre positif').optional(),
-  surface: z.coerce.number().positive('La surface doit être un nombre positif').optional(),
+  nom: z.string().min(1, 'Le nom de la chambre est requis'),
+  batiment: z.string().optional().default(''),
+  etage: z.string().optional().default('0'),
+  type: z.string().optional().default('double'),
+  capacite: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? 2 : val),
+    z.coerce.number().int().positive('La capacité doit être un nombre positif')
+  ),
+  prix: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? undefined : val),
+    z.coerce.number().positive('Le prix doit être un nombre positif').optional()
+  ),
+  surface: z.preprocess(
+    (val) => (val === '' || val === null || val === undefined ? undefined : val),
+    z.coerce.number().positive('La surface doit être un nombre positif').optional()
+  ),
   description: z.string().optional().default(''),
   equipements: z.string().optional().default(''), // Séparés par des virgules
 });
@@ -141,6 +151,11 @@ const normalizeKey = (key: string): string => {
 const normalizeObject = (obj: any, keyMapping: Record<string, string>): any => {
   const normalized: any = {};
 
+  // Vérifier que obj existe et est un objet
+  if (!obj || typeof obj !== 'object') {
+    return normalized;
+  }
+
   Object.keys(obj).forEach((key) => {
     const normalizedKey = normalizeKey(key);
     const mappedKey = keyMapping[normalizedKey];
@@ -193,6 +208,8 @@ const ROOM_KEY_MAPPING: Record<string, string> = {
   roomnumber: 'numero',
   nom: 'nom',
   name: 'nom',
+  batiment: 'batiment',
+  building: 'batiment',
   etage: 'etage',
   floor: 'etage',
   niveau: 'etage',
@@ -232,10 +249,10 @@ export const importInterventions = async (
     // Parser le fichier
     const rawData = await parseExcelFile(file);
 
-    // Filtrer lignes vides
+    // Filtrer lignes vides et invalides
     let data = skipEmptyRows
-      ? rawData.filter((row) => Object.values(row).some((val) => val !== ''))
-      : rawData;
+      ? rawData.filter((row) => row && typeof row === 'object' && Object.values(row).some((val) => val !== ''))
+      : rawData.filter((row) => row && typeof row === 'object');
 
     // Limiter le nombre de lignes
     if (startRow > 0) {
@@ -261,7 +278,7 @@ export const importInterventions = async (
 
         validData.push(validated);
       } catch (error) {
-        if (error instanceof z.ZodError) {
+        if (error instanceof z.ZodError && Array.isArray(error.errors)) {
           error.errors.forEach((err) => {
             errors.push({
               row: rowNumber,
@@ -273,7 +290,7 @@ export const importInterventions = async (
         } else {
           errors.push({
             row: rowNumber,
-            message: 'Erreur de validation inconnue',
+            message: error instanceof Error ? error.message : 'Erreur de validation inconnue',
           });
         }
       }
@@ -290,6 +307,7 @@ export const importInterventions = async (
       },
     };
   } catch (error) {
+    console.error('Import error:', error);
     return {
       success: false,
       data: [],
@@ -321,10 +339,10 @@ export const importRooms = async (
     // Parser le fichier
     const rawData = await parseExcelFile(file);
 
-    // Filtrer lignes vides
+    // Filtrer lignes vides et invalides
     let data = skipEmptyRows
-      ? rawData.filter((row) => Object.values(row).some((val) => val !== ''))
-      : rawData;
+      ? rawData.filter((row) => row && typeof row === 'object' && Object.values(row).some((val) => val !== ''))
+      : rawData.filter((row) => row && typeof row === 'object');
 
     // Limiter le nombre de lignes
     if (startRow > 0) {
@@ -350,7 +368,7 @@ export const importRooms = async (
 
         validData.push(validated);
       } catch (error) {
-        if (error instanceof z.ZodError) {
+        if (error instanceof z.ZodError && Array.isArray(error.errors)) {
           error.errors.forEach((err) => {
             errors.push({
               row: rowNumber,
@@ -362,7 +380,7 @@ export const importRooms = async (
         } else {
           errors.push({
             row: rowNumber,
-            message: 'Erreur de validation inconnue',
+            message: error instanceof Error ? error.message : 'Erreur de validation inconnue',
           });
         }
       }
@@ -379,6 +397,7 @@ export const importRooms = async (
       },
     };
   } catch (error) {
+    console.error('Import error:', error);
     return {
       success: false,
       data: [],
@@ -432,25 +451,48 @@ export const convertToRooms = (
   establishmentId: string,
   createdBy: string
 ): Partial<Room>[] => {
-  return data.map((row) => ({
-    number: row.numero,
-    name: row.nom || `Chambre ${row.numero}`,
-    floor: row.etage,
-    type: row.type,
-    capacity: row.capacite,
-    price: row.prix,
-    area: row.surface,
-    description: row.description || '',
-    amenities: row.equipements
-      ? row.equipements.split(',').map((a) => a.trim()).filter(Boolean)
-      : [],
-    status: 'available' as const,
-    isBlocked: false,
-    establishmentId,
-    createdBy,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
+  return data.map((row) => {
+    // Parse les équipements si présents
+    let amenities: string[] | undefined = undefined;
+    if (row.equipements && row.equipements.trim()) {
+      amenities = row.equipements
+        .split(',')
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0);
+    }
+
+    // Construire l'objet sans les valeurs undefined
+    const room: Partial<Room> = {
+      number: row.numero,
+      name: row.nom || `Chambre ${row.numero}`,
+      floor: parseInt(row.etage) || 0,
+      type: row.type as any,
+      capacity: row.capacite,
+      description: row.description || '',
+      status: 'available' as const,
+      isBlocked: false,
+      establishmentId,
+      createdBy,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    // Ajouter les champs optionnels seulement s'ils ont une valeur
+    if (row.batiment && row.batiment.trim()) {
+      room.building = row.batiment;
+    }
+    if (row.prix !== undefined) {
+      room.price = row.prix;
+    }
+    if (row.surface !== undefined) {
+      room.area = row.surface;
+    }
+    if (amenities && amenities.length > 0) {
+      room.amenities = amenities;
+    }
+
+    return room;
+  });
 };
 
 /**

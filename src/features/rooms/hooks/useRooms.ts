@@ -1,7 +1,7 @@
 /**
  * Rooms Hook
  *
- * Hook pour gérer les opérations CRUD sur les chambres
+ * Hook pour gï¿½rer les opï¿½rations CRUD sur les chambres
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -26,7 +26,7 @@ import type { Room, CreateRoomData, UpdateRoomData, BlockRoomData } from '../typ
 const COLLECTION_NAME = 'rooms';
 
 /**
- * Hook pour gérer les chambres d'un établissement
+ * Hook pour gï¿½rer les chambres d'un ï¿½tablissement
  */
 export const useRooms = (establishmentId: string) => {
   const { user } = useAuth();
@@ -36,7 +36,7 @@ export const useRooms = (establishmentId: string) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Écouter les chambres en temps réel
+  // ï¿½couter les chambres en temps rï¿½el
   useEffect(() => {
     if (!establishmentId) {
       setRooms([]);
@@ -77,34 +77,44 @@ export const useRooms = (establishmentId: string) => {
   }, [establishmentId]);
 
   /**
-   * Créer une chambre
+   * Crï¿½er une chambre
    */
   const createRoom = useCallback(
     async (data: CreateRoomData): Promise<string | null> => {
       if (!user || !establishmentId) {
-        toast.error('Impossible de créer la chambre');
+        toast.error('Impossible de crï¿½er la chambre');
         return null;
       }
 
       setIsCreating(true);
       try {
-        const roomData = {
-          ...data,
+        // PrÃ©parer les donnÃ©es en excluant les champs undefined
+        const { createdAt, updatedAt, createdBy, ...cleanData } = data;
+
+        const roomData: any = {
+          ...cleanData,
           establishmentId,
           status: 'available' as const,
           isBlocked: false,
-          amenities: data.amenities || [],
+          amenities: Array.isArray(data.amenities) ? data.amenities : [],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
           createdBy: user.uid,
         };
 
+        // Supprimer les champs undefined
+        Object.keys(roomData).forEach(key => {
+          if (roomData[key] === undefined) {
+            delete roomData[key];
+          }
+        });
+
         const docRef = await addDoc(collection(db, COLLECTION_NAME), roomData);
-        toast.success('Chambre créée avec succès');
+        toast.success('Chambre crï¿½ï¿½e avec succï¿½s');
         return docRef.id;
       } catch (error: any) {
         console.error('Error creating room:', error);
-        toast.error('Erreur lors de la création', {
+        toast.error('Erreur lors de la crï¿½ation', {
           description: error.message,
         });
         return null;
@@ -116,29 +126,40 @@ export const useRooms = (establishmentId: string) => {
   );
 
   /**
-   * Mettre à jour une chambre
+   * Mettre ï¿½ jour une chambre
    */
   const updateRoom = useCallback(
     async (roomId: string, data: UpdateRoomData): Promise<boolean> => {
       if (!user) {
-        toast.error('Vous devez être connecté');
+        toast.error('Vous devez ï¿½tre connectï¿½');
         return false;
       }
 
       setIsUpdating(true);
       try {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
-        await updateDoc(roomRef, {
+
+        // PrÃ©parer les donnÃ©es en nettoyant les undefined
+        const updateData: any = {
           ...data,
           updatedAt: serverTimestamp(),
           lastModifiedBy: user.uid,
+        };
+
+        // Supprimer les champs undefined
+        Object.keys(updateData).forEach(key => {
+          if (updateData[key] === undefined) {
+            delete updateData[key];
+          }
         });
 
-        toast.success('Chambre mise à jour');
+        await updateDoc(roomRef, updateData);
+
+        toast.success('Chambre mise ï¿½ jour');
         return true;
       } catch (error: any) {
         console.error('Error updating room:', error);
-        toast.error('Erreur lors de la mise à jour', {
+        toast.error('Erreur lors de la mise ï¿½ jour', {
           description: error.message,
         });
         return false;
@@ -155,7 +176,7 @@ export const useRooms = (establishmentId: string) => {
   const deleteRoom = useCallback(
     async (roomId: string): Promise<boolean> => {
       if (!user) {
-        toast.error('Vous devez être connecté');
+        toast.error('Vous devez ï¿½tre connectï¿½');
         return false;
       }
 
@@ -164,7 +185,7 @@ export const useRooms = (establishmentId: string) => {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
         await deleteDoc(roomRef);
 
-        toast.success('Chambre supprimée');
+        toast.success('Chambre supprimï¿½e');
         return true;
       } catch (error: any) {
         console.error('Error deleting room:', error);
@@ -185,13 +206,15 @@ export const useRooms = (establishmentId: string) => {
   const blockRoom = useCallback(
     async (roomId: string, blockData: BlockRoomData): Promise<boolean> => {
       if (!user) {
-        toast.error('Vous devez être connecté');
+        toast.error('Vous devez ï¿½tre connectï¿½');
         return false;
       }
 
       try {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
-        await updateDoc(roomRef, {
+
+        // PrÃ©parer les donnÃ©es en nettoyant les undefined
+        const blockUpdateData: any = {
           isBlocked: true,
           blockReason: blockData.reason,
           blockedAt: serverTimestamp(),
@@ -199,9 +222,18 @@ export const useRooms = (establishmentId: string) => {
           status: 'blocked',
           updatedAt: serverTimestamp(),
           lastModifiedBy: user.uid,
+        };
+
+        // Supprimer les champs undefined
+        Object.keys(blockUpdateData).forEach(key => {
+          if (blockUpdateData[key] === undefined) {
+            delete blockUpdateData[key];
+          }
         });
 
-        toast.success('Chambre bloquée');
+        await updateDoc(roomRef, blockUpdateData);
+
+        toast.success('Chambre bloquï¿½e');
         return true;
       } catch (error: any) {
         console.error('Error blocking room:', error);
@@ -215,18 +247,20 @@ export const useRooms = (establishmentId: string) => {
   );
 
   /**
-   * Débloquer une chambre
+   * Dï¿½bloquer une chambre
    */
   const unblockRoom = useCallback(
     async (roomId: string): Promise<boolean> => {
       if (!user) {
-        toast.error('Vous devez être connecté');
+        toast.error('Vous devez ï¿½tre connectï¿½');
         return false;
       }
 
       try {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
-        await updateDoc(roomRef, {
+
+        // PrÃ©parer les donnÃ©es en nettoyant les undefined
+        const unblockUpdateData: any = {
           isBlocked: false,
           blockReason: null,
           blockedAt: null,
@@ -234,13 +268,22 @@ export const useRooms = (establishmentId: string) => {
           status: 'available',
           updatedAt: serverTimestamp(),
           lastModifiedBy: user.uid,
+        };
+
+        // Supprimer les champs undefined
+        Object.keys(unblockUpdateData).forEach(key => {
+          if (unblockUpdateData[key] === undefined) {
+            delete unblockUpdateData[key];
+          }
         });
 
-        toast.success('Chambre débloquée');
+        await updateDoc(roomRef, unblockUpdateData);
+
+        toast.success('Chambre dï¿½bloquï¿½e');
         return true;
       } catch (error: any) {
         console.error('Error unblocking room:', error);
-        toast.error('Erreur lors du déblocage', {
+        toast.error('Erreur lors du dï¿½blocage', {
           description: error.message,
         });
         return false;

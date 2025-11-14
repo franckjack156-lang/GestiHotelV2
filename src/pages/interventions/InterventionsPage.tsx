@@ -1,18 +1,21 @@
 /**
- * InterventionsPage
+ * ============================================================================
+ * INTERVENTIONS PAGE - MODERN REDESIGN WITH DRAG & DROP
+ * ============================================================================
  *
- * Page principale de gestion des interventions
- * - Liste avec temps réel
- * - Filtres avancés
- * - Recherche
- * - Actions rapides
- *
- * Destination: src/pages/interventions/InterventionsPage.tsx
+ * Design moderne avec 2 vues:
+ * - Kanban: Colonnes par statut avec drag & drop
+ * - Table: Tableau compact et élégant avec couleurs de statut
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, RefreshCw, Upload, Grid3x3, List } from 'lucide-react';
+import {
+  Plus, Search, RefreshCw, Upload, LayoutGrid,
+  Table as TableIcon, Filter, X, TrendingUp,
+  Clock, AlertCircle, CheckCircle2, Pause,
+  MoreVertical, Edit, Trash2, Eye, MapPin, User
+} from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import {
@@ -23,6 +26,24 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { Card } from '@/shared/components/ui/card';
+import { Badge } from '@/shared/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCorners,
+  useDroppable,
+  useDraggable,
+} from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { useInterventions } from '@/features/interventions/hooks/useInterventions';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { usePermissions } from '@/shared/hooks/usePermissions';
@@ -38,15 +59,16 @@ import {
   type InterventionPriority,
   type InterventionType,
 } from '@/shared/types/status.types';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { ImportDialog } from '@/shared/components/import/ImportDialog';
 import { useImportInterventions } from '@/shared/hooks/useImport';
 import { downloadInterventionsTemplate } from '@/shared/services/exportService';
 import { toast } from 'sonner';
-import { InterventionCard } from '@/features/interventions/components/cards/InterventionCard';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
 import { ConfirmDialog } from '@/shared/components/ui-extended';
+import type { Intervention } from '@/features/interventions/types/intervention.types';
+import { cn } from '@/shared/lib/utils';
 
 export const InterventionsPage = () => {
   const navigate = useNavigate();
@@ -59,102 +81,111 @@ export const InterventionsPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [interventionToDelete, setInterventionToDelete] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeIntervention, setActiveIntervention] = useState<Intervention | null>(null);
 
-  // Hook d'import
+  const { deleteIntervention, isDeleting, updateIntervention } = useInterventionActions();
   const importHook = useImportInterventions(establishmentId || '', user?.id || '');
 
-  // Hook d'actions
-  const { deleteIntervention, isDeleting } = useInterventionActions();
+  // Drag & Drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
 
   // Gérer la recherche
-  const handleSearch = () => {
-    setFilters({ search: searchQuery || undefined });
-  };
-
-  const handleSearchClear = () => {
-    setSearchQuery('');
-    setFilters({ search: undefined });
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    setFilters({ search: value || undefined });
   };
 
   // Gérer les filtres
   const handleStatusFilter = (value: string) => {
-    if (value === 'all') {
-      setFilters({ status: undefined });
-    } else {
-      setFilters({ status: [value as InterventionStatus] });
-    }
+    setFilters({ status: value === 'all' ? undefined : [value as InterventionStatus] });
   };
 
   const handlePriorityFilter = (value: string) => {
-    if (value === 'all') {
-      setFilters({ priority: undefined });
-    } else {
-      setFilters({ priority: [value as InterventionPriority] });
-    }
+    setFilters({ priority: value === 'all' ? undefined : [value as InterventionPriority] });
   };
 
   const handleTypeFilter = (value: string) => {
-    if (value === 'all') {
-      setFilters({ type: undefined });
-    } else {
-      setFilters({ type: value as InterventionType });
-    }
+    setFilters({ type: value === 'all' ? undefined : value as InterventionType });
   };
 
   // Actions
-  const handleCreateIntervention = () => {
-    navigate('/app/interventions/create');
-  };
-
-  const handleInterventionClick = (id: string) => {
-    navigate(`/app/interventions/${id}`);
-  };
-
-  const handleEdit = (id: string) => {
+  const handleCreateIntervention = () => navigate('/app/interventions/create');
+  const handleInterventionClick = (id: string) => navigate(`/app/interventions/${id}`);
+  const handleEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     navigate(`/app/interventions/${id}/edit`);
   };
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setInterventionToDelete(id);
   };
 
   const handleDeleteConfirm = async () => {
     if (!interventionToDelete) return;
-
     try {
       await deleteIntervention(interventionToDelete);
-      toast.success('Intervention supprimée avec succès');
+      toast.success('Intervention supprimée');
       setInterventionToDelete(null);
     } catch (error) {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
     }
   };
 
-  const handleRefresh = () => {
-    // Le hook recharge automatiquement grâce au temps réel
-    window.location.reload();
-  };
+  const handleRefresh = () => window.location.reload();
 
-  // Gestion de l'import
   const handleImportConfirm = async (data: any[]) => {
     try {
       await importHook.handleConfirm(data);
-      toast.success('Import réussi', {
-        description: `${data.length} intervention(s) importée(s)`,
-      });
+      toast.success('Import réussi', { description: `${data.length} intervention(s) importée(s)` });
       setImportDialogOpen(false);
     } catch (error) {
-      toast.error('Erreur lors de l\'import', {
-        description: error instanceof Error ? error.message : 'Une erreur est survenue',
-      });
+      toast.error('Erreur lors de l\'import');
     }
   };
 
-  // Vérifier si des filtres sont actifs
+  // Drag & Drop handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    const intervention = interventions.find(i => i.id === event.active.id);
+    setActiveIntervention(intervention || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveIntervention(null);
+
+    if (!over || active.id === over.id) return;
+
+    const interventionId = active.id as string;
+    const newStatus = over.id as InterventionStatus;
+
+    try {
+      await updateIntervention(interventionId, { status: newStatus });
+      toast.success('Statut mis à jour');
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
   const hasActiveFilters = filters.status || filters.priority || filters.type || filters.search;
+
+  // Grouper par statut pour le Kanban
+  const kanbanColumns = {
+    pending: interventions.filter(i => i.status === 'pending'),
+    in_progress: interventions.filter(i => i.status === 'in_progress'),
+    on_hold: interventions.filter(i => i.status === 'on_hold'),
+    completed: interventions.filter(i => i.status === 'completed'),
+    validated: interventions.filter(i => i.status === 'validated'),
+  };
 
   if (!establishmentId) {
     return (
@@ -166,46 +197,49 @@ export const InterventionsPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header moderne */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Interventions</h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Gérez toutes les interventions de maintenance
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Gérez et suivez toutes vos interventions
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {/* Toggle view mode */}
-          <div className="flex border rounded-lg">
+          <div className="flex border rounded-lg bg-white dark:bg-gray-800">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="icon"
-              onClick={() => setViewMode('grid')}
+              variant={viewMode === 'kanban' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('kanban')}
               className="rounded-r-none"
             >
-              <Grid3x3 className="h-4 w-4" />
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Kanban
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="icon"
-              onClick={() => setViewMode('list')}
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
               className="rounded-l-none"
             >
-              <List className="h-4 w-4" />
+              <TableIcon className="h-4 w-4 mr-2" />
+              Liste
             </Button>
           </div>
 
-          <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Actualiser
           </Button>
+
           {canCreateInterventions && (
             <>
-              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Importer
               </Button>
-              <Button onClick={handleCreateIntervention}>
+              <Button size="sm" onClick={handleCreateIntervention}>
                 <Plus className="h-4 w-4 mr-2" />
                 Nouvelle intervention
               </Button>
@@ -214,105 +248,133 @@ export const InterventionsPage = () => {
         </div>
       </div>
 
-      {/* Stats rapides */}
+      {/* Stats modernes */}
       {stats && (
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="p-4">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Total</div>
-            <div className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-              {stats.total}
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          <Card className="p-4 border-l-4 border-l-gray-400 bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Total</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.total}</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-gray-400" />
             </div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">En attente</div>
-            <div className="mt-2 text-2xl font-bold text-orange-600">{stats.pending}</div>
+
+          <Card className="p-4 border-l-4 border-l-orange-400 bg-gradient-to-br from-orange-50 to-white dark:from-orange-900/20 dark:to-gray-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">En attente</p>
+                <p className="text-2xl font-bold text-orange-900 dark:text-orange-300 mt-1">{stats.pending}</p>
+              </div>
+              <Clock className="h-8 w-8 text-orange-400" />
+            </div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">En cours</div>
-            <div className="mt-2 text-2xl font-bold text-blue-600">{stats.inProgress}</div>
+
+          <Card className="p-4 border-l-4 border-l-blue-400 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-blue-600 dark:text-blue-400">En cours</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-300 mt-1">{stats.inProgress}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-blue-400" />
+            </div>
           </Card>
-          <Card className="p-4">
-            <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Terminées</div>
-            <div className="mt-2 text-2xl font-bold text-green-600">{stats.completed}</div>
+
+          <Card className="p-4 border-l-4 border-l-green-400 bg-gradient-to-br from-green-50 to-white dark:from-green-900/20 dark:to-gray-900">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-green-600 dark:text-green-400">Terminées</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-300 mt-1">{stats.completed}</p>
+              </div>
+              <CheckCircle2 className="h-8 w-8 text-green-400" />
+            </div>
           </Card>
         </div>
       )}
 
-      {/* Filtres et recherche */}
-      <Card className="p-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          {/* Recherche */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Rechercher une intervention..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Filtres */}
-          <div className="flex flex-wrap gap-2">
-            {/* Filtre statut */}
-            <Select value={filters.status?.[0] || 'all'} onValueChange={handleStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                {Object.entries(STATUS_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Filtre priorité */}
-            <Select value={filters.priority?.[0] || 'all'} onValueChange={handlePriorityFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Priorité" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
-                {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Filtre type */}
-            <Select value={filters.type || 'all'} onValueChange={handleTypeFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                {Object.entries(INTERVENTION_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Bouton réinitialiser */}
-            {hasActiveFilters && (
-              <Button variant="outline" onClick={resetFilters}>
-                Réinitialiser
-              </Button>
+      {/* Barre de recherche et filtres */}
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Rechercher une intervention..."
+              value={searchQuery}
+              onChange={e => handleSearch(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => handleSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
           </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(hasActiveFilters && 'bg-blue-50 border-blue-300 dark:bg-blue-950 dark:border-blue-700')}
+          >
+            <Filter className="h-4 w-4" />
+          </Button>
         </div>
-      </Card>
 
-      {/* Liste des interventions */}
+        {/* Filtres expandables */}
+        {showFilters && (
+          <Card className="p-4">
+            <div className="flex flex-wrap gap-3">
+              <Select value={filters.status?.[0] || 'all'} onValueChange={handleStatusFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.priority?.[0] || 'all'} onValueChange={handlePriorityFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Priorité" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filters.type || 'all'} onValueChange={handleTypeFilter}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les types</SelectItem>
+                  {Object.entries(INTERVENTION_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={resetFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Réinitialiser
+                </Button>
+              )}
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Contenu principal */}
       {error && (
         <Card className="p-4 border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-red-800 dark:text-red-400">{error}</p>
@@ -326,9 +388,7 @@ export const InterventionsPage = () => {
       ) : interventions.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">
-            {hasActiveFilters
-              ? 'Aucune intervention ne correspond aux filtres'
-              : 'Aucune intervention pour le moment'}
+            {hasActiveFilters ? 'Aucune intervention ne correspond aux filtres' : 'Aucune intervention'}
           </p>
           {canCreateInterventions && !hasActiveFilters && (
             <Button className="mt-4" onClick={handleCreateIntervention}>
@@ -337,35 +397,38 @@ export const InterventionsPage = () => {
             </Button>
           )}
         </Card>
-      ) : (
-        <div
-          className={
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-              : 'space-y-4'
-          }
+      ) : viewMode === 'kanban' ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
-          {interventions.map(intervention => (
-            <InterventionCard
-              key={intervention.id}
-              intervention={intervention}
-              onClick={() => handleInterventionClick(intervention.id)}
-              onEdit={() => handleEdit(intervention.id)}
-              onDelete={() => handleDeleteClick(intervention.id)}
-              viewMode={viewMode}
-              showPhotos={viewMode === 'grid'}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Pagination (à implémenter plus tard si nécessaire) */}
-      {interventions.length > 0 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {interventions.length} intervention(s) affichée(s)
-          </p>
-        </div>
+          <KanbanView
+            columns={kanbanColumns}
+            onInterventionClick={handleInterventionClick}
+            onEdit={handleEdit}
+            onDelete={handleDeleteClick}
+          />
+          <DragOverlay>
+            {activeIntervention ? (
+              <KanbanCard
+                intervention={activeIntervention}
+                onClick={() => {}}
+                onEdit={() => {}}
+                onDelete={() => {}}
+                isDragging
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <TableView
+          interventions={interventions}
+          onInterventionClick={handleInterventionClick}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+        />
       )}
 
       {/* Dialog d'import */}
@@ -399,26 +462,389 @@ export const InterventionsPage = () => {
                 ))}
               </tbody>
             </table>
-            {data.length > 5 && (
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                ... et {data.length - 5} autre(s) ligne(s)
-              </p>
-            )}
           </div>
         )}
       />
 
-      {/* Dialog de confirmation de suppression */}
+      {/* Dialog de suppression */}
       <ConfirmDialog
         isOpen={!!interventionToDelete}
         onClose={() => setInterventionToDelete(null)}
         onConfirm={handleDeleteConfirm}
         title="Supprimer l'intervention"
-        description="Êtes-vous sûr de vouloir supprimer cette intervention ? Cette action est irréversible et supprimera également toutes les photos et commentaires associés."
-        confirmLabel="Supprimer définitivement"
+        description="Êtes-vous sûr de vouloir supprimer cette intervention ?"
+        confirmLabel="Supprimer"
         variant="danger"
         isLoading={isDeleting}
       />
     </div>
+  );
+};
+
+// ============================================================================
+// VUE KANBAN AVEC DRAG & DROP
+// ============================================================================
+
+interface KanbanViewProps {
+  columns: Record<InterventionStatus, Intervention[]>;
+  onInterventionClick: (id: string) => void;
+  onEdit: (id: string, e: React.MouseEvent) => void;
+  onDelete: (id: string, e: React.MouseEvent) => void;
+}
+
+const KanbanView = ({ columns, onInterventionClick, onEdit, onDelete }: KanbanViewProps) => {
+  const columnConfig = {
+    pending: { label: 'En attente', icon: Clock, color: 'orange' },
+    in_progress: { label: 'En cours', icon: AlertCircle, color: 'blue' },
+    on_hold: { label: 'En pause', icon: Pause, color: 'gray' },
+    completed: { label: 'Terminées', icon: CheckCircle2, color: 'green' },
+    validated: { label: 'Validées', icon: CheckCircle2, color: 'purple' },
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {(Object.entries(columnConfig) as [InterventionStatus, typeof columnConfig.pending][]).map(([status, config]) => {
+        const Icon = config.icon;
+        const items = columns[status] || [];
+
+        return (
+          <DroppableColumn key={status} id={status} config={config} items={items}>
+            {items.map(intervention => (
+              <DraggableCard
+                key={intervention.id}
+                intervention={intervention}
+                onClick={() => onInterventionClick(intervention.id)}
+                onEdit={(e) => onEdit(intervention.id, e)}
+                onDelete={(e) => onDelete(intervention.id, e)}
+              />
+            ))}
+          </DroppableColumn>
+        );
+      })}
+    </div>
+  );
+};
+
+// ============================================================================
+// DROPPABLE COLUMN
+// ============================================================================
+
+interface DroppableColumnProps {
+  id: string;
+  config: {
+    label: string;
+    icon: any;
+    color: string;
+  };
+  items: Intervention[];
+  children: React.ReactNode;
+}
+
+const DroppableColumn = ({ id, config, items, children }: DroppableColumnProps) => {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  const Icon = config.icon;
+
+  return (
+    <div className="flex flex-col min-h-[400px]">
+      {/* En-tête de colonne */}
+      <div className={cn(
+        'flex items-center justify-between p-3 rounded-lg mb-3',
+        config.color === 'orange' && 'bg-orange-100 dark:bg-orange-900/30',
+        config.color === 'blue' && 'bg-blue-100 dark:bg-blue-900/30',
+        config.color === 'gray' && 'bg-gray-100 dark:bg-gray-800',
+        config.color === 'green' && 'bg-green-100 dark:bg-green-900/30',
+        config.color === 'purple' && 'bg-purple-100 dark:bg-purple-900/30'
+      )}>
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4" />
+          <span className="font-semibold text-sm">{config.label}</span>
+        </div>
+        <Badge variant="secondary" className="font-semibold">{items.length}</Badge>
+      </div>
+
+      {/* Zone de drop */}
+      <div
+        ref={setNodeRef}
+        className={cn(
+          'flex-1 space-y-2 p-2 rounded-lg border-2 border-dashed transition-colors',
+          isOver
+            ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20'
+            : 'border-transparent'
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// DRAGGABLE CARD
+// ============================================================================
+
+interface DraggableCardProps {
+  intervention: Intervention;
+  onClick: () => void;
+  onEdit: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
+}
+
+const DraggableCard = ({ intervention, onClick, onEdit, onDelete }: DraggableCardProps) => {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: intervention.id,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <KanbanCard
+        intervention={intervention}
+        onClick={onClick}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        isDragging={isDragging}
+      />
+    </div>
+  );
+};
+
+// ============================================================================
+// KANBAN CARD (Compacte)
+// ============================================================================
+
+interface KanbanCardProps {
+  intervention: Intervention;
+  onClick: () => void;
+  onEdit: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
+  isDragging?: boolean;
+}
+
+const KanbanCard = ({ intervention, onClick, onEdit, onDelete, isDragging = false }: KanbanCardProps) => {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'admin' || user?.uid === intervention.createdBy;
+  const canDelete = user?.role === 'admin';
+
+  const timeAgo = intervention.createdAt
+    ? formatDistanceToNow(intervention.createdAt.toDate(), { locale: fr, addSuffix: true })
+    : '';
+
+  return (
+    <Card
+      onClick={onClick}
+      className={cn(
+        'group p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all',
+        'border-l-4',
+        intervention.priority === 'urgent' && 'border-l-red-500',
+        intervention.priority === 'high' && 'border-l-orange-500',
+        intervention.priority === 'medium' && 'border-l-yellow-500',
+        intervention.priority === 'low' && 'border-l-blue-500',
+        isDragging && 'opacity-50 shadow-xl scale-105'
+      )}
+    >
+      <div className="space-y-2">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="font-medium text-sm line-clamp-2 flex-1">{intervention.title}</h4>
+          {(canEdit || canDelete) && !isDragging && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onClick}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Voir
+                </DropdownMenuItem>
+                {canEdit && (
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Modifier
+                  </DropdownMenuItem>
+                )}
+                {canDelete && (
+                  <DropdownMenuItem onClick={onDelete} className="text-red-600">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {/* Badges */}
+        <div className="flex gap-1.5 flex-wrap">
+          <PriorityBadge priority={intervention.priority} size="sm" />
+          <TypeBadge type={intervention.type} size="sm" />
+        </div>
+
+        {/* Infos */}
+        <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
+          {intervention.location && (
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              <span className="truncate">{intervention.location}</span>
+            </div>
+          )}
+          {intervention.assignedToName && (
+            <div className="flex items-center gap-1">
+              <User className="h-3 w-3" />
+              <span className="truncate">{intervention.assignedToName}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1 text-gray-500">
+            <Clock className="h-3 w-3" />
+            <span>{timeAgo}</span>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// ============================================================================
+// VUE TABLEAU AVEC COULEURS DE STATUT
+// ============================================================================
+
+interface TableViewProps {
+  interventions: Intervention[];
+  onInterventionClick: (id: string) => void;
+  onEdit: (id: string, e: React.MouseEvent) => void;
+  onDelete: (id: string, e: React.MouseEvent) => void;
+}
+
+const TableView = ({ interventions, onInterventionClick, onEdit, onDelete }: TableViewProps) => {
+  const { user } = useAuth();
+
+  // Couleurs par statut
+  const getStatusColor = (status: InterventionStatus) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-orange-50 dark:bg-orange-950/20 border-l-orange-400';
+      case 'in_progress':
+        return 'bg-blue-50 dark:bg-blue-950/20 border-l-blue-400';
+      case 'on_hold':
+        return 'bg-gray-50 dark:bg-gray-800/50 border-l-gray-400';
+      case 'completed':
+        return 'bg-green-50 dark:bg-green-950/20 border-l-green-400';
+      case 'validated':
+        return 'bg-purple-50 dark:bg-purple-950/20 border-l-purple-400';
+      default:
+        return '';
+    }
+  };
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50 dark:bg-gray-800 border-b">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Intervention</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Statut</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Priorité</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Localisation</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Assigné à</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">Date</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {interventions.map((intervention) => {
+              const canEdit = user?.role === 'admin' || user?.role === 'super_admin' || user?.uid === intervention.createdBy;
+              const canDelete = user?.role === 'admin' || user?.role === 'super_admin';
+
+              return (
+                <tr
+                  key={intervention.id}
+                  onClick={() => onInterventionClick(intervention.id)}
+                  className={cn(
+                    'hover:shadow-md cursor-pointer transition-all border-l-4',
+                    getStatusColor(intervention.status)
+                  )}
+                >
+                  <td className="px-4 py-3">
+                    <div className="max-w-xs">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                        {intervention.title}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {intervention.description}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <StatusBadge status={intervention.status} size="sm" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <PriorityBadge priority={intervention.priority} size="sm" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <TypeBadge type={intervention.type} size="sm" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin className="h-3 w-3" />
+                      <span className="truncate max-w-[120px]">{intervention.location}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-sm text-gray-600 dark:text-gray-400 truncate block max-w-[120px]">
+                      {intervention.assignedToName || '-'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {intervention.createdAt
+                        ? format(intervention.createdAt.toDate(), 'dd/MM/yy', { locale: fr })
+                        : '-'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-center gap-2">
+                      {canEdit && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit(intervention.id, e);
+                          }}
+                          title="Modifier"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(intervention.id, e);
+                          }}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 };
