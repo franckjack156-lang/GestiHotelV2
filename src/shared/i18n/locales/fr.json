@@ -146,5 +146,17 @@
     "email": "Email invalide",
     "min_length": "Minimum {{count}} caractères",
     "max_length": "Maximum {{count}} caractères"
+  },
+  "network": {
+    "offline": "Hors ligne",
+    "online": "En ligne",
+    "slow_connection": "Connexion lente",
+    "pending_syncs": "en attente",
+    "failed_syncs": "échoué(s)",
+    "sync_now": "Synchroniser maintenant",
+    "connection_lost": "Connexion perdue",
+    "connection_restored": "Connexion rétablie",
+    "offline_mode": "Mode hors ligne",
+    "offline_message": "Vos modifications seront synchronisées automatiquement lorsque la connexion sera rétablie"
   }
 }

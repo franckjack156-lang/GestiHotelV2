@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avat
 
 // 🆕 Import corrigé de EstablishmentSwitcher depuis le bon fichier
 import { EstablishmentSwitcher } from '@/pages/establishments/EstablishmentsPages';
+import { NetworkIndicator } from '@/shared/components/indicators/NetworkIndicator';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -95,6 +96,9 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
       {/* Actions */}
       <div className="flex items-center gap-2">
+        {/* 🆕 Network Indicator */}
+        <NetworkIndicator />
+
         {/* 🆕 Notifications - Clic vers le centre de notifications */}
         <Button
           variant="ghost"

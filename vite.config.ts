@@ -7,7 +7,7 @@ import path from 'path';
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
+VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
@@ -32,22 +32,74 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Stratégies de mise en cache améliorées
         runtimeCaching: [
+          // API Firestore - Réseau en premier, cache en secours
           {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'firestore-cache',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 heures
+              },
+              networkTimeoutSeconds: 10, // Timeout de 10s avant fallback
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          // Firebase Storage - Cache en premier pour les fichiers
+          {
+            urlPattern: /^https:\/\/firebasestorage\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'firebase-storage-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 jours
               },
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
+          },
+          // Images - Cache en premier
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 jours
+              }
+            }
+          },
+          // Fonts - Cache en premier
+          {
+            urlPattern: /\.(?:woff|woff2|ttf|eot)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'fonts-cache',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 an
+              }
+            }
           }
-        ]
+        ],
+        // Nettoyage automatique des anciens caches
+        cleanupOutdatedCaches: true,
+        // Activer le skip waiting pour mise à jour immédiate
+        skipWaiting: true,
+        clientsClaim: true
+      },
+      // Support du Background Sync
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],

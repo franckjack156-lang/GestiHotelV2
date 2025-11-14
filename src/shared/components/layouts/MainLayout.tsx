@@ -11,6 +11,7 @@ import { Sidebar } from './Sidebar';
 import { Footer } from './Footer';
 import { useApplyPreferences } from '@/features/users/hooks/useApplyPreferences';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
+import { OfflineBanner } from '@/shared/components/indicators/NetworkIndicator';
 
 export const MainLayout = () => {
   const { displayPreferences, updateDisplayPreferences } = useUserPreferences();
@@ -35,6 +36,9 @@ export const MainLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+      {/* Offline Banner - affiché en haut de tout */}
+      <OfflineBanner />
+
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
