@@ -14,6 +14,7 @@ import {
   DoorClosed,
   Calendar,
   Bell,
+  MessageSquare,
   Settings,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
@@ -45,6 +46,7 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
     'rooms',
     'planning',
     'notifications',
+    'messaging',
   ]);
 
   /**
@@ -80,6 +82,12 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
       href: '/app/notifications',
       icon: Bell,
       requiredFeature: 'notifications',
+    },
+    {
+      translationKey: 'messaging',
+      href: '/app/messaging',
+      icon: MessageSquare,
+      requiredFeature: 'messaging',
     },
     {
       translationKey: 'settings',

@@ -48,6 +48,9 @@ import { PlanningPage } from '@/pages/PlanningPage';
 // 🆕 Notification Center (nouvelle page)
 import { NotificationCenterPage } from '@/pages/NotificationCenterPage';
 
+// 🆕 Messaging (nouvelle page)
+import { MessagingPage } from '@/pages/MessagingPage';
+
 // Settings
 import { SettingsPage } from '@/pages/Settings';
 import { EstablishmentFeaturesPage } from '@/pages/settings/EstablishmentFeaturesPage';
@@ -254,6 +257,18 @@ export const router = createBrowserRouter([
         element: (
           <FeatureGuard feature="notifications">
             <NotificationCenterPage />
+          </FeatureGuard>
+        ),
+      },
+
+      // ----------------------------------------------------------------------------
+      // 🆕 MESSAGING (Messagerie interne)
+      // ----------------------------------------------------------------------------
+      {
+        path: 'messaging',
+        element: (
+          <FeatureGuard feature="messaging">
+            <MessagingPage />
           </FeatureGuard>
         ),
       },
