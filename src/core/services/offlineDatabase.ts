@@ -55,7 +55,7 @@ export class GestiHotelDatabase extends Dexie {
   constructor() {
     super('GestiHotelDB');
 
-    // Définir le schéma de la base de données
+    // Version 1 - Schéma initial
     this.version(1).stores({
       interventions: 'id, establishmentId, status, priority, createdAt, assignedTo',
       rooms: 'id, establishmentId, number, floor, status',
@@ -64,6 +64,11 @@ export class GestiHotelDatabase extends Dexie {
       messages: 'id, conversationId, senderId, createdAt',
       pendingSyncs: '++id, collection, documentId, timestamp, operation',
       cacheMetadata: '++id, key, establishmentId, lastSync',
+    });
+
+    // Version 2 - Ajout de l'index retries sur pendingSyncs
+    this.version(2).stores({
+      pendingSyncs: '++id, collection, documentId, timestamp, operation, retries',
     });
   }
 }
