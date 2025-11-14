@@ -191,243 +191,203 @@ export const InterventionDetailsPage = () => {
   const coverPhoto = intervention.photos && intervention.photos.length > 0 ? intervention.photos[0] : null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 -m-6 p-6">
-      {/* ========================================================================
-          HERO SECTION AVEC PHOTO DE FOND
-          ======================================================================== */}
-      <div className="relative mb-8 rounded-3xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-800">
-        {/* Photo de fond avec overlay */}
-        {coverPhoto ? (
-          <div className="relative h-[400px]">
-            <img
-              src={coverPhoto.url}
-              alt={intervention.title}
-              className="absolute inset-0 w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-            {/* Effet de texture subtile */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
-          </div>
-        ) : (
-          <div className="relative h-[400px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
-            {/* Pattern géométrique subtil */}
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9InBhdHRlcm4iIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuMiIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==')] opacity-40" />
-            {/* Effet de brillance */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
-          </div>
-        )}
-
-        {/* Contenu Hero */}
-        <div className="absolute inset-0 flex flex-col justify-between p-8 text-white">
-          {/* Top Bar */}
-          <div className="flex items-start justify-between">
+    <div className="space-y-4">
+      {/* Header compact avec actions */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
             <Button
-              variant="secondary"
+              variant="ghost"
+              size="sm"
               onClick={() => navigate('/app/interventions')}
-              className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-md"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="mr-1 h-4 w-4" />
               Retour
             </Button>
-
-            <div className="flex gap-2">
-              {/* Actions contextuelles */}
-              {canStart && (
-                <Button
-                  onClick={() => handleStatusChange('in_progress')}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  size="lg"
-                >
-                  <PlayCircle className="mr-2 h-5 w-5" />
-                  Démarrer
-                </Button>
-              )}
-
-              {canComplete && (
-                <Button
-                  onClick={() => handleStatusChange('completed')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  size="lg"
-                >
-                  <CheckCircle2 className="mr-2 h-5 w-5" />
-                  Terminer
-                </Button>
-              )}
-
-              {canValidate && (
-                <Button
-                  onClick={() => handleStatusChange('validated')}
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  size="lg"
-                >
-                  <CheckCircle2 className="mr-2 h-5 w-5" />
-                  Valider
-                </Button>
-              )}
-
-              {canEdit && (
-                <Button
-                  variant="secondary"
-                  onClick={() => navigate(`/app/interventions/${intervention.id}/edit`)}
-                  className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-md"
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier
-                </Button>
-              )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="bg-white/20 hover:bg-white/30 text-white border-0 backdrop-blur-md"
-                  >
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleExportPDF}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Exporter PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleShare}>
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Partager
-                  </DropdownMenuItem>
-                  {intervention.status === 'in_progress' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleStatusChange('on_hold')}>
-                        <PauseCircle className="mr-2 h-4 w-4" />
-                        Mettre en pause
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {intervention.status === 'on_hold' && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
-                        <PlayCircle className="mr-2 h-4 w-4" />
-                        Reprendre
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  {canDelete && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setShowDeleteDialog(true)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Separator orientation="vertical" className="h-6" />
+            <span className="text-sm text-gray-500 font-mono">{intervention.reference}</span>
           </div>
 
-          {/* Bottom Info */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              {intervention.isUrgent && (
-                <Badge className="bg-red-500/90 hover:bg-red-600 text-white gap-1 backdrop-blur-sm">
-                  <Zap className="h-3 w-3" />
-                  URGENT
-                </Badge>
-              )}
-              {intervention.isBlocking && (
-                <Badge className="bg-orange-500/90 hover:bg-orange-600 text-white gap-1 backdrop-blur-sm">
-                  <AlertCircle className="h-3 w-3" />
-                  BLOQUANT
-                </Badge>
-              )}
-              <StatusBadge status={intervention.status} />
-              <PriorityBadge priority={intervention.priority} />
-              <TypeBadge type={intervention.type} />
-            </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            {intervention.title}
+          </h1>
 
-            <h1 className="text-4xl font-bold mb-3 drop-shadow-lg">{intervention.title}</h1>
-            <div className="flex items-center gap-4 text-white/90">
-              <span className="flex items-center gap-2">
-                <Tag className="h-4 w-4" />
-                <span className="font-mono">{intervention.reference}</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                {elapsedTime}
-              </span>
-              {intervention.assignedToName && (
-                <span className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+          <div className="flex flex-wrap items-center gap-2">
+            {intervention.isUrgent && (
+              <Badge variant="destructive" className="gap-1">
+                <Zap className="h-3 w-3" />
+                URGENT
+              </Badge>
+            )}
+            {intervention.isBlocking && (
+              <Badge className="bg-orange-500 hover:bg-orange-600 gap-1">
+                <AlertCircle className="h-3 w-3" />
+                BLOQUANT
+              </Badge>
+            )}
+            <StatusBadge status={intervention.status} size="sm" />
+            <PriorityBadge priority={intervention.priority} size="sm" />
+            <TypeBadge type={intervention.type} size="sm" />
+            <Separator orientation="vertical" className="h-4" />
+            <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+              <Clock className="h-3.5 w-3.5" />
+              {elapsedTime}
+            </span>
+            {intervention.assignedToName && (
+              <>
+                <Separator orientation="vertical" className="h-4" />
+                <span className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+                  <User className="h-3.5 w-3.5" />
                   {intervention.assignedToName}
                 </span>
-              )}
-            </div>
+              </>
+            )}
           </div>
+        </div>
+
+        {/* Actions rapides */}
+        <div className="flex gap-2 flex-shrink-0">
+          {canStart && (
+            <Button
+              onClick={() => handleStatusChange('in_progress')}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <PlayCircle className="mr-2 h-4 w-4" />
+              Démarrer
+            </Button>
+          )}
+          {canComplete && (
+            <Button
+              onClick={() => handleStatusChange('completed')}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Terminer
+            </Button>
+          )}
+          {canValidate && (
+            <Button
+              onClick={() => handleStatusChange('validated')}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4" />
+              Valider
+            </Button>
+          )}
+          {canEdit && (
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/app/interventions/${intervention.id}/edit`)}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Modifier
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPDF}>
+                <Download className="mr-2 h-4 w-4" />
+                Exporter PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleShare}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Partager
+              </DropdownMenuItem>
+              {intervention.status === 'in_progress' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleStatusChange('on_hold')}>
+                    <PauseCircle className="mr-2 h-4 w-4" />
+                    Mettre en pause
+                  </DropdownMenuItem>
+                </>
+              )}
+              {intervention.status === 'on_hold' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
+                    <PlayCircle className="mr-2 h-4 w-4" />
+                    Reprendre
+                  </DropdownMenuItem>
+                </>
+              )}
+              {canDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
-      {/* ========================================================================
-          CONTENU PRINCIPAL AVEC TABS
-          ======================================================================== */}
-      <Tabs defaultValue="details" className="space-y-6">
-        <TabsList className="bg-white dark:bg-gray-900 p-1.5 shadow-sm border border-gray-200 dark:border-gray-800 rounded-xl">
-          <TabsTrigger value="details" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <Info className="h-4 w-4" />
+      {/* Tabs compacts */}
+      <Tabs defaultValue="details" className="space-y-4">
+        <TabsList className="w-full justify-start h-9">
+          <TabsTrigger value="details" className="gap-1.5">
+            <Info className="h-3.5 w-3.5" />
             Détails
           </TabsTrigger>
           {intervention.photos && intervention.photos.length > 0 && (
-            <TabsTrigger value="photos" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-              <ImageIcon className="h-4 w-4" />
-              Photos ({intervention.photos.length})
+            <TabsTrigger value="photos" className="gap-1.5">
+              <ImageIcon className="h-3.5 w-3.5" />
+              Photos
+              <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                {intervention.photos.length}
+              </Badge>
             </TabsTrigger>
           )}
-          <TabsTrigger value="messages" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <MessageSquare className="h-4 w-4" />
+          <TabsTrigger value="messages" className="gap-1.5">
+            <MessageSquare className="h-3.5 w-3.5" />
             Commentaires
             {intervention.comments && intervention.comments.length > 0 && (
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+              <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
                 {intervention.comments.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <History className="h-4 w-4" />
+          <TabsTrigger value="history" className="gap-1.5">
+            <History className="h-3.5 w-3.5" />
             Historique
           </TabsTrigger>
         </TabsList>
 
         {/* TAB: DÉTAILS */}
-        <TabsContent value="details" className="space-y-6">
-          <div className="grid lg:grid-cols-3 gap-6">
+        <TabsContent value="details" className="space-y-4">
+          <div className="grid lg:grid-cols-3 gap-4">
             {/* Description */}
-            <Card className="lg:col-span-2 border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="border-b border-gray-100 dark:border-gray-800">
-                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
-                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                    <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  </div>
+            <Card className="lg:col-span-2">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
                   Description
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6">
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
+              <CardContent className="space-y-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {intervention.description}
                 </p>
 
                 {/* Notes internes */}
                 {intervention.internalNotes && (
-                  <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg border-l-4 border-orange-500">
-                    <h4 className="font-semibold text-orange-900 dark:text-orange-400 mb-2 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
+                  <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border-l-2 border-orange-500">
+                    <h4 className="text-xs font-semibold text-orange-900 dark:text-orange-400 mb-1 flex items-center gap-1.5">
+                      <AlertCircle className="h-3 w-3" />
                       Notes internes
                     </h4>
-                    <p className="text-sm text-orange-800 dark:text-orange-300">
+                    <p className="text-xs text-orange-800 dark:text-orange-300">
                       {intervention.internalNotes}
                     </p>
                   </div>
@@ -435,12 +395,12 @@ export const InterventionDetailsPage = () => {
 
                 {/* Notes de résolution */}
                 {intervention.resolutionNotes && (
-                  <div className="mt-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border-l-4 border-green-500">
-                    <h4 className="font-semibold text-green-900 dark:text-green-400 mb-2 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4" />
+                  <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border-l-2 border-green-500">
+                    <h4 className="text-xs font-semibold text-green-900 dark:text-green-400 mb-1 flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3 w-3" />
                       Notes de résolution
                     </h4>
-                    <p className="text-sm text-green-800 dark:text-green-300">
+                    <p className="text-xs text-green-800 dark:text-green-300">
                       {intervention.resolutionNotes}
                     </p>
                   </div>
@@ -449,124 +409,88 @@ export const InterventionDetailsPage = () => {
             </Card>
 
             {/* Sidebar Infos */}
-            <div className="space-y-6">
-              {/* Temps & Durée */}
-              <Card className="border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-800">
-                  <CardTitle className="text-base flex items-center gap-2 text-gray-900 dark:text-white">
-                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                      <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    Temps & Durée
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 rounded-lg">
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400 mb-1 font-medium">
-                      TEMPS ÉCOULÉ
-                    </p>
-                    <p className="text-xl font-bold text-indigo-900 dark:text-indigo-100">
-                      {elapsedTime}
-                    </p>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-4 w-4" />
+                  Informations
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Localisation */}
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium">{intervention.location}</span>
+                    {intervention.roomNumber && (
+                      <span className="text-gray-500 ml-1">• {intervention.roomNumber}</span>
+                    )}
                   </div>
+                </div>
 
-                  {intervention.actualDuration && (
-                    <div className="p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                      <p className="text-xs text-green-600 dark:text-green-400 mb-1 font-medium">
-                        DURÉE RÉELLE
-                      </p>
-                      <p className="text-xl font-bold text-green-900 dark:text-green-100">
-                        {intervention.actualDuration} min
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Informations clés */}
-              <Card className="border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-800">
-                  <CardTitle className="text-base flex items-center gap-2 text-gray-900 dark:text-white">
-                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                      <Activity className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    Informations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                      <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Localisation</p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {intervention.location}
-                      </p>
-                      {intervention.roomNumber && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {intervention.roomNumber}
-                        </p>
-                      )}
-                    </div>
+                {/* Assigné */}
+                {intervention.assignedTo && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span>{intervention.assignedToName || 'Technicien'}</span>
                   </div>
+                )}
 
-                  {intervention.assignedTo && (
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                        <User className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Assigné à</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {intervention.assignedToName || 'Technicien'}
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                {/* Date création */}
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                  <span>
+                    {intervention.createdAt &&
+                      format(intervention.createdAt.toDate(), 'dd MMM yyyy à HH:mm', {
+                        locale: fr,
+                      })}
+                  </span>
+                </div>
 
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                      <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Créée le</p>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {intervention.createdAt &&
-                          format(intervention.createdAt.toDate(), 'dd MMM yyyy', {
-                            locale: fr,
-                          })}
-                      </p>
-                    </div>
+                {/* Durée réelle */}
+                {intervention.actualDuration && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                    <span>{intervention.actualDuration} minutes</span>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                )}
+
+                <Separator />
+
+                {/* Photo preview si disponible */}
+                {coverPhoto && (
+                  <div className="aspect-video rounded-lg overflow-hidden border">
+                    <img
+                      src={coverPhoto.thumbnailUrl || coverPhoto.url}
+                      alt={intervention.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
         {/* TAB: PHOTOS */}
         {intervention.photos && intervention.photos.length > 0 && (
           <TabsContent value="photos">
-            <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                   {intervention.photos.map((photo, index) => (
                     <div
                       key={photo.id}
                       onClick={() => setSelectedImageIndex(index)}
-                      className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all hover:shadow-2xl hover:scale-105"
+                      className="group relative aspect-square cursor-pointer overflow-hidden rounded-lg border hover:border-indigo-500 transition-colors"
                     >
                       <img
                         src={photo.thumbnailUrl || photo.url}
                         alt={photo.filename}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-125"
+                        className="w-full h-full object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="p-3 bg-white/90 dark:bg-gray-900/90 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100 backdrop-blur-sm">
-                          <Eye className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-                        </div>
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
+                        <Eye className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                       </div>
                     </div>
                   ))}
@@ -578,35 +502,35 @@ export const InterventionDetailsPage = () => {
 
         {/* TAB: COMMENTAIRES */}
         <TabsContent value="messages">
-          <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
-            <CardContent className="p-6 space-y-6">
+          <Card>
+            <CardContent className="p-4 space-y-4">
               {/* Liste des messages */}
               {intervention.comments && intervention.comments.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {intervention.comments.map(comment => (
                     <div
                       key={comment.id}
-                      className="flex gap-4 p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/30 hover:shadow-md transition-all border border-gray-200 dark:border-gray-700"
+                      className="flex gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                     >
                       <UserAvatar
                         name={comment.userName || 'User'}
                         photoURL={comment.userPhotoURL}
-                        size="md"
-                        className="flex-shrink-0 ring-2 ring-white dark:ring-gray-800"
+                        size="sm"
+                        className="flex-shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-semibold text-gray-900 dark:text-white">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {comment.userName || 'Utilisateur'}
                           </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-white dark:bg-gray-800 rounded-full">
+                          <span className="text-xs text-gray-500">
                             {comment.createdAt &&
                               format(comment.createdAt.toDate(), 'dd/MM à HH:mm', {
                                 locale: fr,
                               })}
                           </span>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 break-words leading-relaxed">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 break-words">
                           {comment.text}
                         </p>
                       </div>
@@ -614,21 +538,21 @@ export const InterventionDetailsPage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <MessageSquare className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">Aucun commentaire pour le moment</p>
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Aucun commentaire</p>
                 </div>
               )}
 
               {/* Formulaire nouveau message */}
-              <div className="pt-6 border-t">
-                <div className="flex gap-3">
+              <div className="pt-3 border-t">
+                <div className="flex gap-2">
                   <Textarea
                     value={messageText}
                     onChange={e => setMessageText(e.target.value)}
                     placeholder="Ajouter un commentaire..."
-                    rows={3}
-                    className="flex-1"
+                    rows={2}
+                    className="flex-1 text-sm"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                         handleSendMessage();
@@ -639,12 +563,11 @@ export const InterventionDetailsPage = () => {
                     onClick={handleSendMessage}
                     disabled={!messageText.trim() || isSendingMessage}
                     size="icon"
-                    className="h-auto"
                   >
-                    <Send className="h-5 w-5" />
+                    <Send className="h-4 w-4" />
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Ctrl+Entrée pour envoyer rapidement</p>
+                <p className="text-xs text-gray-500 mt-1.5">Ctrl+Entrée pour envoyer</p>
               </div>
             </CardContent>
           </Card>
@@ -652,8 +575,8 @@ export const InterventionDetailsPage = () => {
 
         {/* TAB: HISTORIQUE */}
         <TabsContent value="history">
-          <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
-            <CardContent className="p-6">
+          <Card>
+            <CardContent className="p-4">
               {intervention.history && intervention.history.length > 0 ? (
                 <Timeline
                   items={intervention.history.map(item => ({
@@ -667,9 +590,9 @@ export const InterventionDetailsPage = () => {
                   }))}
                 />
               ) : (
-                <div className="text-center py-12">
-                  <History className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">Aucun historique disponible</p>
+                <div className="text-center py-8">
+                  <History className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Aucun historique</p>
                 </div>
               )}
             </CardContent>
