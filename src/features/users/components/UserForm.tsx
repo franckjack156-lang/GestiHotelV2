@@ -43,10 +43,13 @@ const userSchema = z.object({
   firstName: z.string().min(2, 'Le prénom doit contenir au moins 2 caractères'),
   lastName: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   role: z.nativeEnum(UserRole),
+  isTechnician: z.boolean().optional(),
   phoneNumber: z.string().optional(),
   jobTitle: z.string().optional(),
   department: z.string().optional(),
   skills: z.string().optional(), // Sera converti en array
+  specialties: z.string().optional(), // Sera converti en array
+  experienceLevel: z.enum(['junior', 'intermediate', 'senior', 'expert']).optional(),
   photoURL: z.string().url('URL invalide').optional().or(z.literal('')),
   sendInvitation: z.boolean().optional(),
 });
@@ -93,19 +96,25 @@ export const UserForm: React.FC<UserFormProps> = ({
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          isTechnician: user.isTechnician || false,
           phoneNumber: user.phoneNumber || '',
           jobTitle: user.jobTitle || '',
           department: user.department || '',
           skills: user.skills?.join(', ') || '',
+          specialties: user.specialties?.join(', ') || '',
+          experienceLevel: user.experienceLevel || undefined,
           photoURL: user.photoURL || '',
         }
       : {
           role: UserRole.TECHNICIAN,
+          isTechnician: false,
           sendInvitation: true,
         },
   });
 
   const selectedRole = watch('role');
+
+  const isTechnician = watch('isTechnician');
 
   /**
    * Gérer la soumission
@@ -116,9 +125,18 @@ export const UserForm: React.FC<UserFormProps> = ({
       .map((s) => s.trim())
       .filter(Boolean);
 
+    const specialties = data.specialties
+      ?.split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
     if (isEditMode) {
       // Mode édition
-      const updateData: UpdateUserData = {
+      const updateData: UpdateUserData & {
+        isTechnician?: boolean;
+        specialties?: string[];
+        experienceLevel?: string;
+      } = {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
@@ -128,10 +146,26 @@ export const UserForm: React.FC<UserFormProps> = ({
         skills: skills,
         photoURL: data.photoURL || undefined,
       };
+
+      // Ajouter les champs technicien si applicable
+      if (data.isTechnician !== undefined) {
+        updateData.isTechnician = data.isTechnician;
+      }
+      if (data.isTechnician && specialties) {
+        updateData.specialties = specialties;
+      }
+      if (data.isTechnician && data.experienceLevel) {
+        updateData.experienceLevel = data.experienceLevel;
+      }
+
       onSubmit(updateData);
     } else {
       // Mode création
-      const createData: CreateUserData = {
+      const createData: CreateUserData & {
+        isTechnician?: boolean;
+        specialties?: string[];
+        experienceLevel?: string;
+      } = {
         email: data.email,
         password: data.password || 'ChangeMe123!', // Mot de passe par défaut
         firstName: data.firstName,
@@ -145,6 +179,18 @@ export const UserForm: React.FC<UserFormProps> = ({
         photoURL: data.photoURL || undefined,
         sendInvitation: data.sendInvitation,
       };
+
+      // Ajouter les champs technicien si applicable
+      if (data.isTechnician !== undefined) {
+        createData.isTechnician = data.isTechnician;
+      }
+      if (data.isTechnician && specialties) {
+        createData.specialties = specialties;
+      }
+      if (data.isTechnician && data.experienceLevel) {
+        createData.experienceLevel = data.experienceLevel;
+      }
+
       onSubmit(createData);
     }
   };
@@ -291,6 +337,21 @@ export const UserForm: React.FC<UserFormProps> = ({
             <p className="text-sm text-red-500 mt-1">{errors.role.message}</p>
           )}
         </div>
+
+        {/* Checkbox Technicien */}
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="isTechnician"
+            checked={isTechnician}
+            onCheckedChange={(checked) => setValue('isTechnician', checked as boolean)}
+          />
+          <Label
+            htmlFor="isTechnician"
+            className="text-sm font-normal cursor-pointer"
+          >
+            Cet utilisateur est un technicien (peut recevoir des assignations d'interventions)
+          </Label>
+        </div>
       </div>
 
       <Separator />
@@ -334,6 +395,44 @@ export const UserForm: React.FC<UserFormProps> = ({
             Séparer les compétences par des virgules
           </p>
         </div>
+
+        {/* Champs supplémentaires pour techniciens */}
+        {isTechnician && (
+          <>
+            {/* Spécialités */}
+            <div>
+              <Label htmlFor="specialties">Spécialités techniques</Label>
+              <Textarea
+                id="specialties"
+                {...register('specialties')}
+                placeholder="CVC, Domotique, Plomberie sanitaire (séparées par des virgules)"
+                rows={2}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Domaines d'expertise spécifiques
+              </p>
+            </div>
+
+            {/* Niveau d'expérience */}
+            <div>
+              <Label htmlFor="experienceLevel">Niveau d'expérience</Label>
+              <Select
+                value={watch('experienceLevel') || ''}
+                onValueChange={(value) => setValue('experienceLevel', value as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un niveau" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="junior">Junior (0-2 ans)</SelectItem>
+                  <SelectItem value="intermediate">Intermédiaire (2-5 ans)</SelectItem>
+                  <SelectItem value="senior">Senior (5-10 ans)</SelectItem>
+                  <SelectItem value="expert">Expert (10+ ans)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Invitation (création uniquement) */}

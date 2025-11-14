@@ -59,6 +59,9 @@ export interface User {
   /** Rôle global de l'utilisateur */
   role: UserRole;
 
+  /** Est un technicien (peut recevoir des assignations d'interventions) */
+  isTechnician?: boolean;
+
   /** URL de la photo de profil */
   photoURL?: string;
 
@@ -136,6 +139,12 @@ export interface UserProfile extends User {
 
   /** Certifications */
   certifications?: string[];
+
+  /** Spécialités techniques */
+  specialties?: string[];
+
+  /** Niveau d'expérience */
+  experienceLevel?: 'junior' | 'intermediate' | 'senior' | 'expert';
 
   /** Date de naissance */
   birthDate?: Date | Timestamp;

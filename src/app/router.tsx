@@ -30,6 +30,7 @@ import { EditInterventionPage } from '@/pages/interventions/EditInterventionPage
 import { UsersPage } from '@/pages/users/UsersPage';
 import { CreateUserPage } from '@/pages/users/CreateUserPage';
 import { UserDetailsPage } from '@/pages/users/UserDetailsPage';
+import { UserProfilePage } from '@/pages/users/UserProfilePage';
 import { EditUserPage } from '@/pages/users/EditUserPage';
 
 // 🆕 Establishments (nouvelles pages)
@@ -186,6 +187,10 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: <UserDetailsPage />,
+          },
+          {
+            path: ':id/profile',
+            element: <UserProfilePage />,
           },
           {
             path: ':id/edit',
