@@ -191,24 +191,30 @@ export const InterventionDetailsPage = () => {
   const coverPhoto = intervention.photos && intervention.photos.length > 0 ? intervention.photos[0] : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 -m-6 p-6">
+    <div className="min-h-screen bg-white dark:bg-gray-950 -m-6 p-6">
       {/* ========================================================================
           HERO SECTION AVEC PHOTO DE FOND
           ======================================================================== */}
-      <div className="relative mb-8 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="relative mb-8 rounded-3xl overflow-hidden shadow-xl border border-gray-200 dark:border-gray-800">
         {/* Photo de fond avec overlay */}
         {coverPhoto ? (
-          <div className="relative h-80">
+          <div className="relative h-[400px]">
             <img
               src={coverPhoto.url}
               alt={intervention.title}
               className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+            {/* Effet de texture subtile */}
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjAzIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           </div>
         ) : (
-          <div className="relative h-80 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600">
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="relative h-[400px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+            {/* Pattern géométrique subtil */}
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9InBhdHRlcm4iIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuMiIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNwYXR0ZXJuKSIvPjwvc3ZnPg==')] opacity-40" />
+            {/* Effet de brillance */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent" />
           </div>
         )}
 
@@ -370,18 +376,18 @@ export const InterventionDetailsPage = () => {
           CONTENU PRINCIPAL AVEC TABS
           ======================================================================== */}
       <Tabs defaultValue="details" className="space-y-6">
-        <TabsList className="bg-white dark:bg-gray-800 p-1 shadow-sm">
-          <TabsTrigger value="details" className="gap-2">
+        <TabsList className="bg-white dark:bg-gray-900 p-1.5 shadow-sm border border-gray-200 dark:border-gray-800 rounded-xl">
+          <TabsTrigger value="details" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
             <Info className="h-4 w-4" />
             Détails
           </TabsTrigger>
           {intervention.photos && intervention.photos.length > 0 && (
-            <TabsTrigger value="photos" className="gap-2">
+            <TabsTrigger value="photos" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
               <ImageIcon className="h-4 w-4" />
               Photos ({intervention.photos.length})
             </TabsTrigger>
           )}
-          <TabsTrigger value="messages" className="gap-2">
+          <TabsTrigger value="messages" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
             <MessageSquare className="h-4 w-4" />
             Commentaires
             {intervention.comments && intervention.comments.length > 0 && (
@@ -390,7 +396,7 @@ export const InterventionDetailsPage = () => {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
+          <TabsTrigger value="history" className="gap-2 rounded-lg data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
             <History className="h-4 w-4" />
             Historique
           </TabsTrigger>
@@ -400,14 +406,16 @@ export const InterventionDetailsPage = () => {
         <TabsContent value="details" className="space-y-6">
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Description */}
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-indigo-500" />
+            <Card className="lg:col-span-2 border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="border-b border-gray-100 dark:border-gray-800">
+                <CardTitle className="flex items-center gap-2 text-gray-900 dark:text-white">
+                  <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                    <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  </div>
                   Description
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-6">
                 <p className="text-gray-700 dark:text-gray-300 leading-relaxed text-lg">
                   {intervention.description}
                 </p>
@@ -443,10 +451,12 @@ export const InterventionDetailsPage = () => {
             {/* Sidebar Infos */}
             <div className="space-y-6">
               {/* Temps & Durée */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-indigo-500" />
+              <Card className="border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-800">
+                  <CardTitle className="text-base flex items-center gap-2 text-gray-900 dark:text-white">
+                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                      <Clock className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
                     Temps & Durée
                   </CardTitle>
                 </CardHeader>
@@ -474,10 +484,12 @@ export const InterventionDetailsPage = () => {
               </Card>
 
               {/* Informations clés */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Activity className="h-4 w-4 text-indigo-500" />
+              <Card className="border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3 border-b border-gray-100 dark:border-gray-800">
+                  <CardTitle className="text-base flex items-center gap-2 text-gray-900 dark:text-white">
+                    <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                      <Activity className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
                     Informations
                   </CardTitle>
                 </CardHeader>
@@ -536,22 +548,25 @@ export const InterventionDetailsPage = () => {
         {/* TAB: PHOTOS */}
         {intervention.photos && intervention.photos.length > 0 && (
           <TabsContent value="photos">
-            <Card>
+            <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
               <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {intervention.photos.map((photo, index) => (
                     <div
                       key={photo.id}
                       onClick={() => setSelectedImageIndex(index)}
-                      className="group relative aspect-square cursor-pointer overflow-hidden rounded-xl border-2 border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-500 transition-all hover:shadow-xl"
+                      className="group relative aspect-square cursor-pointer overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500 transition-all hover:shadow-2xl hover:scale-105"
                     >
                       <img
                         src={photo.thumbnailUrl || photo.url}
                         alt={photo.filename}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-125"
                       />
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                        <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="p-3 bg-white/90 dark:bg-gray-900/90 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100 backdrop-blur-sm">
+                          <Eye className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -563,28 +578,28 @@ export const InterventionDetailsPage = () => {
 
         {/* TAB: COMMENTAIRES */}
         <TabsContent value="messages">
-          <Card>
+          <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
             <CardContent className="p-6 space-y-6">
               {/* Liste des messages */}
               {intervention.comments && intervention.comments.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {intervention.comments.map(comment => (
                     <div
                       key={comment.id}
-                      className="flex gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      className="flex gap-4 p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-900/30 hover:shadow-md transition-all border border-gray-200 dark:border-gray-700"
                     >
                       <UserAvatar
                         name={comment.userName || 'User'}
                         photoURL={comment.userPhotoURL}
                         size="md"
-                        className="flex-shrink-0"
+                        className="flex-shrink-0 ring-2 ring-white dark:ring-gray-800"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <span className="font-semibold text-gray-900 dark:text-white">
                             {comment.userName || 'Utilisateur'}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-white dark:bg-gray-800 rounded-full">
                             {comment.createdAt &&
                               format(comment.createdAt.toDate(), 'dd/MM à HH:mm', {
                                 locale: fr,
@@ -637,7 +652,7 @@ export const InterventionDetailsPage = () => {
 
         {/* TAB: HISTORIQUE */}
         <TabsContent value="history">
-          <Card>
+          <Card className="border-gray-200 dark:border-gray-800 shadow-sm">
             <CardContent className="p-6">
               {intervention.history && intervention.history.length > 0 ? (
                 <Timeline
