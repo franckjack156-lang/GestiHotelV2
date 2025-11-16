@@ -8,11 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import {
-  ConversationList,
-  ChatWindow,
-  NewConversationDialog,
-} from './index';
+import { ConversationList, ChatWindow, NewConversationDialog } from './index';
 import type {
   Conversation,
   Message,
@@ -79,7 +75,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       },
     ],
     lastMessage: {
-      content: 'D\'accord, je m\'en occupe tout de suite !',
+      content: "D'accord, je m'en occupe tout de suite !",
       senderId: 'user-2',
       senderName: 'Marie Dupont',
       createdAt: new Date('2025-01-14T10:30:00'),
@@ -136,7 +132,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
     type: 'intervention',
     name: 'Intervention #123',
     interventionId: 'int-123',
-    interventionTitle: 'Fuite d\'eau chambre 205',
+    interventionTitle: "Fuite d'eau chambre 205",
     participantIds: ['user-1', 'user-3'],
     participants: [
       {
@@ -154,7 +150,7 @@ const MOCK_CONVERSATIONS: Conversation[] = [
       },
     ],
     lastMessage: {
-      content: 'J\'arrive dans 10 minutes',
+      content: "J'arrive dans 10 minutes",
       senderId: 'user-3',
       senderName: 'Jean Martin',
       createdAt: new Date('2025-01-14T08:45:00'),
@@ -194,7 +190,7 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
       id: 'msg-3',
       conversationId: 'conv-1',
       type: 'text',
-      content: 'Parfait, merci ! C\'est urgent car il arrive dans 30 minutes.',
+      content: "Parfait, merci ! C'est urgent car il arrive dans 30 minutes.",
       senderId: 'user-1',
       senderName: 'Vous',
       readBy: ['user-1', 'user-2'],
@@ -204,7 +200,7 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
       id: 'msg-4',
       conversationId: 'conv-1',
       type: 'text',
-      content: 'D\'accord, je m\'en occupe tout de suite !',
+      content: "D'accord, je m'en occupe tout de suite !",
       senderId: 'user-2',
       senderName: 'Marie Dupont',
       senderAvatar: 'https://i.pravatar.cc/150?img=1',
@@ -235,7 +231,8 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
       id: 'msg-6',
       conversationId: 'conv-2',
       type: 'text',
-      content: 'Bonjour à tous ! Quelqu\'un peut s\'occuper de la climatisation en salle de conférence ?',
+      content:
+        "Bonjour à tous ! Quelqu'un peut s'occuper de la climatisation en salle de conférence ?",
       senderId: 'user-1',
       senderName: 'Vous',
       readBy: ['user-1', 'user-3', 'user-5'],
@@ -245,7 +242,7 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
       id: 'msg-7',
       conversationId: 'conv-2',
       type: 'text',
-      content: '@Jean je m\'en charge !',
+      content: "@Jean je m'en charge !",
       senderId: 'user-3',
       senderName: 'Jean Martin',
       senderAvatar: 'https://i.pravatar.cc/150?img=2',
@@ -265,7 +262,8 @@ const MOCK_MESSAGES: Record<string, Message[]> = {
       createdAt: new Date('2025-01-14T09:15:00'),
       replyTo: {
         messageId: 'msg-6',
-        content: 'Bonjour à tous ! Quelqu\'un peut s\'occuper de la climatisation en salle de conférence ?',
+        content:
+          "Bonjour à tous ! Quelqu'un peut s'occuper de la climatisation en salle de conférence ?",
         senderName: 'Vous',
       },
     },
@@ -285,7 +283,7 @@ export const MessagingExample: React.FC = () => {
     'conv-1': [{ userId: 'user-2', userName: 'Marie Dupont' }],
   });
 
-  const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
+  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
   const currentMessages = selectedConversationId ? messages[selectedConversationId] || [] : [];
 
   // ============================================================================
@@ -311,14 +309,14 @@ export const MessagingExample: React.FC = () => {
       replyTo: data.replyTo,
     };
 
-    setMessages((prev) => ({
+    setMessages(prev => ({
       ...prev,
       [selectedConversationId]: [...(prev[selectedConversationId] || []), newMessage],
     }));
 
     // Mettre à jour le dernier message de la conversation
-    setConversations((prev) =>
-      prev.map((conv) =>
+    setConversations(prev =>
+      prev.map(conv =>
         conv.id === selectedConversationId
           ? {
               ...conv,
@@ -351,8 +349,8 @@ export const MessagingExample: React.FC = () => {
           email: 'vous@gestihotel.fr',
           joinedAt: new Date(),
         },
-        ...data.participantIds.map((id) => {
-          const user = MOCK_USERS.find((u) => u.id === id);
+        ...data.participantIds.map(id => {
+          const user = MOCK_USERS.find(u => u.id === id);
           return {
             userId: id,
             name: user?.name || 'Utilisateur',
@@ -369,8 +367,8 @@ export const MessagingExample: React.FC = () => {
       establishmentId: 'hotel-1',
     };
 
-    setConversations((prev) => [newConversation, ...prev]);
-    setMessages((prev) => ({ ...prev, [newConversation.id]: [] }));
+    setConversations(prev => [newConversation, ...prev]);
+    setMessages(prev => ({ ...prev, [newConversation.id]: [] }));
     setSelectedConversationId(newConversation.id);
   };
 
@@ -437,6 +435,7 @@ export const MessagingExample: React.FC = () => {
         open={showNewDialog}
         onOpenChange={setShowNewDialog}
         onCreateConversation={handleCreateConversation}
+        currentUserId="current-user"
         users={MOCK_USERS}
       />
     </div>

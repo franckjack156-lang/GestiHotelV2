@@ -12,6 +12,7 @@
 
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
+import { Timestamp } from 'firebase/firestore';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 import type { Room } from '@/features/rooms/types/room.types';
 
@@ -48,21 +49,43 @@ export interface ImportOptions {
 // ============================================================================
 
 /**
- * Schema pour l'import d'interventions
+ * Schema pour l'import d'interventions - VERSION COMPLÈTE
  */
 const InterventionImportSchema = z.object({
-  titre: z.string().min(3, 'Le titre doit contenir au moins 3 caractères'),
-  description: z.string().optional().default(''),
+  // ============================================================================
+  // CHAMPS OBLIGATOIRES ⚠️
+  // ============================================================================
+  titre: z.string().min(3, 'Le titre doit contenir au moins 3 caractères').max(100, 'Le titre ne peut pas dépasser 100 caractères'),
   type: z.string().min(1, 'Le type est requis'),
-  categorie: z.string().optional().default(''),
   priorite: z.enum(['basse', 'normale', 'haute', 'urgente'], {
-    errorMap: () => ({ message: 'Priorité invalide (basse, normale, haute, urgente)' }),
+    message: 'La priorité doit être: basse, normale, haute ou urgente',
   }),
-  localisation: z.string().optional().default(''),
-  chambre: z.string().optional().default(''),
+
+  // ============================================================================
+  // CHAMPS OPTIONNELS - Informations de base
+  // ============================================================================
+  description: z.string().max(2000, 'La description ne peut pas dépasser 2000 caractères').optional().default(''),
+  categorie: z.string().optional().default(''),
+
+  // ============================================================================
+  // CHAMPS OPTIONNELS - Localisation
+  // ============================================================================
+  localisation: z.string().max(200, 'La localisation ne peut pas dépasser 200 caractères').optional().default(''),
+  chambre: z.string().max(20, 'Le numéro de chambre ne peut pas dépasser 20 caractères').optional().default(''),
   etage: z.string().optional().default(''),
-  urgent: z.enum(['oui', 'non', 'true', 'false', '1', '0', '']).optional().default('non'),
-  bloquant: z.enum(['oui', 'non', 'true', 'false', '1', '0', '']).optional().default('non'),
+  batiment: z.string().max(50, 'Le bâtiment ne peut pas dépasser 50 caractères').optional().default(''),
+
+  // ============================================================================
+  // CHAMPS OPTIONNELS - Flags
+  // ============================================================================
+  urgent: z.enum(['oui', 'non', 'true', 'false', '1', '0', 'yes', 'no', 'y', 'n', 'o', '']).optional().default('non'),
+  bloquant: z.enum(['oui', 'non', 'true', 'false', '1', '0', 'yes', 'no', 'y', 'n', 'o', '']).optional().default('non'),
+
+  // ============================================================================
+  // CHAMPS OPTIONNELS - Notes (pour futures versions)
+  // ============================================================================
+  notesinternes: z.string().max(1000, 'Les notes internes ne peuvent pas dépasser 1000 caractères').optional().default(''),
+  referenceexterne: z.string().max(50, 'La référence externe ne peut pas dépasser 50 caractères').optional().default(''),
 });
 
 /**
@@ -75,15 +98,15 @@ const RoomImportSchema = z.object({
   etage: z.string().optional().default('0'),
   type: z.string().optional().default('double'),
   capacite: z.preprocess(
-    (val) => (val === '' || val === null || val === undefined ? 2 : val),
+    val => (val === '' || val === null || val === undefined ? 2 : val),
     z.coerce.number().int().positive('La capacité doit être un nombre positif')
   ),
   prix: z.preprocess(
-    (val) => (val === '' || val === null || val === undefined ? undefined : val),
+    val => (val === '' || val === null || val === undefined ? undefined : val),
     z.coerce.number().positive('Le prix doit être un nombre positif').optional()
   ),
   surface: z.preprocess(
-    (val) => (val === '' || val === null || val === undefined ? undefined : val),
+    val => (val === '' || val === null || val === undefined ? undefined : val),
     z.coerce.number().positive('La surface doit être un nombre positif').optional()
   ),
   description: z.string().optional().default(''),
@@ -104,7 +127,7 @@ export const parseExcelFile = (file: File): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = e => {
       try {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: 'binary' });
@@ -156,7 +179,7 @@ const normalizeObject = (obj: any, keyMapping: Record<string, string>): any => {
     return normalized;
   }
 
-  Object.keys(obj).forEach((key) => {
+  Object.keys(obj).forEach(key => {
     const normalizedKey = normalizeKey(key);
     const mappedKey = keyMapping[normalizedKey];
 
@@ -169,33 +192,71 @@ const normalizeObject = (obj: any, keyMapping: Record<string, string>): any => {
 };
 
 /**
- * Mapping des colonnes pour interventions
+ * Mapping des colonnes pour interventions - VERSION COMPLÈTE
  */
 const INTERVENTION_KEY_MAPPING: Record<string, string> = {
+  // Titre
   titre: 'titre',
   title: 'titre',
   nom: 'titre',
   name: 'titre',
+
+  // Description
   description: 'description',
   desc: 'description',
+
+  // Type
   type: 'type',
+
+  // Catégorie
   categorie: 'categorie',
   category: 'categorie',
+
+  // Priorité
   priorite: 'priorite',
   priority: 'priorite',
+
+  // Localisation
   localisation: 'localisation',
   location: 'localisation',
   emplacement: 'localisation',
+  lieu: 'localisation',
+
+  // Chambre
   chambre: 'chambre',
   room: 'chambre',
   numerochambre: 'chambre',
+  roomnumber: 'chambre',
+
+  // Étage
   etage: 'etage',
   floor: 'etage',
   niveau: 'etage',
+
+  // Bâtiment
+  batiment: 'batiment',
+  building: 'batiment',
+
+  // Urgent
   urgent: 'urgent',
   urgence: 'urgent',
+  isurgent: 'urgent',
+
+  // Bloquant
   bloquant: 'bloquant',
   blocking: 'bloquant',
+  isblocking: 'bloquant',
+
+  // Notes internes
+  notesinternes: 'notesinternes',
+  internalnotes: 'notesinternes',
+  notes: 'notesinternes',
+
+  // Référence externe
+  referenceexterne: 'referenceexterne',
+  externalreference: 'referenceexterne',
+  reference: 'referenceexterne',
+  ref: 'referenceexterne',
 };
 
 /**
@@ -251,8 +312,10 @@ export const importInterventions = async (
 
     // Filtrer lignes vides et invalides
     let data = skipEmptyRows
-      ? rawData.filter((row) => row && typeof row === 'object' && Object.values(row).some((val) => val !== ''))
-      : rawData.filter((row) => row && typeof row === 'object');
+      ? rawData.filter(
+          row => row && typeof row === 'object' && Object.values(row).some(val => val !== '')
+        )
+      : rawData.filter(row => row && typeof row === 'object');
 
     // Limiter le nombre de lignes
     if (startRow > 0) {
@@ -278,8 +341,8 @@ export const importInterventions = async (
 
         validData.push(validated);
       } catch (error) {
-        if (error instanceof z.ZodError && Array.isArray(error.errors)) {
-          error.errors.forEach((err) => {
+        if (error instanceof z.ZodError && Array.isArray(error.issues)) {
+          error.issues.forEach((err: any) => {
             errors.push({
               row: rowNumber,
               field: err.path.join('.'),
@@ -341,8 +404,10 @@ export const importRooms = async (
 
     // Filtrer lignes vides et invalides
     let data = skipEmptyRows
-      ? rawData.filter((row) => row && typeof row === 'object' && Object.values(row).some((val) => val !== ''))
-      : rawData.filter((row) => row && typeof row === 'object');
+      ? rawData.filter(
+          row => row && typeof row === 'object' && Object.values(row).some(val => val !== '')
+        )
+      : rawData.filter(row => row && typeof row === 'object');
 
     // Limiter le nombre de lignes
     if (startRow > 0) {
@@ -368,8 +433,8 @@ export const importRooms = async (
 
         validData.push(validated);
       } catch (error) {
-        if (error instanceof z.ZodError && Array.isArray(error.errors)) {
-          error.errors.forEach((err) => {
+        if (error instanceof z.ZodError && Array.isArray(error.issues)) {
+          error.issues.forEach((err: any) => {
             errors.push({
               row: rowNumber,
               field: err.path.join('.'),
@@ -417,30 +482,61 @@ export const importRooms = async (
 };
 
 /**
- * Convertit les données d'import en objets Intervention pour Firestore
+ * Convertit les données d'import en objets Intervention pour Firestore - VERSION COMPLÈTE
  */
 export const convertToInterventions = (
   data: InterventionImportRow[],
   establishmentId: string,
   createdBy: string
 ): Partial<Intervention>[] => {
-  return data.map((row) => ({
-    title: row.titre,
-    description: row.description || '',
-    type: row.type,
-    category: row.categorie || '',
-    priority: row.priorite,
-    location: row.localisation || '',
-    roomNumber: row.chambre || '',
-    floor: row.etage || '',
-    isUrgent: ['oui', 'true', '1'].includes(row.urgent?.toLowerCase() || ''),
-    isBlocking: ['oui', 'true', '1'].includes(row.bloquant?.toLowerCase() || ''),
-    status: 'pending' as const,
-    establishmentId,
-    createdBy,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
+  return data.map(row => {
+    // Parse l'étage en nombre si possible
+    let floorNumber: number | undefined = undefined;
+    if (row.etage && row.etage.trim()) {
+      const parsed = parseInt(row.etage);
+      if (!isNaN(parsed)) {
+        floorNumber = parsed;
+      }
+    }
+
+    // Construire l'objet intervention
+    const intervention: Partial<Intervention> = {
+      // Champs obligatoires
+      title: row.titre,
+      type: row.type as any,
+      priority: row.priorite as any,
+      status: 'pending' as any,
+      establishmentId,
+      createdBy,
+
+      // Champs de base
+      description: row.description || '',
+      category: row.categorie as any || undefined,
+
+      // Localisation
+      location: row.localisation || '',
+      roomNumber: row.chambre || undefined,
+      floor: floorNumber,
+      building: row.batiment || undefined,
+
+      // Flags
+      isUrgent: ['oui', 'true', '1', 'yes', 'y', 'o'].includes(row.urgent?.toLowerCase() || ''),
+      isBlocking: ['oui', 'true', '1', 'yes', 'y', 'o'].includes(row.bloquant?.toLowerCase() || ''),
+
+      // Notes (si présentes)
+      internalNotes: row.notesinternes || undefined,
+      externalReference: row.referenceexterne || undefined,
+
+      // Métadonnées
+      photos: [],
+      photosCount: 0,
+      viewsCount: 0,
+      requiresValidation: false,
+      isDeleted: false,
+    };
+
+    return intervention as any;
+  });
 };
 
 /**
@@ -451,20 +547,19 @@ export const convertToRooms = (
   establishmentId: string,
   createdBy: string
 ): Partial<Room>[] => {
-  return data.map((row) => {
+  return data.map(row => {
     // Parse les équipements si présents
     let amenities: string[] | undefined = undefined;
     if (row.equipements && row.equipements.trim()) {
       amenities = row.equipements
         .split(',')
-        .map((a) => a.trim())
-        .filter((a) => a.length > 0);
+        .map(a => a.trim())
+        .filter(a => a.length > 0);
     }
 
     // Construire l'objet sans les valeurs undefined
     const room: Partial<Room> = {
       number: row.numero,
-      name: row.nom || `Chambre ${row.numero}`,
       floor: parseInt(row.etage) || 0,
       type: row.type as any,
       capacity: row.capacite,
@@ -473,8 +568,8 @@ export const convertToRooms = (
       isBlocked: false,
       establishmentId,
       createdBy,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
     };
 
     // Ajouter les champs optionnels seulement s'ils ont une valeur
@@ -503,19 +598,22 @@ export const generateErrorReport = (errors: ImportError[]): string => {
     return 'Aucune erreur';
   }
 
-  const lines = ['RAPPORT D\'ERREURS D\'IMPORT', '='.repeat(50), ''];
+  const lines = ["RAPPORT D'ERREURS D'IMPORT", '='.repeat(50), ''];
 
-  const errorsByRow = errors.reduce((acc, error) => {
-    if (!acc[error.row]) {
-      acc[error.row] = [];
-    }
-    acc[error.row].push(error);
-    return acc;
-  }, {} as Record<number, ImportError[]>);
+  const errorsByRow = errors.reduce(
+    (acc, error) => {
+      if (!acc[error.row]) {
+        acc[error.row] = [];
+      }
+      acc[error.row].push(error);
+      return acc;
+    },
+    {} as Record<number, ImportError[]>
+  );
 
   Object.entries(errorsByRow).forEach(([row, rowErrors]) => {
     lines.push(`Ligne ${row}:`);
-    rowErrors.forEach((error) => {
+    rowErrors.forEach(error => {
       if (error.field) {
         lines.push(`  - Champ "${error.field}": ${error.message}`);
         if (error.value !== undefined) {

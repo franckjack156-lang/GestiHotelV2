@@ -24,26 +24,28 @@ export interface Room {
   establishmentId: string;
 
   // Identifiants
-  number: string; // Numéro de chambre
-  floor: number; // Étage
-  building?: string; // Bâtiment (optionnel)
+  number: string; // Numï¿½ro de chambre
+  floor: number; // ï¿½tage
+  building?: string; // Bï¿½timent (optionnel)
 
-  // Caractéristiques
+  // Caractï¿½ristiques
   type: RoomType;
   capacity: number; // Nombre de personnes
   description?: string;
+  price?: number; // Prix par nuit
+  area?: number; // Superficie en mÂ²
 
-  // État
+  // ï¿½tat
   status: RoomStatus;
   isBlocked: boolean;
   blockReason?: string;
   blockedAt?: Timestamp;
   blockedBy?: string;
 
-  // Équipements
-  amenities?: string[]; // Liste des équipements
+  // ï¿½quipements
+  amenities?: string[]; // Liste des ï¿½quipements
 
-  // Métadonnées
+  // Mï¿½tadonnï¿½es
   createdAt: Timestamp;
   updatedAt: Timestamp;
   createdBy: string;

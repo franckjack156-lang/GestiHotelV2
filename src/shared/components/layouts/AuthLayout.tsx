@@ -1,6 +1,6 @@
 /**
  * AuthLayout Component
- * 
+ *
  * Layout pour les pages d'authentification (Login, Register, etc.)
  */
 
@@ -27,8 +27,8 @@ export const AuthLayout = () => {
               en toute simplicité
             </h1>
             <p className="mt-6 text-lg text-indigo-100">
-              La solution complète pour la gestion des interventions techniques dans le
-              secteur hôtelier.
+              La solution complète pour la gestion des interventions techniques dans le secteur
+              hôtelier.
             </p>
 
             {/* Features */}
@@ -56,9 +56,7 @@ export const AuthLayout = () => {
         </div>
 
         {/* Footer */}
-        <div className="text-sm text-indigo-200">
-          © 2025 GestiHôtel. Tous droits réservés.
-        </div>
+        <div className="text-sm text-indigo-200">© 2025 GestiHôtel. Tous droits réservés.</div>
       </div>
 
       {/* Colonne droite - Formulaire */}
@@ -67,9 +65,7 @@ export const AuthLayout = () => {
           {/* Logo mobile */}
           <div className="mb-8 flex items-center justify-center gap-3 lg:hidden">
             <Building2 className="h-8 w-8 text-indigo-600" />
-            <span className="text-2xl font-bold text-gray-900 dark:text-white">
-              GestiHôtel
-            </span>
+            <span className="text-2xl font-bold text-gray-900 dark:text-white">GestiHôtel</span>
           </div>
 
           {/* Contenu de la page */}

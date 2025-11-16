@@ -1,21 +1,16 @@
 /**
  * Onglet Détails - Informations de base de l'intervention
+ * VERSION TECHNICIEN - Avec édition rapide des notes
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
-import {
-  MapPin,
-  User,
-  Calendar,
-  Clock,
-  Building2,
-  AlertTriangle,
-  FileText,
-  Tag as TagIcon,
-} from 'lucide-react';
+import { MapPin, User, Calendar, FileText, Tag as TagIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useInterventionActions } from '../../hooks/useInterventionActions';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { QuickNotesEditor, TechnicianActions } from '../quick-edit';
 import type { Intervention } from '../../types/intervention.types';
 
 interface DetailsTabProps {
@@ -23,10 +18,33 @@ interface DetailsTabProps {
 }
 
 export const DetailsTab = ({ intervention }: DetailsTabProps) => {
+  const { user } = useAuth();
+  const { updateIntervention, changeStatus, isUpdating } = useInterventionActions();
+
+  // Permissions
+  const canEdit = user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
+  const isTechnician = user?.id === intervention.assignedTo || user?.role === 'technician';
+  const canStartWork = intervention.status === 'pending' || intervention.status === 'assigned';
+  const canPause = intervention.status === 'in_progress';
+  const canComplete = intervention.status === 'in_progress';
+
+  // Handlers pour les notes
+  const handleSaveInternalNotes = async (value: string): Promise<boolean> => {
+    return await updateIntervention(intervention.id, { internalNotes: value });
+  };
+
+  const handleSaveResolutionNotes = async (value: string): Promise<boolean> => {
+    return await updateIntervention(intervention.id, { resolutionNotes: value });
+  };
+
+  const handleStatusChange = async (newStatus: string): Promise<boolean> => {
+    return await changeStatus(intervention.id, { newStatus: newStatus as any });
+  };
+
   return (
-    <div className="grid lg:grid-cols-2 gap-6">
-      {/* Colonne gauche */}
-      <div className="space-y-6">
+    <div className="grid lg:grid-cols-3 gap-6">
+      {/* Colonne gauche - 2/3 */}
+      <div className="lg:col-span-2 space-y-6">
         {/* Description */}
         <Card>
           <CardHeader>
@@ -76,43 +94,41 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
           </CardContent>
         </Card>
 
-        {/* Notes internes */}
-        {intervention.internalNotes && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-amber-500" />
-                Notes internes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {intervention.internalNotes}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Notes internes - Édition rapide */}
+        <QuickNotesEditor
+          interventionId={intervention.id}
+          noteType="internal"
+          currentValue={intervention.internalNotes}
+          status={intervention.status}
+          onSave={handleSaveInternalNotes}
+          canEdit={canEdit || isTechnician}
+        />
 
-        {/* Notes de résolution */}
-        {intervention.resolutionNotes && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5 text-green-500" />
-                Notes de résolution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {intervention.resolutionNotes}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        {/* Notes de résolution - Édition rapide */}
+        <QuickNotesEditor
+          interventionId={intervention.id}
+          noteType="resolution"
+          currentValue={intervention.resolutionNotes}
+          status={intervention.status}
+          onSave={handleSaveResolutionNotes}
+          canEdit={canEdit || isTechnician}
+        />
       </div>
 
-      {/* Colonne droite */}
+      {/* Colonne droite - 1/3 */}
       <div className="space-y-6">
+        {/* Actions Technicien */}
+        {isTechnician && (
+          <TechnicianActions
+            intervention={intervention}
+            onStatusChange={handleStatusChange}
+            canStartWork={canStartWork}
+            canPause={canPause}
+            canComplete={canComplete}
+            isUpdating={isUpdating}
+          />
+        )}
+
         {/* Assignation */}
         <Card>
           <CardHeader>
@@ -132,7 +148,10 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
                 <p className="font-medium">{intervention.assignedToName}</p>
                 {intervention.assignedAt && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Le {format(intervention.assignedAt.toDate(), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                    Le{' '}
+                    {format(intervention.assignedAt.toDate(), 'dd MMM yyyy à HH:mm', {
+                      locale: fr,
+                    })}
                   </p>
                 )}
               </div>
@@ -208,7 +227,7 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
               <div className="flex flex-wrap gap-2">
                 {intervention.tags.map((tag, index) => (
                   <Badge key={index} variant="outline">
-                    {tag.label || tag.value}
+                    {tag.label}
                   </Badge>
                 ))}
               </div>
@@ -242,7 +261,9 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
         {/* Métadonnées */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-gray-600 dark:text-gray-400">Informations système</CardTitle>
+            <CardTitle className="text-sm text-gray-600 dark:text-gray-400">
+              Informations système
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <div className="flex justify-between">

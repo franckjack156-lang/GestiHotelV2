@@ -1,6 +1,6 @@
 /**
  * usePermissions Hook
- * 
+ *
  * Hook personnalisé pour vérifier les permissions utilisateur
  */
 
@@ -39,7 +39,7 @@ export const usePermissions = () => {
     if (!user) return false;
     if (user.role === UserRole.SUPER_ADMIN) return true;
 
-    return permissions.every((permission) => userPermissions.includes(permission));
+    return permissions.every(permission => userPermissions.includes(permission));
   };
 
   /**
@@ -49,7 +49,7 @@ export const usePermissions = () => {
     if (!user) return false;
     if (user.role === UserRole.SUPER_ADMIN) return true;
 
-    return permissions.some((permission) => userPermissions.includes(permission));
+    return permissions.some(permission => userPermissions.includes(permission));
   };
 
   /**

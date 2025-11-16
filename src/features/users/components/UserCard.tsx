@@ -4,15 +4,11 @@
  * ============================================================================
  */
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import {
   DropdownMenu,
@@ -25,7 +21,7 @@ import { cn } from '@/shared/utils/cn';
 import { UserAvatar } from './UserAvatar';
 import { RoleBadge } from './RoleBadge';
 import { StatusBadge } from './StatusBadge';
-import type { User } from '../types/user.types';
+import type { User, UserProfile } from '../types/user.types';
 import {
   MoreVertical,
   Edit,
@@ -55,7 +51,7 @@ interface UserCardProps {
   className?: string;
 }
 
-export const UserCard: React.FC<UserCardProps> = ({
+const UserCardComponent: React.FC<UserCardProps> = ({
   user,
   showActions = true,
   view = 'default',
@@ -66,6 +62,18 @@ export const UserCard: React.FC<UserCardProps> = ({
 }) => {
   const isCompact = view === 'compact';
   const isDetailed = view === 'detailed';
+
+  const handleEdit = useCallback(() => {
+    onEdit?.(user);
+  }, [onEdit, user]);
+
+  const handleDelete = useCallback(() => {
+    onDelete?.(user);
+  }, [onDelete, user]);
+
+  const handleToggleActive = useCallback(() => {
+    onToggleActive?.(user);
+  }, [onToggleActive, user]);
 
   return (
     <Card className={cn('hover:shadow-md transition-shadow', className)}>
@@ -114,12 +122,12 @@ export const UserCard: React.FC<UserCardProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit?.(user)}>
+                <DropdownMenuItem onClick={handleEdit}>
                   <Edit className="mr-2 h-4 w-4" />
                   Modifier
                 </DropdownMenuItem>
 
-                <DropdownMenuItem onClick={() => onToggleActive?.(user)}>
+                <DropdownMenuItem onClick={handleToggleActive}>
                   {user.isActive ? (
                     <>
                       <PowerOff className="mr-2 h-4 w-4" />
@@ -135,10 +143,7 @@ export const UserCard: React.FC<UserCardProps> = ({
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                  onClick={() => onDelete?.(user)}
-                  className="text-red-600 dark:text-red-400"
-                >
+                <DropdownMenuItem onClick={handleDelete} className="text-red-600 dark:text-red-400">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Supprimer
                 </DropdownMenuItem>
@@ -158,10 +163,10 @@ export const UserCard: React.FC<UserCardProps> = ({
         {/* Infos supplémentaires */}
         {!isCompact && (
           <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-            {user.jobTitle && (
+            {(user as UserProfile).jobTitle && (
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 flex-shrink-0" />
-                <span>{user.jobTitle}</span>
+                <span>{(user as UserProfile).jobTitle}</span>
               </div>
             )}
 
@@ -171,9 +176,7 @@ export const UserCard: React.FC<UserCardProps> = ({
                 <span>
                   Dernière connexion:{' '}
                   {format(
-                    user.lastLoginAt instanceof Date
-                      ? user.lastLoginAt
-                      : user.lastLoginAt.toDate(),
+                    user.lastLoginAt instanceof Date ? user.lastLoginAt : user.lastLoginAt.toDate(),
                     'dd MMM yyyy',
                     { locale: fr }
                   )}
@@ -181,26 +184,32 @@ export const UserCard: React.FC<UserCardProps> = ({
               </div>
             )}
 
-            {isDetailed && user.skills && user.skills.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {user.skills.slice(0, 3).map((skill) => (
-                  <span
-                    key={skill}
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {user.skills.length > 3 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-                    +{user.skills.length - 3}
-                  </span>
-                )}
-              </div>
-            )}
+            {isDetailed &&
+              (user as UserProfile).skills &&
+              (user as UserProfile).skills!.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {(user as UserProfile).skills!.slice(0, 3).map(skill => (
+                    <span
+                      key={skill}
+                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {(user as UserProfile).skills!.length > 3 && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                      +{(user as UserProfile).skills!.length - 3}
+                    </span>
+                  )}
+                </div>
+              )}
           </div>
         )}
       </CardContent>
     </Card>
   );
 };
+
+UserCardComponent.displayName = 'UserCard';
+
+export const UserCard = memo(UserCardComponent);

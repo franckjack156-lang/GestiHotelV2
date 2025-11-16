@@ -9,6 +9,8 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Badge } from '@/shared/components/ui/badge';
+import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   Select,
   SelectContent,
@@ -30,18 +32,24 @@ import {
   Edit,
   Trash2,
   Mail,
-  Euro,
   ShoppingCart,
   CheckCircle2,
   Clock,
-  X,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
-import type { PartStatus } from '../../types/intervention.types';
+import { useParts } from '../../hooks/useParts';
+import type { PartStatus } from '../../types/subcollections.types';
+import { sendPartOrderEmail } from '@/shared/services/emailService';
+import { logOrderEmailSent } from '../../services/historyService';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface PartsTabProps {
   interventionId: string;
+  interventionNumber?: string;
+  roomNumber?: string;
 }
 
 const STATUS_CONFIG: Record<PartStatus, { label: string; color: string; icon: any }> = {
@@ -51,12 +59,26 @@ const STATUS_CONFIG: Record<PartStatus, { label: string; color: string; icon: an
   installed: { label: 'Installée', color: 'bg-gray-500', icon: CheckCircle2 },
 };
 
-export const PartsTab = ({ interventionId }: PartsTabProps) => {
-  // TODO: Récupérer les pièces depuis Firestore
-  const [parts, setParts] = useState<any[]>([]);
+export const PartsTab = ({ interventionId, interventionNumber, roomNumber }: PartsTabProps) => {
+  // Utiliser le hook pour les pièces
+  const {
+    parts,
+    getPartsByStatus,
+    getTotalCost,
+    add,
+    update,
+    remove,
+    changeStatus: changePartStatus,
+  } = useParts(interventionId);
+
+  const { currentEstablishment } = useEstablishmentStore();
+  const { user } = useAuth();
+  const orderEmail = currentEstablishment?.settings?.orderEmail || 'achats@hotel.com';
+
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [editingPart, setEditingPart] = useState<any>(null);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -80,41 +102,82 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
     setEditingPart(null);
   };
 
-  const handleAdd = () => {
-    if (!formData.name) {
+  const handleAdd = async () => {
+    console.log('handleAdd called with formData:', formData);
+
+    if (!formData.name || formData.name.trim() === '') {
       toast.error('Veuillez saisir le nom de la pièce');
       return;
     }
 
-    // TODO: Appel API
-    toast.success('Pièce ajoutée');
-    setShowAddDialog(false);
-    resetForm();
+    const success = editingPart ? await update(editingPart.id, formData) : await add(formData);
+
+    if (success) {
+      setShowAddDialog(false);
+      resetForm();
+    }
   };
 
-  const handleDelete = (partId: string) => {
+  const handleDelete = async (partId: string) => {
     if (!confirm('Supprimer cette pièce ?')) return;
-    setParts(parts.filter((p) => p.id !== partId));
-    toast.success('Pièce supprimée');
+    await remove(partId);
   };
 
-  const handleStatusChange = (partId: string, newStatus: PartStatus) => {
-    setParts(parts.map((p) => (p.id === partId ? { ...p, status: newStatus } : p)));
-    toast.success('Statut mis à jour');
+  const handleStatusChange = async (partId: string, newStatus: PartStatus) => {
+    await changePartStatus(partId, newStatus);
   };
 
-  const handleSendEmail = () => {
-    // TODO: Appel API pour envoyer l'email
-    toast.success('Email envoyé au responsable des achats');
-    setShowEmailDialog(false);
-  };
+  const handleSendEmail = async () => {
+    if (!currentEstablishment || !user) {
+      toast.error('Informations manquantes');
+      return;
+    }
 
-  const getTotalCost = () => {
-    return parts.reduce((sum, part) => sum + part.quantity * part.unitPrice, 0);
-  };
+    const partsToOrder = getPartsByStatus('to_order');
+    if (partsToOrder.length === 0) {
+      toast.error('Aucune pièce à commander');
+      return;
+    }
 
-  const getPartsByStatus = (status: PartStatus) => {
-    return parts.filter((p) => p.status === status);
+    setIsSendingEmail(true);
+    try {
+      await sendPartOrderEmail({
+        to: orderEmail,
+        establishmentName: currentEstablishment.name,
+        interventionNumber,
+        roomNumber,
+        parts: partsToOrder.map(part => ({
+          name: part.name,
+          reference: part.reference,
+          quantity: part.quantity,
+          unitPrice: part.unitPrice,
+          supplier: part.supplier,
+        })),
+        requestedBy: user.displayName || user.email || 'Utilisateur',
+        requestedAt: format(new Date(), 'dd MMMM yyyy à HH:mm', { locale: fr }),
+      });
+
+      // Logger l'envoi de l'email dans l'historique
+      await logOrderEmailSent(
+        currentEstablishment.id,
+        interventionId,
+        user.id,
+        user.displayName || user.email || 'Utilisateur',
+        user.role,
+        orderEmail,
+        partsToOrder.length
+      );
+
+      toast.success('Email envoyé avec succès au responsable des achats');
+      setShowEmailDialog(false);
+    } catch (error: any) {
+      console.error('Erreur envoi email:', error);
+      toast.error("Erreur lors de l'envoi de l'email", {
+        description: error.message,
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
   };
 
   return (
@@ -186,7 +249,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {parts.map((part) => (
+              {parts.map(part => (
                 <div
                   key={part.id}
                   className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -215,7 +278,9 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                         </div>
                         <div>
                           <p className="text-gray-600 dark:text-gray-400">Total</p>
-                          <p className="font-medium">{(part.quantity * part.unitPrice).toFixed(2)} €</p>
+                          <p className="font-medium">
+                            {(part.quantity * part.unitPrice).toFixed(2)} €
+                          </p>
                         </div>
                         <div>
                           <p className="text-gray-600 dark:text-gray-400">Fournisseur</p>
@@ -235,7 +300,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                     <div className="flex flex-col items-end gap-2">
                       <Select
                         value={part.status}
-                        onValueChange={(value) => handleStatusChange(part.id, value as PartStatus)}
+                        onValueChange={value => handleStatusChange(part.id, value as PartStatus)}
                       >
                         <SelectTrigger className="w-[160px]">
                           <SelectValue />
@@ -259,7 +324,14 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                           className="h-8 w-8"
                           onClick={() => {
                             setEditingPart(part);
-                            setFormData(part);
+                            setFormData({
+                              name: part.name,
+                              reference: part.reference || '',
+                              quantity: part.quantity,
+                              unitPrice: part.unitPrice,
+                              supplier: part.supplier || '',
+                              notes: part.notes || '',
+                            });
                             setShowAddDialog(true);
                           }}
                         >
@@ -284,7 +356,15 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
       </Card>
 
       {/* Dialog Ajouter/Modifier */}
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+      <Dialog
+        open={showAddDialog}
+        onOpenChange={open => {
+          setShowAddDialog(open);
+          if (!open) {
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{editingPart ? 'Modifier' : 'Ajouter'} une pièce</DialogTitle>
@@ -299,7 +379,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ex: Robinet thermostatique"
               />
             </div>
@@ -310,7 +390,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                 <Input
                   id="reference"
                   value={formData.reference}
-                  onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+                  onChange={e => setFormData({ ...formData, reference: e.target.value })}
                   placeholder="Ex: RT-2024-A"
                 />
               </div>
@@ -321,7 +401,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                   type="number"
                   min="1"
                   value={formData.quantity}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })
                   }
                 />
@@ -337,7 +417,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                   step="0.01"
                   min="0"
                   value={formData.unitPrice}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || 0 })
                   }
                 />
@@ -347,7 +427,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
                 <Input
                   id="supplier"
                   value={formData.supplier}
-                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  onChange={e => setFormData({ ...formData, supplier: e.target.value })}
                   placeholder="Ex: Leroy Merlin"
                 />
               </div>
@@ -358,7 +438,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
               <Textarea
                 id="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={e => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Informations complémentaires..."
                 rows={3}
               />
@@ -394,7 +474,7 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
               <h4 className="font-semibold mb-3">Pièces à commander :</h4>
               <div className="space-y-2">
-                {getPartsByStatus('to_order').map((part) => (
+                {getPartsByStatus('to_order').map(part => (
                   <div key={part.id} className="flex justify-between text-sm">
                     <span>
                       {part.name} x{part.quantity}
@@ -418,17 +498,36 @@ export const PartsTab = ({ interventionId }: PartsTabProps) => {
 
             <div>
               <Label>Destinataire</Label>
-              <Input value="achats@hotel.com" disabled />
+              <Input value={orderEmail} disabled />
+              {!currentEstablishment?.settings?.orderEmail && (
+                <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                  ⚠️ Email par défaut - Configurez l'email de commande dans les paramètres de
+                  l'établissement
+                </p>
+              )}
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowEmailDialog(false)}
+              disabled={isSendingEmail}
+            >
               Annuler
             </Button>
-            <Button onClick={handleSendEmail}>
-              <Mail className="mr-2 h-4 w-4" />
-              Envoyer
+            <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Envoyer
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

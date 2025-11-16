@@ -11,7 +11,8 @@ import * as LucideIcons from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Skeleton } from '@/shared/components/ui/skeleton';
-import { AlertCircle, Loader2 } from 'lucide-react';
+// TODO: Loader2 imported but unused
+import { AlertCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -64,13 +65,7 @@ export const ListSelect = ({
   allowEmpty = false,
   emptyLabel = 'Aucun',
 }: ListSelectProps) => {
-  const {
-    activeItems,
-    isLoading,
-    error,
-    listConfig,
-    getLabelByValue,
-  } = useReferenceList(listKey);
+  const { activeItems, isLoading, error, listConfig, getLabelByValue } = useReferenceList(listKey);
 
   // Préparer les options
   const options = useMemo(() => {
@@ -83,10 +78,7 @@ export const ListSelect = ({
 
     // Ajouter l'option vide si autorisé
     if (allowEmpty) {
-      return [
-        { value: '', label: emptyLabel, color: undefined, icon: undefined },
-        ...items,
-      ];
+      return [{ value: '', label: emptyLabel, color: undefined, icon: undefined }, ...items];
     }
 
     return items;
@@ -178,9 +170,7 @@ export const ListSelect = ({
         )}
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Erreur de chargement de la liste: {error}
-          </AlertDescription>
+          <AlertDescription>Erreur de chargement de la liste: {error}</AlertDescription>
         </Alert>
       </div>
     );
@@ -200,7 +190,7 @@ export const ListSelect = ({
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Aucune valeur disponible pour cette liste.
-            {listConfig?.allowCustom && " Vous pouvez en ajouter dans les paramètres."}
+            {listConfig?.allowCustom && ' Vous pouvez en ajouter dans les paramètres.'}
           </AlertDescription>
         </Alert>
       </div>
@@ -216,11 +206,7 @@ export const ListSelect = ({
         </label>
       )}
 
-      <Select
-        value={value}
-        onValueChange={onValueChange}
-        disabled={disabled || isLoading}
-      >
+      <Select value={value} onValueChange={onValueChange} disabled={disabled || isLoading}>
         <SelectTrigger className={className}>
           <SelectValue placeholder={placeholder || `Sélectionner ${listConfig?.name || ''}`}>
             {value && (
@@ -235,22 +221,14 @@ export const ListSelect = ({
         </SelectTrigger>
 
         <SelectContent>
-          {listConfig?.name && (
-            <SelectLabel>{listConfig.name}</SelectLabel>
-          )}
+          {listConfig?.name && <SelectLabel>{listConfig.name}</SelectLabel>}
           <SelectGroup>
             {options.map(option => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                className="cursor-pointer"
-              >
+              <SelectItem key={option.value} value={option.value} className="cursor-pointer">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
                     {showIcons && getIcon(option.icon)}
-                    <span className={getColorClass(option.color)}>
-                      {option.label}
-                    </span>
+                    <span className={getColorClass(option.color)}>{option.label}</span>
                   </div>
                   {renderColorBadge(option.color)}
                 </div>
@@ -262,9 +240,7 @@ export const ListSelect = ({
 
       {/* Helper text */}
       {listConfig?.description && !error && (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {listConfig.description}
-        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{listConfig.description}</p>
       )}
     </div>
   );
@@ -294,12 +270,7 @@ export const ListSelectField = ({
   onChange?: (value: string) => void;
 }) => {
   return (
-    <ListSelect
-      listKey={listKey}
-      value={value}
-      onValueChange={onChange || (() => {})}
-      {...props}
-    />
+    <ListSelect listKey={listKey} value={value} onValueChange={onChange || (() => {})} {...props} />
   );
 };
 

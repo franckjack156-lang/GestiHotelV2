@@ -6,8 +6,11 @@
 
 import { useMemo } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ROLE_PERMISSIONS, roleHasPermission } from '@/shared/constants/permissions';
-import { UserRole, Permission } from '@/features/users/types/role.types';
+import { ROLE_PERMISSIONS } from '@/shared/constants/permissions';
+// TODO: roleHasPermission and UserRole imported but unused
+// import { roleHasPermission } from '@/shared/constants/permissions';
+// import { UserRole } from '@/features/users/types/role.types';
+import { Permission } from '@/features/users/types/role.types';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 
 /**

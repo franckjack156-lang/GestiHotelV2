@@ -1,6 +1,6 @@
 /**
  * GuestRoute Component
- * 
+ *
  * Guard pour les routes accessibles uniquement aux utilisateurs non authentifiés
  */
 

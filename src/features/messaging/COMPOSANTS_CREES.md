@@ -9,22 +9,22 @@
 
 ### Composants UI (4 principaux)
 
-| Composant | Fichier | Lignes | Fonctionnalités |
-|-----------|---------|--------|-----------------|
-| **ConversationList** | `ConversationList.tsx` | 400 | Liste des conversations avec filtres, recherche, badges non lus, indicateurs présence et typing |
-| **ChatWindow** | `ChatWindow.tsx` | 647 | Fenêtre de chat complète avec messages, réactions, pièces jointes, réponses |
-| **MessageInput** | `MessageInput.tsx` | 460 | Input de message avec upload, emojis, mentions, réponses |
-| **NewConversationDialog** | `NewConversationDialog.tsx` | 420 | Dialog de création de conversation (direct/groupe) |
+| Composant                 | Fichier                     | Lignes | Fonctionnalités                                                                                 |
+| ------------------------- | --------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
+| **ConversationList**      | `ConversationList.tsx`      | 400    | Liste des conversations avec filtres, recherche, badges non lus, indicateurs présence et typing |
+| **ChatWindow**            | `ChatWindow.tsx`            | 647    | Fenêtre de chat complète avec messages, réactions, pièces jointes, réponses                     |
+| **MessageInput**          | `MessageInput.tsx`          | 460    | Input de message avec upload, emojis, mentions, réponses                                        |
+| **NewConversationDialog** | `NewConversationDialog.tsx` | 420    | Dialog de création de conversation (direct/groupe)                                              |
 
 ### Fichiers Additionnels
 
-| Fichier | Lignes | Description |
-|---------|--------|-------------|
-| `MessagingExample.tsx` | 446 | Exemple d'utilisation complet avec mock data |
-| `index.ts` | 20 | Barrel exports |
-| `README.md` | 200+ | Documentation complète d'utilisation |
-| `IMPLEMENTATION.md` | 400+ | Détails d'implémentation et statistiques |
-| `TESTING.md` | 500+ | Guide de tests et exemples |
+| Fichier                | Lignes | Description                                  |
+| ---------------------- | ------ | -------------------------------------------- |
+| `MessagingExample.tsx` | 446    | Exemple d'utilisation complet avec mock data |
+| `index.ts`             | 20     | Barrel exports                               |
+| `README.md`            | 200+   | Documentation complète d'utilisation         |
+| `IMPLEMENTATION.md`    | 400+   | Détails d'implémentation et statistiques     |
+| `TESTING.md`           | 500+   | Guide de tests et exemples                   |
 
 **Total lignes de code**: ~2,393 lignes (TypeScript/TSX)
 
@@ -44,6 +44,7 @@
 ## 🎯 Fonctionnalités Implémentées
 
 ### ConversationList
+
 - ✅ Filtres (Tous/Direct/Groupes/Interventions)
 - ✅ Recherche en temps réel
 - ✅ Badges de messages non lus
@@ -56,6 +57,7 @@
 - ✅ État vide avec CTA
 
 ### ChatWindow
+
 - ✅ Header avec avatar, nom, statut
 - ✅ Menu actions (épingler, archiver, info)
 - ✅ Messages groupés par date
@@ -72,6 +74,7 @@
 - ✅ État vide
 
 ### MessageInput
+
 - ✅ Textarea auto-resize (max 200px)
 - ✅ Upload de fichiers (avec preview)
 - ✅ Validation taille (max 10MB)
@@ -85,6 +88,7 @@
 - ✅ Gestion des erreurs avec toast
 
 ### NewConversationDialog
+
 - ✅ Tabs (Direct/Groupe)
 - ✅ Multi-select utilisateurs
 - ✅ Recherche utilisateurs
@@ -101,17 +105,19 @@
 ## 🚀 Utilisation
 
 ### Import
+
 ```typescript
 import {
   ConversationList,
   ChatWindow,
   MessageInput,
   NewConversationDialog,
-  MessagingExample
+  MessagingExample,
 } from '@/features/messaging/components';
 ```
 
 ### Layout type
+
 ```tsx
 <div className="flex h-screen">
   {/* Sidebar */}
@@ -178,14 +184,14 @@ import {
 
 ## 📊 Résumé
 
-| Métrique | Valeur |
-|----------|--------|
-| Composants créés | 4 principaux + 1 exemple |
-| Lignes de code | 2,393 |
-| Fichiers de doc | 3 (README, IMPLEMENTATION, TESTING) |
-| Erreurs TS | 0 |
-| Couverture fonctionnelle | 100% |
-| Statut | ✅ Production-ready |
+| Métrique                 | Valeur                              |
+| ------------------------ | ----------------------------------- |
+| Composants créés         | 4 principaux + 1 exemple            |
+| Lignes de code           | 2,393                               |
+| Fichiers de doc          | 3 (README, IMPLEMENTATION, TESTING) |
+| Erreurs TS               | 0                                   |
+| Couverture fonctionnelle | 100%                                |
+| Statut                   | ✅ Production-ready                 |
 
 ---
 

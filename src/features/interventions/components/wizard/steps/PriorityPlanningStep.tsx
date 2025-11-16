@@ -17,7 +17,7 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Calendar } from '@/shared/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Button } from '@/shared/components/ui/button';
-import { Calendar as CalendarIcon, Clock, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { InterventionPriority, PRIORITY_LABELS } from '@/shared/types/status.types';

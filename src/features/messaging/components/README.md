@@ -11,6 +11,7 @@ Liste des conversations avec filtres, recherche et gestion des états.
 **Fichier**: `ConversationList.tsx`
 
 **Props**:
+
 ```typescript
 interface ConversationListProps {
   conversations: Conversation[];
@@ -23,6 +24,7 @@ interface ConversationListProps {
 ```
 
 **Fonctionnalités**:
+
 - ✅ Liste scrollable des conversations
 - ✅ Filtres par type (Tous / Direct / Groupes / Interventions)
 - ✅ Barre de recherche en temps réel
@@ -35,6 +37,7 @@ interface ConversationListProps {
 - ✅ État vide avec CTA
 
 **Exemple d'utilisation**:
+
 ```tsx
 import { ConversationList } from '@/features/messaging/components';
 
@@ -45,7 +48,7 @@ import { ConversationList } from '@/features/messaging/components';
   onNewConversation={() => setShowNewDialog(true)}
   currentUserId={currentUser.id}
   typingIndicators={typingIndicators}
-/>
+/>;
 ```
 
 ---
@@ -57,6 +60,7 @@ Fenêtre de chat principale avec messages, header et input.
 **Fichier**: `ChatWindow.tsx`
 
 **Props**:
+
 ```typescript
 interface ChatWindowProps {
   conversation: Conversation;
@@ -75,6 +79,7 @@ interface ChatWindowProps {
 ```
 
 **Fonctionnalités**:
+
 - ✅ Header avec avatar, nom, statut en ligne
 - ✅ Menu actions (épingler, archiver, info)
 - ✅ Messages groupés par date avec séparateurs
@@ -91,6 +96,7 @@ interface ChatWindowProps {
 - ✅ État vide
 
 **Exemple d'utilisation**:
+
 ```tsx
 import { ChatWindow } from '@/features/messaging/components';
 
@@ -107,7 +113,7 @@ import { ChatWindow } from '@/features/messaging/components';
   onPinConversation={handlePin}
   onArchiveConversation={handleArchive}
   onShowInfo={() => setShowInfo(true)}
-/>
+/>;
 ```
 
 ---
@@ -119,6 +125,7 @@ Composant d'envoi de messages avec support multimédia.
 **Fichier**: `MessageInput.tsx`
 
 **Props**:
+
 ```typescript
 interface MessageInputProps {
   onSend: (data: SendMessageData) => Promise<void>;
@@ -137,6 +144,7 @@ interface MessageInputProps {
 ```
 
 **Fonctionnalités**:
+
 - ✅ Textarea auto-resize (max 200px)
 - ✅ Upload de fichiers (drag & drop, click)
 - ✅ Preview des fichiers avant envoi
@@ -151,6 +159,7 @@ interface MessageInputProps {
 - ✅ Gestion des erreurs avec toast
 
 **Exemple d'utilisation**:
+
 ```tsx
 import { MessageInput } from '@/features/messaging/components';
 
@@ -162,7 +171,7 @@ import { MessageInput } from '@/features/messaging/components';
   currentUserId={currentUser.id}
   onTypingStart={handleTypingStart}
   onTypingStop={handleTypingStop}
-/>
+/>;
 ```
 
 ---
@@ -174,6 +183,7 @@ Dialog de création de nouvelle conversation.
 **Fichier**: `NewConversationDialog.tsx`
 
 **Props**:
+
 ```typescript
 interface NewConversationDialogProps {
   open: boolean;
@@ -190,6 +200,7 @@ interface NewConversationDialogProps {
 ```
 
 **Fonctionnalités**:
+
 - ✅ Sélection type (Direct / Groupe)
 - ✅ Multi-select utilisateurs avec checkboxes
 - ✅ Recherche utilisateurs (nom, email, rôle)
@@ -202,6 +213,7 @@ interface NewConversationDialogProps {
 - ✅ Reset automatique après création
 
 **Exemple d'utilisation**:
+
 ```tsx
 import { NewConversationDialog } from '@/features/messaging/components';
 
@@ -210,7 +222,7 @@ import { NewConversationDialog } from '@/features/messaging/components';
   onOpenChange={setShowDialog}
   onCreateConversation={handleCreateConversation}
   users={availableUsers}
-/>
+/>;
 ```
 
 ---
@@ -218,6 +230,7 @@ import { NewConversationDialog } from '@/features/messaging/components';
 ## 🎨 Design System
 
 ### Couleurs
+
 - **Primary**: Messages envoyés, boutons principaux
 - **Muted**: Messages reçus, backgrounds secondaires
 - **Green**: Statut en ligne
@@ -225,6 +238,7 @@ import { NewConversationDialog } from '@/features/messaging/components';
 - **Destructive**: Suppression, erreurs
 
 ### Icônes (lucide-react)
+
 - `User`: Conversation directe
 - `Users`: Groupe
 - `Wrench`: Intervention
@@ -236,6 +250,7 @@ import { NewConversationDialog } from '@/features/messaging/components';
 - `Check/CheckCheck`: Indicateurs de lecture
 
 ### Animations
+
 - `transition-all`: Hover effects
 - `hover:bg-accent`: Backgrounds cliquables
 - `animate-spin`: Loading states
@@ -258,6 +273,7 @@ Tous les types sont définis dans `src/features/messaging/types/message.types.ts
 ## 🛠️ Dépendances
 
 ### UI Components (shadcn/ui)
+
 - `avatar`
 - `badge`
 - `button`
@@ -272,6 +288,7 @@ Tous les types sont définis dans `src/features/messaging/types/message.types.ts
 - `separator`
 
 ### Utilitaires
+
 - `date-fns`: Formatage des dates
 - `lucide-react`: Icônes
 - `sonner`: Toast notifications
@@ -288,7 +305,7 @@ import {
   ConversationList,
   ChatWindow,
   MessageInput,
-  NewConversationDialog
+  NewConversationDialog,
 } from '@/features/messaging/components';
 ```
 

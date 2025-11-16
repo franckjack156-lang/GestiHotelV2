@@ -1,11 +1,12 @@
 /**
  * useInterventionWizard Hook
- * 
+ *
  * Hook pour gérer le formulaire multi-étapes de création d'intervention
  */
 
 import { useState, useCallback } from 'react';
 import type { CreateInterventionData } from '../types/intervention.types';
+import { InterventionPriority } from '@/shared/types/status.types';
 
 export interface WizardStep {
   id: number;
@@ -24,7 +25,7 @@ export const WIZARD_STEPS: Omit<WizardStep, 'isValid' | 'isCompleted'>[] = [
   {
     id: 2,
     title: 'Localisation',
-    description: 'Où se situe l\'intervention',
+    description: "Où se situe l'intervention",
   },
   {
     id: 3,
@@ -49,39 +50,26 @@ export const WIZARD_STEPS: Omit<WizardStep, 'isValid' | 'isCompleted'>[] = [
 ];
 
 export interface WizardData extends Partial<CreateInterventionData> {
-  // Étape 1 - Informations de base
-  title?: string;
-  description?: string;
-  type?: string;
-  category?: string;
+  // Propriétés additionnelles spécifiques au wizard (non présentes dans CreateInterventionData)
   tags?: Array<{ id: string; label: string; color?: string }>;
-  
-  // Étape 2 - Localisation
   roomType?: 'chambre' | 'commun' | 'exterieur';
-  location?: string;
   locations?: string[]; // Multi-chambres
-  roomNumber?: string;
   floor?: number;
   building?: string;
-  
-  // Étape 3 - Priorité & Planning
-  priority?: string;
   isUrgent?: boolean;
   isBlocking?: boolean;
-  scheduledAt?: Date;
   estimatedDuration?: number;
-  
-  // Étape 4 - Assignation
-  assignedTo?: string;
-  internalNotes?: string;
-  
-  // Étape 5 - Photos
   photos?: File[];
+
+  // Note: Les autres propriétés (priority, assignedTo, scheduledAt, internalNotes, etc.)
+  // sont héritées de Partial<CreateInterventionData> avec leur type correct
 }
 
 export const useInterventionWizard = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [wizardData, setWizardData] = useState<WizardData>({});
+  const [wizardData, setWizardData] = useState<WizardData>({
+    priority: InterventionPriority.NORMAL, // Priorité par défaut
+  });
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
 
   /**
@@ -134,46 +122,46 @@ export const useInterventionWizard = () => {
   /**
    * Vérifier si une étape est valide
    */
-  const isStepValid = useCallback((step: number): boolean => {
-    switch (step) {
-      case 1:
-        // Informations de base
-        return !!(
-          wizardData.title &&
-          wizardData.title.length >= 3 &&
-          wizardData.description &&
-          wizardData.description.length >= 10 &&
-          wizardData.type &&
-          wizardData.category
-        );
-      
-      case 2:
-        // Localisation
-        return !!(
-          wizardData.roomType &&
-          wizardData.location
-        );
-      
-      case 3:
-        // Priorité & Planning
-        return !!wizardData.priority;
-      
-      case 4:
-        // Assignation (optionnel)
-        return true;
-      
-      case 5:
-        // Photos (optionnel)
-        return true;
-      
-      case 6:
-        // Récapitulatif
-        return isStepValid(1) && isStepValid(2) && isStepValid(3);
-      
-      default:
-        return false;
-    }
-  }, [wizardData]);
+  const isStepValid = useCallback(
+    (step: number): boolean => {
+      switch (step) {
+        case 1:
+          // Informations de base
+          return !!(
+            wizardData.title &&
+            wizardData.title.length >= 3 &&
+            wizardData.description &&
+            wizardData.description.length >= 10 &&
+            wizardData.type &&
+            wizardData.category
+          );
+
+        case 2:
+          // Localisation
+          return !!(wizardData.roomType && wizardData.location);
+
+        case 3:
+          // Priorité & Planning
+          return !!wizardData.priority;
+
+        case 4:
+          // Assignation (optionnel)
+          return true;
+
+        case 5:
+          // Photos (optionnel)
+          return true;
+
+        case 6:
+          // Récapitulatif
+          return isStepValid(1) && isStepValid(2) && isStepValid(3);
+
+        default:
+          return false;
+      }
+    },
+    [wizardData]
+  );
 
   /**
    * Obtenir les données complètes pour la création
@@ -212,24 +200,24 @@ export const useInterventionWizard = () => {
     currentStep,
     wizardData,
     completedSteps,
-    
+
     // Actions
     goToNextStep,
     goToPreviousStep,
     goToStep,
     updateWizardData,
     resetWizard,
-    
+
     // Validation
     isStepValid,
     canGoNext: isStepValid(currentStep),
     canGoPrevious: currentStep > 1,
     isLastStep: currentStep === WIZARD_STEPS.length,
-    
+
     // Données
     getInterventionData,
     getProgress,
-    
+
     // Configuration
     totalSteps: WIZARD_STEPS.length,
     steps: WIZARD_STEPS,

@@ -4,7 +4,7 @@
  * Hook pour gérer les préférences utilisateur avec sauvegarde automatique
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import userService from '../services/userService';
 import type { DisplayPreferences, NotificationPreferences } from '../types/user.types';
@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 
 export const useUserPreferences = () => {
   const { user, setUser } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false); // TODO: Utiliser pour afficher un loader
   const [isSaving, setIsSaving] = useState(false);
 
   // Préférences par défaut

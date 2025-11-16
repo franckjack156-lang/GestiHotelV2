@@ -33,7 +33,8 @@ import {
   Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ImportResult, ImportError } from '@/shared/services/importService';
+// TODO: ImportError imported but unused
+import type { ImportResult } from '@/shared/services/importService';
 import { downloadErrorReport } from '@/shared/services/importService';
 
 // ============================================================================
@@ -48,6 +49,7 @@ export interface ImportDialogProps<T> {
   acceptedFileTypes?: string;
   maxFileSize?: number; // en MB
   templateDownloadFn?: () => void;
+  templateWithExamplesFn?: () => void; // Nouvelle option pour template avec exemples
   onImport: (file: File) => Promise<ImportResult<T>>;
   onConfirm: (data: T[]) => Promise<void>;
   renderPreview?: (data: T[]) => React.ReactNode;
@@ -67,6 +69,7 @@ export function ImportDialog<T>({
   acceptedFileTypes = '.xlsx,.xls',
   maxFileSize = 10,
   templateDownloadFn,
+  templateWithExamplesFn,
   onImport,
   onConfirm,
   renderPreview,
@@ -134,7 +137,7 @@ export function ImportDialog<T>({
       }
     } catch (error) {
       toast.dismiss();
-      toast.error('Erreur lors de l\'analyse du fichier');
+      toast.error("Erreur lors de l'analyse du fichier");
       console.error(error);
       setStep('upload');
     }
@@ -157,7 +160,7 @@ export function ImportDialog<T>({
         handleClose();
       }, 2000);
     } catch (error) {
-      toast.error('Erreur lors de l\'import');
+      toast.error("Erreur lors de l'import");
       console.error(error);
       setStep('preview');
     }
@@ -198,15 +201,30 @@ export function ImportDialog<T>({
         {step === 'upload' && (
           <div className="space-y-4">
             {/* Template download */}
-            {templateDownloadFn && (
+            {(templateDownloadFn || templateWithExamplesFn) && (
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between">
-                  <span>Téléchargez le template Excel pour voir le format attendu</span>
-                  <Button variant="outline" size="sm" onClick={templateDownloadFn}>
-                    <Download className="mr-2 h-4 w-4" />
-                    Télécharger le template
-                  </Button>
+                <AlertDescription>
+                  <div className="flex flex-col gap-3">
+                    <span className="font-medium">Téléchargez un template Excel pour voir le format attendu</span>
+                    <div className="flex gap-2">
+                      {templateDownloadFn && (
+                        <Button variant="outline" size="sm" onClick={templateDownloadFn} className="flex-1">
+                          <Download className="mr-2 h-4 w-4" />
+                          Template vierge
+                        </Button>
+                      )}
+                      {templateWithExamplesFn && (
+                        <Button variant="outline" size="sm" onClick={templateWithExamplesFn} className="flex-1">
+                          <Download className="mr-2 h-4 w-4" />
+                          Template avec exemples
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      💡 Le template avec exemples contient 5 interventions exemple et une feuille d'instructions complète
+                    </p>
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
@@ -218,7 +236,7 @@ export function ImportDialog<T>({
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
                   : 'border-gray-300 dark:border-gray-700'
               }`}
-              onDragOver={(e) => {
+              onDragOver={e => {
                 e.preventDefault();
                 setIsDragging(true);
               }}
@@ -253,7 +271,7 @@ export function ImportDialog<T>({
                 <input
                   type="file"
                   accept={acceptedFileTypes}
-                  onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
+                  onChange={e => handleFileSelect(e.target.files?.[0] || null)}
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 />
               </div>
@@ -310,7 +328,10 @@ export function ImportDialog<T>({
                   </div>
                   <div className="mt-3 max-h-40 overflow-y-auto space-y-1">
                     {importResult.errors.slice(0, 5).map((error, idx) => (
-                      <div key={idx} className="text-xs font-mono bg-red-100 dark:bg-red-950/30 p-2 rounded">
+                      <div
+                        key={idx}
+                        className="text-xs font-mono bg-red-100 dark:bg-red-950/30 p-2 rounded"
+                      >
                         Ligne {error.row}: {error.field && `${error.field} - `}
                         {error.message}
                       </div>

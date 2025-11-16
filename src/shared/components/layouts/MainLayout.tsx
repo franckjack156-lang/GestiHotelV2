@@ -12,6 +12,7 @@ import { Footer } from './Footer';
 import { useApplyPreferences } from '@/features/users/hooks/useApplyPreferences';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 import { OfflineBanner } from '@/shared/components/indicators/NetworkIndicator';
+import { GlobalSearch } from '@/shared/components/search';
 
 export const MainLayout = () => {
   const { displayPreferences, updateDisplayPreferences } = useUserPreferences();
@@ -38,6 +39,9 @@ export const MainLayout = () => {
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       {/* Offline Banner - affiché en haut de tout */}
       <OfflineBanner />
+
+      {/* Global Search - Cmd+K */}
+      <GlobalSearch />
 
       {/* Sidebar */}
       <Sidebar

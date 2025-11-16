@@ -15,23 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Checkbox } from '@/shared/components/ui/checkbox';
-import {
-  UserRole,
-  ROLE_LABELS,
-} from '../types/role.types';
+import { UserRole, ROLE_LABELS } from '../types/role.types';
 import { UserStatus } from '../types/user.types';
 import type { UserFilters } from '../types/user.types';
-import {
-  Search,
-  Filter,
-  X,
-} from 'lucide-react';
+import { Search, Filter, X } from 'lucide-react';
 
 interface UsersFiltersProps {
   /** Filtres actifs */
@@ -56,7 +45,7 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
    * Compter les filtres actifs
    */
   const activeFiltersCount = Object.values(filters).filter(
-    (value) => value !== undefined && value !== '' && value !== false
+    value => value !== undefined && value !== '' && value !== false
   ).length;
 
   /**
@@ -84,7 +73,7 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
           <Input
             placeholder="Rechercher par nom ou email..."
             value={searchValue}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={e => handleSearch(e.target.value)}
             className="pl-9"
           />
           {searchValue && (
@@ -130,12 +119,8 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
               <div>
                 <Label>Rôle</Label>
                 <Select
-                  value={
-                    Array.isArray(filters.role)
-                      ? undefined
-                      : filters.role || 'all'
-                  }
-                  onValueChange={(value) =>
+                  value={Array.isArray(filters.role) ? undefined : filters.role || 'all'}
+                  onValueChange={value =>
                     onFiltersChange({
                       role: value === 'all' ? undefined : (value as UserRole),
                     })
@@ -146,7 +131,7 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les rôles</SelectItem>
-                    {Object.values(UserRole).map((role) => (
+                    {Object.values(UserRole).map(role => (
                       <SelectItem key={role} value={role}>
                         {ROLE_LABELS[role]}
                       </SelectItem>
@@ -159,12 +144,8 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
               <div>
                 <Label>Statut</Label>
                 <Select
-                  value={
-                    Array.isArray(filters.status)
-                      ? undefined
-                      : filters.status || 'all'
-                  }
-                  onValueChange={(value) =>
+                  value={Array.isArray(filters.status) ? undefined : filters.status || 'all'}
+                  onValueChange={value =>
                     onFiltersChange({
                       status: value === 'all' ? undefined : (value as UserStatus),
                     })
@@ -191,9 +172,7 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
                   id="department"
                   placeholder="Ex: Maintenance"
                   value={filters.department || ''}
-                  onChange={(e) =>
-                    onFiltersChange({ department: e.target.value || undefined })
-                  }
+                  onChange={e => onFiltersChange({ department: e.target.value || undefined })}
                 />
               </div>
 
@@ -202,9 +181,7 @@ export const UsersFilters: React.FC<UsersFiltersProps> = ({
                 <Checkbox
                   id="activeOnly"
                   checked={filters.activeOnly}
-                  onCheckedChange={(checked) =>
-                    onFiltersChange({ activeOnly: checked as boolean })
-                  }
+                  onCheckedChange={checked => onFiltersChange({ activeOnly: checked as boolean })}
                 />
                 <Label htmlFor="activeOnly" className="cursor-pointer">
                   Actifs uniquement

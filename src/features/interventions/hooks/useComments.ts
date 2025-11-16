@@ -13,7 +13,7 @@ import {
   subscribeToComments,
   updateComment,
   deleteComment,
-  getCommentsCount,
+  // getCommentsCount, // TODO: Imported but unused
 } from '../services/commentService';
 import type { Comment, CreateCommentData, SystemActionData } from '../types/comment.types';
 
@@ -65,7 +65,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
         await createComment(
           interventionId,
           establishmentId,
-          user.uid,
+          user.id,
           user.displayName || user.email || 'Utilisateur',
           user.role || 'user',
           data,
@@ -75,7 +75,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
         return true;
       } catch (error: any) {
         console.error('Error adding comment:', error);
-        toast.error('Erreur lors de l\'ajout du commentaire', {
+        toast.error("Erreur lors de l'ajout du commentaire", {
           description: error.message,
         });
         return false;
@@ -98,7 +98,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       try {
         await createSystemComment(interventionId, establishmentId, {
           ...actionData,
-          userId: user.uid,
+          userId: user.id,
           userName: user.displayName || user.email || 'Système',
         });
 
@@ -114,27 +114,24 @@ export const useComments = (interventionId: string, establishmentId: string) => 
   /**
    * Modifier un commentaire
    */
-  const editComment = useCallback(
-    async (commentId: string, content: string): Promise<boolean> => {
-      if (!content.trim()) {
-        toast.error('Le commentaire ne peut pas être vide');
-        return false;
-      }
+  const editComment = useCallback(async (commentId: string, content: string): Promise<boolean> => {
+    if (!content.trim()) {
+      toast.error('Le commentaire ne peut pas être vide');
+      return false;
+    }
 
-      try {
-        await updateComment(commentId, { content });
-        toast.success('Commentaire modifié');
-        return true;
-      } catch (error: any) {
-        console.error('Error editing comment:', error);
-        toast.error('Erreur lors de la modification', {
-          description: error.message,
-        });
-        return false;
-      }
-    },
-    []
-  );
+    try {
+      await updateComment(commentId, { content });
+      toast.success('Commentaire modifié');
+      return true;
+    } catch (error: any) {
+      console.error('Error editing comment:', error);
+      toast.error('Erreur lors de la modification', {
+        description: error.message,
+      });
+      return false;
+    }
+  }, []);
 
   /**
    * Supprimer un commentaire
@@ -147,7 +144,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       }
 
       try {
-        await deleteComment(commentId, user.uid);
+        await deleteComment(commentId, user.id);
         toast.success('Commentaire supprimé');
         return true;
       } catch (error: any) {
@@ -169,7 +166,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       if (!user) return false;
       // L'auteur peut toujours éditer, sauf les commentaires système
       if (comment.contentType === 'system') return false;
-      return comment.authorId === user.uid;
+      return comment.authorId === user.id;
     },
     [user]
   );
@@ -182,7 +179,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       if (!user) return false;
       // L'auteur ou un admin peut supprimer
       if (comment.contentType === 'system') return false;
-      return comment.authorId === user.uid || user.role === 'SUPER_ADMIN' || user.role === 'ADMIN';
+      return comment.authorId === user.id || user.role === 'super_admin' || user.role === 'admin';
     },
     [user]
   );

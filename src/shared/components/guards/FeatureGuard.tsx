@@ -4,15 +4,22 @@
  * Composant pour protéger une route en fonction d'une feature activée/désactivée
  */
 
-import { ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useFeatureFlag, useFeatureStatus } from '@/shared/hooks/useFeatureFlag';
+import type { ReactNode } from 'react';
+import { Navigate, Link } from 'react-router-dom';
+import { useFeature } from '@/features/establishments/hooks/useFeature';
+import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
 import { AlertTriangle, Lock, ArrowLeft } from 'lucide-react';
 import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
-import { Link } from 'react-router-dom';
 
 interface FeatureGuardProps {
   children: ReactNode;
@@ -37,8 +44,12 @@ export const FeatureGuard = ({
   fallback,
   showMessage = true,
 }: FeatureGuardProps) => {
-  const isEnabled = useFeatureFlag(feature);
-  const status = useFeatureStatus(feature);
+  const { hasFeature } = useFeature();
+  const { currentEstablishment } = useEstablishmentStore();
+
+  const isEnabled = hasFeature(feature);
+  const hasEstablishment = !!currentEstablishment;
+  const featureExists = currentEstablishment?.features?.[feature] !== undefined;
 
   // Si la feature est activée, afficher le contenu
   if (isEnabled) {
@@ -78,7 +89,7 @@ export const FeatureGuard = ({
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              {status.hasEstablishment ? (
+              {hasEstablishment ? (
                 <>
                   La fonctionnalité <strong>{feature}</strong> n'est pas activée pour cet
                   établissement. Contactez un administrateur pour l'activer.
@@ -93,16 +104,16 @@ export const FeatureGuard = ({
           </Alert>
 
           {/* Informations de debug (en dev uniquement) */}
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <div className="rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-900">
               <p className="font-mono text-gray-600 dark:text-gray-400">
                 <strong>Debug Info:</strong>
               </p>
               <ul className="mt-2 space-y-1 font-mono text-xs text-gray-500">
                 <li>Feature: {feature}</li>
-                <li>Enabled: {status.enabled ? 'Yes' : 'No'}</li>
-                <li>Has Establishment: {status.hasEstablishment ? 'Yes' : 'No'}</li>
-                <li>Feature Exists: {status.featureExists ? 'Yes' : 'No'}</li>
+                <li>Enabled: {isEnabled ? 'Yes' : 'No'}</li>
+                <li>Has Establishment: {hasEstablishment ? 'Yes' : 'No'}</li>
+                <li>Feature Exists: {featureExists ? 'Yes' : 'No'}</li>
               </ul>
             </div>
           )}
@@ -116,7 +127,7 @@ export const FeatureGuard = ({
             </Link>
           </Button>
 
-          {status.hasEstablishment && (
+          {hasEstablishment && (
             <Button asChild>
               <Link to="/app/settings/features">Gérer les fonctionnalités</Link>
             </Button>

@@ -10,16 +10,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
-import {
-  Send,
-  Paperclip,
-  Smile,
-  X,
-  File,
-  Loader2,
-} from 'lucide-react';
+import { Send, Paperclip, Smile, X, File, Loader2 } from 'lucide-react';
 import type { SendMessageData } from '../types/message.types';
 import { toast } from 'sonner';
+import { EmojiPicker } from './EmojiPicker';
 
 // ============================================================================
 // PROPS
@@ -90,22 +84,7 @@ const extractMentions = (text: string): string[] => {
   return mentions;
 };
 
-// ============================================================================
-// EMOJIS POPULAIRES
-// ============================================================================
-
-const POPULAR_EMOJIS = [
-  '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊',
-  '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗',
-  '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨',
-  '🧐', '🤓', '😎', '🥳', '😏', '😒', '😞', '😔',
-  '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩',
-  '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯',
-  '👍', '👎', '👏', '🙌', '👌', '🤝', '🙏', '💪',
-  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
-  '💯', '💢', '💥', '💫', '💦', '💨', '🕐', '⏰',
-  '⚡', '🔥', '✨', '🌟', '⭐', '🎉', '🎊', '🎈',
-];
+// Note: POPULAR_EMOJIS supprimé - utilise maintenant emoji-picker-react
 
 // ============================================================================
 // MAIN COMPONENT
@@ -128,6 +107,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  const [pickerPosition, setPickerPosition] = useState({ bottom: 80, left: 16 });
 
   // Auto-resize textarea
   useEffect(() => {
@@ -182,7 +163,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     const newFiles: FilePreview[] = [];
     const errors: string[] = [];
 
-    Array.from(selectedFiles).forEach((file) => {
+    Array.from(selectedFiles).forEach(file => {
       // Vérifier la taille
       if (file.size > MAX_FILE_SIZE) {
         errors.push(`${file.name}: Taille maximale 10MB`);
@@ -203,9 +184,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       if (isImageFile(file.type)) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
           filePreview.preview = e.target?.result as string;
-          setFiles((prev) => [...prev]);
+          setFiles(prev => [...prev]);
         };
         reader.readAsDataURL(file);
       }
@@ -217,11 +198,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       toast.error(errors.join('\n'));
     }
 
-    setFiles((prev) => [...prev, ...newFiles]);
+    setFiles(prev => [...prev, ...newFiles]);
   };
 
   const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleEmojiSelect = (emoji: string) => {
@@ -262,7 +243,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       await onSend({
         content: content.trim(),
-        attachments: files.map((f) => f.file),
+        attachments: files.map(f => f.file),
         mentions: mentions.length > 0 ? mentions : undefined,
         replyTo,
       });
@@ -278,8 +259,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onTypingStop?.();
       }
     } catch (error) {
-      console.error('Erreur lors de l\'envoi du message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
+      console.error("Erreur lors de l'envoi du message:", error);
+      toast.error("Erreur lors de l'envoi du message");
     } finally {
       setIsSending(false);
     }
@@ -290,24 +271,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({
   // ============================================================================
 
   return (
-    <div className="border-t bg-background p-4 space-y-3">
+    <div className="border-t bg-background p-4 space-y-3 relative">
       {/* Répondre à */}
       {replyTo && (
         <div className="flex items-start gap-2 p-2 bg-accent/50 rounded-lg border-l-2 border-primary">
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-primary">
-              Réponse à {replyTo.senderName}
-            </p>
-            <p className="text-sm text-muted-foreground truncate">
-              {replyTo.content}
-            </p>
+            <p className="text-xs font-medium text-primary">Réponse à {replyTo.senderName}</p>
+            <p className="text-sm text-muted-foreground truncate">{replyTo.content}</p>
           </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={onCancelReply}
-            className="h-6 w-6 p-0"
-          >
+          <Button size="sm" variant="ghost" onClick={onCancelReply} className="h-6 w-6 p-0">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -317,10 +289,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
       {files.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {files.map((filePreview, index) => (
-            <div
-              key={index}
-              className="relative group rounded-lg border bg-card overflow-hidden"
-            >
+            <div key={index} className="relative group rounded-lg border bg-card overflow-hidden">
               {filePreview.type === 'image' && filePreview.preview ? (
                 <div className="relative w-20 h-20">
                   <img
@@ -365,21 +334,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
 
       {/* Emoji Picker */}
       {showEmojiPicker && (
-        <div className="relative">
-          <div className="absolute bottom-full mb-2 left-0 bg-popover border rounded-lg shadow-lg p-3 max-w-xs">
-            <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
-              {POPULAR_EMOJIS.map((emoji, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleEmojiSelect(emoji)}
-                  className="text-2xl hover:bg-accent rounded p-1 transition-colors"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
+        <>
+          {/* Overlay pour fermer au clic à l'extérieur */}
+          <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+          <div
+            className="fixed z-50"
+            style={{
+              bottom: `${pickerPosition.bottom}px`,
+              left: `${pickerPosition.left}px`,
+            }}
+          >
+            <EmojiPicker onEmojiClick={handleEmojiSelect} width={350} height={400} />
           </div>
-        </div>
+        </>
       )}
 
       {/* Input principal */}
@@ -391,7 +358,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             type="file"
             multiple
             accept={ALLOWED_FILE_TYPES.join(',')}
-            onChange={(e) => handleFileSelect(e.target.files)}
+            onChange={e => handleFileSelect(e.target.files)}
             className="hidden"
           />
           <Button
@@ -406,10 +373,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           </Button>
 
           <Button
+            ref={emojiButtonRef}
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            onClick={() => {
+              if (!showEmojiPicker && emojiButtonRef.current) {
+                const rect = emojiButtonRef.current.getBoundingClientRect();
+                setPickerPosition({
+                  bottom: window.innerHeight - rect.top + 8,
+                  left: rect.left,
+                });
+              }
+              setShowEmojiPicker(!showEmojiPicker);
+            }}
             disabled={disabled}
             className="h-9 w-9 p-0"
           >
@@ -422,7 +399,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           ref={textareaRef}
           placeholder="Écrivez votre message... (@mention pour mentionner)"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={e => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           disabled={disabled || isSending}
           rows={1}
@@ -432,28 +409,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         {/* Bouton envoyer */}
         <Button
           onClick={handleSubmit}
-          disabled={
-            disabled ||
-            isSending ||
-            (!content.trim() && files.length === 0)
-          }
+          disabled={disabled || isSending || (!content.trim() && files.length === 0)}
           size="sm"
           className="h-9 w-9 p-0"
         >
-          {isSending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
 
       {/* Aide */}
       <p className="text-xs text-muted-foreground">
-        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> pour
-        envoyer,{' '}
-        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Shift+Enter</kbd>{' '}
-        pour nouvelle ligne
+        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Enter</kbd> pour envoyer,{' '}
+        <kbd className="px-1.5 py-0.5 bg-muted rounded text-xs">Shift+Enter</kbd> pour nouvelle
+        ligne
       </p>
     </div>
   );

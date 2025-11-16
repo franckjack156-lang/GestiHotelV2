@@ -1,6 +1,6 @@
 /**
  * InterventionFilters Component
- * 
+ *
  * Barre de filtres pour les interventions
  */
 
@@ -73,9 +73,9 @@ export const InterventionFilters = ({
   const handleStatusToggle = (status: InterventionStatus) => {
     const currentStatuses = filters.status || [];
     const newStatuses = currentStatuses.includes(status)
-      ? currentStatuses.filter((s) => s !== status)
+      ? currentStatuses.filter(s => s !== status)
       : [...currentStatuses, status];
-    
+
     onFiltersChange({
       status: newStatuses.length > 0 ? newStatuses : undefined,
     });
@@ -85,9 +85,9 @@ export const InterventionFilters = ({
   const handlePriorityToggle = (priority: InterventionPriority) => {
     const currentPriorities = filters.priority || [];
     const newPriorities = currentPriorities.includes(priority)
-      ? currentPriorities.filter((p) => p !== priority)
+      ? currentPriorities.filter(p => p !== priority)
       : [...currentPriorities, priority];
-    
+
     onFiltersChange({
       priority: newPriorities.length > 0 ? newPriorities : undefined,
     });
@@ -99,16 +99,13 @@ export const InterventionFilters = ({
       <div className="flex items-center gap-3">
         {/* Recherche */}
         <div className="relative flex-1">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <Input
             type="text"
             placeholder="Rechercher par titre, description, chambre..."
             value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            onKeyDown={(e) => {
+            onChange={e => handleSearchChange(e.target.value)}
+            onKeyDown={e => {
               if (e.key === 'Enter') {
                 handleSearchSubmit();
               }
@@ -141,9 +138,7 @@ export const InterventionFilters = ({
           <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
             <SheetHeader>
               <SheetTitle>Filtres avancés</SheetTitle>
-              <SheetDescription>
-                Affinez votre recherche d'interventions
-              </SheetDescription>
+              <SheetDescription>Affinez votre recherche d'interventions</SheetDescription>
             </SheetHeader>
 
             <div className="mt-6 space-y-6">
@@ -151,7 +146,7 @@ export const InterventionFilters = ({
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Statuts</Label>
                 <div className="space-y-2">
-                  {Object.values(InterventionStatus).map((status) => (
+                  {Object.values(InterventionStatus).map(status => (
                     <div key={status} className="flex items-center space-x-2">
                       <Checkbox
                         id={`status-${status}`}
@@ -173,7 +168,7 @@ export const InterventionFilters = ({
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Priorités</Label>
                 <div className="space-y-2">
-                  {Object.values(InterventionPriority).map((priority) => (
+                  {Object.values(InterventionPriority).map(priority => (
                     <div key={priority} className="flex items-center space-x-2">
                       <Checkbox
                         id={`priority-${priority}`}
@@ -196,7 +191,7 @@ export const InterventionFilters = ({
                 <Label className="text-sm font-semibold">Type</Label>
                 <Select
                   value={filters.type || 'all'}
-                  onValueChange={(value) =>
+                  onValueChange={value =>
                     onFiltersChange({
                       type: value === 'all' ? undefined : (value as InterventionType),
                     })
@@ -207,7 +202,7 @@ export const InterventionFilters = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tous les types</SelectItem>
-                    {Object.values(InterventionType).map((type) => (
+                    {Object.values(InterventionType).map(type => (
                       <SelectItem key={type} value={type}>
                         {INTERVENTION_TYPE_LABELS[type]}
                       </SelectItem>
@@ -224,7 +219,7 @@ export const InterventionFilters = ({
                     <Checkbox
                       id="urgent"
                       checked={filters.isUrgent === true}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         onFiltersChange({
                           isUrgent: checked ? true : undefined,
                         })
@@ -242,7 +237,7 @@ export const InterventionFilters = ({
                     <Checkbox
                       id="blocking"
                       checked={filters.isBlocking === true}
-                      onCheckedChange={(checked) =>
+                      onCheckedChange={checked =>
                         onFiltersChange({
                           isBlocking: checked ? true : undefined,
                         })
@@ -269,10 +264,7 @@ export const InterventionFilters = ({
                   <RotateCcw size={18} className="mr-2" />
                   Réinitialiser
                 </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => setIsOpen(false)}
-                >
+                <Button className="flex-1" onClick={() => setIsOpen(false)}>
                   Appliquer
                 </Button>
               </div>

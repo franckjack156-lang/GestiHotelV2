@@ -11,7 +11,6 @@ import {
   getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -125,7 +124,7 @@ export const getEstablishments = async (
  * Obtenir les établissements d'un utilisateur
  */
 export const getUserEstablishments = async (
-  userId: string,
+  _userId: string,
   establishmentIds: string[]
 ): Promise<Establishment[]> => {
   try {

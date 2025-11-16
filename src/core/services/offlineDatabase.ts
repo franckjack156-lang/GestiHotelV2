@@ -19,12 +19,19 @@ import type { Message, Conversation } from '@/features/messaging/types/message.t
 // TYPES
 // ============================================================================
 
+export interface PendingSyncData {
+  establishmentId: string;
+  createdBy?: string;
+  userId?: string;
+  [key: string]: unknown;
+}
+
 export interface PendingSync {
   id?: number;
   collection: string;
   documentId: string;
   operation: 'create' | 'update' | 'delete';
-  data: any;
+  data: PendingSyncData;
   timestamp: Date;
   retries: number;
   error?: string;
@@ -94,13 +101,8 @@ export const cacheInterventions = async (
 /**
  * Récupérer les interventions du cache
  */
-export const getCachedInterventions = async (
-  establishmentId: string
-): Promise<Intervention[]> => {
-  return await db.interventions
-    .where('establishmentId')
-    .equals(establishmentId)
-    .toArray();
+export const getCachedInterventions = async (establishmentId: string): Promise<Intervention[]> => {
+  return await db.interventions.where('establishmentId').equals(establishmentId).toArray();
 };
 
 /**
@@ -130,10 +132,7 @@ export const cacheUsers = async (users: User[], establishmentId: string) => {
  * Récupérer les utilisateurs du cache
  */
 export const getCachedUsers = async (establishmentId: string): Promise<User[]> => {
-  return await db.users
-    .where('establishmentIds')
-    .equals(establishmentId)
-    .toArray();
+  return await db.users.where('establishmentIds').equals(establishmentId).toArray();
 };
 
 /**
@@ -150,13 +149,8 @@ export const cacheConversations = async (
 /**
  * Récupérer les conversations du cache
  */
-export const getCachedConversations = async (
-  establishmentId: string
-): Promise<Conversation[]> => {
-  return await db.conversations
-    .where('establishmentId')
-    .equals(establishmentId)
-    .toArray();
+export const getCachedConversations = async (establishmentId: string): Promise<Conversation[]> => {
+  return await db.conversations.where('establishmentId').equals(establishmentId).toArray();
 };
 
 /**
@@ -171,10 +165,7 @@ export const cacheMessages = async (messages: Message[], conversationId: string)
  * Récupérer les messages du cache
  */
 export const getCachedMessages = async (conversationId: string): Promise<Message[]> => {
-  return await db.messages
-    .where('conversationId')
-    .equals(conversationId)
-    .toArray();
+  return await db.messages.where('conversationId').equals(conversationId).toArray();
 };
 
 // ============================================================================
@@ -221,10 +212,7 @@ export const clearEstablishmentCache = async (establishmentId: string) => {
   await db.interventions.where('establishmentId').equals(establishmentId).delete();
   await db.rooms.where('establishmentId').equals(establishmentId).delete();
   await db.conversations.where('establishmentId').equals(establishmentId).delete();
-  await db.cacheMetadata
-    .where('establishmentId')
-    .equals(establishmentId)
-    .delete();
+  await db.cacheMetadata.where('establishmentId').equals(establishmentId).delete();
 };
 
 /**

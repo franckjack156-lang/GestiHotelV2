@@ -54,7 +54,8 @@ export const useUsers = () => {
   } = useUserStore();
 
   // Établissement actuel
-  const establishmentId = currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
+  const establishmentId =
+    currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
 
   /**
    * Charger les utilisateurs avec temps réel

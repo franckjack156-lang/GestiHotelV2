@@ -1,10 +1,10 @@
 /**
  * InterventionForm Component
- * 
+ *
  * Formulaire de création/édition d'intervention
  */
 
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
@@ -28,6 +28,7 @@ import {
   CATEGORY_LABELS,
   PRIORITY_LABELS,
 } from '@/shared/types/status.types';
+import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
 import { useInterventionForm } from '../../hooks/useInterventionForm';
 import { useInterventionActions } from '../../hooks/useInterventionActions';
 import type { CreateInterventionData } from '../../types/intervention.types';
@@ -40,7 +41,7 @@ interface InterventionFormProps {
   onCancel?: () => void;
 }
 
-export const InterventionForm = ({
+const InterventionFormComponent = ({
   initialData,
   interventionId,
   mode = 'create',
@@ -48,9 +49,9 @@ export const InterventionForm = ({
   onCancel,
 }: InterventionFormProps) => {
   const navigate = useNavigate();
-  const { form, register, handleSubmit, watch, setValue, errors, isDirty, isValid } =
+  const { register, handleSubmit, watch, setValue, errors, isValid } =
     useInterventionForm(initialData);
-  
+
   const { createIntervention, updateIntervention, isCreating, isUpdating, actionError } =
     useInterventionActions();
 
@@ -59,68 +60,73 @@ export const InterventionForm = ({
 
   const isLoading = isCreating || isUpdating;
 
-  // Surveiller certains champs
-  const priority = watch('priority');
-  const isUrgent = watch('isUrgent');
+  // Gérer l'upload de fichiers - memoized
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(e.target.files || []);
 
-  // Gérer l'upload de fichiers
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    
-    if (files.length + selectedFiles.length > 5) {
-      alert('Vous ne pouvez pas uploader plus de 5 photos');
-      return;
-    }
-
-    // Générer les aperçus
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    
-    setSelectedFiles([...selectedFiles, ...files]);
-    setFilePreviews([...filePreviews, ...newPreviews]);
-    setValue('photos', [...selectedFiles, ...files]);
-  };
-
-  // Supprimer un fichier
-  const handleRemoveFile = (index: number) => {
-    const newFiles = selectedFiles.filter((_, i) => i !== index);
-    const newPreviews = filePreviews.filter((_, i) => i !== index);
-    
-    // Révoquer l'URL de l'aperçu
-    URL.revokeObjectURL(filePreviews[index]);
-    
-    setSelectedFiles(newFiles);
-    setFilePreviews(newPreviews);
-    setValue('photos', newFiles);
-  };
-
-  // Soumettre le formulaire
-  const onSubmit = async (data: any) => {
-    try {
-      if (mode === 'create') {
-        const id = await createIntervention(data);
-        if (id) {
-          onSuccess?.(id);
-          navigate(`/interventions/${id}`);
-        }
-      } else if (mode === 'edit' && interventionId) {
-        const success = await updateIntervention(interventionId, data);
-        if (success) {
-          onSuccess?.(interventionId);
-          navigate(`/interventions/${interventionId}`);
-        }
+      if (files.length + selectedFiles.length > 5) {
+        alert('Vous ne pouvez pas uploader plus de 5 photos');
+        return;
       }
-    } catch (error) {
-      console.error('Erreur lors de la soumission:', error);
-    }
-  };
 
-  const handleCancel = () => {
+      // Générer les aperçus
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+
+      setSelectedFiles([...selectedFiles, ...files]);
+      setFilePreviews([...filePreviews, ...newPreviews]);
+      setValue('photos', [...selectedFiles, ...files]);
+    },
+    [selectedFiles, filePreviews, setValue]
+  );
+
+  // Supprimer un fichier - memoized
+  const handleRemoveFile = useCallback(
+    (index: number) => {
+      const newFiles = selectedFiles.filter((_, i) => i !== index);
+      const newPreviews = filePreviews.filter((_, i) => i !== index);
+
+      // Révoquer l'URL de l'aperçu
+      URL.revokeObjectURL(filePreviews[index]);
+
+      setSelectedFiles(newFiles);
+      setFilePreviews(newPreviews);
+      setValue('photos', newFiles);
+    },
+    [selectedFiles, filePreviews, setValue]
+  );
+
+  // Soumettre le formulaire - memoized
+  const onSubmit = useCallback(
+    async (data: any) => {
+      try {
+        if (mode === 'create') {
+          const id = await createIntervention(data);
+          if (id) {
+            onSuccess?.(id);
+            navigate(`/interventions/${id}`);
+          }
+        } else if (mode === 'edit' && interventionId) {
+          const success = await updateIntervention(interventionId, data);
+          if (success) {
+            onSuccess?.(interventionId);
+            navigate(`/interventions/${interventionId}`);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la soumission:', error);
+      }
+    },
+    [mode, interventionId, createIntervention, updateIntervention, onSuccess, navigate]
+  );
+
+  const handleCancelClick = useCallback(() => {
     if (onCancel) {
       onCancel();
     } else {
       navigate(-1);
     }
-  };
+  }, [onCancel, navigate]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -147,9 +153,7 @@ export const InterventionForm = ({
               placeholder="Ex: Fuite d'eau dans la salle de bain"
               {...register('title')}
             />
-            {errors.title && (
-              <p className="text-sm text-red-600">{errors.title.message}</p>
-            )}
+            {errors.title && <p className="text-sm text-red-600">{errors.title.message}</p>}
           </div>
 
           {/* Description */}
@@ -176,22 +180,20 @@ export const InterventionForm = ({
               </Label>
               <Select
                 value={watch('type')}
-                onValueChange={(value) => setValue('type', value as InterventionType)}
+                onValueChange={value => setValue('type', value as InterventionType)}
               >
                 <SelectTrigger id="type">
                   <SelectValue placeholder="Sélectionner un type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(InterventionType).map((type) => (
+                  {Object.values(InterventionType).map(type => (
                     <SelectItem key={type} value={type}>
                       {INTERVENTION_TYPE_LABELS[type]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.type && (
-                <p className="text-sm text-red-600">{errors.type.message}</p>
-              )}
+              {errors.type && <p className="text-sm text-red-600">{errors.type.message}</p>}
             </div>
 
             <div className="space-y-2">
@@ -200,24 +202,20 @@ export const InterventionForm = ({
               </Label>
               <Select
                 value={watch('category')}
-                onValueChange={(value) =>
-                  setValue('category', value as InterventionCategory)
-                }
+                onValueChange={value => setValue('category', value as InterventionCategory)}
               >
                 <SelectTrigger id="category">
                   <SelectValue placeholder="Sélectionner une catégorie" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(InterventionCategory).map((category) => (
+                  {Object.values(InterventionCategory).map(category => (
                     <SelectItem key={category} value={category}>
                       {CATEGORY_LABELS[category]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.category && (
-                <p className="text-sm text-red-600">{errors.category.message}</p>
-              )}
+              {errors.category && <p className="text-sm text-red-600">{errors.category.message}</p>}
             </div>
           </div>
 
@@ -228,7 +226,7 @@ export const InterventionForm = ({
             </Label>
             <Select
               value={watch('priority')}
-              onValueChange={(value) => {
+              onValueChange={value => {
                 setValue('priority', value as InterventionPriority);
                 // Auto-cocher "urgent" si priorité urgente ou critique
                 if (value === 'urgent' || value === 'critical') {
@@ -240,16 +238,14 @@ export const InterventionForm = ({
                 <SelectValue placeholder="Sélectionner une priorité" />
               </SelectTrigger>
               <SelectContent>
-                {Object.values(InterventionPriority).map((priority) => (
+                {Object.values(InterventionPriority).map(priority => (
                   <SelectItem key={priority} value={priority}>
                     {PRIORITY_LABELS[priority]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.priority && (
-              <p className="text-sm text-red-600">{errors.priority.message}</p>
-            )}
+            {errors.priority && <p className="text-sm text-red-600">{errors.priority.message}</p>}
           </div>
 
           {/* Options */}
@@ -258,7 +254,7 @@ export const InterventionForm = ({
               <Checkbox
                 id="isUrgent"
                 checked={watch('isUrgent')}
-                onCheckedChange={(checked) => setValue('isUrgent', checked as boolean)}
+                onCheckedChange={checked => setValue('isUrgent', checked as boolean)}
               />
               <Label htmlFor="isUrgent" className="font-normal cursor-pointer">
                 Marquer comme urgente
@@ -269,7 +265,7 @@ export const InterventionForm = ({
               <Checkbox
                 id="isBlocking"
                 checked={watch('isBlocking')}
-                onCheckedChange={(checked) => setValue('isBlocking', checked as boolean)}
+                onCheckedChange={checked => setValue('isBlocking', checked as boolean)}
               />
               <Label htmlFor="isBlocking" className="font-normal cursor-pointer">
                 Bloque la chambre/zone
@@ -288,27 +284,21 @@ export const InterventionForm = ({
           {/* Lieu */}
           <div className="space-y-2">
             <Label htmlFor="location">
-              Lieu <span className="text-red-500">*</span>
+              Lieu
             </Label>
             <Input
               id="location"
               placeholder="Ex: Salle de bain principale"
               {...register('location')}
             />
-            {errors.location && (
-              <p className="text-sm text-red-600">{errors.location.message}</p>
-            )}
+            {errors.location && <p className="text-sm text-red-600">{errors.location.message}</p>}
           </div>
 
           {/* Numéro de chambre, Étage, Bâtiment */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="roomNumber">Numéro de chambre</Label>
-              <Input
-                id="roomNumber"
-                placeholder="Ex: 205"
-                {...register('roomNumber')}
-              />
+              <Input id="roomNumber" placeholder="Ex: 205" {...register('roomNumber')} />
               {errors.roomNumber && (
                 <p className="text-sm text-red-600">{errors.roomNumber.message}</p>
               )}
@@ -316,29 +306,37 @@ export const InterventionForm = ({
 
             <div className="space-y-2">
               <Label htmlFor="floor">Étage</Label>
-              <Input
-                id="floor"
-                type="number"
-                placeholder="Ex: 2"
-                {...register('floor', { valueAsNumber: true })}
+              <DynamicListSelect
+                listKey="floors"
+                value={watch('floor')?.toString() || ''}
+                onChange={(value: string) => setValue('floor', value ? parseInt(value) : undefined)}
+                placeholder="Sélectionner un étage"
+                allowEmpty
               />
-              {errors.floor && (
-                <p className="text-sm text-red-600">{errors.floor.message}</p>
-              )}
+              {errors.floor && <p className="text-sm text-red-600">{errors.floor.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="building">Bâtiment</Label>
-              <Input
-                id="building"
-                placeholder="Ex: Bâtiment A"
-                {...register('building')}
+              <DynamicListSelect
+                listKey="buildings"
+                value={watch('building') || ''}
+                onChange={(value: string) => setValue('building', value || undefined)}
+                placeholder="Sélectionner un bâtiment"
+                allowEmpty
               />
-              {errors.building && (
-                <p className="text-sm text-red-600">{errors.building.message}</p>
-              )}
+              {errors.building && <p className="text-sm text-red-600">{errors.building.message}</p>}
             </div>
           </div>
+
+          {/* Avertissement si aucune localisation */}
+          {!watch('location') && !watch('roomNumber') && !watch('floor') && !watch('building') && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                ⚠️ Aucune information de localisation fournie. Il est recommandé de renseigner au moins un champ pour situer l'intervention.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -423,19 +421,18 @@ export const InterventionForm = ({
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3 pt-6 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handleCancel}
-          disabled={isLoading}
-        >
+        <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isLoading}>
           Annuler
         </Button>
         <Button type="submit" disabled={isLoading || !isValid}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {mode === 'create' ? 'Créer l\'intervention' : 'Enregistrer'}
+          {mode === 'create' ? "Créer l'intervention" : 'Enregistrer'}
         </Button>
       </div>
     </form>
   );
 };
+
+InterventionFormComponent.displayName = 'InterventionForm';
+
+export const InterventionForm = memo(InterventionFormComponent);

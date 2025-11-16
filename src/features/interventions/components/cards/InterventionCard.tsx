@@ -6,8 +6,8 @@
  * - list : Vue liste compacte horizontale
  */
 
-import { useState } from 'react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { useState, memo, useCallback, useMemo } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Calendar,
@@ -19,7 +19,6 @@ import {
   Eye,
   AlertTriangle,
   Clock,
-  MessageSquare,
   Image as ImageIcon,
   CheckCircle,
 } from 'lucide-react';
@@ -49,7 +48,7 @@ interface InterventionCardProps {
   className?: string;
 }
 
-export const InterventionCard = ({
+const InterventionCardComponent = ({
   intervention,
   onClick,
   onEdit,
@@ -71,7 +70,6 @@ export const InterventionCard = ({
     location,
     roomNumber,
     createdAt,
-    scheduledAt,
     assignedTo,
     assignedToName,
     createdBy,
@@ -81,39 +79,53 @@ export const InterventionCard = ({
     isBlocking,
   } = intervention;
 
-  // Permissions
-  const canEdit = user?.role === 'admin' || user?.uid === createdBy;
-  const canDelete = user?.role === 'admin';
-  const isAssigned = user?.uid === assignedTo;
+  // Permissions - memoized
+  const canEdit = useMemo(
+    () => user?.role === 'admin' || user?.id === createdBy,
+    [user?.role, user?.id, createdBy]
+  );
+  const canDelete = useMemo(() => user?.role === 'admin', [user?.role]);
+  const isAssigned = useMemo(() => user?.id === assignedTo, [user?.id, assignedTo]);
 
-  // Formater la date
-  const formattedDate = createdAt
-    ? format(createdAt.toDate(), 'dd MMM yyyy', { locale: fr })
-    : '';
-  const timeAgo = createdAt
-    ? formatDistanceToNow(createdAt.toDate(), { locale: fr, addSuffix: true })
-    : '';
+  // Formater la date - memoized
+  const timeAgo = useMemo(
+    () =>
+      createdAt ? formatDistanceToNow(createdAt.toDate(), { locale: fr, addSuffix: true }) : '',
+    [createdAt]
+  );
 
-  // Photo de couverture
-  const coverPhoto = photos && photos.length > 0 && !imageError ? photos[0] : null;
+  // Photo de couverture - memoized
+  const coverPhoto = useMemo(
+    () => (photos && photos.length > 0 && !imageError ? photos[0] : null),
+    [photos, imageError]
+  );
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Ne pas déclencher onClick si on clique sur un bouton/menu
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
-    onClick?.();
-  };
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      // Ne pas déclencher onClick si on clique sur un bouton/menu
+      if ((e.target as HTMLElement).closest('button')) {
+        return;
+      }
+      onClick?.();
+    },
+    [onClick]
+  );
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete?.();
-  };
+  const handleDelete = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onDelete?.();
+    },
+    [onDelete]
+  );
 
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onEdit?.();
-  };
+  const handleEdit = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onEdit?.();
+    },
+    [onEdit]
+  );
 
   // ============================================================================
   // VUE LISTE (COMPACTE)
@@ -151,9 +163,7 @@ export const InterventionCard = ({
               {/* Titre et badges */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                    {title}
-                  </h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white truncate">{title}</h3>
                   {isUrgent && (
                     <span className="flex-shrink-0">
                       <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -401,3 +411,7 @@ export const InterventionCard = ({
     </Card>
   );
 };
+
+InterventionCardComponent.displayName = 'InterventionCard';
+
+export const InterventionCard = memo(InterventionCardComponent);

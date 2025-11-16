@@ -9,12 +9,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, DoorClosed } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { toast } from 'sonner';
@@ -43,7 +38,7 @@ export const EditRoomPage = () => {
   };
 
   if (isLoading) {
-    return <LoadingSkeleton type="form" />;
+    return <LoadingSkeleton type="card" />;
   }
 
   if (!room) {

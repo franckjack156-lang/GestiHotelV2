@@ -16,12 +16,7 @@ import {
 } from '@/shared/components/ui/select';
 import { Badge } from '@/shared/components/ui/badge';
 import { X } from 'lucide-react';
-import {
-  InterventionType,
-  InterventionCategory,
-  INTERVENTION_TYPE_LABELS,
-  CATEGORY_LABELS,
-} from '@/shared/types/status.types';
+import { INTERVENTION_TYPE_LABELS, CATEGORY_LABELS } from '@/shared/types/status.types';
 import type { WizardData } from '@/features/interventions/hooks/useInterventionWizard';
 
 interface BasicInfoStepProps {

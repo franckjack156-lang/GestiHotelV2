@@ -7,38 +7,46 @@ Guide visuel de toutes les fonctionnalités implémentées dans les composants d
 ## 🗂️ ConversationList
 
 ### Vue d'Ensemble
+
 Sidebar gauche affichant toutes les conversations de l'utilisateur.
 
 ### Fonctionnalités Visuelles
 
 #### 1. Header
+
 ```
 ┌─────────────────────────────────────┐
 │ Messagerie              [+ Nouveau] │
 └─────────────────────────────────────┘
 ```
+
 - Titre "Messagerie"
 - Bouton "Nouveau" pour créer une conversation
 
 #### 2. Barre de Recherche
+
 ```
 ┌─────────────────────────────────────┐
 │ 🔍 Rechercher...                    │
 └─────────────────────────────────────┘
 ```
+
 - Recherche en temps réel
 - Filtre par nom ou contenu du dernier message
 
 #### 3. Filtres par Type
+
 ```
 ┌─────────────────────────────────────┐
 │ [Tous] [Direct] [Groupes] [Interv.]│
 └─────────────────────────────────────┘
 ```
+
 - 4 onglets pour filtrer les conversations
 - Active visuellement l'onglet sélectionné
 
 #### 4. Liste des Conversations
+
 ```
 ┌─────────────────────────────────────┐
 │ 📌 (avatar) Marie Dupont      10:30│
@@ -53,6 +61,7 @@ Sidebar gauche affichant toutes les conversations de l'utilisateur.
 ```
 
 **Éléments d'une conversation**:
+
 - 📌 Icône d'épinglage (si épinglée)
 - 👥/🔧 Icône de type (groupe/intervention)
 - Avatar avec indicateur en ligne (point vert)
@@ -68,6 +77,7 @@ Sidebar gauche affichant toutes les conversations de l'utilisateur.
 #### 5. États Spéciaux
 
 **Conversation Épinglée**:
+
 ```
 ┌─────────────────────────────────────┐
 │ 📌 [fond bleu clair]                │
@@ -76,6 +86,7 @@ Sidebar gauche affichant toutes les conversations de l'utilisateur.
 ```
 
 **Conversation avec Messages Non Lus**:
+
 ```
 ┌─────────────────────────────────────┐
 │ Jean Martin (texte gras)      10:30 │
@@ -84,6 +95,7 @@ Sidebar gauche affichant toutes les conversations de l'utilisateur.
 ```
 
 **Indicateur "Typing"**:
+
 ```
 ┌─────────────────────────────────────┐
 │ Sophie Bernard                      │
@@ -92,6 +104,7 @@ Sidebar gauche affichant toutes les conversations de l'utilisateur.
 ```
 
 **État Vide**:
+
 ```
 ┌─────────────────────────────────────┐
 │         (icône cercle)              │
@@ -105,17 +118,20 @@ Sidebar gauche affichant toutes les conversations de l'utilisateur.
 ## 💬 ChatWindow
 
 ### Vue d'Ensemble
+
 Fenêtre principale de chat avec messages et interactions.
 
 ### Fonctionnalités Visuelles
 
 #### 1. Header
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar●) Marie Dupont                           ⋮   │
 │          En ligne                                     │
 └──────────────────────────────────────────────────────┘
 ```
+
 - Avatar avec point vert si en ligne
 - Nom de la conversation
 - Statut (en ligne / typing...)
@@ -127,6 +143,7 @@ Fenêtre principale de chat avec messages et interactions.
 #### 2. Zone de Messages
 
 **Séparateur de Date**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │              ┌─────────────┐                         │
@@ -136,6 +153,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 **Message Reçu**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar) Marie Dupont                                │
@@ -149,6 +167,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 **Message Envoyé**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │                          ┌─────────────────────────┐ │
@@ -158,10 +177,12 @@ Fenêtre principale de chat avec messages et interactions.
 │                          └─────────────────────────┘ │
 └──────────────────────────────────────────────────────┘
 ```
+
 - ✓ = Envoyé
 - ✓✓ = Lu
 
 **Message avec Réponse**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar) Marie                                       │
@@ -177,6 +198,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 **Message avec Pièce Jointe (Image)**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar) Jean                                        │
@@ -192,6 +214,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 **Message avec Fichier**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar) Pierre                                      │
@@ -204,6 +227,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 **Message Système**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │              ┌───────────────────────┐                │
@@ -214,6 +238,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 **Message avec Mention**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar) Sophie                                      │
@@ -226,6 +251,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 #### 3. Actions au Hover
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ (avatar) Marie                                       │
@@ -235,10 +261,12 @@ Fenêtre principale de chat avec messages et interactions.
 │ └────────────────────────┘                           │
 └──────────────────────────────────────────────────────┘
 ```
+
 - Bouton réaction (😊)
 - Bouton répondre
 
 #### 4. État Vide
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │                                                      │
@@ -251,6 +279,7 @@ Fenêtre principale de chat avec messages et interactions.
 ```
 
 #### 5. Chargement de Plus
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │         [Charger plus de messages]                   │
@@ -266,11 +295,13 @@ Fenêtre principale de chat avec messages et interactions.
 ## ✍️ MessageInput
 
 ### Vue d'Ensemble
+
 Zone de saisie et d'envoi de messages.
 
 ### Fonctionnalités Visuelles
 
 #### 1. Preview de Réponse
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ ┃ Réponse à Marie                              ✕    │
@@ -281,6 +312,7 @@ Zone de saisie et d'envoi de messages.
 #### 2. Preview de Fichiers
 
 **Images**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ ┌────────┐ ┌────────┐                                │
@@ -291,6 +323,7 @@ Zone de saisie et d'envoi de messages.
 ```
 
 **Documents**:
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ 📄 rapport.pdf (1.2 MB) ✕                            │
@@ -299,6 +332,7 @@ Zone de saisie et d'envoi de messages.
 ```
 
 #### 3. Emoji Picker
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ ┌─────────────────────────────┐                      │
@@ -312,6 +346,7 @@ Zone de saisie et d'envoi de messages.
 ```
 
 #### 4. Input Principal
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ 📎 😊 [Écrivez votre message...              ] 🚀    │
@@ -319,17 +354,20 @@ Zone de saisie et d'envoi de messages.
 │ Enter pour envoyer, Shift+Enter pour nouvelle ligne │
 └──────────────────────────────────────────────────────┘
 ```
+
 - 📎 Attach (fichiers)
 - 😊 Emoji picker
 - Textarea auto-resize
 - 🚀 Send button
 
 #### 5. États de Chargement
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ 📎 😊 [Écrivez votre message...              ] ⟳     │
 └──────────────────────────────────────────────────────┘
 ```
+
 - Bouton envoyer devient spinner pendant l'envoi
 
 ---
@@ -337,11 +375,13 @@ Zone de saisie et d'envoi de messages.
 ## 🆕 NewConversationDialog
 
 ### Vue d'Ensemble
+
 Modal de création de nouvelle conversation.
 
 ### Fonctionnalités Visuelles
 
 #### 1. Header
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ Nouvelle conversation                            ✕   │
@@ -349,6 +389,7 @@ Modal de création de nouvelle conversation.
 ```
 
 #### 2. Sélection de Type
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ [👤 Conversation directe] [👥 Groupe]                │
@@ -356,6 +397,7 @@ Modal de création de nouvelle conversation.
 ```
 
 #### 3. Formulaire Groupe (si groupe sélectionné)
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ Nom du groupe *                                      │
@@ -367,6 +409,7 @@ Modal de création de nouvelle conversation.
 ```
 
 #### 4. Utilisateurs Sélectionnés
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ Membres sélectionnés (3)                             │
@@ -377,6 +420,7 @@ Modal de création de nouvelle conversation.
 ```
 
 #### 5. Recherche
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ Sélectionner les membres (minimum 2)                 │
@@ -385,6 +429,7 @@ Modal de création de nouvelle conversation.
 ```
 
 #### 6. Liste Utilisateurs
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ ☐ (avatar) Marie Dupont                              │
@@ -397,6 +442,7 @@ Modal de création de nouvelle conversation.
 │            sophie.bernard@gestihotel.fr  [Manager]   │
 └──────────────────────────────────────────────────────┘
 ```
+
 - Checkbox pour sélection
 - Avatar
 - Nom + Role badge
@@ -404,6 +450,7 @@ Modal de création de nouvelle conversation.
 - Checkmark (✓) si sélectionné
 
 #### 7. Footer
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │                          [Annuler] [👥 Créer le groupe]│
@@ -411,6 +458,7 @@ Modal de création de nouvelle conversation.
 ```
 
 #### 8. Validation
+
 ```
 ┌──────────────────────────────────────────────────────┐
 │ ⚠️ Un groupe nécessite au moins 2 membres.          │
@@ -424,20 +472,24 @@ Modal de création de nouvelle conversation.
 ### Palette de Couleurs
 
 **Messages**:
+
 - Envoyé: Bleu primary (bg-primary)
 - Reçu: Gris clair (bg-muted)
 
 **États**:
+
 - En ligne: Vert (bg-green-500)
 - Hors ligne: Gris (bg-gray-400)
 - Typing: Bleu (text-primary)
 
 **Indicateurs**:
+
 - Non lu: Badge bleu (bg-primary)
 - Lu: Double check bleu (text-blue-600)
 - Épinglé: Fond bleu clair (bg-blue-50)
 
 **Actions**:
+
 - Hover: bg-accent/50
 - Active: bg-accent
 - Disabled: opacity-50
@@ -445,6 +497,7 @@ Modal de création de nouvelle conversation.
 ### Icônes Utilisées
 
 **Navigation**:
+
 - 🔍 Search
 - ➕ Plus
 - 📌 Pin
@@ -453,11 +506,13 @@ Modal de création de nouvelle conversation.
 - ⋮ MoreVertical
 
 **Types**:
+
 - 👤 User (direct)
 - 👥 Users (groupe)
 - 🔧 Wrench (intervention)
 
 **Messages**:
+
 - 📎 Paperclip (attach)
 - 😊 Smile (emoji)
 - 🚀 Send
@@ -466,6 +521,7 @@ Modal de création de nouvelle conversation.
 - ⬇️ Download
 
 **Fichiers**:
+
 - 📄 File
 - 🖼️ Image
 - ⟳ Loader2 (loading)
@@ -475,6 +531,7 @@ Modal de création de nouvelle conversation.
 ## 📱 Responsive
 
 ### Desktop (>1024px)
+
 ```
 ┌────────────────────────────────────────────────┐
 │ ConversationList │ ChatWindow                  │
@@ -484,6 +541,7 @@ Modal de création de nouvelle conversation.
 ```
 
 ### Tablet (768-1024px)
+
 ```
 ┌────────────────────────────────────────────────┐
 │ ConversationList │ ChatWindow                  │
@@ -493,7 +551,9 @@ Modal de création de nouvelle conversation.
 ```
 
 ### Mobile (<768px)
+
 Recommandation: Utiliser Sheet pour le ConversationList
+
 ```
 ┌────────────────────────────────────────────────┐
 │ [☰] ChatWindow                                 │
@@ -513,33 +573,37 @@ Au clic sur ☰:
 
 ## ⌨️ Raccourcis Clavier
 
-| Raccourci | Action |
-|-----------|--------|
-| `Enter` | Envoyer le message |
-| `Shift+Enter` | Nouvelle ligne |
-| `Ctrl+F` | Focus recherche (suggéré) |
-| `Esc` | Annuler réponse (suggéré) |
+| Raccourci     | Action                    |
+| ------------- | ------------------------- |
+| `Enter`       | Envoyer le message        |
+| `Shift+Enter` | Nouvelle ligne            |
+| `Ctrl+F`      | Focus recherche (suggéré) |
+| `Esc`         | Annuler réponse (suggéré) |
 
 ---
 
 ## 🎭 Animations
 
 **Transitions**:
+
 - Hover: `transition-all` (200ms)
 - Messages: Fade in
 - Scroll: Smooth scroll
 
 **Loading**:
+
 - Spinner: `animate-spin`
 - Skeleton: Pulse (suggéré)
 
 **Interactions**:
+
 - Button click: Scale effect (suggéré)
 - Toast: Slide in from bottom
 
 ---
 
 **Légende des Symboles**:
+
 - ✅ Implémenté
 - ⏳ À implémenter
 - 📌 Important

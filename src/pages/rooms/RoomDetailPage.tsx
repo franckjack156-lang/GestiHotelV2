@@ -9,12 +9,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Lock, Unlock, Trash2, Building2, Users, DoorClosed } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
@@ -35,6 +30,8 @@ import {
 } from '@/shared/components/ui/dialog';
 import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
+import { QRCodeGenerator } from '@/features/qrcode/components';
+import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 
 const ROOM_TYPES: Record<string, string> = {
   single: 'Simple',
@@ -48,6 +45,7 @@ export const RoomDetailPage = () => {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
+  const { currentEstablishment } = useEstablishmentStore();
   const { user } = useAuth();
   const { getRoomById, isLoading, deleteRoom, blockRoom, unblockRoom } = useRooms(establishmentId!);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
@@ -95,7 +93,7 @@ export const RoomDetailPage = () => {
   };
 
   if (isLoading) {
-    return <LoadingSkeleton type="detail" />;
+    return <LoadingSkeleton type="card" />;
   }
 
   if (!room) {
@@ -131,6 +129,18 @@ export const RoomDetailPage = () => {
         </div>
 
         <div className="flex gap-2">
+          {currentEstablishment && (
+            <QRCodeGenerator
+              roomData={{
+                roomId: room.id,
+                roomNumber: room.number,
+                establishmentId: currentEstablishment.id,
+                establishmentName: currentEstablishment.name,
+                type: 'room',
+                version: '1.0',
+              }}
+            />
+          )}
           <Button variant="outline" onClick={() => navigate(`/app/rooms/${room.id}/edit`)}>
             <Edit size={16} className="mr-2" />
             Modifier
@@ -141,7 +151,11 @@ export const RoomDetailPage = () => {
               Débloquer
             </Button>
           ) : (
-            <Button variant="outline" onClick={() => setBlockDialogOpen(true)} className="text-orange-600">
+            <Button
+              variant="outline"
+              onClick={() => setBlockDialogOpen(true)}
+              className="text-orange-600"
+            >
               <Lock size={16} className="mr-2" />
               Bloquer
             </Button>
@@ -170,14 +184,10 @@ export const RoomDetailPage = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Statut</p>
-                <p className="text-lg font-medium">
-                  {room.isBlocked ? 'Bloquée' : 'Disponible'}
-                </p>
+                <p className="text-lg font-medium">{room.isBlocked ? 'Bloquée' : 'Disponible'}</p>
               </div>
             </div>
-            {room.isBlocked && (
-              <Badge variant="destructive">Bloquée</Badge>
-            )}
+            {room.isBlocked && <Badge variant="destructive">Bloquée</Badge>}
           </div>
 
           {room.isBlocked && (
@@ -316,13 +326,15 @@ export const RoomDetailPage = () => {
             <div>
               <p className="text-gray-600 dark:text-gray-400">Créée le</p>
               <p>
-                {room.createdAt && format(room.createdAt.toDate(), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                {room.createdAt &&
+                  format(room.createdAt.toDate(), 'dd MMMM yyyy à HH:mm', { locale: fr })}
               </p>
             </div>
             <div>
               <p className="text-gray-600 dark:text-gray-400">Dernière modification</p>
               <p>
-                {room.updatedAt && format(room.updatedAt.toDate(), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                {room.updatedAt &&
+                  format(room.updatedAt.toDate(), 'dd MMMM yyyy à HH:mm', { locale: fr })}
               </p>
             </div>
           </div>
@@ -334,9 +346,7 @@ export const RoomDetailPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Bloquer la chambre {room.number}</DialogTitle>
-            <DialogDescription>
-              Indiquez la raison du blocage de cette chambre
-            </DialogDescription>
+            <DialogDescription>Indiquez la raison du blocage de cette chambre</DialogDescription>
           </DialogHeader>
 
           <div>
@@ -344,7 +354,7 @@ export const RoomDetailPage = () => {
             <Textarea
               id="reason"
               value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
+              onChange={e => setBlockReason(e.target.value)}
               placeholder="Ex: Travaux en cours, problème de plomberie..."
               rows={3}
             />

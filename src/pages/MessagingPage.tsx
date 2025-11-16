@@ -10,20 +10,28 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
+import { useEstablishmentUsers } from '@/features/messaging/hooks/useEstablishmentUsers';
+import { useFeature } from '@/features/establishments/hooks/useFeature';
+import { usePresence } from '@/features/messaging/hooks/usePresence';
 import {
   ConversationList,
   ChatWindow,
-  MessageInput,
   NewConversationDialog,
 } from '@/features/messaging/components';
+import { toDate } from '@/shared/utils/dateUtils';
 import {
   subscribeToConversations,
   subscribeToMessages,
+  loadMoreMessages,
   sendMessage,
   markConversationAsRead,
   createConversation,
   getOrCreateDirectConversation,
   markMessagesAsRead,
+  deleteConversationForUser,
+  addReaction,
+  removeReaction,
+  setTypingIndicator,
 } from '@/features/messaging/services/messageService';
 import type {
   Conversation,
@@ -32,21 +40,33 @@ import type {
   CreateConversationData,
 } from '@/features/messaging/types/message.types';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock, MessageCircle } from 'lucide-react';
 
 export const MessagingPage = () => {
-  const { user } = useAuth();
+  const { user, firebaseUser } = useAuth();
   const { currentEstablishment } = useCurrentEstablishment();
+  const { users: establishmentUsers } = useEstablishmentUsers(currentEstablishment?.id);
+  const { hasFeature } = useFeature();
+
+  // User ID (peut venir de user.id ou firebaseUser.uid)
+  const userId = user?.id || firebaseUser?.uid;
+
+  // Initialiser la présence en temps réel
+  // TODO: isUserOnline unused
+  // const { isUserOnline } = usePresence(currentEstablishment?.id, userId);
+  usePresence(currentEstablishment?.id, userId);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isNewConversationOpen, setIsNewConversationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  // const [isSendingMessage, setIsSendingMessage] = useState(false); // TODO: Utiliser pour afficher un loader lors de l'envoi
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Conversation sélectionnée
-  const selectedConversation = conversations.find((c) => c.id === selectedConversationId);
+  const selectedConversation = conversations.find(c => c.id === selectedConversationId);
 
   // ============================================================================
   // EFFECTS - Subscriptions temps réel
@@ -54,50 +74,54 @@ export const MessagingPage = () => {
 
   // Écouter les conversations
   useEffect(() => {
-    if (!currentEstablishment?.id || !user?.uid) return;
+    if (!currentEstablishment?.id || !userId) return;
 
     setIsLoading(true);
 
-    const unsubscribe = subscribeToConversations(
-      currentEstablishment.id,
-      user.uid,
-      (convs) => {
-        setConversations(convs);
-        setIsLoading(false);
-      }
-    );
+    const unsubscribe = subscribeToConversations(currentEstablishment.id, userId, convs => {
+      setConversations(convs);
+      setIsLoading(false);
+    });
 
     return () => unsubscribe();
-  }, [currentEstablishment?.id, user?.uid]);
+  }, [currentEstablishment?.id, userId]);
 
   // Écouter les messages de la conversation sélectionnée
   useEffect(() => {
-    if (!selectedConversationId) {
+    if (!selectedConversationId || !userId) {
       setMessages([]);
       return;
     }
 
-    const unsubscribe = subscribeToMessages(selectedConversationId, (msgs) => {
-      setMessages(msgs);
+    // Récupérer le timestamp de suppression pour filtrer les anciens messages
+    const deletionTimestamp = selectedConversation?.deletedBy?.[userId];
 
-      // Marquer les messages non lus comme lus
-      if (user?.uid) {
+    const unsubscribe = subscribeToMessages(
+      selectedConversationId,
+      (msgs: Message[]) => {
+        setMessages(msgs);
+        // Vérifier s'il y a potentiellement plus de messages (si on a exactement 50 messages)
+        setHasMoreMessages(msgs.length >= 50);
+
+        // Marquer les messages non lus comme lus
         const unreadMessages = msgs.filter(
-          (msg) => msg.senderId !== user.uid && !msg.readBy.includes(user.uid)
+          (msg: Message) => msg.senderId !== userId && !msg.readBy.includes(userId)
         );
 
         if (unreadMessages.length > 0) {
           markMessagesAsRead(
-            unreadMessages.map((m) => m.id),
-            user.uid
+            unreadMessages.map((m: Message) => m.id),
+            userId
           );
-          markConversationAsRead(selectedConversationId, user.uid);
+          markConversationAsRead(selectedConversationId, userId);
         }
-      }
-    });
+      },
+      50,
+      deletionTimestamp
+    );
 
     return () => unsubscribe();
-  }, [selectedConversationId, user?.uid]);
+  }, [selectedConversationId, userId, selectedConversation?.deletedBy]);
 
   // ============================================================================
   // HANDLERS
@@ -108,56 +132,184 @@ export const MessagingPage = () => {
   };
 
   const handleSendMessage = async (data: SendMessageData) => {
-    if (!selectedConversationId || !user?.uid) return;
+    if (!selectedConversationId || !userId) return;
 
-    setIsSendingMessage(true);
+    // setIsSendingMessage(true); // TODO: Uncomment when using loader
 
     try {
       await sendMessage(
         selectedConversationId,
-        user.uid,
-        user.displayName || user.email || 'Utilisateur',
+        userId,
+        user?.displayName || user?.email || 'Utilisateur',
         data
       );
     } catch (error) {
       console.error('Error sending message:', error);
-      toast.error('Erreur lors de l\'envoi du message');
+      toast.error("Erreur lors de l'envoi du message");
     } finally {
-      setIsSendingMessage(false);
+      // setIsSendingMessage(false); // TODO: Uncomment when using loader
     }
   };
 
   const handleCreateConversation = async (data: CreateConversationData) => {
-    if (!currentEstablishment?.id || !user?.uid) return;
+    if (!currentEstablishment?.id || !userId) {
+      console.error('Missing establishment or user:', {
+        establishmentId: currentEstablishment?.id,
+        userId,
+      });
+      return;
+    }
+
+    console.log('Creating conversation with data:', data);
 
     try {
       let conversationId: string;
 
       // Si c'est une conversation directe avec un seul participant
       if (data.type === 'direct' && data.participantIds.length === 1) {
+        console.log('Creating direct conversation...');
         conversationId = await getOrCreateDirectConversation(
           currentEstablishment.id,
-          user.uid,
+          userId,
           data.participantIds[0]
         );
       } else {
-        conversationId = await createConversation(currentEstablishment.id, user.uid, data);
+        console.log('Creating group conversation...');
+        conversationId = await createConversation(currentEstablishment.id, userId, data);
       }
 
+      console.log('Conversation created with ID:', conversationId);
       setSelectedConversationId(conversationId);
       setIsNewConversationOpen(false);
       toast.success('Conversation créée avec succès');
     } catch (error) {
       console.error('Error creating conversation:', error);
-      toast.error('Erreur lors de la création de la conversation');
+      toast.error(
+        `Erreur lors de la création de la conversation: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!selectedConversationId || !userId) return;
+
+    try {
+      await deleteConversationForUser(selectedConversationId, userId);
+      setSelectedConversationId(null);
+      toast.success('Conversation supprimée');
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      toast.error('Erreur lors de la suppression de la conversation');
+    }
+  };
+
+  const handleReaction = async (messageId: string, emoji: string) => {
+    if (!userId) return;
+
+    try {
+      await addReaction(
+        messageId,
+        userId,
+        user?.displayName || user?.email || 'Utilisateur',
+        emoji
+      );
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      toast.error("Erreur lors de l'ajout de la réaction");
+    }
+  };
+
+  const handleRemoveReaction = async (messageId: string) => {
+    if (!userId) return;
+
+    try {
+      await removeReaction(messageId, userId);
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      toast.error('Erreur lors de la suppression de la réaction');
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (!selectedConversationId || isLoadingMore || !hasMoreMessages) return;
+
+    setIsLoadingMore(true);
+
+    try {
+      // Obtenir le timestamp du message le plus ancien
+      const oldestMessage = messages[0];
+      if (!oldestMessage) return;
+
+      const oldestTimestamp =
+        oldestMessage.clientCreatedAt ||
+        (oldestMessage.createdAt ? toDate(oldestMessage.createdAt).getTime() : Date.now());
+
+      const { messages: olderMessages, hasMore } = await loadMoreMessages(
+        selectedConversationId,
+        50,
+        oldestTimestamp
+      );
+
+      // Ajouter les anciens messages au début
+      setMessages(prev => [...olderMessages, ...prev]);
+      setHasMoreMessages(hasMore);
+    } catch (error) {
+      console.error('Error loading more messages:', error);
+      toast.error('Erreur lors du chargement des messages');
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
+  const handleTypingStart = () => {
+    if (!selectedConversationId || !userId) return;
+
+    setTypingIndicator(
+      selectedConversationId,
+      userId,
+      user?.displayName || user?.email || 'Utilisateur',
+      true
+    ).catch(error => {
+      console.error('Error setting typing indicator:', error);
+    });
+  };
+
+  const handleTypingStop = () => {
+    if (!selectedConversationId || !userId) return;
+
+    setTypingIndicator(
+      selectedConversationId,
+      userId,
+      user?.displayName || user?.email || 'Utilisateur',
+      false
+    ).catch(error => {
+      console.error('Error removing typing indicator:', error);
+    });
   };
 
   // ============================================================================
   // RENDER
   // ============================================================================
 
-  if (!user || !currentEstablishment) {
+  // Vérifier si la fonctionnalité de messagerie est activée
+  if (!hasFeature('internalChat')) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center max-w-md">
+          <div className="mb-4 flex justify-center">
+            <Lock className="h-16 w-16 text-muted-foreground" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Messagerie Désactivée</h2>
+          <p className="text-muted-foreground">
+            La fonctionnalité de messagerie interne n'est pas activée pour cet établissement.
+            Contactez un administrateur pour l'activer.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userId || !currentEstablishment) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -174,7 +326,7 @@ export const MessagingPage = () => {
           selectedId={selectedConversationId || undefined}
           onSelect={handleSelectConversation}
           onNewConversation={() => setIsNewConversationOpen(true)}
-          currentUserId={user.uid}
+          currentUserId={userId}
           isLoading={isLoading}
         />
       </div>
@@ -182,29 +334,27 @@ export const MessagingPage = () => {
       {/* Zone de chat principale */}
       <div className="flex-1 flex flex-col bg-white dark:bg-gray-950">
         {selectedConversation ? (
-          <>
-            <ChatWindow
-              conversation={selectedConversation}
-              messages={messages}
-              currentUserId={user.uid}
-              onSendMessage={handleSendMessage}
-              onLoadMore={() => {
-                // TODO: Implémenter le chargement de plus de messages
-              }}
-              hasMore={false}
-            />
-            <MessageInput
-              onSend={handleSendMessage}
-              conversationId={selectedConversationId!}
-              currentUserId={user.uid}
-              disabled={isSendingMessage}
-            />
-          </>
+          <ChatWindow
+            conversation={selectedConversation}
+            messages={messages}
+            currentUserId={userId}
+            onSendMessage={handleSendMessage}
+            onLoadMore={handleLoadMore}
+            hasMore={hasMoreMessages}
+            isLoading={isLoadingMore}
+            onReaction={handleReaction}
+            onRemoveReaction={handleRemoveReaction}
+            onTypingStart={handleTypingStart}
+            onTypingStop={handleTypingStop}
+            onDeleteConversation={handleDeleteConversation}
+          />
         ) : (
           // État vide - Aucune conversation sélectionnée
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-md">
-              <div className="mb-4 text-6xl">💬</div>
+              <div className="mb-4 flex justify-center">
+                <MessageCircle className="h-16 w-16 text-muted-foreground" />
+              </div>
               <h2 className="text-2xl font-bold mb-2">Messagerie GestiHôtel</h2>
               <p className="text-muted-foreground mb-6">
                 Sélectionnez une conversation ou démarrez-en une nouvelle pour commencer à discuter
@@ -220,8 +370,8 @@ export const MessagingPage = () => {
         open={isNewConversationOpen}
         onOpenChange={setIsNewConversationOpen}
         onCreateConversation={handleCreateConversation}
-        users={[]} // TODO: Charger les utilisateurs de l'établissement
-        currentUserId={user.uid}
+        users={establishmentUsers}
+        currentUserId={userId}
       />
     </div>
   );

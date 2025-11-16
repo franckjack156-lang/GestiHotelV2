@@ -2,6 +2,9 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "interventions": "Interventions",
+    "templates": "Modèles",
+    "suppliers": "Fournisseurs",
+    "inventory": "Inventaire",
     "rooms": "Chambres",
     "planning": "Planning",
     "notifications": "Notifications",

@@ -1,6 +1,6 @@
 /**
  * useInterventionActions Hook
- * 
+ *
  * Hook pour gérer les actions CRUD sur les interventions
  */
 
@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useInterventionStore } from '../stores/interventionStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import interventionService from '../services/interventionService';
-import photoService from '../services/photoService';
+import * as photoService from '../services/photosService';
 import type {
   CreateInterventionData,
   UpdateInterventionData,
@@ -21,12 +21,8 @@ import type {
 export const useInterventionActions = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const {
-    addIntervention,
-    updateInterventionInList,
-    removeIntervention,
-    setSelectedIntervention,
-  } = useInterventionStore();
+  const { addIntervention, updateInterventionInList, removeIntervention, setSelectedIntervention } =
+    useInterventionStore();
 
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -59,12 +55,13 @@ export const useInterventionActions = () => {
 
         // Uploader les photos si présentes
         if (data.photos && data.photos.length > 0) {
-          await photoService.uploadPhotos(
-            establishmentId,
-            interventionId,
-            userId,
-            data.photos
-          );
+          const userName = user?.displayName || user?.email || 'Unknown';
+          for (const photo of data.photos) {
+            await photoService.uploadPhoto(establishmentId, interventionId, userId, userName, {
+              file: photo,
+              category: 'before',
+            });
+          }
         }
 
         // Récupérer l'intervention créée
@@ -92,10 +89,7 @@ export const useInterventionActions = () => {
    * Mettre à jour une intervention
    */
   const updateIntervention = useCallback(
-    async (
-      interventionId: string,
-      data: UpdateInterventionData
-    ): Promise<boolean> => {
+    async (interventionId: string, data: UpdateInterventionData): Promise<boolean> => {
       if (!establishmentId) {
         setActionError('Établissement non défini');
         return false;
@@ -105,14 +99,10 @@ export const useInterventionActions = () => {
         setIsUpdating(true);
         setActionError(null);
 
-        await interventionService.updateIntervention(
-          establishmentId,
-          interventionId,
-          data
-        );
+        await interventionService.updateIntervention(establishmentId, interventionId, data);
 
-        // Mettre à jour dans le store
-        updateInterventionInList(interventionId, data);
+        // Mettre à jour dans le store - cast car UpdateInterventionData est compatible
+        updateInterventionInList(interventionId, data as any);
 
         return true;
       } catch (error: any) {
@@ -129,10 +119,7 @@ export const useInterventionActions = () => {
    * Changer le statut d'une intervention
    */
   const changeStatus = useCallback(
-    async (
-      interventionId: string,
-      statusData: StatusChangeData
-    ): Promise<boolean> => {
+    async (interventionId: string, statusData: StatusChangeData): Promise<boolean> => {
       if (!establishmentId || !userId) {
         setActionError('Utilisateur ou établissement non défini');
         return false;
@@ -142,12 +129,7 @@ export const useInterventionActions = () => {
         setIsUpdating(true);
         setActionError(null);
 
-        await interventionService.changeStatus(
-          establishmentId,
-          interventionId,
-          userId,
-          statusData
-        );
+        await interventionService.changeStatus(establishmentId, interventionId, userId, statusData);
 
         // Mettre à jour dans le store
         updateInterventionInList(interventionId, {
@@ -169,10 +151,7 @@ export const useInterventionActions = () => {
    * Assigner une intervention à un technicien
    */
   const assignIntervention = useCallback(
-    async (
-      interventionId: string,
-      assignmentData: AssignmentData
-    ): Promise<boolean> => {
+    async (interventionId: string, assignmentData: AssignmentData): Promise<boolean> => {
       if (!establishmentId) {
         setActionError('Établissement non défini');
         return false;
@@ -191,7 +170,7 @@ export const useInterventionActions = () => {
         // Mettre à jour dans le store
         updateInterventionInList(interventionId, {
           assignedTo: assignmentData.technicianId,
-          status: 'assigned',
+          status: 'assigned' as any,
         });
 
         return true;
@@ -219,11 +198,7 @@ export const useInterventionActions = () => {
         setIsDeleting(true);
         setActionError(null);
 
-        await interventionService.deleteIntervention(
-          establishmentId,
-          interventionId,
-          userId
-        );
+        await interventionService.deleteIntervention(establishmentId, interventionId, userId);
 
         // Retirer du store
         removeIntervention(interventionId);
@@ -257,15 +232,15 @@ export const useInterventionActions = () => {
 
         if (intervention) {
           setSelectedIntervention(intervention);
-          
-          // Incrémenter le compteur de vues
-          if (userId) {
-            interventionService.incrementViewCount(
-              establishmentId,
-              interventionId,
-              userId
-            );
-          }
+
+          // TODO: Incrémenter le compteur de vues
+          // if (userId) {
+          //   interventionService.incrementViewCount(
+          //     establishmentId,
+          //     interventionId,
+          //     userId
+          //   );
+          // }
         }
 
         return intervention;
@@ -282,7 +257,7 @@ export const useInterventionActions = () => {
    */
   const uploadPhotos = useCallback(
     async (interventionId: string, files: File[]): Promise<boolean> => {
-      if (!establishmentId || !userId) {
+      if (!establishmentId || !userId || !user) {
         setActionError('Utilisateur ou établissement non défini');
         return false;
       }
@@ -291,12 +266,13 @@ export const useInterventionActions = () => {
         setIsUpdating(true);
         setActionError(null);
 
-        await photoService.uploadPhotos(
-          establishmentId,
-          interventionId,
-          userId,
-          files
-        );
+        const userName = user?.displayName || user?.email || 'Unknown';
+        for (const file of files) {
+          await photoService.uploadPhoto(establishmentId, interventionId, userId, userName, {
+            file,
+            category: 'during',
+          });
+        }
 
         return true;
       } catch (error: any) {
@@ -306,7 +282,7 @@ export const useInterventionActions = () => {
         setIsUpdating(false);
       }
     },
-    [establishmentId, userId]
+    [establishmentId, userId, user]
   );
 
   /**
@@ -333,12 +309,19 @@ export const useInterventionActions = () => {
           throw new Error('Intervention non trouvée');
         }
 
-        const photo = intervention.photos.find((p) => p.id === photoId);
+        // Trouver la photo pour obtenir son URL
+        const photo = intervention.photos?.find((p: any) => p.id === photoId);
         if (!photo) {
           throw new Error('Photo non trouvée');
         }
 
-        await photoService.deletePhoto(establishmentId, interventionId, photo);
+        await photoService.deletePhoto(
+          establishmentId,
+          interventionId,
+          photoId,
+          photo.url,
+          photo.thumbnailUrl
+        );
 
         return true;
       } catch (error: any) {

@@ -38,6 +38,7 @@ import {
   EstablishmentsListPage,
   CreateEstablishmentPage,
   EditEstablishmentPage,
+  EstablishmentDetailPage,
 } from '@/pages/establishments/EstablishmentsPages';
 
 // 🆕 Rooms (nouvelles pages)
@@ -57,6 +58,8 @@ import { MessagingPage } from '@/pages/MessagingPage';
 // Settings
 import { SettingsPage } from '@/pages/Settings';
 import { EstablishmentFeaturesPage } from '@/pages/settings/EstablishmentFeaturesPage';
+import { EstablishmentSettingsPage } from '@/pages/settings/EstablishmentSettingsPage';
+import { MigrationToolsPage } from '@/pages/settings/MigrationToolsPage';
 
 // 🔍 Diagnostic
 import { DiagnosticPage } from '@/pages/DiagnosticPage';
@@ -216,6 +219,10 @@ export const router = createBrowserRouter([
             element: <CreateEstablishmentPage />,
           },
           {
+            path: ':id',
+            element: <EstablishmentDetailPage />,
+          },
+          {
             path: ':id/edit',
             element: <EditEstablishmentPage />,
           },
@@ -269,7 +276,7 @@ export const router = createBrowserRouter([
       {
         path: 'planning',
         element: (
-          <FeatureGuard feature="planning">
+          <FeatureGuard feature="interventionPlanning">
             <PlanningPage />
           </FeatureGuard>
         ),
@@ -281,7 +288,7 @@ export const router = createBrowserRouter([
       {
         path: 'notifications',
         element: (
-          <FeatureGuard feature="notifications">
+          <FeatureGuard feature="pushNotifications">
             <NotificationCenterPage />
           </FeatureGuard>
         ),
@@ -293,7 +300,7 @@ export const router = createBrowserRouter([
       {
         path: 'messaging',
         element: (
-          <FeatureGuard feature="messaging">
+          <FeatureGuard feature="internalChat">
             <MessagingPage />
           </FeatureGuard>
         ),
@@ -309,6 +316,14 @@ export const router = createBrowserRouter([
       {
         path: 'settings/features',
         element: <EstablishmentFeaturesPage />,
+      },
+      {
+        path: 'settings/establishment',
+        element: <EstablishmentSettingsPage />,
+      },
+      {
+        path: 'settings/migration',
+        element: <MigrationToolsPage />,
       },
 
       // ----------------------------------------------------------------------------

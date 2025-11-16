@@ -14,6 +14,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu';
 import {
@@ -29,6 +30,7 @@ import {
   Users,
   Circle,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -36,6 +38,7 @@ import type { Conversation, Message, SendMessageData } from '../types/message.ty
 import { MessageInput } from './MessageInput';
 import { cn } from '@/lib/utils';
 import type { Timestamp } from 'firebase/firestore';
+import { EmojiPicker } from './EmojiPicker';
 
 // ============================================================================
 // PROPS
@@ -51,22 +54,58 @@ export interface ChatWindowProps {
   isLoading?: boolean;
   typingUsers?: { userId: string; userName: string }[];
   onReaction?: (messageId: string, emoji: string) => void;
+  onRemoveReaction?: (messageId: string) => void;
+  onTypingStart?: () => void;
+  onTypingStop?: () => void;
   onPinConversation?: () => void;
   onArchiveConversation?: () => void;
   onShowInfo?: () => void;
+  onDeleteConversation?: () => void;
 }
 
 // ============================================================================
 // UTILS
 // ============================================================================
 
-const formatMessageTime = (date: Date | Timestamp): string => {
-  const dateObj = (date as any)?.toDate ? (date as any).toDate() : new Date(date as Date);
+/**
+ * Convertir un timestamp Firestore en Date JavaScript
+ * @param timestamp - Le timestamp à convertir
+ * @param fallbackTimestamp - Timestamp de fallback (optionnel, ex: clientCreatedAt)
+ */
+const toDate = (timestamp: any, fallbackTimestamp?: number): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  } else if (timestamp instanceof Date) {
+    return timestamp;
+  } else if (typeof timestamp === 'number') {
+    return new Date(timestamp);
+  } else {
+    // Pour serverTimestamp() non résolu, utiliser le fallback client ou la date actuelle
+    if (fallbackTimestamp) {
+      return new Date(fallbackTimestamp);
+    }
+    return new Date();
+  }
+};
+
+const formatMessageTime = (date: Date | Timestamp, clientCreatedAt?: number): string => {
+  const dateObj = toDate(date, clientCreatedAt);
+
+  // Vérifier que la date est valide avant de formater
+  if (isNaN(dateObj.getTime())) {
+    return '--:--';
+  }
+
   return format(dateObj, 'HH:mm', { locale: fr });
 };
 
-const formatDateSeparator = (date: Date | Timestamp): string => {
-  const dateObj = (date as any)?.toDate ? (date as any).toDate() : new Date(date as Date);
+const formatDateSeparator = (date: Date | Timestamp, clientCreatedAt?: number): string => {
+  const dateObj = toDate(date, clientCreatedAt);
+
+  // Vérifier que la date est valide avant d'utiliser date-fns
+  if (isNaN(dateObj.getTime())) {
+    return "Aujourd'hui";
+  }
 
   if (isToday(dateObj)) {
     return "Aujourd'hui";
@@ -82,10 +121,8 @@ const formatDateSeparator = (date: Date | Timestamp): string => {
 const groupMessagesByDate = (messages: Message[]): Map<string, Message[]> => {
   const grouped = new Map<string, Message[]>();
 
-  messages.forEach((message) => {
-    const date = (message.createdAt as any)?.toDate
-      ? (message.createdAt as any).toDate()
-      : new Date(message.createdAt as Date);
+  messages.forEach(message => {
+    const date = toDate(message.createdAt, (message as any).clientCreatedAt);
     const dateKey = format(date, 'yyyy-MM-dd');
 
     if (!grouped.has(dateKey)) {
@@ -94,23 +131,28 @@ const groupMessagesByDate = (messages: Message[]): Map<string, Message[]> => {
     grouped.get(dateKey)!.push(message);
   });
 
+  // Trier les messages dans chaque groupe par ordre chronologique
+  grouped.forEach((msgs, key) => {
+    grouped.set(
+      key,
+      msgs.sort((a, b) => {
+        const aTime = toDate(a.createdAt, (a as any).clientCreatedAt).getTime();
+        const bTime = toDate(b.createdAt, (b as any).clientCreatedAt).getTime();
+        return aTime - bTime; // Ordre chronologique (ancien -> récent)
+      })
+    );
+  });
+
   return grouped;
 };
 
-const shouldGroupMessages = (
-  current: Message,
-  previous: Message | undefined
-): boolean => {
+const shouldGroupMessages = (current: Message, previous: Message | undefined): boolean => {
   if (!previous) return false;
   if (current.senderId !== previous.senderId) return false;
   if (current.type === 'system' || previous.type === 'system') return false;
 
-  const currentTime = (current.createdAt as any)?.toDate
-    ? (current.createdAt as any).toDate()
-    : new Date(current.createdAt as Date);
-  const previousTime = (previous.createdAt as any)?.toDate
-    ? (previous.createdAt as any).toDate()
-    : new Date(previous.createdAt as Date);
+  const currentTime = toDate(current.createdAt, (current as any).clientCreatedAt);
+  const previousTime = toDate(previous.createdAt, (previous as any).clientCreatedAt);
 
   const diff = currentTime.getTime() - previousTime.getTime();
   return diff < 5 * 60 * 1000; // 5 minutes
@@ -135,10 +177,7 @@ const highlightMentions = (content: string): React.ReactNode => {
 
     // La mention
     parts.push(
-      <span
-        key={match.index}
-        className="bg-primary/10 text-primary font-medium px-1 rounded"
-      >
+      <span key={match.index} className="bg-primary/10 text-primary font-medium px-1 rounded">
         @{match[1]}
       </span>
     );
@@ -163,7 +202,9 @@ interface MessageBubbleProps {
   isOwn: boolean;
   isGrouped: boolean;
   showAvatar: boolean;
+  currentUserId: string;
   onReaction?: (emoji: string) => void;
+  onRemoveReaction?: () => void;
   onReply?: () => void;
 }
 
@@ -172,10 +213,12 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   isOwn,
   isGrouped,
   showAvatar,
+  currentUserId,
   onReaction,
+  onRemoveReaction,
   onReply,
 }) => {
-  const [showReactions, setShowReactions] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   if (message.type === 'system') {
     return (
@@ -187,7 +230,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     );
   }
 
-  const QUICK_REACTIONS = ['👍', '❤️', '😊', '😂', '🎉', '👏'];
+  const handleEmojiClick = (emoji: string) => {
+    onReaction?.(emoji);
+    setShowEmojiPicker(false);
+  };
 
   return (
     <div
@@ -202,20 +248,13 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {showAvatar && !isOwn && (
           <Avatar className="h-8 w-8">
             <AvatarImage src={message.senderAvatar} alt={message.senderName} />
-            <AvatarFallback className="text-xs">
-              {message.senderName?.[0] || 'U'}
-            </AvatarFallback>
+            <AvatarFallback className="text-xs">{message.senderName?.[0] || 'U'}</AvatarFallback>
           </Avatar>
         )}
       </div>
 
       {/* Message content */}
-      <div
-        className={cn(
-          'flex flex-col max-w-[70%]',
-          isOwn ? 'items-end' : 'items-start'
-        )}
-      >
+      <div className={cn('flex flex-col max-w-[70%]', isOwn ? 'items-end' : 'items-start')}>
         {/* Sender name (pour messages groupés ou non own) */}
         {!isGrouped && !isOwn && (
           <span className="text-xs font-medium text-muted-foreground mb-1 px-1">
@@ -231,9 +270,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
               isOwn ? 'border-primary/50' : 'border-muted-foreground/50'
             )}
           >
-            <p className="font-medium text-muted-foreground">
-              {message.replyTo.senderName}
-            </p>
+            <p className="font-medium text-muted-foreground">{message.replyTo.senderName}</p>
             <p className="text-muted-foreground/80 truncate max-w-[300px]">
               {message.replyTo.content}
             </p>
@@ -244,9 +281,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div
           className={cn(
             'rounded-lg px-3 py-2 relative',
-            isOwn
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted',
+            isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted',
             message.isDeleted && 'opacity-60 italic'
           )}
         >
@@ -267,10 +302,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
                     if (attachment.type.startsWith('image/')) {
                       return (
-                        <div
-                          key={index}
-                          className="rounded overflow-hidden max-w-sm"
-                        >
+                        <div key={index} className="rounded overflow-hidden max-w-sm">
                           <img
                             src={attachment.url}
                             alt={attachment.name}
@@ -295,9 +327,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                       >
                         <IconComponent className="h-4 w-4 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium truncate">
-                            {attachment.name}
-                          </p>
+                          <p className="text-xs font-medium truncate">{attachment.name}</p>
                         </div>
                         <Download className="h-3 w-3 flex-shrink-0" />
                       </a>
@@ -313,7 +343,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                   isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
                 )}
               >
-                <span>{formatMessageTime(message.createdAt)}</span>
+                <span>
+                  {formatMessageTime(message.createdAt, (message as any).clientCreatedAt)}
+                </span>
                 {message.isEdited && <span>(modifié)</span>}
                 {isOwn && (
                   <>
@@ -340,44 +372,27 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setShowReactions(!showReactions)}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   className="h-6 w-6 p-0"
                 >
                   <span className="text-sm">😊</span>
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={onReply}
-                  className="h-6 px-2 text-xs"
-                >
+                <Button size="sm" variant="ghost" onClick={onReply} className="h-6 px-2 text-xs">
                   Répondre
                 </Button>
               </div>
             </div>
           )}
 
-          {/* Quick reactions picker */}
-          {showReactions && (
-            <div
-              className={cn(
-                'absolute top-full mt-1 bg-background border rounded-lg shadow-lg p-1 flex gap-1 z-10',
-                isOwn ? 'right-0' : 'left-0'
-              )}
-            >
-              {QUICK_REACTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => {
-                    onReaction?.(emoji);
-                    setShowReactions(false);
-                  }}
-                  className="text-lg hover:bg-accent rounded p-1 transition-colors"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
+          {/* Emoji Picker pour réactions */}
+          {showEmojiPicker && (
+            <>
+              {/* Overlay pour fermer au clic à l'extérieur */}
+              <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+              <div className={cn('absolute top-full mt-1 z-50', isOwn ? 'right-0' : 'left-0')}>
+                <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+              </div>
+            </>
           )}
         </div>
 
@@ -385,27 +400,44 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         {message.reactions && message.reactions.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1">
             {Object.entries(
-              message.reactions.reduce((acc, reaction) => {
-                if (!acc[reaction.emoji]) {
-                  acc[reaction.emoji] = [];
-                }
-                acc[reaction.emoji].push(reaction.userName);
-                return acc;
-              }, {} as Record<string, string[]>)
-            ).map(([emoji, users]) => (
-              <button
-                key={emoji}
-                className={cn(
-                  'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border',
-                  'hover:bg-accent transition-colors',
-                  users.some(u => u === message.senderName) && 'bg-primary/10 border-primary'
-                )}
-                title={users.join(', ')}
-              >
-                <span>{emoji}</span>
-                <span className="text-muted-foreground">{users.length}</span>
-              </button>
-            ))}
+              message.reactions.reduce(
+                (acc, reaction) => {
+                  if (!acc[reaction.emoji]) {
+                    acc[reaction.emoji] = { userIds: [], userNames: [] };
+                  }
+                  acc[reaction.emoji].userIds.push(reaction.userId);
+                  acc[reaction.emoji].userNames.push(reaction.userName);
+                  return acc;
+                },
+                {} as Record<string, { userIds: string[]; userNames: string[] }>
+              )
+            ).map(([emoji, data]) => {
+              const hasUserReacted = data.userIds.includes(currentUserId);
+
+              return (
+                <button
+                  key={emoji}
+                  onClick={() => {
+                    // Si l'utilisateur a déjà réagi avec cet emoji, retirer la réaction
+                    if (hasUserReacted) {
+                      onRemoveReaction?.();
+                    } else {
+                      // Sinon, ajouter la réaction (qui remplacera l'ancienne s'il en avait une)
+                      onReaction?.(emoji);
+                    }
+                  }}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border',
+                    'hover:bg-accent transition-colors',
+                    hasUserReacted && 'bg-primary/10 border-primary'
+                  )}
+                  title={data.userNames.join(', ')}
+                >
+                  <span>{emoji}</span>
+                  <span className="text-muted-foreground">{data.userIds.length}</span>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
@@ -427,9 +459,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   isLoading = false,
   typingUsers = [],
   onReaction,
+  onRemoveReaction,
+  onTypingStart,
+  onTypingStop,
   onPinConversation,
   onArchiveConversation,
   onShowInfo,
+  onDeleteConversation,
 }) => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [replyTo, setReplyTo] = useState<SendMessageData['replyTo']>();
@@ -438,7 +474,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   // Auto-scroll vers le bas pour les nouveaux messages
   useEffect(() => {
     if (shouldScrollToBottom && scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        '[data-radix-scroll-area-viewport]'
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -485,7 +523,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     return undefined;
   };
 
-  const isOnline = conversation.type === 'direct' &&
+  const isOnline =
+    conversation.type === 'direct' &&
     conversation.participants.find(p => p.userId !== currentUserId)?.isOnline;
 
   return (
@@ -548,6 +587,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 <Archive className="h-4 w-4 mr-2" />
                 Archiver
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={onDeleteConversation}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer la conversation
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -559,12 +606,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {/* Load more indicator */}
           {hasMore && (
             <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLoadMore}
-                disabled={isLoading}
-              >
+              <Button variant="outline" size="sm" onClick={onLoadMore} disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -578,19 +620,17 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           )}
 
           {/* Messages groupés par date */}
-          {sortedDates.map((dateKey) => {
+          {sortedDates.map(dateKey => {
             const dateMessages = groupedMessages.get(dateKey) || [];
             const firstMessage = dateMessages[0];
-            const date = (firstMessage.createdAt as any)?.toDate
-              ? (firstMessage.createdAt as any).toDate()
-              : new Date(firstMessage.createdAt as Date);
+            const date = toDate(firstMessage.createdAt, (firstMessage as any).clientCreatedAt);
 
             return (
               <div key={dateKey}>
                 {/* Date separator */}
                 <div className="flex justify-center my-4">
                   <div className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
-                    {formatDateSeparator(date)}
+                    {formatDateSeparator(date, (firstMessage as any).clientCreatedAt)}
                   </div>
                 </div>
 
@@ -609,7 +649,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                         isOwn={isOwn}
                         isGrouped={isGrouped}
                         showAvatar={showAvatar}
-                        onReaction={(emoji) => onReaction?.(message.id, emoji)}
+                        currentUserId={currentUserId}
+                        onReaction={emoji => onReaction?.(message.id, emoji)}
+                        onRemoveReaction={() => onRemoveReaction?.(message.id)}
                         onReply={() => handleReply(message)}
                       />
                     );
@@ -623,9 +665,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {messages.length === 0 && !isLoading && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Circle className="h-12 w-12 text-muted-foreground/50 mb-3" />
-              <p className="text-muted-foreground">
-                Aucun message pour le moment
-              </p>
+              <p className="text-muted-foreground">Aucun message pour le moment</p>
               <p className="text-sm text-muted-foreground">
                 Envoyez un message pour démarrer la conversation
               </p>
@@ -641,6 +681,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         onCancelReply={() => setReplyTo(undefined)}
         conversationId={conversation.id}
         currentUserId={currentUserId}
+        onTypingStart={onTypingStart}
+        onTypingStop={onTypingStop}
       />
     </div>
   );

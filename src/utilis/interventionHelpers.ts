@@ -1,6 +1,6 @@
 /**
  * Intervention Helpers
- * 
+ *
  * Fonctions utilitaires pour les interventions
  */
 
@@ -10,7 +10,7 @@ import type { Timestamp } from 'firebase/firestore';
 import type {
   Intervention,
   InterventionFilters,
-} from '../types/intervention.types';
+} from '@/features/interventions/types/intervention.types';
 import {
   InterventionStatus,
   InterventionPriority,
@@ -59,11 +59,8 @@ export const calculateActualDuration = (
   completedAt?: Timestamp
 ): number | undefined => {
   if (!startedAt || !completedAt) return undefined;
-  
-  return differenceInMinutes(
-    completedAt.toDate(),
-    startedAt.toDate()
-  );
+
+  return differenceInMinutes(completedAt.toDate(), startedAt.toDate());
 };
 
 /**
@@ -73,14 +70,14 @@ export const formatDuration = (minutes: number): string => {
   if (minutes < 60) {
     return `${minutes} min`;
   }
-  
+
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
-  
+
   if (remainingMinutes === 0) {
     return `${hours}h`;
   }
-  
+
   return `${hours}h ${remainingMinutes}min`;
 };
 
@@ -101,20 +98,20 @@ export const getTimeSinceCreation = (createdAt: Timestamp): string => {
   const now = new Date();
   const created = createdAt.toDate();
   const diffMinutes = differenceInMinutes(now, created);
-  
-  if (diffMinutes < 1) return 'À l\'instant';
+
+  if (diffMinutes < 1) return "À l'instant";
   if (diffMinutes < 60) return `Il y a ${diffMinutes} min`;
-  
+
   const diffHours = Math.floor(diffMinutes / 60);
   if (diffHours < 24) return `Il y a ${diffHours}h`;
-  
+
   const diffDays = Math.floor(diffHours / 24);
   if (diffDays === 1) return 'Hier';
   if (diffDays < 7) return `Il y a ${diffDays} jours`;
-  
+
   const diffWeeks = Math.floor(diffDays / 7);
   if (diffWeeks < 4) return `Il y a ${diffWeeks} semaine${diffWeeks > 1 ? 's' : ''}`;
-  
+
   const diffMonths = Math.floor(diffDays / 30);
   return `Il y a ${diffMonths} mois`;
 };
@@ -125,10 +122,10 @@ export const getTimeSinceCreation = (createdAt: Timestamp): string => {
 export const isOverdue = (intervention: Intervention): boolean => {
   if (!intervention.scheduledAt) return false;
   if (isCompletedStatus(intervention.status)) return false;
-  
+
   const now = new Date();
   const scheduled = intervention.scheduledAt.toDate();
-  
+
   return now > scheduled;
 };
 
@@ -143,7 +140,7 @@ export const getPriorityColor = (priority: InterventionPriority): string => {
     urgent: '#EF4444',
     critical: '#A855F7',
   };
-  
+
   return colors[priority];
 };
 
@@ -161,7 +158,7 @@ export const getStatusColor = (status: InterventionStatus): string => {
     validated: '#059669',
     cancelled: '#EF4444',
   };
-  
+
   return colors[status];
 };
 
@@ -172,19 +169,19 @@ export const filterInterventionsLocally = (
   interventions: Intervention[],
   filters: InterventionFilters
 ): Intervention[] => {
-  return interventions.filter((intervention) => {
+  return interventions.filter(intervention => {
     // Recherche textuelle
     if (filters.search) {
       const search = filters.search.toLowerCase();
       const matchesTitle = intervention.title.toLowerCase().includes(search);
       const matchesDescription = intervention.description.toLowerCase().includes(search);
       const matchesRoom = intervention.roomNumber?.toLowerCase().includes(search);
-      
+
       if (!matchesTitle && !matchesDescription && !matchesRoom) {
         return false;
       }
     }
-    
+
     // Autres filtres (status, priority, etc.) sont gérés par Firestore
     return true;
   });
@@ -201,7 +198,7 @@ export const sortInterventions = (
   const sorted = [...interventions].sort((a, b) => {
     let aValue: any;
     let bValue: any;
-    
+
     switch (field) {
       case 'createdAt':
       case 'updatedAt':
@@ -228,12 +225,12 @@ export const sortInterventions = (
         aValue = a[field as keyof Intervention];
         bValue = b[field as keyof Intervention];
     }
-    
+
     if (aValue < bValue) return order === 'asc' ? -1 : 1;
     if (aValue > bValue) return order === 'asc' ? 1 : -1;
     return 0;
   });
-  
+
   return sorted;
 };
 
@@ -254,35 +251,35 @@ export const generateExportFileName = (
  */
 export const validateInterventionData = (data: any): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
-  
+
   if (!data.title || data.title.trim().length < 3) {
     errors.push('Le titre doit contenir au moins 3 caractères');
   }
-  
+
   if (!data.description || data.description.trim().length < 10) {
     errors.push('La description doit contenir au moins 10 caractères');
   }
-  
+
   if (!data.type) {
-    errors.push('Le type d\'intervention est requis');
+    errors.push("Le type d'intervention est requis");
   }
-  
+
   if (!data.category) {
     errors.push('La catégorie est requise');
   }
-  
+
   if (!data.priority) {
     errors.push('La priorité est requise');
   }
-  
+
   if (!data.location || data.location.trim().length < 3) {
     errors.push('La localisation doit contenir au moins 3 caractères');
   }
-  
+
   if (data.photos && data.photos.length > 5) {
     errors.push('Vous ne pouvez pas uploader plus de 5 photos');
   }
-  
+
   return {
     valid: errors.length === 0,
     errors,
@@ -294,14 +291,14 @@ export const validateInterventionData = (data: any): { valid: boolean; errors: s
  */
 export const getInterventionSummary = (intervention: Intervention): string => {
   const parts = [intervention.title];
-  
+
   if (intervention.roomNumber) {
     parts.push(`Ch. ${intervention.roomNumber}`);
   }
-  
+
   if (intervention.isUrgent) {
     parts.push('URGENT');
   }
-  
+
   return parts.join(' - ');
 };

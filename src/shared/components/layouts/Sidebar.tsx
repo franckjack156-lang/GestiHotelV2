@@ -16,6 +16,9 @@ import {
   Bell,
   MessageSquare,
   Settings,
+  FileText,
+  Package,
+  Warehouse,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useMemo } from 'react';
@@ -44,9 +47,12 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
   const features = useFeatureFlags([
     'interventions',
     'rooms',
-    'planning',
-    'notifications',
-    'messaging',
+    'interventionPlanning',
+    'pushNotifications',
+    'internalChat',
+    'interventionTemplates',
+    'suppliers',
+    'inventory',
   ]);
 
   /**
@@ -66,6 +72,24 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
       requiredFeature: 'interventions',
     },
     {
+      translationKey: 'templates',
+      href: '/app/templates',
+      icon: FileText,
+      requiredFeature: 'interventionTemplates',
+    },
+    {
+      translationKey: 'suppliers',
+      href: '/app/suppliers',
+      icon: Package,
+      requiredFeature: 'suppliers',
+    },
+    {
+      translationKey: 'inventory',
+      href: '/app/inventory',
+      icon: Warehouse,
+      requiredFeature: 'inventory',
+    },
+    {
       translationKey: 'rooms',
       href: '/app/rooms',
       icon: DoorClosed,
@@ -75,19 +99,19 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
       translationKey: 'planning',
       href: '/app/planning',
       icon: Calendar,
-      requiredFeature: 'planning',
+      requiredFeature: 'interventionPlanning',
     },
     {
       translationKey: 'notifications',
       href: '/app/notifications',
       icon: Bell,
-      requiredFeature: 'notifications',
+      requiredFeature: 'pushNotifications',
     },
     {
       translationKey: 'messaging',
       href: '/app/messaging',
       icon: MessageSquare,
-      requiredFeature: 'messaging',
+      requiredFeature: 'internalChat',
     },
     {
       translationKey: 'settings',
@@ -121,9 +145,7 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
   return (
     <>
       {/* Overlay mobile */}
-      {isOpen && (
-        <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={onClose} />
-      )}
+      {isOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={onClose} />}
 
       {/* Sidebar */}
       <aside

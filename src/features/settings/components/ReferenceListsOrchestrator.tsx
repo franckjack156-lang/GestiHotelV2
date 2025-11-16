@@ -32,7 +32,7 @@ import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import {
   Copy,
   Download,
-  Upload,
+  // Upload, // TODO: Imported but unused
   Settings,
   BarChart3,
   FileText,
@@ -63,8 +63,7 @@ import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurr
 // Services
 import { getAvailableTemplates, applyTemplate } from '@/shared/services/listTemplatesService';
 import { addMissingLists } from '@/features/establishments/services/establishmentInitService';
-import type { ListTemplate } from '@/shared/services/listTemplatesService';
-import type { ListKey } from '@/shared/types/reference-lists.types';
+import type { ListTemplate } from '@/shared/types/reference-lists.types';
 
 // ============================================================================
 // TYPES
@@ -227,9 +226,8 @@ export const ReferenceListsOrchestrator: React.FC = () => {
   // ============================================================================
 
   const availableTemplates = React.useMemo(() => {
-    if (!currentEstablishment?.type) return [];
-    return getAvailableTemplates(currentEstablishment.type);
-  }, [currentEstablishment?.type]);
+    return getAvailableTemplates();
+  }, []);
 
   // ============================================================================
   // RENDER
@@ -282,7 +280,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem
-                  onClick={(e) => {
+                  onClick={e => {
                     console.log('🟡 DropdownMenuItem onClick déclenché', e);
                     handleSyncMissingLists();
                   }}
@@ -358,10 +356,14 @@ export const ReferenceListsOrchestrator: React.FC = () => {
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-bold text-white">{stats.activeItems}</span>
-                <Badge variant="secondary" className="text-xs bg-white/20 text-white border-white/30">
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-white/20 text-white border-white/30"
+                >
                   {stats.totalItems > 0
                     ? Math.round((stats.activeItems / stats.totalItems) * 100)
-                    : 0}%
+                    : 0}
+                  %
                 </Badge>
               </div>
             </div>
@@ -438,7 +440,16 @@ export const ReferenceListsOrchestrator: React.FC = () => {
         open={isDuplicateDialogOpen}
         onOpenChange={setIsDuplicateDialogOpen}
         currentEstablishmentId={currentEstablishment.id}
-        establishments={establishments || []}
+        establishments={(establishments || []).map(e => ({
+          id: e.id,
+          name: e.name,
+          type: e.type,
+          category: e.category,
+          logoUrl: e.logoUrl,
+          isActive: e.isActive,
+          totalRooms: e.totalRooms,
+          city: e.address?.city || '',
+        }))}
         onSuccess={() => {
           toast.success('Listes dupliquées avec succès !');
           reload();
@@ -449,7 +460,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
       <TemplateSelectionDialog
         open={isTemplateDialogOpen}
         onOpenChange={setIsTemplateDialogOpen}
-        templates={availableTemplates}
+        templates={availableTemplates as any}
         onApply={handleApplyTemplate}
       />
     </div>

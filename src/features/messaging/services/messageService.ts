@@ -15,7 +15,8 @@ import {
   doc,
   addDoc,
   updateDoc,
-  deleteDoc,
+  // deleteDoc, // TODO: Imported but unused
+  deleteField,
   query,
   where,
   orderBy,
@@ -47,6 +48,31 @@ const MESSAGES_COLLECTION = 'messages';
 const PRESENCE_COLLECTION = 'presence';
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Nettoyer les champs undefined d'un objet (Firestore n'accepte pas undefined)
+ */
+const cleanUndefined = (obj: any): any => {
+  const cleaned: any = {};
+  Object.keys(obj).forEach(key => {
+    if (obj[key] !== undefined) {
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        cleaned[key] = cleanUndefined(obj[key]);
+      } else if (Array.isArray(obj[key])) {
+        cleaned[key] = obj[key].map((item: any) =>
+          typeof item === 'object' && item !== null ? cleanUndefined(item) : item
+        );
+      } else {
+        cleaned[key] = obj[key];
+      }
+    }
+  });
+  return cleaned;
+};
+
+// ============================================================================
 // CONVERSATIONS
 // ============================================================================
 
@@ -58,12 +84,29 @@ export const createConversation = async (
   userId: string,
   data: CreateConversationData
 ): Promise<string> => {
-  const conversationData: Partial<Conversation> = {
+  const allParticipantIds = [...new Set([userId, ...data.participantIds])]; // Inclure le créateur
+
+  // Récupérer les informations des participants
+  const participantsData = await Promise.all(
+    allParticipantIds.map(async participantId => {
+      const userDoc = await getDoc(doc(db, 'users', participantId));
+      const userData = userDoc.data();
+      return {
+        userId: participantId,
+        name: userData?.displayName || userData?.email || 'Utilisateur',
+        email: userData?.email || '',
+        avatar: userData?.photoURL,
+        role: userData?.role,
+        isOnline: false,
+        joinedAt: serverTimestamp(),
+      };
+    })
+  );
+
+  const conversationData: any = {
     type: data.type,
-    participantIds: [...new Set([userId, ...data.participantIds])], // Inclure le créateur
-    name: data.name,
-    description: data.description,
-    interventionId: data.interventionId,
+    participantIds: allParticipantIds,
+    participants: participantsData,
     establishmentId,
     createdBy: userId,
     createdAt: serverTimestamp(),
@@ -71,7 +114,21 @@ export const createConversation = async (
     unreadCount: {},
   };
 
-  const docRef = await addDoc(collection(db, CONVERSATIONS_COLLECTION), conversationData);
+  // Ajouter les champs optionnels seulement s'ils sont définis
+  if (data.name) {
+    conversationData.name = data.name;
+  }
+  if (data.description) {
+    conversationData.description = data.description;
+  }
+  if (data.interventionId) {
+    conversationData.interventionId = data.interventionId;
+  }
+
+  // Nettoyer les undefined avant d'envoyer à Firestore
+  const cleanedData = cleanUndefined(conversationData);
+
+  const docRef = await addDoc(collection(db, CONVERSATIONS_COLLECTION), cleanedData);
   return docRef.id;
 };
 
@@ -94,13 +151,28 @@ export const getOrCreateDirectConversation = async (
   const snapshot = await getDocs(q);
 
   // Vérifier si l'autre utilisateur est dans les participants
-  const existing = snapshot.docs.find((doc) => {
+  const existing = snapshot.docs.find(doc => {
     const conv = doc.data() as Conversation;
     return conv.participantIds.includes(userId2);
   });
 
   if (existing) {
-    return existing.id;
+    const conversationId = existing.id;
+    const conv = existing.data() as Conversation;
+
+    // Si la conversation a été cachée par userId1, la restaurer
+    if (conv.hiddenBy?.includes(userId1)) {
+      const conversationRef = doc(db, CONVERSATIONS_COLLECTION, conversationId);
+
+      // Retirer de hiddenBy pour que la conversation réapparaisse
+      // MAIS on garde deletedBy pour filtrer les anciens messages
+      await updateDoc(conversationRef, {
+        hiddenBy: arrayRemove(userId1),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    return conversationId;
   }
 
   // Créer une nouvelle conversation
@@ -130,7 +202,7 @@ export const getUserConversations = async (
   }
 
   const snapshot = await getDocs(q);
-  const conversations = snapshot.docs.map((doc) => ({
+  const conversations = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data(),
   })) as Conversation[];
@@ -139,21 +211,21 @@ export const getUserConversations = async (
   let filtered = conversations;
 
   if (filters?.unreadOnly) {
-    filtered = filtered.filter((conv) => (conv.unreadCount[userId] || 0) > 0);
+    filtered = filtered.filter(conv => (conv.unreadCount[userId] || 0) > 0);
   }
 
   if (filters?.archived) {
-    filtered = filtered.filter((conv) => conv.archivedBy?.includes(userId));
+    filtered = filtered.filter(conv => conv.archivedBy?.includes(userId));
   }
 
   if (filters?.pinned) {
-    filtered = filtered.filter((conv) => conv.pinnedBy?.includes(userId));
+    filtered = filtered.filter(conv => conv.pinnedBy?.includes(userId));
   }
 
   if (filters?.search) {
     const searchLower = filters.search.toLowerCase();
     filtered = filtered.filter(
-      (conv) =>
+      conv =>
         conv.name?.toLowerCase().includes(searchLower) ||
         conv.lastMessage?.content.toLowerCase().includes(searchLower)
     );
@@ -178,13 +250,16 @@ export const subscribeToConversations = (
     limit(50)
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const conversations = snapshot.docs.map((doc) => ({
+  return onSnapshot(q, snapshot => {
+    const conversations = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as Conversation[];
 
-    callback(conversations);
+    // Filtrer les conversations cachées par l'utilisateur
+    const visibleConversations = conversations.filter(conv => !conv.hiddenBy?.includes(userId));
+
+    callback(visibleConversations);
   });
 };
 
@@ -227,6 +302,21 @@ export const togglePinConversation = async (
   });
 };
 
+/**
+ * Supprimer une conversation (pour l'utilisateur uniquement)
+ * La conversation reste visible pour les autres participants
+ * Enregistre le timestamp de suppression pour filtrer les anciens messages
+ */
+export const deleteConversationForUser = async (conversationId: string, userId: string) => {
+  const conversationRef = doc(db, CONVERSATIONS_COLLECTION, conversationId);
+  const deletionTimestamp = Date.now();
+
+  await updateDoc(conversationRef, {
+    [`deletedBy.${userId}`]: deletionTimestamp, // Timestamp pour filtrer les anciens messages
+    hiddenBy: arrayUnion(userId), // Cacher la conversation
+  });
+};
+
 // ============================================================================
 // MESSAGES
 // ============================================================================
@@ -239,13 +329,17 @@ const uploadAttachment = async (
   messageId: string,
   file: File
 ): Promise<Attachment> => {
-  const fileRef = ref(storage, `messages/${conversationId}/${messageId}/${file.name}`);
+  // Sanitize filename: remplacer les espaces et caractères spéciaux
+  const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const uniqueFileName = `${Date.now()}_${sanitizedFileName}`;
+
+  const fileRef = ref(storage, `messages/${conversationId}/${messageId}/${uniqueFileName}`);
   await uploadBytes(fileRef, file);
   const url = await getDownloadURL(fileRef);
 
   return {
     id: `${Date.now()}-${Math.random()}`,
-    name: file.name,
+    name: file.name, // Garder le nom original pour l'affichage
     url,
     type: file.type,
     size: file.size,
@@ -262,8 +356,9 @@ export const sendMessage = async (
   userName: string,
   data: SendMessageData
 ): Promise<string> => {
-  // Créer le message
-  const messageData: Partial<Message> = {
+  // Créer le message avec timestamp client pour garantir l'ordre
+  const clientTimestamp = Date.now();
+  const messageData: any = {
     conversationId,
     type: data.type || 'text',
     content: data.content,
@@ -272,15 +367,23 @@ export const sendMessage = async (
     mentions: data.mentions || [],
     readBy: [userId], // Le sender a lu son propre message
     createdAt: serverTimestamp(),
-    replyTo: data.replyTo,
+    clientCreatedAt: clientTimestamp, // Timestamp client pour fallback
   };
 
-  const messageRef = await addDoc(collection(db, MESSAGES_COLLECTION), messageData);
+  // Ajouter replyTo seulement s'il existe
+  if (data.replyTo) {
+    messageData.replyTo = data.replyTo;
+  }
+
+  // Nettoyer les undefined
+  const cleanedMessageData = cleanUndefined(messageData);
+
+  const messageRef = await addDoc(collection(db, MESSAGES_COLLECTION), cleanedMessageData);
 
   // Upload des pièces jointes si présentes
   if (data.attachments && data.attachments.length > 0) {
     const attachments = await Promise.all(
-      data.attachments.map((file) => uploadAttachment(conversationId, messageRef.id, file))
+      data.attachments.map(file => uploadAttachment(conversationId, messageRef.id, file))
     );
 
     await updateDoc(messageRef, {
@@ -306,7 +409,7 @@ export const sendMessage = async (
     updatedAt: serverTimestamp(),
   };
 
-  conversation.participantIds.forEach((participantId) => {
+  conversation.participantIds.forEach(participantId => {
     if (participantId !== userId) {
       updates[`unreadCount.${participantId}`] = increment(1);
     }
@@ -320,10 +423,13 @@ export const sendMessage = async (
 
 /**
  * Récupérer les messages d'une conversation
+ * Filtre automatiquement les messages antérieurs à la suppression de la conversation
  */
 export const getMessages = async (
   conversationId: string,
-  limitCount: number = 50
+  // userId, // TODO: Unused parameter
+  limitCount: number = 50,
+  deletionTimestamp?: number
 ): Promise<Message[]> => {
   const q = query(
     collection(db, MESSAGES_COLLECTION),
@@ -333,21 +439,82 @@ export const getMessages = async (
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs
-    .map((doc) => ({
+  let messages = snapshot.docs
+    .map(doc => ({
       id: doc.id,
       ...doc.data(),
     }))
     .reverse() as Message[]; // Inverser pour avoir chronologique
+
+  // Filtrer les messages antérieurs à la suppression
+  if (deletionTimestamp) {
+    messages = messages.filter(msg => {
+      const createdAt = msg.createdAt;
+      const msgTimestamp =
+        msg.clientCreatedAt ||
+        (createdAt && typeof (createdAt as any).toDate === 'function'
+          ? (createdAt as any).toDate().getTime()
+          : createdAt instanceof Date
+            ? createdAt.getTime()
+            : 0);
+      return msgTimestamp > deletionTimestamp;
+    });
+  }
+
+  return messages;
+};
+
+/**
+ * Charger plus de messages (pagination avec curseur)
+ */
+export const loadMoreMessages = async (
+  conversationId: string,
+  limitCount: number = 50,
+  oldestMessageTimestamp?: number
+): Promise<{ messages: Message[]; hasMore: boolean }> => {
+  let q = query(
+    collection(db, MESSAGES_COLLECTION),
+    where('conversationId', '==', conversationId),
+    orderBy('createdAt', 'desc'),
+    limit(limitCount + 1) // +1 pour savoir s'il y a plus de messages
+  );
+
+  // Si on a un timestamp, charger les messages plus anciens
+  if (oldestMessageTimestamp) {
+    const oldestDate = Timestamp.fromMillis(oldestMessageTimestamp);
+    q = query(
+      collection(db, MESSAGES_COLLECTION),
+      where('conversationId', '==', conversationId),
+      where('createdAt', '<', oldestDate),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount + 1)
+    );
+  }
+
+  const snapshot = await getDocs(q);
+  const hasMore = snapshot.docs.length > limitCount;
+
+  const messages = snapshot.docs
+    .slice(0, limitCount) // Enlever le message supplémentaire
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .reverse() as Message[]; // Chronologique
+
+  return { messages, hasMore };
 };
 
 /**
  * Écouter les messages en temps réel
+ * Filtre automatiquement les messages antérieurs à la suppression de la conversation
  */
 export const subscribeToMessages = (
   conversationId: string,
+  // userId, // TODO: Unused parameter
   callback: (messages: Message[]) => void,
-  limitCount: number = 50
+  limitCount: number = 50,
+  deletionTimestamp?: number
 ) => {
   const q = query(
     collection(db, MESSAGES_COLLECTION),
@@ -356,13 +523,28 @@ export const subscribeToMessages = (
     limit(limitCount)
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs
-      .map((doc) => ({
+  return onSnapshot(q, snapshot => {
+    let messages = snapshot.docs
+      .map(doc => ({
         id: doc.id,
         ...doc.data(),
       }))
       .reverse() as Message[]; // Chronologique
+
+    // Filtrer les messages antérieurs à la suppression
+    if (deletionTimestamp) {
+      messages = messages.filter(msg => {
+        const createdAt = msg.createdAt;
+        const msgTimestamp =
+          msg.clientCreatedAt ||
+          (createdAt && typeof (createdAt as any).toDate === 'function'
+            ? (createdAt as any).toDate().getTime()
+            : createdAt instanceof Date
+              ? createdAt.getTime()
+              : 0);
+        return msgTimestamp > deletionTimestamp;
+      });
+    }
 
     callback(messages);
   });
@@ -374,7 +556,7 @@ export const subscribeToMessages = (
 export const markMessagesAsRead = async (messageIds: string[], userId: string) => {
   const batch = writeBatch(db);
 
-  messageIds.forEach((messageId) => {
+  messageIds.forEach(messageId => {
     const messageRef = doc(db, MESSAGES_COLLECTION, messageId);
     batch.update(messageRef, {
       readBy: arrayUnion(userId),
@@ -417,6 +599,8 @@ export const deleteMessage = async (messageId: string) => {
 
 /**
  * Ajouter une réaction à un message
+ * Un utilisateur ne peut avoir qu'une seule réaction par message
+ * Si une réaction existe déjà, elle est remplacée par la nouvelle
  */
 export const addReaction = async (
   messageId: string,
@@ -425,31 +609,37 @@ export const addReaction = async (
   emoji: string
 ) => {
   const messageRef = doc(db, MESSAGES_COLLECTION, messageId);
+  const messageSnap = await getDoc(messageRef);
+  const message = messageSnap.data() as Message;
+
+  // Retirer l'ancienne réaction de l'utilisateur s'il en avait une
+  const existingReactions = message.reactions || [];
+  const filteredReactions = existingReactions.filter(r => r.userId !== userId);
+
+  // Ajouter la nouvelle réaction
+  const newReaction = {
+    emoji,
+    userId,
+    userName,
+    createdAt: Date.now(),
+  };
+
   await updateDoc(messageRef, {
-    reactions: arrayUnion({
-      emoji,
-      userId,
-      userName,
-      createdAt: serverTimestamp(),
-    }),
+    reactions: [...filteredReactions, newReaction],
   });
 };
 
 /**
- * Retirer une réaction
+ * Retirer la réaction d'un utilisateur sur un message
+ * Retire toutes les réactions de l'utilisateur (il ne peut en avoir qu'une)
  */
-export const removeReaction = async (
-  messageId: string,
-  userId: string,
-  emoji: string
-) => {
+export const removeReaction = async (messageId: string, userId: string) => {
   const messageRef = doc(db, MESSAGES_COLLECTION, messageId);
   const messageSnap = await getDoc(messageRef);
   const message = messageSnap.data() as Message;
 
-  const updatedReactions = message.reactions?.filter(
-    (r) => !(r.userId === userId && r.emoji === emoji)
-  );
+  // Retirer toutes les réactions de cet utilisateur
+  const updatedReactions = message.reactions?.filter(r => r.userId !== userId);
 
   await updateDoc(messageRef, {
     reactions: updatedReactions || [],
@@ -490,10 +680,10 @@ export const subscribeToPresence = (
     where('__name__', 'in', userIds.slice(0, 10)) // Firestore limit
   );
 
-  return onSnapshot(q, (snapshot) => {
+  return onSnapshot(q, snapshot => {
     const presence: Record<string, UserPresence> = {};
 
-    snapshot.docs.forEach((doc) => {
+    snapshot.docs.forEach(doc => {
       presence[doc.id] = {
         userId: doc.id,
         ...doc.data(),
@@ -525,7 +715,7 @@ export const setTypingIndicator = async (
     });
   } else {
     await updateDoc(conversationRef, {
-      [`typing.${userId}`]: deleteDoc as any,
+      [`typing.${userId}`]: deleteField(),
     });
   }
 };

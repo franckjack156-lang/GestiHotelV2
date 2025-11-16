@@ -59,8 +59,8 @@ export const BlockRoomDialog: React.FC<BlockRoomDialogProps> = ({
             Bloquer la chambre {roomNumber}
           </DialogTitle>
           <DialogDescription>
-            Cette action bloquera la chambre pour toutes les interventions futures.
-            Veuillez indiquer la raison du blocage.
+            Cette action bloquera la chambre pour toutes les interventions futures. Veuillez
+            indiquer la raison du blocage.
           </DialogDescription>
         </DialogHeader>
 
@@ -72,7 +72,7 @@ export const BlockRoomDialog: React.FC<BlockRoomDialogProps> = ({
             <Textarea
               id="blockReason"
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={e => setReason(e.target.value)}
               placeholder="Ex: Fuite d'eau, travaux de rénovation, problème électrique..."
               rows={4}
               className="resize-none"
@@ -91,11 +91,7 @@ export const BlockRoomDialog: React.FC<BlockRoomDialogProps> = ({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={handleClose} disabled={isLoading}>
             Annuler
           </Button>
           <Button

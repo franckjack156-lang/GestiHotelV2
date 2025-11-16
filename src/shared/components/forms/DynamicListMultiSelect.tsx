@@ -27,11 +27,7 @@ import {
   CommandInput,
   CommandItem,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Loader2, AlertCircle, Check, ChevronsUpDown, X } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -94,7 +90,8 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
   showIcons = true,
   showColors = true,
   includeInactive = false,
-  allowCustom = false,
+  // TODO: allowCustom unused
+  // allowCustom = false,
   error,
   className,
   maxSelections,
@@ -116,7 +113,7 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
 
     if (isSelected) {
       // Désélectionner
-      onChange(value.filter((v) => v !== itemValue));
+      onChange(value.filter(v => v !== itemValue));
     } else {
       // Sélectionner si pas de limite ou limite non atteinte
       if (!maxSelections || value.length < maxSelections) {
@@ -126,7 +123,7 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
   };
 
   const handleRemove = (itemValue: string) => {
-    onChange(value.filter((v) => v !== itemValue));
+    onChange(value.filter(v => v !== itemValue));
   };
 
   const handleClearAll = () => {
@@ -189,9 +186,7 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
 
   const getSelectedLabels = () => {
     if (!items) return [];
-    return value
-      .map((v) => items.find((item) => item.value === v))
-      .filter(Boolean);
+    return value.map(v => items.find(item => item.value === v)).filter(Boolean);
   };
 
   // ============================================================================
@@ -245,11 +240,7 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn(
-              'w-full justify-between',
-              error && 'border-red-500',
-              className
-            )}
+            className={cn('w-full justify-between', error && 'border-red-500', className)}
             disabled={disabled}
           >
             <div className="flex items-center gap-1 flex-wrap flex-1 overflow-hidden">
@@ -269,37 +260,27 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
             <CommandInput placeholder="Rechercher..." />
             <CommandEmpty>Aucun élément trouvé.</CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
-              {items.map((item) => {
+              {items.map(item => {
                 const isSelected = value.includes(item.value);
                 const isDisabled =
-                  !item.isActive ||
-                  (!isSelected && maxSelections && value.length >= maxSelections);
+                  !item.isActive || (!isSelected && maxSelections && value.length >= maxSelections);
 
                 return (
                   <CommandItem
                     key={item.id}
                     value={item.value}
                     onSelect={() => !isDisabled && handleSelect(item.value)}
-                    disabled={isDisabled}
-                    className={cn(
-                      isDisabled && 'opacity-50 cursor-not-allowed'
-                    )}
+                    disabled={isDisabled ? true : false}
+                    className={cn(isDisabled && 'opacity-50 cursor-not-allowed')}
                   >
                     <Check
-                      className={cn(
-                        'mr-2 h-4 w-4',
-                        isSelected ? 'opacity-100' : 'opacity-0'
-                      )}
+                      className={cn('mr-2 h-4 w-4', isSelected ? 'opacity-100' : 'opacity-0')}
                     />
                     <div className="flex items-center gap-2">
                       {showIcons && (
-                        <span className={getColorClass(item.color)}>
-                          {getIcon(item.icon)}
-                        </span>
+                        <span className={getColorClass(item.color)}>{getIcon(item.icon)}</span>
                       )}
-                      <span className={getColorClass(item.color)}>
-                        {item.label}
-                      </span>
+                      <span className={getColorClass(item.color)}>{item.label}</span>
                     </div>
                   </CommandItem>
                 );
@@ -312,14 +293,11 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
       {/* Badges des sélections */}
       {selectedLabels.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {selectedLabels.map((item) => (
+          {selectedLabels.map(item => (
             <Badge
               key={item!.id}
               variant="secondary"
-              className={cn(
-                'gap-1 pr-1',
-                getBadgeColorClass(item!.color)
-              )}
+              className={cn('gap-1 pr-1', getBadgeColorClass(item!.color))}
             >
               {showIcons && getIcon(item!.icon)}
               <span className="text-xs">{item!.label}</span>
@@ -366,9 +344,7 @@ export const DynamicListMultiSelect: React.FC<DynamicListMultiSelectProps> = ({
 
       {/* Information sur la liste */}
       {listConfig && listConfig.description && !error && !maxSelections && (
-        <p className="text-xs text-muted-foreground">
-          {listConfig.description}
-        </p>
+        <p className="text-xs text-muted-foreground">{listConfig.description}</p>
       )}
     </div>
   );

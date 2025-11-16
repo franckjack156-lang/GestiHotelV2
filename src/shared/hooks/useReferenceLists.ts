@@ -20,10 +20,10 @@ import type {
   ListConfig,
   ReferenceItem,
   CreateItemInput,
-  UpdateItemInput,
+  // UpdateItemInput, // TODO: Imported but unused
   ImportOptions,
   ImportResult,
-  ExportOptions,
+  ReferenceListsExportOptions,
   ListAnalytics,
   SmartSuggestion,
   ValidationResult,
@@ -53,7 +53,8 @@ interface ReferenceListsState {
 const useReferenceListsStore = create<ReferenceListsState>()(
   devtools(
     persist(
-      (set, get) => ({
+      // TODO: get unused in function
+      set => ({
         cache: {},
         loading: {},
         errors: {},
@@ -228,7 +229,9 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
 
           setLists(establishmentId, {
             ...data,
-            lastModified: data.lastModified?.toDate ? data.lastModified.toDate() : (data.lastModified || new Date()),
+            lastModified: data.lastModified?.toDate
+              ? data.lastModified.toDate()
+              : data.lastModified || new Date(),
             lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
               acc[key] = {
                 ...config,
@@ -330,8 +333,9 @@ export const useReferenceList = (listKey: ListKey) => {
   const { currentEstablishment } = useCurrentEstablishment();
   const { user } = useAuth(); // ✅ CORRIGÉ : useAuth au lieu de useAuthStore
 
+  // TODO: get unused in destructuring
   const {
-    data,
+    // data, // TODO: Unused
     isLoading,
     error,
     getList,
@@ -341,6 +345,7 @@ export const useReferenceList = (listKey: ListKey) => {
     reload,
   } = useAllReferenceLists({ realtime: true, autoLoad: true });
 
+  // TODO: getItemByValue and getLabelByValue and reload unused here
   const listConfig = useMemo(() => getList(listKey), [getList, listKey]);
   const activeItems = useMemo(() => getActiveItems(listKey), [getActiveItems, listKey]);
 
@@ -463,7 +468,7 @@ export const useImportExport = () => {
   const { reload } = useAllReferenceLists();
 
   const exportToExcel = useCallback(
-    async (options: ExportOptions): Promise<Blob> => {
+    async (options: ReferenceListsExportOptions): Promise<Blob> => {
       if (!currentEstablishment?.id) {
         throw new Error('Établissement non trouvé');
       }
@@ -510,16 +515,10 @@ export const useTrackItemUsage = () => {
   const { currentEstablishment } = useCurrentEstablishment();
 
   return useCallback(
-    async (listKey: ListKey, itemValue: string, context: string, contextId: string) => {
+    async (listKey: ListKey, itemValue: string) => {
       if (!currentEstablishment?.id) return;
 
-      await referenceListsService.trackItemUsage(
-        currentEstablishment.id,
-        listKey,
-        itemValue,
-        context,
-        contextId
-      );
+      await referenceListsService.trackItemUsage(currentEstablishment.id, listKey, itemValue);
     },
     [currentEstablishment?.id]
   );

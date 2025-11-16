@@ -27,17 +27,13 @@ import {
   CommandInput,
   CommandItem,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
-import { Loader2, AlertCircle, Check, ChevronsUpDown, X, User, Wrench } from 'lucide-react';
+import { Loader2, AlertCircle, Check, ChevronsUpDown, X } from 'lucide-react';
 import { useUsers } from '@/features/users/hooks/useUsers';
 import { UserAvatar } from '@/features/users/components';
 import { cn } from '@/shared/utils/cn';
-import type { User as UserType } from '@/features/users/types/user.types';
+import type { User as UserType, UserProfile } from '@/features/users/types/user.types';
 
 // ============================================================================
 // TYPES
@@ -104,13 +100,15 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
   const technicians = useMemo(() => {
     if (!users) return [];
 
-    let filtered = users.filter((u) => u.isTechnician && u.isActive);
+    // Cast to UserProfile to access skills property
+    const userProfiles = users as UserProfile[];
+    let filtered = userProfiles.filter(u => u.isTechnician && u.isActive);
 
     // Filtrer par compétences requises
     if (requiredSkills.length > 0) {
-      filtered = filtered.filter((tech) => {
+      filtered = filtered.filter(tech => {
         if (!tech.skills || tech.skills.length === 0) return false;
-        return requiredSkills.some((required) => tech.skills?.includes(required));
+        return requiredSkills.some(required => tech.skills?.includes(required));
       });
     }
 
@@ -133,7 +131,7 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
 
       if (isSelected) {
         // Désélectionner
-        const newValue = selectedIds.filter((id) => id !== technicianId);
+        const newValue = selectedIds.filter(id => id !== technicianId);
         onChange(newValue);
       } else {
         // Sélectionner si pas de limite ou limite non atteinte
@@ -150,7 +148,7 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
 
   const handleRemove = (technicianId: string) => {
     if (multiple) {
-      onChange(selectedIds.filter((id) => id !== technicianId));
+      onChange(selectedIds.filter(id => id !== technicianId));
     } else {
       onChange('');
     }
@@ -166,9 +164,7 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
 
   const getSelectedTechnicians = (): UserType[] => {
     if (!technicians) return [];
-    return selectedIds
-      .map((id) => technicians.find((t) => t.id === id))
-      .filter(Boolean) as UserType[];
+    return selectedIds.map(id => technicians.find(t => t.id === id)).filter(Boolean) as UserType[];
   };
 
   const getTechnicianLabel = (tech: UserType): string => {
@@ -176,9 +172,10 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
   };
 
   const hasRequiredSkills = (tech: UserType): boolean => {
+    const techProfile = tech as UserProfile;
     if (requiredSkills.length === 0) return true;
-    if (!tech.skills || tech.skills.length === 0) return false;
-    return requiredSkills.some((required) => tech.skills?.includes(required));
+    if (!techProfile.skills || techProfile.skills.length === 0) return false;
+    return requiredSkills.some(required => techProfile.skills?.includes(required));
   };
 
   // ============================================================================
@@ -229,11 +226,7 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className={cn(
-              'w-full justify-between',
-              error && 'border-red-500',
-              className
-            )}
+            className={cn('w-full justify-between', error && 'border-red-500', className)}
             disabled={disabled}
           >
             <div className="flex items-center gap-2 flex-1 overflow-hidden">
@@ -241,12 +234,17 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
                 <span className="text-muted-foreground">{placeholder}</span>
               ) : multiple ? (
                 <span className="text-sm">
-                  {selectedIds.length} {selectedIds.length === 1 ? 'technicien sélectionné' : 'techniciens sélectionnés'}
+                  {selectedIds.length}{' '}
+                  {selectedIds.length === 1 ? 'technicien sélectionné' : 'techniciens sélectionnés'}
                 </span>
               ) : (
                 <div className="flex items-center gap-2">
                   {showAvatars && selectedTechnicians[0] && (
-                    <UserAvatar user={selectedTechnicians[0]} size="xs" />
+                    <UserAvatar
+                      photoURL={selectedTechnicians[0].photoURL}
+                      displayName={selectedTechnicians[0].displayName}
+                      size="sm"
+                    />
                   )}
                   <span className="truncate">
                     {selectedTechnicians[0] ? getTechnicianLabel(selectedTechnicians[0]) : ''}
@@ -262,14 +260,12 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
             <CommandInput placeholder="Rechercher un technicien..." />
             <CommandEmpty>Aucun technicien trouvé.</CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
-              {technicians.map((tech) => {
+              {technicians.map(tech => {
                 const isSelected = selectedIds.includes(tech.id);
                 const meetsSkillRequirement = hasRequiredSkills(tech);
-                const isDisabled =
-                  !isSelected &&
-                  multiple &&
-                  maxSelections &&
-                  selectedIds.length >= maxSelections;
+                const isDisabled = Boolean(
+                  !isSelected && multiple && maxSelections && selectedIds.length >= maxSelections
+                );
 
                 return (
                   <CommandItem
@@ -277,49 +273,49 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
                     value={tech.id}
                     onSelect={() => !isDisabled && handleSelect(tech.id)}
                     disabled={isDisabled}
-                    className={cn(
-                      isDisabled && 'opacity-50 cursor-not-allowed'
-                    )}
+                    className={cn(isDisabled && 'opacity-50 cursor-not-allowed')}
                   >
                     {multiple && (
                       <Check
-                        className={cn(
-                          'mr-2 h-4 w-4',
-                          isSelected ? 'opacity-100' : 'opacity-0'
-                        )}
+                        className={cn('mr-2 h-4 w-4', isSelected ? 'opacity-100' : 'opacity-0')}
                       />
                     )}
                     <div className="flex items-center gap-2 flex-1">
-                      {showAvatars && <UserAvatar user={tech} size="xs" />}
+                      {showAvatars && (
+                        <UserAvatar
+                          photoURL={tech.photoURL}
+                          displayName={tech.displayName}
+                          size="sm"
+                        />
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium truncate">
-                            {getTechnicianLabel(tech)}
-                          </span>
+                          <span className="font-medium truncate">{getTechnicianLabel(tech)}</span>
                           {meetsSkillRequirement && requiredSkills.length > 0 && (
-                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-green-100 text-green-800"
+                            >
                               Compétent
                             </Badge>
                           )}
                         </div>
-                        {showSkills && tech.skills && tech.skills.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {tech.skills.slice(0, 3).map((skill, idx) => (
-                              <Badge
-                                key={idx}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {skill}
-                              </Badge>
-                            ))}
-                            {tech.skills.length > 3 && (
-                              <span className="text-xs text-muted-foreground">
-                                +{tech.skills.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        {showSkills &&
+                          (tech as UserProfile).skills &&
+                          (tech as UserProfile).skills!.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {(tech as UserProfile).skills!.slice(0, 3).map((skill, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {skill}
+                                </Badge>
+                              ))}
+                              {(tech as UserProfile).skills!.length > 3 && (
+                                <span className="text-xs text-muted-foreground">
+                                  +{(tech as UserProfile).skills!.length - 3}
+                                </span>
+                              )}
+                            </div>
+                          )}
                       </div>
                     </div>
                   </CommandItem>
@@ -333,13 +329,11 @@ export const TechnicianSelect: React.FC<TechnicianSelectProps> = ({
       {/* Badges des sélections (mode multiple) */}
       {multiple && selectedTechnicians.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {selectedTechnicians.map((tech) => (
-            <Badge
-              key={tech.id}
-              variant="secondary"
-              className="gap-2 pr-1"
-            >
-              {showAvatars && <UserAvatar user={tech} size="xs" />}
+          {selectedTechnicians.map(tech => (
+            <Badge key={tech.id} variant="secondary" className="gap-2 pr-1">
+              {showAvatars && (
+                <UserAvatar photoURL={tech.photoURL} displayName={tech.displayName} size="sm" />
+              )}
               <span className="text-xs">{getTechnicianLabel(tech)}</span>
               <button
                 type="button"

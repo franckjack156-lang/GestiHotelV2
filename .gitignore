@@ -49,4 +49,4 @@ firestore-debug.log
 # Firebase Service Account Keys
 scripts/serviceAccountKey.json
 **/serviceAccountKey.json
-**/*.json.key
+**/*.json.keynul

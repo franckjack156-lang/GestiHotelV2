@@ -1,6 +1,6 @@
 /**
  * Intervention Store
- * 
+ *
  * Store Zustand pour gérer l'état des interventions
  */
 
@@ -19,18 +19,18 @@ interface InterventionState {
   selectedIntervention: Intervention | null;
   isLoading: boolean;
   error: string | null;
-  
+
   // Filtres et tri
   filters: InterventionFilters;
   sortOptions: InterventionSortOptions;
-  
+
   // Configuration d'affichage
   listConfig: InterventionListConfig;
-  
+
   // Pagination
   currentPage: number;
   totalItems: number;
-  
+
   // Statistiques
   stats: {
     total: number;
@@ -39,7 +39,7 @@ interface InterventionState {
     completed: number;
     urgent: number;
   } | null;
-  
+
   // Actions - État
   setInterventions: (interventions: Intervention[]) => void;
   addIntervention: (intervention: Intervention) => void;
@@ -48,22 +48,22 @@ interface InterventionState {
   setSelectedIntervention: (intervention: Intervention | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  
+
   // Actions - Filtres
   setFilters: (filters: Partial<InterventionFilters>) => void;
   resetFilters: () => void;
   setSortOptions: (options: InterventionSortOptions) => void;
-  
+
   // Actions - Configuration
   setListConfig: (config: Partial<InterventionListConfig>) => void;
-  
+
   // Actions - Pagination
   setCurrentPage: (page: number) => void;
   setTotalItems: (total: number) => void;
-  
+
   // Actions - Statistiques
   updateStats: () => void;
-  
+
   // Utilitaires
   getInterventionById: (id: string) => Intervention | undefined;
   clearAll: () => void;
@@ -113,23 +113,21 @@ export const useInterventionStore = create<InterventionState>()(
       stats: null,
 
       // Actions - État
-      setInterventions: (interventions) => {
+      setInterventions: interventions => {
         set({ interventions, error: null });
         get().updateStats();
       },
 
-      addIntervention: (intervention) =>
-        set((state) => {
+      addIntervention: intervention =>
+        set(state => {
           const newInterventions = [intervention, ...state.interventions];
           return { interventions: newInterventions };
         }),
 
       updateInterventionInList: (id, updates) =>
-        set((state) => ({
-          interventions: state.interventions.map((intervention) =>
-            intervention.id === id
-              ? { ...intervention, ...updates }
-              : intervention
+        set(state => ({
+          interventions: state.interventions.map(intervention =>
+            intervention.id === id ? { ...intervention, ...updates } : intervention
           ),
           selectedIntervention:
             state.selectedIntervention?.id === id
@@ -137,25 +135,22 @@ export const useInterventionStore = create<InterventionState>()(
               : state.selectedIntervention,
         })),
 
-      removeIntervention: (id) =>
-        set((state) => ({
-          interventions: state.interventions.filter((i) => i.id !== id),
+      removeIntervention: id =>
+        set(state => ({
+          interventions: state.interventions.filter(i => i.id !== id),
           selectedIntervention:
-            state.selectedIntervention?.id === id
-              ? null
-              : state.selectedIntervention,
+            state.selectedIntervention?.id === id ? null : state.selectedIntervention,
         })),
 
-      setSelectedIntervention: (intervention) =>
-        set({ selectedIntervention: intervention }),
+      setSelectedIntervention: intervention => set({ selectedIntervention: intervention }),
 
-      setLoading: (loading) => set({ isLoading: loading }),
+      setLoading: loading => set({ isLoading: loading }),
 
-      setError: (error) => set({ error, isLoading: false }),
+      setError: error => set({ error, isLoading: false }),
 
       // Actions - Filtres
-      setFilters: (newFilters) =>
-        set((state) => ({
+      setFilters: newFilters =>
+        set(state => ({
           filters: { ...state.filters, ...newFilters },
           currentPage: 1, // Reset à la page 1 lors du changement de filtres
         })),
@@ -166,43 +161,42 @@ export const useInterventionStore = create<InterventionState>()(
           currentPage: 1,
         }),
 
-      setSortOptions: (options) =>
+      setSortOptions: options =>
         set({
           sortOptions: options,
           currentPage: 1,
         }),
 
       // Actions - Configuration
-      setListConfig: (config) =>
-        set((state) => ({
+      setListConfig: config =>
+        set(state => ({
           listConfig: { ...state.listConfig, ...config },
         })),
 
       // Actions - Pagination
-      setCurrentPage: (page) => set({ currentPage: page }),
+      setCurrentPage: page => set({ currentPage: page }),
 
-      setTotalItems: (total) => set({ totalItems: total }),
+      setTotalItems: total => set({ totalItems: total }),
 
       // Actions - Statistiques
       updateStats: () => {
         const { interventions } = get();
-        
+
         const stats = {
           total: interventions.length,
-          pending: interventions.filter((i) => i.status === 'pending').length,
-          inProgress: interventions.filter((i) => i.status === 'in_progress').length,
-          completed: interventions.filter(
-            (i) => i.status === 'completed' || i.status === 'validated'
-          ).length,
-          urgent: interventions.filter((i) => i.isUrgent).length,
+          pending: interventions.filter(i => i.status === 'pending').length,
+          inProgress: interventions.filter(i => i.status === 'in_progress').length,
+          completed: interventions.filter(i => i.status === 'completed' || i.status === 'validated')
+            .length,
+          urgent: interventions.filter(i => i.isUrgent).length,
         };
-        
+
         set({ stats });
       },
 
       // Utilitaires
-      getInterventionById: (id) => {
-        return get().interventions.find((i) => i.id === id);
+      getInterventionById: id => {
+        return get().interventions.find(i => i.id === id);
       },
 
       clearAll: () =>

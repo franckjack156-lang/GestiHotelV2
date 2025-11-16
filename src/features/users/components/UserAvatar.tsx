@@ -10,7 +10,8 @@
  */
 
 import React from 'react';
-import { User as UserIcon } from 'lucide-react';
+// TODO: UserIcon imported but unused
+// import { User as UserIcon } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 

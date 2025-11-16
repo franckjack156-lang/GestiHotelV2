@@ -80,6 +80,9 @@ const CreateUserPage = lazy(() =>
 const UserDetailsPage = lazy(() =>
   import('@/pages/users/UserDetailsPage').then(module => ({ default: module.UserDetailsPage }))
 );
+const UserProfilePage = lazy(() =>
+  import('@/pages/users/UserProfilePage').then(module => ({ default: module.UserProfilePage }))
+);
 const EditUserPage = lazy(() =>
   import('@/pages/users/EditUserPage').then(module => ({ default: module.EditUserPage }))
 );
@@ -108,6 +111,24 @@ const RoomsListPage = lazy(() =>
 const CreateRoomPage = lazy(() =>
   import('@/pages/rooms/RoomsPages').then(module => ({ default: module.CreateRoomPage }))
 );
+const RoomDetailPage = lazy(() =>
+  import('@/pages/rooms/RoomDetailPage').then(module => ({ default: module.RoomDetailPage }))
+);
+const EditRoomPage = lazy(() =>
+  import('@/pages/rooms/EditRoomPage').then(module => ({ default: module.EditRoomPage }))
+);
+
+// Establishments Detail
+const EstablishmentDetailPage = lazy(() =>
+  import('@/pages/establishments/EstablishmentsPages').then(module => ({
+    default: module.EstablishmentDetailPage,
+  }))
+);
+
+// Messaging
+const MessagingPage = lazy(() =>
+  import('@/pages/MessagingPage').then(module => ({ default: module.MessagingPage }))
+);
 
 // Planning
 const PlanningPage = lazy(() =>
@@ -125,12 +146,49 @@ const NotificationCenterPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('@/pages/Settings').then(module => ({ default: module.SettingsPage }))
 );
-const ReferenceListsOrchestrator = lazy(() =>
-  import('@/features/settings/components/ReferenceListsOrchestrator')
-);
 const EstablishmentFeaturesPage = lazy(() =>
   import('@/pages/settings/EstablishmentFeaturesPage').then(module => ({
     default: module.EstablishmentFeaturesPage,
+  }))
+);
+const EstablishmentSettingsPage = lazy(() =>
+  import('@/pages/settings/EstablishmentSettingsPage').then(module => ({
+    default: module.EstablishmentSettingsPage,
+  }))
+);
+const MigrationToolsPage = lazy(() =>
+  import('@/pages/settings/MigrationToolsPage').then(module => ({
+    default: module.MigrationToolsPage,
+  }))
+);
+
+// Diagnostic
+const DiagnosticPage = lazy(() =>
+  import('@/pages/DiagnosticPage').then(module => ({ default: module.DiagnosticPage }))
+);
+
+// Templates
+const TemplatesPage = lazy(() =>
+  import('@/pages/templates/TemplatesPage').then(module => ({ default: module.TemplatesPage }))
+);
+
+// Suppliers
+const SuppliersPage = lazy(() =>
+  import('@/pages/suppliers/SuppliersPage').then(module => ({ default: module.SuppliersPage }))
+);
+const SupplierDetailPage = lazy(() =>
+  import('@/pages/suppliers/SupplierDetailPage').then(module => ({
+    default: module.SupplierDetailPage,
+  }))
+);
+
+// Inventory
+const InventoryPage = lazy(() =>
+  import('@/pages/inventory/InventoryPage').then(module => ({ default: module.InventoryPage }))
+);
+const InventoryItemDetailPage = lazy(() =>
+  import('@/pages/inventory/InventoryItemDetailPage').then(module => ({
+    default: module.InventoryItemDetailPage,
   }))
 );
 
@@ -204,19 +262,33 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <FeatureGuard feature="interventions">{withSuspense(InterventionsPage)}</FeatureGuard>,
+            element: (
+              <FeatureGuard feature="interventions">{withSuspense(InterventionsPage)}</FeatureGuard>
+            ),
           },
           {
             path: 'create',
-            element: <FeatureGuard feature="interventions">{withSuspense(CreateInterventionPage)}</FeatureGuard>,
+            element: (
+              <FeatureGuard feature="interventions">
+                {withSuspense(CreateInterventionPage)}
+              </FeatureGuard>
+            ),
           },
           {
             path: ':id',
-            element: <FeatureGuard feature="interventions">{withSuspense(InterventionDetailsPage)}</FeatureGuard>,
+            element: (
+              <FeatureGuard feature="interventions">
+                {withSuspense(InterventionDetailsPage)}
+              </FeatureGuard>
+            ),
           },
           {
             path: ':id/edit',
-            element: <FeatureGuard feature="interventions">{withSuspense(EditInterventionPage)}</FeatureGuard>,
+            element: (
+              <FeatureGuard feature="interventions">
+                {withSuspense(EditInterventionPage)}
+              </FeatureGuard>
+            ),
           },
         ],
       },
@@ -238,6 +310,10 @@ export const router = createBrowserRouter([
             element: withSuspense(UserDetailsPage),
           },
           {
+            path: ':id/profile',
+            element: withSuspense(UserProfilePage),
+          },
+          {
             path: ':id/edit',
             element: withSuspense(EditUserPage),
           },
@@ -255,6 +331,10 @@ export const router = createBrowserRouter([
           {
             path: 'create',
             element: withSuspense(CreateEstablishmentPage),
+          },
+          {
+            path: ':id',
+            element: withSuspense(EstablishmentDetailPage),
           },
           {
             path: ':id/edit',
@@ -275,37 +355,103 @@ export const router = createBrowserRouter([
             path: 'create',
             element: <FeatureGuard feature="rooms">{withSuspense(CreateRoomPage)}</FeatureGuard>,
           },
+          {
+            path: ':roomId',
+            element: <FeatureGuard feature="rooms">{withSuspense(RoomDetailPage)}</FeatureGuard>,
+          },
+          {
+            path: ':roomId/edit',
+            element: <FeatureGuard feature="rooms">{withSuspense(EditRoomPage)}</FeatureGuard>,
+          },
         ],
       },
 
       // Planning
       {
         path: 'planning',
-        element: <FeatureGuard feature="planning">{withSuspense(PlanningPage)}</FeatureGuard>,
+        element: (
+          <FeatureGuard feature="interventionPlanning">{withSuspense(PlanningPage)}</FeatureGuard>
+        ),
       },
 
       // Notifications
       {
         path: 'notifications',
-        element: <FeatureGuard feature="notifications">{withSuspense(NotificationCenterPage)}</FeatureGuard>,
+        element: (
+          <FeatureGuard feature="pushNotifications">
+            {withSuspense(NotificationCenterPage)}
+          </FeatureGuard>
+        ),
+      },
+
+      // Messaging
+      {
+        path: 'messaging',
+        element: <FeatureGuard feature="internalChat">{withSuspense(MessagingPage)}</FeatureGuard>,
       },
 
       // Settings
       {
         path: 'settings',
         element: withSuspense(SettingsPage),
+      },
+      {
+        path: 'settings/features',
+        element: withSuspense(EstablishmentFeaturesPage),
+      },
+      {
+        path: 'settings/establishment',
+        element: withSuspense(EstablishmentSettingsPage),
+      },
+      {
+        path: 'settings/migration',
+        element: withSuspense(MigrationToolsPage),
+      },
+
+      // Diagnostic
+      {
+        path: 'diagnostic',
+        element: withSuspense(DiagnosticPage),
+      },
+
+      // Templates
+      {
+        path: 'templates',
+        element: (
+          <FeatureGuard feature="interventionTemplates">{withSuspense(TemplatesPage)}</FeatureGuard>
+        ),
+      },
+
+      // Suppliers
+      {
+        path: 'suppliers',
         children: [
           {
             index: true,
-            element: <Navigate to="/app/settings/reference-lists" replace />,
+            element: <FeatureGuard feature="suppliers">{withSuspense(SuppliersPage)}</FeatureGuard>,
           },
           {
-            path: 'reference-lists',
-            element: withSuspense(ReferenceListsOrchestrator),
+            path: ':supplierId',
+            element: (
+              <FeatureGuard feature="suppliers">{withSuspense(SupplierDetailPage)}</FeatureGuard>
+            ),
+          },
+        ],
+      },
+
+      // Inventory
+      {
+        path: 'inventory',
+        children: [
+          {
+            index: true,
+            element: <FeatureGuard feature="inventory">{withSuspense(InventoryPage)}</FeatureGuard>,
           },
           {
-            path: 'features',
-            element: withSuspense(EstablishmentFeaturesPage),
+            path: ':itemId',
+            element: (
+              <FeatureGuard feature="inventory">{withSuspense(InventoryItemDetailPage)}</FeatureGuard>
+            ),
           },
         ],
       },

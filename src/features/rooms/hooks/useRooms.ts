@@ -16,7 +16,6 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -61,7 +60,7 @@ export const useRooms = (establishmentId: string) => {
             ({
               id: doc.id,
               ...doc.data(),
-            } as Room)
+            }) as Room
         );
         setRooms(roomsData);
         setIsLoading(false);
@@ -88,18 +87,16 @@ export const useRooms = (establishmentId: string) => {
 
       setIsCreating(true);
       try {
-        // Préparer les données en excluant les champs undefined
-        const { createdAt, updatedAt, createdBy, ...cleanData } = data;
-
+        // Préparer les données
         const roomData: any = {
-          ...cleanData,
+          ...data,
           establishmentId,
           status: 'available' as const,
           isBlocked: false,
           amenities: Array.isArray(data.amenities) ? data.amenities : [],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
-          createdBy: user.uid,
+          createdBy: user.id,
         };
 
         // Supprimer les champs undefined
@@ -143,7 +140,7 @@ export const useRooms = (establishmentId: string) => {
         const updateData: any = {
           ...data,
           updatedAt: serverTimestamp(),
-          lastModifiedBy: user.uid,
+          lastModifiedBy: user.id,
         };
 
         // Supprimer les champs undefined
@@ -221,7 +218,7 @@ export const useRooms = (establishmentId: string) => {
           blockedBy: blockData.userId,
           status: 'blocked',
           updatedAt: serverTimestamp(),
-          lastModifiedBy: user.uid,
+          lastModifiedBy: user.id,
         };
 
         // Supprimer les champs undefined
@@ -267,7 +264,7 @@ export const useRooms = (establishmentId: string) => {
           blockedBy: null,
           status: 'available',
           updatedAt: serverTimestamp(),
-          lastModifiedBy: user.uid,
+          lastModifiedBy: user.id,
         };
 
         // Supprimer les champs undefined

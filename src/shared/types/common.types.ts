@@ -1,6 +1,6 @@
 /**
  * Common Types
- * 
+ *
  * Types de base réutilisables dans toute l'application
  */
 

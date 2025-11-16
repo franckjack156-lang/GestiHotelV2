@@ -14,7 +14,7 @@ export const useCurrentEstablishment = () => {
 
   /**
    * Obtenir l'ID de l'établissement actuel
-   * 
+   *
    * Ordre de priorité:
    * 1. Établissement sélectionné dans le store
    * 2. currentEstablishmentId de l'utilisateur

@@ -7,23 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import {
-  Image as ImageIcon,
-  Upload,
-  X,
-  Download,
-  Maximize2,
-  Trash2,
-  Camera,
-} from 'lucide-react';
+import { Image as ImageIcon, Upload, X, Maximize2, Trash2, Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
+import { usePhotos } from '../../hooks/usePhotos';
+import type { PhotoCategory } from '../../types/subcollections.types';
 
 interface PhotosTabProps {
   interventionId: string;
 }
-
-type PhotoCategory = 'before' | 'during' | 'after';
 
 const CATEGORIES = {
   before: { label: 'Avant', color: 'bg-red-500', icon: Camera },
@@ -34,23 +26,25 @@ const CATEGORIES = {
 export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
   const [selectedCategory, setSelectedCategory] = useState<PhotoCategory>('before');
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
 
-  // TODO: Récupérer les photos depuis Firestore
+  // Utiliser le hook pour les photos
+  const { isUploading, getPhotosByCategory, uploadMultiple, remove } = usePhotos(interventionId);
+
+  // Organiser les photos par catégorie
   const photos = {
-    before: [],
-    during: [],
-    after: [],
+    before: getPhotosByCategory('before'),
+    during: getPhotosByCategory('during'),
+    after: getPhotosByCategory('after'),
   };
 
   const handleFileUpload = async (category: PhotoCategory, files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Vérifier la taille (max 5MB par fichier)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const validFiles = Array.from(files).filter((file) => {
+    // Vérifier la taille (max 10MB par fichier)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const validFiles = Array.from(files).filter(file => {
       if (file.size > maxSize) {
-        toast.error(`${file.name} est trop volumineux (max 5MB)`);
+        toast.error(`${file.name} est trop volumineux (max 10MB)`);
         return false;
       }
       if (!file.type.startsWith('image/')) {
@@ -62,28 +56,12 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
 
     if (validFiles.length === 0) return;
 
-    setIsUploading(true);
-    try {
-      // TODO: Upload vers le serveur
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success(`${validFiles.length} photo(s) ajoutée(s)`);
-    } catch (error) {
-      toast.error('Erreur lors de l\'upload');
-    } finally {
-      setIsUploading(false);
-    }
+    await uploadMultiple(validFiles, category);
   };
 
   const handleDelete = async (photoId: string) => {
     if (!confirm('Supprimer cette photo ?')) return;
-
-    try {
-      // TODO: Appel API
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      toast.success('Photo supprimée');
-    } catch (error) {
-      toast.error('Erreur lors de la suppression');
-    }
+    await remove(photoId);
   };
 
   const getTotalPhotos = () => {
@@ -103,17 +81,19 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
             multiple
             accept="image/*"
             className="hidden"
-            onChange={(e) => handleFileUpload(category, e.target.files)}
+            onChange={e => handleFileUpload(category, e.target.files)}
             disabled={isUploading}
           />
           <label htmlFor={`upload-${category}`} className="cursor-pointer block">
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            {isUploading ? (
+              <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+            ) : (
+              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            )}
             <p className="text-gray-600 dark:text-gray-400 mb-2">
               {isUploading ? 'Upload en cours...' : 'Cliquez ou glissez des photos ici'}
             </p>
-            <p className="text-sm text-gray-500">
-              Formats acceptés : JPG, PNG, WEBP (max 5MB)
-            </p>
+            <p className="text-sm text-gray-500">Formats acceptés : JPG, PNG, WEBP (max 10MB)</p>
           </label>
         </div>
 
@@ -127,7 +107,7 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {categoryPhotos.map((photo) => (
+            {categoryPhotos.map(photo => (
               <div
                 key={photo.id}
                 className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer"
@@ -146,7 +126,7 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       setSelectedPhoto(photo.url);
                     }}
@@ -157,7 +137,7 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
                     variant="secondary"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleDelete(photo.id);
                     }}
@@ -223,7 +203,10 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={selectedCategory} onValueChange={(v) => setSelectedCategory(v as PhotoCategory)}>
+          <Tabs
+            value={selectedCategory}
+            onValueChange={v => setSelectedCategory(v as PhotoCategory)}
+          >
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="before" className="gap-2">
                 <div className={cn('h-2 w-2 rounded-full', CATEGORIES.before.color)} />
@@ -277,7 +260,7 @@ export const PhotosTab = ({ interventionId }: PhotosTabProps) => {
             src={selectedPhoto}
             alt="Photo en plein écran"
             className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           />
         </div>
       )}

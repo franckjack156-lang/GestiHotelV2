@@ -15,14 +15,14 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  deleteDoc,
+  // deleteDoc, // TODO: Imported but unused
   collection,
   query,
   where,
   getDocs,
   writeBatch,
   serverTimestamp,
-  Timestamp,
+  // Timestamp, // TODO: Imported but unused
   increment,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
@@ -37,16 +37,16 @@ import type {
   UpdateItemInput,
   ImportOptions,
   ImportResult,
-  ImportPreview,
-  ExportOptions,
+  // ImportPreview, // TODO: Imported but unused
+  ReferenceListsExportOptions,
   AuditEntry,
   AuditAction,
   ListAnalytics,
   ItemAnalytics,
   ValidationResult,
   SmartSuggestion,
-  ListDraft,
-  ListTemplate,
+  // ListDraft, // TODO: Imported but unused
+  // ListTemplate, // TODO: Imported but unused
   DuplicateListsInput,
 } from '@/shared/types/reference-lists.types';
 
@@ -103,14 +103,15 @@ const removeUndefined = (obj: any): any => {
 const getListsDocPath = (establishmentId: string) =>
   doc(db, 'establishments', establishmentId, 'config', 'reference-lists');
 
-const getAuditCollectionPath = (establishmentId: string) =>
-  collection(db, 'establishments', establishmentId, 'config', 'reference-lists-audit');
-
-const getVersionsCollectionPath = (establishmentId: string) =>
-  collection(db, 'establishments', establishmentId, 'config', 'reference-lists-versions');
-
-const getDraftsCollectionPath = (establishmentId: string) =>
-  collection(db, 'establishments', establishmentId, 'config', 'reference-lists-drafts');
+// TODO: These functions defined but unused
+// const getAuditCollectionPath = (establishmentId: string) =>
+//   collection(db, 'establishments', establishmentId, 'config', 'reference-lists-audit');
+//
+// const getVersionsCollectionPath = (establishmentId: string) =>
+//   collection(db, 'establishments', establishmentId, 'config', 'reference-lists-versions');
+//
+// const getDraftsCollectionPath = (establishmentId: string) =>
+//   collection(db, 'establishments', establishmentId, 'config', 'reference-lists-drafts');
 
 // ============================================================================
 // BATCH OPERATIONS
@@ -136,11 +137,14 @@ async function performListOperation<T>(
   const batch = writeBatch(db);
 
   // Nettoyer les valeurs undefined avant d'envoyer à Firestore
-  batch.update(getListsDocPath(establishmentId), removeUndefined({
-    [`lists.${listKey}`]: list,
-    lastModified: serverTimestamp(),
-    modifiedBy: userId,
-  }));
+  batch.update(
+    getListsDocPath(establishmentId),
+    removeUndefined({
+      [`lists.${listKey}`]: list,
+      lastModified: serverTimestamp(),
+      modifiedBy: userId,
+    })
+  );
 
   const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
 
@@ -190,7 +194,9 @@ export const getAllLists = async (
     const data = docSnap.data();
     return {
       ...data,
-      lastModified: data.lastModified?.toDate ? data.lastModified.toDate() : (data.lastModified || new Date()),
+      lastModified: data.lastModified?.toDate
+        ? data.lastModified.toDate()
+        : data.lastModified || new Date(),
       lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
         acc[key] = {
           ...config,
@@ -363,7 +369,7 @@ export const addItem = async (
       list => {
         if (!list.allowCustom) throw new Error("Cette liste ne permet pas d'ajouter des valeurs");
 
-        const validation = validateItem(input);
+        const validation = validateItem(input, listKey);
         if (!validation.isValid) throw new Error(validation.errors.join(', '));
 
         if (list.items.find(i => i.value === input.value)) {
@@ -543,7 +549,7 @@ export const reorderItems = async (
  */
 export const exportToExcel = async (
   establishmentId: string,
-  options: ExportOptions
+  options: ReferenceListsExportOptions
 ): Promise<Blob> => {
   try {
     const allLists = await getAllLists(establishmentId);
@@ -632,7 +638,7 @@ export const importFromFile = async (
         };
 
         if (options.validate) {
-          const validation = validateItem(item);
+          const validation = validateItem(item, listKey);
           if (!validation.isValid) {
             errors.push({
               row: i + 2,
@@ -786,12 +792,11 @@ export const getListAnalytics = async (
 /**
  * Enregistrer l'utilisation d'un item
  */
+// TODO: context and contextId parameters unused
 export const trackItemUsage = async (
   establishmentId: string,
   listKey: ListKey,
-  itemValue: string,
-  context: string,
-  contextId: string
+  itemValue: string
 ): Promise<void> => {
   try {
     const allLists = await getAllLists(establishmentId);
@@ -813,10 +818,11 @@ export const trackItemUsage = async (
     const updatedItems = [...list.items];
     updatedItems[itemIndex] = updatedItem;
 
-    const updatedList = {
-      ...list,
-      items: updatedItems,
-    };
+    // TODO: updatedList unused
+    // const updatedList = {
+    //   ...list,
+    //   items: updatedItems,
+    // };
 
     const docRef = getListsDocPath(establishmentId);
     await updateDoc(docRef, {
@@ -964,18 +970,31 @@ export const duplicateLists = async (userId: string, input: DuplicateListsInput)
 /**
  * Valider un item
  */
-export const validateItem = (item: Partial<ReferenceItem>): ValidationResult => {
+export const validateItem = (item: Partial<ReferenceItem>, listKey?: ListKey): ValidationResult => {
   const errors: string[] = [];
   const warnings: string[] = [];
   const rules = DEFAULT_VALIDATION_RULES;
 
+  // Listes qui acceptent des valeurs courtes (1 caractère minimum)
+  const shortValueLists: ListKey[] = ['floors', 'buildings'];
+  const allowShortValues = listKey && shortValueLists.includes(listKey);
+  const minLength = allowShortValues ? 1 : rules.value.minLength;
+
+  // Pattern de validation personnalisé pour les étages (accepte les négatifs)
+  const pattern = listKey === 'floors'
+    ? /^-?[a-z0-9_]+$/  // Accepte le tiret au début pour les sous-sols
+    : rules.value.pattern;
+
   // Valeur
   if (item.value) {
-    if (!rules.value.pattern.test(item.value)) {
-      errors.push('La valeur doit contenir uniquement minuscules, chiffres et underscore');
+    if (!pattern.test(item.value)) {
+      const message = listKey === 'floors'
+        ? 'La valeur doit contenir uniquement minuscules, chiffres, underscore et tiret (pour les sous-sols)'
+        : 'La valeur doit contenir uniquement minuscules, chiffres et underscore';
+      errors.push(message);
     }
-    if (item.value.length < rules.value.minLength) {
-      errors.push(`La valeur doit contenir au moins ${rules.value.minLength} caractères`);
+    if (item.value.length < minLength) {
+      errors.push(`La valeur doit contenir au moins ${minLength} caractère${minLength > 1 ? 's' : ''}`);
     }
     if (item.value.length > rules.value.maxLength) {
       errors.push(`La valeur doit contenir au maximum ${rules.value.maxLength} caractères`);
@@ -992,8 +1011,8 @@ export const validateItem = (item: Partial<ReferenceItem>): ValidationResult => 
     errors.push('Le label est requis');
   }
   if (item.label) {
-    if (item.label.length < rules.label.minLength) {
-      errors.push(`Le label doit contenir au moins ${rules.label.minLength} caractères`);
+    if (item.label.length < minLength) {
+      errors.push(`Le label doit contenir au moins ${minLength} caractère${minLength > 1 ? 's' : ''}`);
     }
     if (item.label.length > rules.label.maxLength) {
       errors.push(`Le label doit contenir au maximum ${rules.label.maxLength} caractères`);
@@ -1169,9 +1188,9 @@ const levenshteinDistance = (str1: string, str2: string): number => {
 };
 
 const checkItemUsage = async (
-  establishmentId: string,
-  listKey: string,
-  itemId: string
+  _establishmentId: string,
+  _listKey: ListKey,
+  _itemId: string
 ): Promise<{ count: number }> => {
   // TODO: Implémenter vérification usage dans interventions, etc.
   return { count: 0 };

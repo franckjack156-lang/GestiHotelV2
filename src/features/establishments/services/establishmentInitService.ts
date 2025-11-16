@@ -9,9 +9,12 @@
 
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
-import { DEFAULT_REFERENCE_LISTS, getListsByFeatures } from '@/shared/services/defaultReferenceLists';
+import {
+  DEFAULT_REFERENCE_LISTS,
+  getListsByFeatures,
+} from '@/shared/services/defaultReferenceLists';
 import type { EstablishmentReferenceLists } from '@/shared/types/reference-lists.types';
-import type { EstablishmentFeatures, DEFAULT_ESTABLISHMENT_FEATURES } from '@/shared/types/establishment.types';
+import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
 
 /**
  * Initialiser les listes de référence pour un établissement
@@ -30,7 +33,7 @@ export const initializeEstablishmentLists = async (
     const listsToCreate = features
       ? getListsByFeatures({
           rooms: features.rooms?.enabled ?? true,
-          exports: features.exports?.enabled ?? true,
+          exports: features.interventionImportExport?.enabled ?? true,
         })
       : DEFAULT_REFERENCE_LISTS;
 
@@ -52,8 +55,8 @@ export const initializeEstablishmentLists = async (
 
     console.log(`✅ Listes de référence initialisées pour l'établissement ${establishmentId}`);
   } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation des listes:', error);
-    throw new Error('Impossible d\'initialiser les listes de référence');
+    console.error("❌ Erreur lors de l'initialisation des listes:", error);
+    throw new Error("Impossible d'initialiser les listes de référence");
   }
 };
 
@@ -81,7 +84,7 @@ export const initializeEstablishment = async (
 
     console.log(`✅ Établissement ${establishmentId} initialisé avec succès`);
   } catch (error) {
-    console.error('❌ Erreur lors de l\'initialisation de l\'établissement:', error);
+    console.error("❌ Erreur lors de l'initialisation de l'établissement:", error);
     throw error;
   }
 };
@@ -92,15 +95,13 @@ export const initializeEstablishment = async (
  * @param establishmentId - ID de l'établissement
  * @returns true si l'établissement est initialisé
  */
-export const isEstablishmentInitialized = async (
-  establishmentId: string
-): Promise<boolean> => {
+export const isEstablishmentInitialized = async (establishmentId: string): Promise<boolean> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'config', 'reference-lists');
     const docSnap = await getDoc(docRef);
     return docSnap.exists();
   } catch (error) {
-    console.error('Erreur lors de la vérification de l\'initialisation:', error);
+    console.error("Erreur lors de la vérification de l'initialisation:", error);
     return false;
   }
 };
@@ -175,10 +176,7 @@ const cleanForFirestore = (obj: any): any => {
   return obj;
 };
 
-export const addMissingLists = async (
-  establishmentId: string,
-  userId: string
-): Promise<void> => {
+export const addMissingLists = async (establishmentId: string, userId: string): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'config', 'reference-lists');
     const docSnap = await getDoc(docRef);
@@ -214,12 +212,14 @@ export const addMissingLists = async (
         version: (currentData.version || 1) + 1,
       });
 
-      console.log(`✅ ${Object.keys(missingLists).length} liste(s) ajoutée(s) pour l'établissement ${establishmentId}`);
+      console.log(
+        `✅ ${Object.keys(missingLists).length} liste(s) ajoutée(s) pour l'établissement ${establishmentId}`
+      );
     } else {
       console.log(`✅ Aucune liste manquante pour l'établissement ${establishmentId}`);
     }
   } catch (error) {
-    console.error('❌ Erreur lors de l\'ajout des listes manquantes:', error);
+    console.error("❌ Erreur lors de l'ajout des listes manquantes:", error);
     throw error;
   }
 };

@@ -259,9 +259,7 @@ export const CommentsList = ({ interventionId, establishmentId }: CommentsListPr
             <p className="text-sm mt-1">Soyez le premier à commenter !</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {comments.map(comment => renderComment(comment))}
-          </div>
+          <div className="space-y-3">{comments.map(comment => renderComment(comment))}</div>
         )}
       </CardContent>
     </Card>

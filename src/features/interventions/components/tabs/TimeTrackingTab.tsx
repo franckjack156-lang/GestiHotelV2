@@ -9,6 +9,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Badge } from '@/shared/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Textarea } from '@/shared/components/ui/textarea';
 import {
   Clock,
   Play,
@@ -18,35 +19,43 @@ import {
   Trash2,
   TrendingUp,
   TrendingDown,
-  Minus,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Intervention } from '../../types/intervention.types';
 import { cn } from '@/shared/lib/utils';
+import { useTimeSessions } from '../../hooks/useTimeSessions';
 
 interface TimeTrackingTabProps {
   intervention: Intervention;
 }
 
 export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
-  // TODO: Récupérer les sessions depuis Firestore
-  const [sessions, setSessions] = useState<any[]>([]);
+  const { sessions, isLoading, isSubmitting, getTotalTime, addSession, removeSession } =
+    useTimeSessions(intervention.id);
+
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerStartTime, setTimerStartTime] = useState<Date | null>(null);
   const [manualHours, setManualHours] = useState(0);
   const [manualMinutes, setManualMinutes] = useState(0);
+  const [notes, setNotes] = useState('');
 
   // Chronomètre
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: number | undefined;
     if (isTimerRunning) {
-      interval = setInterval(() => {
-        setTimerSeconds((prev) => prev + 1);
+      interval = window.setInterval(() => {
+        setTimerSeconds(prev => prev + 1);
       }, 1000);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval !== undefined) {
+        clearInterval(interval);
+      }
+    };
   }, [isTimerRunning]);
 
   const formatTimer = (seconds: number) => {
@@ -58,6 +67,9 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
 
   const handleStartTimer = () => {
     setIsTimerRunning(true);
+    if (!timerStartTime) {
+      setTimerStartTime(new Date());
+    }
     toast.success('Chronomètre démarré');
   };
 
@@ -66,37 +78,64 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
     toast.info('Chronomètre en pause');
   };
 
-  const handleStopTimer = () => {
+  const handleStopTimer = async () => {
     if (timerSeconds === 0) return;
 
-    // TODO: Sauvegarder la session
     const minutes = Math.floor(timerSeconds / 60);
-    toast.success(`Session enregistrée (${minutes} minutes)`);
-    setIsTimerRunning(false);
-    setTimerSeconds(0);
+    const endTime = new Date();
+
+    const success = await addSession({
+      duration: minutes,
+      startedAt: timerStartTime || new Date(Date.now() - timerSeconds * 1000),
+      endedAt: endTime,
+      isManual: false,
+      notes: notes || undefined,
+    });
+
+    if (success) {
+      setIsTimerRunning(false);
+      setTimerSeconds(0);
+      setTimerStartTime(null);
+      setNotes('');
+    }
   };
 
-  const handleAddManualTime = () => {
+  const handleAddManualTime = async () => {
     const totalMinutes = manualHours * 60 + manualMinutes;
     if (totalMinutes === 0) {
       toast.error('Veuillez saisir une durée');
       return;
     }
 
-    // TODO: Sauvegarder la session manuelle
-    toast.success(`Temps ajouté (${totalMinutes} minutes)`);
-    setManualHours(0);
-    setManualMinutes(0);
+    const now = new Date();
+    const success = await addSession({
+      duration: totalMinutes,
+      startedAt: new Date(now.getTime() - totalMinutes * 60 * 1000),
+      endedAt: now,
+      isManual: true,
+      notes: notes || undefined,
+    });
+
+    if (success) {
+      setManualHours(0);
+      setManualMinutes(0);
+      setNotes('');
+    }
+  };
+
+  const handleDeleteSession = async (sessionId: string) => {
+    await removeSession(sessionId);
   };
 
   const getTotalMinutes = () => {
-    return sessions.reduce((sum, session) => sum + session.duration, 0);
+    return getTotalTime();
   };
 
   const getVariance = () => {
     if (!intervention.estimatedDuration) return null;
     const total = getTotalMinutes();
-    const variance = ((total - intervention.estimatedDuration) / intervention.estimatedDuration) * 100;
+    const variance =
+      ((total - intervention.estimatedDuration) / intervention.estimatedDuration) * 100;
     return variance;
   };
 
@@ -236,7 +275,8 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
                       type="number"
                       min="0"
                       value={manualHours}
-                      onChange={(e) => setManualHours(parseInt(e.target.value) || 0)}
+                      onChange={e => setManualHours(parseInt(e.target.value) || 0)}
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div>
@@ -247,14 +287,36 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
                       min="0"
                       max="59"
                       value={manualMinutes}
-                      onChange={(e) => setManualMinutes(parseInt(e.target.value) || 0)}
+                      onChange={e => setManualMinutes(parseInt(e.target.value) || 0)}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
 
-                <Button onClick={handleAddManualTime} className="w-full">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Ajouter le temps saisi
+                <div>
+                  <Label htmlFor="notes">Notes (optionnel)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Description du travail effectué..."
+                    value={notes}
+                    onChange={e => setNotes(e.target.value)}
+                    disabled={isSubmitting}
+                    rows={3}
+                  />
+                </div>
+
+                <Button onClick={handleAddManualTime} className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Enregistrement...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Ajouter le temps saisi
+                    </>
+                  )}
                 </Button>
               </div>
             </TabsContent>
@@ -271,14 +333,19 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {sessions.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+              <p className="text-gray-600 dark:text-gray-400">Chargement des sessions...</p>
+            </div>
+          ) : sessions.length === 0 ? (
             <div className="text-center py-12">
               <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">Aucune session enregistrée</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {sessions.map((session) => (
+              {sessions.map(session => (
                 <div
                   key={session.id}
                   className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -288,18 +355,28 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="secondary">{session.technicianName}</Badge>
                         <Badge className="bg-blue-600">{formatDuration(session.duration)}</Badge>
+                        {session.isManual && (
+                          <Badge variant="outline" className="text-xs">
+                            Manuel
+                          </Badge>
+                        )}
                       </div>
 
                       <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                         <p>
                           <strong>Début:</strong>{' '}
-                          {format(session.startedAt, 'dd MMM yyyy à HH:mm', { locale: fr })}
+                          {format(session.startedAt.toDate(), 'dd MMM yyyy à HH:mm', {
+                            locale: fr,
+                          })}
                         </p>
-                        <p>
-                          <strong>Fin:</strong>{' '}
-                          {session.endedAt &&
-                            format(session.endedAt, 'dd MMM yyyy à HH:mm', { locale: fr })}
-                        </p>
+                        {session.endedAt && (
+                          <p>
+                            <strong>Fin:</strong>{' '}
+                            {format(session.endedAt.toDate(), 'dd MMM yyyy à HH:mm', {
+                              locale: fr,
+                            })}
+                          </p>
+                        )}
                         {session.notes && (
                           <p className="italic">
                             <strong>Notes:</strong> {session.notes}
@@ -312,6 +389,7 @@ export const TimeTrackingTab = ({ intervention }: TimeTrackingTabProps) => {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-red-600 hover:text-red-700"
+                      onClick={() => handleDeleteSession(session.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

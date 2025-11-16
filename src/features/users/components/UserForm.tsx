@@ -4,7 +4,7 @@
  * ============================================================================
  */
 
-import React, { useEffect } from 'react';
+import React, { memo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,17 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { Textarea } from '@/shared/components/ui/textarea';
+// TODO: Textarea imported but unused
+// import { Textarea } from '@/shared/components/ui/textarea';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Separator } from '@/shared/components/ui/separator';
 import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
 import { DynamicListMultiSelect } from '@/shared/components/forms/DynamicListMultiSelect';
-import {
-  UserRole,
-  ROLE_LABELS,
-  ROLE_DESCRIPTIONS,
-} from '../types/role.types';
-import type { User, CreateUserData, UpdateUserData } from '../types/user.types';
+import { UserRole, ROLE_LABELS, ROLE_DESCRIPTIONS } from '../types/role.types';
+import type { User, UserProfile, CreateUserData, UpdateUserData } from '../types/user.types';
 import { Loader2 } from 'lucide-react';
 
 // ============================================================================
@@ -75,7 +72,7 @@ interface UserFormProps {
   onCancel?: () => void;
 }
 
-export const UserForm: React.FC<UserFormProps> = ({
+const UserFormComponent: React.FC<UserFormProps> = ({
   user,
   establishmentIds,
   isSubmitting = false,
@@ -100,11 +97,11 @@ export const UserForm: React.FC<UserFormProps> = ({
           role: user.role,
           isTechnician: user.isTechnician || false,
           phoneNumber: user.phoneNumber || '',
-          jobTitle: user.jobTitle || '',
-          department: user.department || '',
-          skills: user.skills || [],
-          specialties: user.specialties || [],
-          experienceLevel: user.experienceLevel || undefined,
+          jobTitle: (user as UserProfile).jobTitle || '',
+          department: (user as UserProfile).department || '',
+          skills: (user as UserProfile).skills || [],
+          specialties: (user as UserProfile).specialties || [],
+          experienceLevel: (user as UserProfile).experienceLevel || undefined,
           photoURL: user.photoURL || '',
         }
       : {
@@ -121,49 +118,60 @@ export const UserForm: React.FC<UserFormProps> = ({
   const isTechnician = watch('isTechnician');
 
   /**
-   * Gérer la soumission
+   * Gérer la soumission - memoized
    */
-  const handleFormSubmit = (data: UserFormData) => {
-    if (isEditMode) {
-      // Mode édition
-      const updateData: UpdateUserData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-        phoneNumber: data.phoneNumber || undefined,
-        jobTitle: data.jobTitle || undefined,
-        department: data.department || undefined,
-        skills: data.skills && data.skills.length > 0 ? data.skills : undefined,
-        photoURL: data.photoURL || undefined,
-        isTechnician: data.isTechnician,
-        specialties: data.isTechnician && data.specialties && data.specialties.length > 0 ? data.specialties : undefined,
-        experienceLevel: data.isTechnician && data.experienceLevel ? data.experienceLevel : undefined,
-      };
+  const handleFormSubmit = useCallback(
+    (data: UserFormData) => {
+      if (isEditMode) {
+        // Mode édition
+        const updateData: UpdateUserData = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: data.role,
+          phoneNumber: data.phoneNumber || undefined,
+          jobTitle: data.jobTitle || undefined,
+          department: data.department || undefined,
+          skills: data.skills && data.skills.length > 0 ? data.skills : undefined,
+          photoURL: data.photoURL || undefined,
+          isTechnician: data.isTechnician,
+          specialties:
+            data.isTechnician && data.specialties && data.specialties.length > 0
+              ? data.specialties
+              : undefined,
+          experienceLevel:
+            data.isTechnician && data.experienceLevel ? data.experienceLevel : undefined,
+        };
 
-      onSubmit(updateData);
-    } else {
-      // Mode création
-      const createData: CreateUserData = {
-        email: data.email,
-        password: data.password || 'ChangeMe123!', // Mot de passe par défaut
-        firstName: data.firstName,
-        lastName: data.lastName,
-        role: data.role,
-        establishmentIds,
-        phoneNumber: data.phoneNumber || undefined,
-        jobTitle: data.jobTitle || undefined,
-        department: data.department || undefined,
-        skills: data.skills && data.skills.length > 0 ? data.skills : undefined,
-        photoURL: data.photoURL || undefined,
-        sendInvitation: data.sendInvitation,
-        isTechnician: data.isTechnician,
-        specialties: data.isTechnician && data.specialties && data.specialties.length > 0 ? data.specialties : undefined,
-        experienceLevel: data.isTechnician && data.experienceLevel ? data.experienceLevel : undefined,
-      };
+        onSubmit(updateData);
+      } else {
+        // Mode création
+        const createData: CreateUserData = {
+          email: data.email,
+          password: data.password || 'ChangeMe123!', // Mot de passe par défaut
+          firstName: data.firstName,
+          lastName: data.lastName,
+          role: data.role,
+          establishmentIds,
+          phoneNumber: data.phoneNumber || undefined,
+          jobTitle: data.jobTitle || undefined,
+          department: data.department || undefined,
+          skills: data.skills && data.skills.length > 0 ? data.skills : undefined,
+          photoURL: data.photoURL || undefined,
+          sendInvitation: data.sendInvitation,
+          isTechnician: data.isTechnician,
+          specialties:
+            data.isTechnician && data.specialties && data.specialties.length > 0
+              ? data.specialties
+              : undefined,
+          experienceLevel:
+            data.isTechnician && data.experienceLevel ? data.experienceLevel : undefined,
+        };
 
-      onSubmit(createData);
-    }
-  };
+        onSubmit(createData);
+      }
+    },
+    [isEditMode, establishmentIds, onSubmit]
+  );
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
@@ -218,9 +226,7 @@ export const UserForm: React.FC<UserFormProps> = ({
             disabled={isEditMode} // Email non modifiable en édition
             className={errors.email ? 'border-red-500' : ''}
           />
-          {errors.email && (
-            <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
         </div>
 
         {/* Mot de passe (création uniquement) */}
@@ -283,29 +289,22 @@ export const UserForm: React.FC<UserFormProps> = ({
           <Label htmlFor="role">
             Rôle <span className="text-red-500">*</span>
           </Label>
-          <Select
-            value={selectedRole}
-            onValueChange={(value) => setValue('role', value as UserRole)}
-          >
+          <Select value={selectedRole} onValueChange={value => setValue('role', value as UserRole)}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un rôle" />
             </SelectTrigger>
             <SelectContent>
-              {Object.values(UserRole).map((role) => (
+              {Object.values(UserRole).map(role => (
                 <SelectItem key={role} value={role}>
                   <div className="flex flex-col items-start">
                     <span className="font-medium">{ROLE_LABELS[role]}</span>
-                    <span className="text-xs text-gray-500">
-                      {ROLE_DESCRIPTIONS[role]}
-                    </span>
+                    <span className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</span>
                   </div>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          {errors.role && (
-            <p className="text-sm text-red-500 mt-1">{errors.role.message}</p>
-          )}
+          {errors.role && <p className="text-sm text-red-500 mt-1">{errors.role.message}</p>}
         </div>
 
         {/* Checkbox Technicien */}
@@ -313,12 +312,9 @@ export const UserForm: React.FC<UserFormProps> = ({
           <Checkbox
             id="isTechnician"
             checked={isTechnician}
-            onCheckedChange={(checked) => setValue('isTechnician', checked as boolean)}
+            onCheckedChange={checked => setValue('isTechnician', checked as boolean)}
           />
-          <Label
-            htmlFor="isTechnician"
-            className="text-sm font-normal cursor-pointer"
-          >
+          <Label htmlFor="isTechnician" className="text-sm font-normal cursor-pointer">
             Cet utilisateur est un technicien (peut recevoir des assignations d'interventions)
           </Label>
         </div>
@@ -347,9 +343,8 @@ export const UserForm: React.FC<UserFormProps> = ({
             <DynamicListSelect
               listKey="staffDepartments"
               value={watch('department') || ''}
-              onValueChange={(value) => setValue('department', value)}
+              onChange={(value: string) => setValue('department', value)}
               placeholder="Sélectionner un département"
-              allowCustom={true}
             />
           </div>
         </div>
@@ -360,7 +355,7 @@ export const UserForm: React.FC<UserFormProps> = ({
           <DynamicListMultiSelect
             listKey="staffSkills"
             value={watch('skills') || []}
-            onChange={(values) => setValue('skills', values)}
+            onChange={values => setValue('skills', values)}
             placeholder="Sélectionner des compétences"
             allowCustom={true}
           />
@@ -375,7 +370,7 @@ export const UserForm: React.FC<UserFormProps> = ({
               <DynamicListMultiSelect
                 listKey="technicalSpecialties"
                 value={watch('specialties') || []}
-                onChange={(values) => setValue('specialties', values)}
+                onChange={values => setValue('specialties', values)}
                 placeholder="Sélectionner des spécialités techniques"
                 allowCustom={true}
               />
@@ -386,7 +381,7 @@ export const UserForm: React.FC<UserFormProps> = ({
               <Label htmlFor="experienceLevel">Niveau d'expérience</Label>
               <Select
                 value={watch('experienceLevel') || ''}
-                onValueChange={(value) => setValue('experienceLevel', value as any)}
+                onValueChange={value => setValue('experienceLevel', value as any)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un niveau" />
@@ -408,11 +403,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         <>
           <Separator />
           <div className="flex items-center space-x-2">
-            <Checkbox
-              id="sendInvitation"
-              {...register('sendInvitation')}
-              defaultChecked
-            />
+            <Checkbox id="sendInvitation" {...register('sendInvitation')} defaultChecked />
             <Label htmlFor="sendInvitation" className="cursor-pointer">
               Envoyer un email d'invitation à l'utilisateur
             </Label>
@@ -429,9 +420,13 @@ export const UserForm: React.FC<UserFormProps> = ({
         )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEditMode ? 'Mettre à jour' : 'Créer l\'utilisateur'}
+          {isEditMode ? 'Mettre à jour' : "Créer l'utilisateur"}
         </Button>
       </div>
     </form>
   );
 };
+
+UserFormComponent.displayName = 'UserForm';
+
+export const UserForm = memo(UserFormComponent);

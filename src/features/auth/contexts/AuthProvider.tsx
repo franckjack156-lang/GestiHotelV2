@@ -12,6 +12,8 @@ import { doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/core/config/firebase';
 import { useAuthStore } from '../stores/authStore';
 import userService from '@/features/users/services/userService';
+import { setSentryUser, clearSentryUser } from '@/core/config/sentry';
+import { setUserProperties, resetUser, trackUserLogin } from '@/core/config/analytics';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -43,6 +45,22 @@ const initAuthListener = () => {
           setUser(userData);
           setError(null);
 
+          // Configurer le contexte utilisateur Sentry
+          setSentryUser({
+            id: userData.id,
+            role: userData.role,
+            currentEstablishmentId: userData.currentEstablishmentId,
+          });
+
+          // Configurer Google Analytics
+          setUserProperties({
+            role: userData.role,
+            isTechnician: userData.isTechnician,
+          });
+
+          // Track login
+          trackUserLogin(userData.role);
+
           // Mettre à jour lastLoginAt
           try {
             await updateDoc(doc(db, 'users', firebaseUser.uid), {
@@ -59,6 +77,10 @@ const initAuthListener = () => {
         setFirebaseUser(null);
         setUser(null);
         setError(null);
+
+        // Retirer le contexte utilisateur
+        clearSentryUser();
+        resetUser();
       }
     } catch (error) {
       setUser(null);

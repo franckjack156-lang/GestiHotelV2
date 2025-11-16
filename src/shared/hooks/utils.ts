@@ -6,8 +6,10 @@
  * Collection de hooks utilitaires réutilisables
  */
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+// TODO: useMemo and useNavigate imported but may be unused - keeping them
+// import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 // ============================================================================
 // useDebounce - Débouncer une valeur
@@ -366,7 +368,7 @@ export function useKeyPress(targetKey: string): boolean {
 // ============================================================================
 
 export function useInterval(callback: () => void, delay: number | null): void {
-  const savedCallback = useRef<() => void>();
+  const savedCallback = useRef<() => void>(callback);
 
   useEffect(() => {
     savedCallback.current = callback;
@@ -506,10 +508,11 @@ export function useConfirm(): UseConfirmReturn {
     resolveRef?.resolve(false);
   }, [resolveRef]);
 
-  const handleConfirm = useCallback(() => {
-    setIsOpen(false);
-    resolveRef?.resolve(true);
-  }, [resolveRef]);
+  // TODO: handleConfirm unused - not returned from hook
+  // const handleConfirm = useCallback(() => {
+  //   setIsOpen(false);
+  //   resolveRef?.resolve(true);
+  // }, [resolveRef]);
 
   return { isOpen, confirm, close, message };
 }

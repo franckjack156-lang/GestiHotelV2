@@ -40,18 +40,22 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/shared/components/ui/dropdown-menu';
-import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
+// TODO: StatusBadge imported but unused
+// import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
+import { StatusBadgeDropdown } from '@/features/interventions/components';
 import { PriorityBadge } from '@/features/interventions/components/badges/PriorityBadge';
 import { TypeBadge } from '@/features/interventions/components/badges/TypeBadge';
 import { useIntervention } from '@/features/interventions/hooks/useIntervention';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
+import { useFeature } from '@/features/establishments/hooks/useFeature';
 import { BlockRoomDialog } from '@/features/rooms/components';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { cn } from '@/shared/lib/utils';
+// TODO: cn imported but unused
+// import { cn } from '@/shared/lib/utils';
 
 // Onglets (à implémenter)
 import { DetailsTab } from '@/features/interventions/components/tabs/DetailsTab';
@@ -69,9 +73,12 @@ export const InterventionDetailsPage = () => {
   const { intervention, isLoading, error } = useIntervention(id!);
   const { changeStatus, deleteIntervention, isUpdating, isDeleting } = useInterventionActions();
 
+  // Vérifier les fonctionnalités activées
+  const { hasFeature } = useFeature();
+
   // Rooms management
-  const { rooms, blockRoom, unblockRoom } = useRooms(user?.establishmentId || '');
-  const currentRoom = rooms?.find((r) => r.number === intervention?.roomNumber);
+  const { rooms, blockRoom, unblockRoom } = useRooms(user?.establishmentIds?.[0] || '');
+  const currentRoom = rooms?.find(r => r.number === intervention?.roomNumber);
 
   // UI State
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -90,21 +97,23 @@ export const InterventionDetailsPage = () => {
   // ============================================================================
   // PERMISSIONS
   // ============================================================================
-  const canEdit = user?.role === 'admin' || user?.role === 'super_admin' || user?.uid === intervention.createdBy;
+  const canEdit =
+    user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
   const canDelete = user?.role === 'admin' || user?.role === 'super_admin';
-  const canStart = intervention.status === 'pending' && (user?.uid === intervention.assignedTo || canEdit);
-  const canComplete = intervention.status === 'in_progress' && (user?.uid === intervention.assignedTo || canEdit);
-  const canValidate = intervention.status === 'completed' && (user?.role === 'admin' || user?.role === 'super_admin');
+  const canStart =
+    intervention.status === 'pending' && (user?.id === intervention.assignedTo || canEdit);
+  const canComplete =
+    intervention.status === 'in_progress' && (user?.id === intervention.assignedTo || canEdit);
+  const canValidate =
+    intervention.status === 'completed' && (user?.role === 'admin' || user?.role === 'super_admin');
 
   // ============================================================================
   // ACTIONS
   // ============================================================================
-  const handleStatusChange = async (newStatus: any) => {
-    if (!id) return;
-    const success = await changeStatus(id, { newStatus });
-    if (success) {
-      toast.success('Statut mis à jour');
-    }
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id) return false;
+    const success = await changeStatus(id, { newStatus: newStatus as any });
+    return success || false;
   };
 
   const handleDelete = async () => {
@@ -116,11 +125,12 @@ export const InterventionDetailsPage = () => {
     }
   };
 
-  const handleBlockRoom = async (reason: string, estimatedDays?: number) => {
-    if (!currentRoom) return;
+  // TODO: estimatedDays parameter unused
+  const handleBlockRoom = async (reason: string) => {
+    if (!currentRoom || !user) return;
     setIsBlockingRoom(true);
     try {
-      await blockRoom(currentRoom.id, reason, estimatedDays);
+      await blockRoom(currentRoom.id, { reason, userId: user.id });
       toast.success('Chambre bloquée avec succès');
       setShowBlockRoomDialog(false);
     } catch (error) {
@@ -250,7 +260,9 @@ export const InterventionDetailsPage = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   {canEdit && (
-                    <DropdownMenuItem onClick={() => navigate(`/app/interventions/${intervention.id}/edit`)}>
+                    <DropdownMenuItem
+                      onClick={() => navigate(`/app/interventions/${intervention.id}/edit`)}
+                    >
                       <Edit className="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
@@ -284,7 +296,10 @@ export const InterventionDetailsPage = () => {
                   {canDelete && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-red-600">
+                      <DropdownMenuItem
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="text-red-600"
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Supprimer
                       </DropdownMenuItem>
@@ -299,7 +314,13 @@ export const InterventionDetailsPage = () => {
         {/* Informations rapides (badges et infos clés) */}
         <div className="px-6 pb-4">
           <div className="flex items-center gap-3 flex-wrap">
-            <StatusBadge status={intervention.status} />
+            <StatusBadgeDropdown
+              currentStatus={intervention.status as any}
+              interventionId={intervention.id}
+              assignedTo={intervention.assignedTo}
+              onStatusChange={handleStatusChange as any}
+              disabled={isUpdating}
+            />
             <PriorityBadge priority={intervention.priority} />
             <TypeBadge type={intervention.type} />
 
@@ -333,7 +354,9 @@ export const InterventionDetailsPage = () => {
 
             <span className="text-sm text-gray-500">•</span>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Créé {intervention.createdAt && format(intervention.createdAt.toDate(), 'dd MMM yyyy', { locale: fr })}
+              Créé{' '}
+              {intervention.createdAt &&
+                format(intervention.createdAt.toDate(), 'dd MMM yyyy', { locale: fr })}
             </span>
           </div>
         </div>
@@ -350,31 +373,46 @@ export const InterventionDetailsPage = () => {
               <Info className="h-4 w-4" />
               Détails
             </TabsTrigger>
-            <TabsTrigger value="comments" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Commentaires
-            </TabsTrigger>
-            <TabsTrigger value="photos" className="gap-2">
-              <ImageIcon className="h-4 w-4" />
-              Photos
-              {intervention.photosCount > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
-                  {intervention.photosCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="parts" className="gap-2">
-              <Package className="h-4 w-4" />
-              Pièces
-            </TabsTrigger>
-            <TabsTrigger value="time" className="gap-2">
-              <Clock className="h-4 w-4" />
-              Temps
-            </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
-              <History className="h-4 w-4" />
-              Historique
-            </TabsTrigger>
+
+            {hasFeature('comments') && (
+              <TabsTrigger value="comments" className="gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Commentaires
+              </TabsTrigger>
+            )}
+
+            {hasFeature('photos') && (
+              <TabsTrigger value="photos" className="gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Photos
+                {intervention.photosCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
+                    {intervention.photosCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            )}
+
+            {hasFeature('parts') && (
+              <TabsTrigger value="parts" className="gap-2">
+                <Package className="h-4 w-4" />
+                Pièces
+              </TabsTrigger>
+            )}
+
+            {hasFeature('timeTracking') && (
+              <TabsTrigger value="time" className="gap-2">
+                <Clock className="h-4 w-4" />
+                Temps
+              </TabsTrigger>
+            )}
+
+            {hasFeature('history') && (
+              <TabsTrigger value="history" className="gap-2">
+                <History className="h-4 w-4" />
+                Historique
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Contenu des onglets */}
@@ -382,25 +420,39 @@ export const InterventionDetailsPage = () => {
             <DetailsTab intervention={intervention} />
           </TabsContent>
 
-          <TabsContent value="comments" className="mt-6">
-            <CommentsTab interventionId={intervention.id} />
-          </TabsContent>
+          {hasFeature('comments') && (
+            <TabsContent value="comments" className="mt-6">
+              <CommentsTab interventionId={intervention.id} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="photos" className="mt-6">
-            <PhotosTab interventionId={intervention.id} />
-          </TabsContent>
+          {hasFeature('photos') && (
+            <TabsContent value="photos" className="mt-6">
+              <PhotosTab interventionId={intervention.id} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="parts" className="mt-6">
-            <PartsTab interventionId={intervention.id} />
-          </TabsContent>
+          {hasFeature('parts') && (
+            <TabsContent value="parts" className="mt-6">
+              <PartsTab
+                interventionId={intervention.id}
+                interventionNumber={intervention.id}
+                roomNumber={intervention.roomNumber}
+              />
+            </TabsContent>
+          )}
 
-          <TabsContent value="time" className="mt-6">
-            <TimeTrackingTab intervention={intervention} />
-          </TabsContent>
+          {hasFeature('timeTracking') && (
+            <TabsContent value="time" className="mt-6">
+              <TimeTrackingTab intervention={intervention} />
+            </TabsContent>
+          )}
 
-          <TabsContent value="history" className="mt-6">
-            <HistoryTab intervention={intervention} />
-          </TabsContent>
+          {hasFeature('history') && (
+            <TabsContent value="history" className="mt-6">
+              <HistoryTab intervention={intervention} />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 

@@ -8,6 +8,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: './src/tests/setup.ts',
+    include: ['**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    passWithNoTests: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -16,8 +18,17 @@ export default defineConfig({
         'src/tests/',
         '**/*.d.ts',
         '**/*.config.*',
-        '**/mockData/'
-      ]
+        '**/mockData/',
+        '**/__tests__/'
+      ],
+      include: ['src/**/*.{ts,tsx}'],
+      all: true,
+      thresholds: {
+        lines: 50,
+        functions: 50,
+        branches: 50,
+        statements: 50
+      }
     }
   },
   resolve: {

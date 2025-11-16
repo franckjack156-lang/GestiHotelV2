@@ -1,16 +1,12 @@
 /**
  * Establishment Store
- * 
+ *
  * Store Zustand pour gérer l'état des établissements
  */
 
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type {
-  Establishment,
-  EstablishmentSummary,
-  EstablishmentFilters,
-} from '@/shared/types/establishment.types';
+import type { Establishment, EstablishmentFilters } from '@/shared/types/establishment.types';
 
 interface EstablishmentState {
   // État des établissements
@@ -18,10 +14,10 @@ interface EstablishmentState {
   currentEstablishment: Establishment | null;
   isLoading: boolean;
   error: string | null;
-  
+
   // Filtres
   filters: EstablishmentFilters;
-  
+
   // Actions - État
   setEstablishments: (establishments: Establishment[]) => void;
   addEstablishment: (establishment: Establishment) => void;
@@ -30,11 +26,11 @@ interface EstablishmentState {
   setCurrentEstablishment: (establishment: Establishment | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-  
+
   // Actions - Filtres
   setFilters: (filters: Partial<EstablishmentFilters>) => void;
   resetFilters: () => void;
-  
+
   // Utilitaires
   getEstablishmentById: (id: string) => Establishment | undefined;
   getCurrentEstablishmentId: () => string | null;
@@ -61,20 +57,20 @@ export const useEstablishmentStore = create<EstablishmentState>()(
         filters: initialFilters,
 
         // Actions - État
-        setEstablishments: (establishments) =>
+        setEstablishments: establishments =>
           set({
             establishments,
             error: null,
           }),
 
-        addEstablishment: (establishment) =>
-          set((state) => ({
+        addEstablishment: establishment =>
+          set(state => ({
             establishments: [establishment, ...state.establishments],
           })),
 
         updateEstablishmentInList: (id, updates) =>
-          set((state) => ({
-            establishments: state.establishments.map((est) =>
+          set(state => ({
+            establishments: state.establishments.map(est =>
               est.id === id ? { ...est, ...updates } : est
             ),
             currentEstablishment:
@@ -83,31 +79,31 @@ export const useEstablishmentStore = create<EstablishmentState>()(
                 : state.currentEstablishment,
           })),
 
-        removeEstablishment: (id) =>
-          set((state) => ({
-            establishments: state.establishments.filter((est) => est.id !== id),
+        removeEstablishment: id =>
+          set(state => ({
+            establishments: state.establishments.filter(est => est.id !== id),
             currentEstablishment:
               state.currentEstablishment?.id === id ? null : state.currentEstablishment,
           })),
 
-        setCurrentEstablishment: (establishment) =>
+        setCurrentEstablishment: establishment =>
           set({
             currentEstablishment: establishment,
           }),
 
-        setLoading: (loading) =>
+        setLoading: loading =>
           set({
             isLoading: loading,
           }),
 
-        setError: (error) =>
+        setError: error =>
           set({
             error,
           }),
 
         // Actions - Filtres
-        setFilters: (newFilters) =>
-          set((state) => ({
+        setFilters: newFilters =>
+          set(state => ({
             filters: {
               ...state.filters,
               ...newFilters,
@@ -120,9 +116,9 @@ export const useEstablishmentStore = create<EstablishmentState>()(
           }),
 
         // Utilitaires
-        getEstablishmentById: (id) => {
+        getEstablishmentById: id => {
           const state = get();
-          return state.establishments.find((est) => est.id === id);
+          return state.establishments.find(est => est.id === id);
         },
 
         getCurrentEstablishmentId: () => {
@@ -141,7 +137,7 @@ export const useEstablishmentStore = create<EstablishmentState>()(
       }),
       {
         name: 'establishment-storage',
-        partialize: (state) => ({
+        partialize: state => ({
           currentEstablishment: state.currentEstablishment,
         }),
       }

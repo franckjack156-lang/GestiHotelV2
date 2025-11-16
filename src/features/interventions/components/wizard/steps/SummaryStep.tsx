@@ -12,7 +12,6 @@ import {
   MapPin,
   User,
   Calendar,
-  Clock,
   Image as ImageIcon,
   Tag,
   FileText,
@@ -77,7 +76,7 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
             <div>
               <p className="text-xs text-gray-500 dark:text-gray-400">Catégorie</p>
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {CATEGORY_LABELS[data.category as any]}
+                {CATEGORY_LABELS[data.category as keyof typeof CATEGORY_LABELS]}
               </p>
             </div>
           )}

@@ -35,7 +35,7 @@ export const DiagnosticPage = () => {
       // 1. Vérifier l'authentification
       newResults.auth = {
         status: !!user,
-        userId: user?.uid,
+        userId: user?.id,
         email: user?.email,
         displayName: user?.displayName,
       };
@@ -52,9 +52,9 @@ export const DiagnosticPage = () => {
         newResults.features = {
           interventions: currentEstablishment.features?.interventions?.enabled || false,
           rooms: currentEstablishment.features?.rooms?.enabled || false,
-          planning: currentEstablishment.features?.planning?.enabled || false,
-          notifications: currentEstablishment.features?.notifications?.enabled || false,
-          messaging: currentEstablishment.features?.messaging?.enabled || false,
+          planning: currentEstablishment.features?.interventionPlanning?.enabled || false,
+          notifications: currentEstablishment.features?.pushNotifications?.enabled || false,
+          messaging: currentEstablishment.features?.internalChat?.enabled || false,
         };
       }
 
@@ -177,9 +177,7 @@ export const DiagnosticPage = () => {
             <>
               <div className="flex justify-between">
                 <span className="text-gray-600">Sélectionné:</span>
-                <span className="font-medium">
-                  {results.establishment.status ? 'Oui' : 'Non'}
-                </span>
+                <span className="font-medium">{results.establishment.status ? 'Oui' : 'Non'}</span>
               </div>
               {results.establishment.status && (
                 <>
@@ -277,9 +275,7 @@ export const DiagnosticPage = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Erreur:</span>
-                  <span className="font-medium text-red-600">
-                    {results.interventions.error}
-                  </span>
+                  <span className="font-medium text-red-600">{results.interventions.error}</span>
                 </div>
                 {results.interventions.code && (
                   <div className="flex justify-between">

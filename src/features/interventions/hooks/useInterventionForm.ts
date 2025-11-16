@@ -1,9 +1,10 @@
 /**
  * useInterventionForm Hook
- * 
+ *
  * Hook pour gérer le formulaire d'intervention avec React Hook Form et Zod
  */
 
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,51 +23,46 @@ const interventionSchema = z.object({
     .string()
     .min(3, 'Le titre doit contenir au moins 3 caractères')
     .max(100, 'Le titre ne peut pas dépasser 100 caractères'),
-  
+
   description: z
     .string()
-    .min(10, 'La description doit contenir au moins 10 caractères')
-    .max(2000, 'La description ne peut pas dépasser 2000 caractères'),
-  
+    .max(2000, 'La description ne peut pas dépasser 2000 caractères')
+    .optional(),
+
   type: z.nativeEnum(InterventionType, {
-    errorMap: () => ({ message: 'Type d\'intervention requis' }),
-  }),
-  
+    message: "Type d'intervention requis",
+  }).optional(),
+
   category: z.nativeEnum(InterventionCategory, {
-    errorMap: () => ({ message: 'Catégorie requise' }),
-  }),
-  
-  priority: z.nativeEnum(InterventionPriority, {
-    errorMap: () => ({ message: 'Priorité requise' }),
-  }),
-  
+    message: 'Catégorie requise',
+  }).optional(),
+
+  priority: z.nativeEnum(InterventionPriority).optional(),
+
   location: z
     .string()
-    .min(3, 'La localisation doit contenir au moins 3 caractères')
-    .max(200, 'La localisation ne peut pas dépasser 200 caractères'),
-  
+    .max(200, 'La localisation ne peut pas dépasser 200 caractères')
+    .optional(),
+
   roomNumber: z
     .string()
     .max(20, 'Le numéro de chambre ne peut pas dépasser 20 caractères')
     .optional(),
-  
+
   floor: z
     .number()
-    .int('L\'étage doit être un nombre entier')
-    .min(-5, 'L\'étage ne peut pas être inférieur à -5')
-    .max(200, 'L\'étage ne peut pas dépasser 200')
+    .int("L'étage doit être un nombre entier")
+    .min(-5, "L'étage ne peut pas être inférieur à -5")
+    .max(200, "L'étage ne peut pas dépasser 200")
     .optional()
     .nullable(),
-  
-  building: z
-    .string()
-    .max(50, 'Le nom du bâtiment ne peut pas dépasser 50 caractères')
-    .optional(),
-  
+
+  building: z.string().max(50, 'Le nom du bâtiment ne peut pas dépasser 50 caractères').optional(),
+
   assignedTo: z.string().optional(),
-  
+
   scheduledAt: z.date().optional().nullable(),
-  
+
   estimatedDuration: z
     .number()
     .int('La durée doit être un nombre entier')
@@ -74,22 +70,26 @@ const interventionSchema = z.object({
     .max(1440, 'La durée maximale est de 1440 minutes (24h)')
     .optional()
     .nullable(),
-  
+
   internalNotes: z
     .string()
     .max(1000, 'Les notes ne peuvent pas dépasser 1000 caractères')
     .optional(),
-  
+
   isUrgent: z.boolean().optional(),
-  
+
   isBlocking: z.boolean().optional(),
-  
-  tags: z.array(z.object({
-    id: z.string(),
-    label: z.string(),
-    color: z.string().optional(),
-  })).optional(),
-  
+
+  tags: z
+    .array(
+      z.object({
+        id: z.string(),
+        label: z.string(),
+        color: z.string().optional(),
+      })
+    )
+    .optional(),
+
   photos: z
     .array(z.instanceof(File))
     .max(5, 'Vous ne pouvez pas uploader plus de 5 photos')
@@ -171,13 +171,13 @@ export const useInterventionForm = (initialData?: Partial<CreateInterventionData
     setValue: form.setValue,
     getValues: form.getValues,
     control: form.control,
-    
+
     // États
     isDirty,
     isValid,
     isSubmitting,
     errors,
-    
+
     // Actions
     resetForm,
     fillForm,
@@ -189,21 +189,21 @@ export const useInterventionForm = (initialData?: Partial<CreateInterventionData
  */
 export const usePhotoPreview = () => {
   const [previews, setPreviews] = useState<string[]>([]);
-  
+
   const generatePreviews = (files: File[]) => {
     // Nettoyer les anciennes previews
-    previews.forEach(url => URL.revokeObjectURL(url));
-    
+    previews.forEach((url: string) => URL.revokeObjectURL(url));
+
     // Générer les nouvelles
-    const newPreviews = files.map(file => URL.createObjectURL(file));
+    const newPreviews = files.map((file: File) => URL.createObjectURL(file));
     setPreviews(newPreviews);
   };
-  
+
   const clearPreviews = () => {
-    previews.forEach(url => URL.revokeObjectURL(url));
+    previews.forEach((url: string) => URL.revokeObjectURL(url));
     setPreviews([]);
   };
-  
+
   return {
     previews,
     generatePreviews,

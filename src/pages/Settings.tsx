@@ -53,7 +53,7 @@ import {
   Sparkles,
   Zap,
   Volume2,
-  VolumeX,
+  // VolumeX, // TODO: Imported but unused
   MessageSquare,
   FileText,
   ChevronRight,
@@ -292,7 +292,8 @@ export const SettingsPage = () => {
 
 const ProfileSection = ({ user }: any) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  // TODO: hasChanges unused
+  // const [hasChanges, setHasChanges] = useState(false);
 
   const form = useForm<ProfileFormData>({
     defaultValues: {
@@ -311,7 +312,8 @@ const ProfileSection = ({ user }: any) => {
     formState: { isDirty },
   } = form;
 
-  const onSubmit = async (data: ProfileFormData) => {
+  // TODO: data parameter unused
+  const onSubmit = async () => {
     setIsUpdating(true);
     try {
       // TODO: Implement profile update
@@ -319,7 +321,7 @@ const ProfileSection = ({ user }: any) => {
       toast.success('Profil mis à jour avec succès', {
         description: 'Vos informations ont été enregistrées',
       });
-      setHasChanges(false);
+      // setHasChanges(false);
     } catch (error) {
       toast.error('Erreur lors de la mise à jour', {
         description: 'Veuillez réessayer',
@@ -367,7 +369,10 @@ const ProfileSection = ({ user }: any) => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2 group">
-                <Label htmlFor="displayName" className="flex items-center gap-2 text-sm font-medium">
+                <Label
+                  htmlFor="displayName"
+                  className="flex items-center gap-2 text-sm font-medium"
+                >
                   <Sparkles className="h-3.5 w-3.5 text-blue-500" />
                   Nom d'affichage
                 </Label>
@@ -376,9 +381,7 @@ const ProfileSection = ({ user }: any) => {
                   placeholder="Comment souhaitez-vous être appelé ?"
                   className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Visible par tous les utilisateurs
-                </p>
+                <p className="text-xs text-muted-foreground">Visible par tous les utilisateurs</p>
               </div>
 
               <div className="space-y-2">
@@ -387,16 +390,10 @@ const ProfileSection = ({ user }: any) => {
                   Email
                 </Label>
                 <div className="relative">
-                  <Input
-                    value={user?.email}
-                    disabled
-                    className="bg-muted/50 cursor-not-allowed"
-                  />
+                  <Input value={user?.email} disabled className="bg-muted/50 cursor-not-allowed" />
                   <Lock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  L'email ne peut pas être modifié
-                </p>
+                <p className="text-xs text-muted-foreground">L'email ne peut pas être modifié</p>
               </div>
 
               <div className="space-y-2">
@@ -433,7 +430,10 @@ const ProfileSection = ({ user }: any) => {
             </div>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="phoneNumber" className="flex items-center gap-2 text-sm font-medium">
+                <Label
+                  htmlFor="phoneNumber"
+                  className="flex items-center gap-2 text-sm font-medium"
+                >
                   <Phone className="h-3.5 w-3.5 text-green-500" />
                   Téléphone
                 </Label>
@@ -523,20 +523,22 @@ const NotificationsSection = () => {
   }: any) => (
     <div className="group flex items-center justify-between p-4 rounded-lg hover:bg-muted/50 transition-colors duration-200">
       <div className="flex items-start gap-3 flex-1">
-        <div className={cn(
-          "p-2 rounded-lg transition-colors duration-200",
-          checked ? accentColor : "bg-muted"
-        )}>
-          <Icon className={cn(
-            "h-4 w-4 transition-colors duration-200",
-            checked ? "text-white" : "text-muted-foreground"
-          )} />
+        <div
+          className={cn(
+            'p-2 rounded-lg transition-colors duration-200',
+            checked ? accentColor : 'bg-muted'
+          )}
+        >
+          <Icon
+            className={cn(
+              'h-4 w-4 transition-colors duration-200',
+              checked ? 'text-white' : 'text-muted-foreground'
+            )}
+          />
         </div>
         <div className="space-y-0.5">
           <p className="font-medium text-sm">{label}</p>
-          {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
-          )}
+          {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </div>
       </div>
       <Switch
@@ -1023,8 +1025,8 @@ const SecuritySection = () => {
                     type={showPasswords ? 'text' : 'password'}
                     placeholder="Entrez votre mot de passe actuel"
                     className={cn(
-                      "pr-10 transition-all duration-200",
-                      errors.currentPassword && "border-red-500 focus:ring-red-500/20"
+                      'pr-10 transition-all duration-200',
+                      errors.currentPassword && 'border-red-500 focus:ring-red-500/20'
                     )}
                   />
                   <button
@@ -1056,22 +1058,24 @@ const SecuritySection = () => {
                     type={showPasswords ? 'text' : 'password'}
                     placeholder="Entrez votre nouveau mot de passe"
                     className={cn(
-                      "pr-10 transition-all duration-200",
-                      errors.newPassword && "border-red-500 focus:ring-red-500/20"
+                      'pr-10 transition-all duration-200',
+                      errors.newPassword && 'border-red-500 focus:ring-red-500/20'
                     )}
-                    onChange={(e) => setPasswordStrength(calculatePasswordStrength(e.target.value))}
+                    onChange={e => setPasswordStrength(calculatePasswordStrength(e.target.value))}
                   />
                 </div>
                 {newPassword && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Force du mot de passe</span>
-                      <span className={cn(
-                        "font-medium",
-                        passwordStrength <= 1 && "text-red-500",
-                        passwordStrength > 1 && passwordStrength <= 3 && "text-orange-500",
-                        passwordStrength > 3 && "text-green-500"
-                      )}>
+                      <span
+                        className={cn(
+                          'font-medium',
+                          passwordStrength <= 1 && 'text-red-500',
+                          passwordStrength > 1 && passwordStrength <= 3 && 'text-orange-500',
+                          passwordStrength > 3 && 'text-green-500'
+                        )}
+                      >
                         {getStrengthLabel()}
                       </span>
                     </div>
@@ -1080,8 +1084,8 @@ const SecuritySection = () => {
                         <div
                           key={i}
                           className={cn(
-                            "flex-1 rounded-full transition-all duration-300",
-                            i < passwordStrength ? getStrengthColor() : "bg-muted"
+                            'flex-1 rounded-full transition-all duration-300',
+                            i < passwordStrength ? getStrengthColor() : 'bg-muted'
                           )}
                         />
                       ))}
@@ -1108,8 +1112,8 @@ const SecuritySection = () => {
                     type={showPasswords ? 'text' : 'password'}
                     placeholder="Confirmez votre nouveau mot de passe"
                     className={cn(
-                      "pr-10 transition-all duration-200",
-                      errors.confirmPassword && "border-red-500 focus:ring-red-500/20"
+                      'pr-10 transition-all duration-200',
+                      errors.confirmPassword && 'border-red-500 focus:ring-red-500/20'
                     )}
                   />
                 </div>
@@ -1163,18 +1167,17 @@ const SecuritySection = () => {
 // ============================================================================
 
 const PreferencesSection = () => {
-  const {
-    displayPreferences,
-    updateDisplayPreferences,
-    resetToDefaults,
-    isSaving,
-  } = useUserPreferences();
+  const { displayPreferences, updateDisplayPreferences, resetToDefaults, isSaving } =
+    useUserPreferences();
 
   const handleThemeChange = (theme: 'light' | 'dark' | 'auto') => {
     updateDisplayPreferences({ theme });
 
     // Appliquer immédiatement le thème
-    if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (
+      theme === 'dark' ||
+      (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    ) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
@@ -1185,16 +1188,21 @@ const PreferencesSection = () => {
     <button
       onClick={() => handleThemeChange(value)}
       className={cn(
-        "group relative p-4 border-2 rounded-xl transition-all duration-300 hover:scale-105",
+        'group relative p-4 border-2 rounded-xl transition-all duration-300 hover:scale-105',
         displayPreferences.theme === value
-          ? "border-blue-500 bg-gradient-to-br from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20 shadow-md"
-          : "border-border hover:border-blue-300 dark:hover:border-blue-700"
+          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20 shadow-md'
+          : 'border-border hover:border-blue-300 dark:hover:border-blue-700'
       )}
     >
-      <Icon className={cn(
-        "mx-auto mb-2 transition-colors duration-200",
-        displayPreferences.theme === value ? "text-blue-600 dark:text-blue-400" : "text-muted-foreground"
-      )} size={24} />
+      <Icon
+        className={cn(
+          'mx-auto mb-2 transition-colors duration-200',
+          displayPreferences.theme === value
+            ? 'text-blue-600 dark:text-blue-400'
+            : 'text-muted-foreground'
+        )}
+        size={24}
+      />
       <div className="text-sm font-semibold mb-1">{label}</div>
       <div className="text-xs text-muted-foreground">{description}</div>
       {displayPreferences.theme === value && (
@@ -1205,17 +1213,18 @@ const PreferencesSection = () => {
     </button>
   );
 
-  const ColorOption = ({ value, color, name }: any) => (
+  // TODO: name parameter unused
+  const ColorOption = ({ value, color }: any) => (
     <button
       onClick={() => updateDisplayPreferences({ themeColor: value })}
       className={cn(
-        "group relative p-2.5 border-2 rounded-xl transition-all duration-300 hover:scale-105",
+        'group relative p-2.5 border-2 rounded-xl transition-all duration-300 hover:scale-105',
         displayPreferences.themeColor === value
-          ? "border-foreground shadow-md"
-          : "border-border hover:border-muted-foreground"
+          ? 'border-foreground shadow-md'
+          : 'border-border hover:border-muted-foreground'
       )}
     >
-      <div className={cn("w-full h-8 rounded-lg", color)} />
+      <div className={cn('w-full h-8 rounded-lg', color)} />
       {displayPreferences.themeColor === value && (
         <div className="absolute -top-2 -right-2 p-1 bg-foreground rounded-full shadow-lg">
           <Check className="h-3 w-3 text-background" />
@@ -1228,10 +1237,10 @@ const PreferencesSection = () => {
     <button
       onClick={() => updateDisplayPreferences({ density: value })}
       className={cn(
-        "group relative p-4 border-2 rounded-xl transition-all duration-300 hover:scale-105",
+        'group relative p-4 border-2 rounded-xl transition-all duration-300 hover:scale-105',
         displayPreferences.density === value
-          ? "border-blue-500 bg-gradient-to-br from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20 shadow-md"
-          : "border-border hover:border-blue-300 dark:hover:border-blue-700"
+          ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-violet-50 dark:from-blue-950/20 dark:to-violet-950/20 shadow-md'
+          : 'border-border hover:border-blue-300 dark:hover:border-blue-700'
       )}
     >
       <div className="mb-2">{preview}</div>
@@ -1282,7 +1291,9 @@ const PreferencesSection = () => {
             {isSaving && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full">
                 <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-400">Enregistrement...</span>
+                <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                  Enregistrement...
+                </span>
               </div>
             )}
           </div>
@@ -1297,7 +1308,10 @@ const PreferencesSection = () => {
               { label: 'Format date', value: displayPreferences.dateFormat, icon: Calendar },
               { label: 'Format heure', value: displayPreferences.timeFormat, icon: Clock },
             ].map(({ label, value, icon: Icon }) => (
-              <div key={label} className="p-2.5 bg-background/50 backdrop-blur-sm rounded-lg border border-border/50">
+              <div
+                key={label}
+                className="p-2.5 bg-background/50 backdrop-blur-sm rounded-lg border border-border/50"
+              >
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <Icon className="h-3 w-3 text-muted-foreground" />
                   <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -1312,9 +1326,16 @@ const PreferencesSection = () => {
       {/* Collapsible Sections */}
       <Card className="border-none shadow-sm">
         <CardContent className="pt-6">
-          <Accordion type="multiple" defaultValue={["apparence", "interface", "localisation"]} className="space-y-4">
+          <Accordion
+            type="multiple"
+            defaultValue={['apparence', 'interface', 'localisation']}
+            className="space-y-4"
+          >
             {/* Section 1: Apparence */}
-            <AccordionItem value="apparence" className="border rounded-xl px-4 bg-gradient-to-br from-violet-50/30 to-purple-50/30 dark:from-violet-950/10 dark:to-purple-950/10">
+            <AccordionItem
+              value="apparence"
+              className="border rounded-xl px-4 bg-gradient-to-br from-violet-50/30 to-purple-50/30 dark:from-violet-950/10 dark:to-purple-950/10"
+            >
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-sm">
@@ -1348,14 +1369,43 @@ const PreferencesSection = () => {
                   </div>
                   <div className="grid grid-cols-6 gap-2">
                     {[
-                      { value: 'blue', color: 'bg-gradient-to-br from-blue-500 to-blue-600', name: 'Bleu' },
-                      { value: 'green', color: 'bg-gradient-to-br from-green-500 to-emerald-600', name: 'Vert' },
-                      { value: 'purple', color: 'bg-gradient-to-br from-purple-500 to-violet-600', name: 'Violet' },
-                      { value: 'orange', color: 'bg-gradient-to-br from-orange-500 to-amber-600', name: 'Orange' },
-                      { value: 'red', color: 'bg-gradient-to-br from-red-500 to-rose-600', name: 'Rouge' },
-                      { value: 'pink', color: 'bg-gradient-to-br from-pink-500 to-rose-600', name: 'Rose' },
-                    ].map((color) => (
-                      <ColorOption key={color.value} value={color.value} color={color.color} name={color.name} />
+                      {
+                        value: 'blue',
+                        color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+                        name: 'Bleu',
+                      },
+                      {
+                        value: 'green',
+                        color: 'bg-gradient-to-br from-green-500 to-emerald-600',
+                        name: 'Vert',
+                      },
+                      {
+                        value: 'purple',
+                        color: 'bg-gradient-to-br from-purple-500 to-violet-600',
+                        name: 'Violet',
+                      },
+                      {
+                        value: 'orange',
+                        color: 'bg-gradient-to-br from-orange-500 to-amber-600',
+                        name: 'Orange',
+                      },
+                      {
+                        value: 'red',
+                        color: 'bg-gradient-to-br from-red-500 to-rose-600',
+                        name: 'Rouge',
+                      },
+                      {
+                        value: 'pink',
+                        color: 'bg-gradient-to-br from-pink-500 to-rose-600',
+                        name: 'Rose',
+                      },
+                    ].map(color => (
+                      <ColorOption
+                        key={color.value}
+                        value={color.value}
+                        color={color.color}
+                        name={color.name}
+                      />
                     ))}
                   </div>
                 </div>
@@ -1409,7 +1459,10 @@ const PreferencesSection = () => {
             </AccordionItem>
 
             {/* Section 2: Interface */}
-            <AccordionItem value="interface" className="border rounded-xl px-4 bg-gradient-to-br from-orange-50/30 to-amber-50/30 dark:from-orange-950/10 dark:to-amber-950/10">
+            <AccordionItem
+              value="interface"
+              className="border rounded-xl px-4 bg-gradient-to-br from-orange-50/30 to-amber-50/30 dark:from-orange-950/10 dark:to-amber-950/10"
+            >
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-orange-500 to-amber-600 shadow-sm">
@@ -1458,22 +1511,27 @@ const PreferencesSection = () => {
                     {[
                       { value: 'list', label: 'Liste', icon: List },
                       { value: 'grid', label: 'Grille', icon: Layout },
-                      { value: 'calendar', label: 'Calendrier', icon: Calendar }
+                      { value: 'calendar', label: 'Calendrier', icon: Calendar },
                     ].map(({ value, label, icon: Icon }) => (
                       <button
                         key={value}
                         onClick={() => updateDisplayPreferences({ defaultView: value as any })}
                         className={cn(
-                          "p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105",
+                          'p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105',
                           displayPreferences.defaultView === value
-                            ? "border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 shadow-md"
-                            : "border-border hover:border-orange-300 dark:hover:border-orange-700"
+                            ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 shadow-md'
+                            : 'border-border hover:border-orange-300 dark:hover:border-orange-700'
                         )}
                       >
-                        <Icon className={cn(
-                          "mx-auto mb-1",
-                          displayPreferences.defaultView === value ? "text-orange-600" : "text-muted-foreground"
-                        )} size={20} />
+                        <Icon
+                          className={cn(
+                            'mx-auto mb-1',
+                            displayPreferences.defaultView === value
+                              ? 'text-orange-600'
+                              : 'text-muted-foreground'
+                          )}
+                          size={20}
+                        />
                         <div className="text-xs font-semibold">{label}</div>
                       </button>
                     ))}
@@ -1504,7 +1562,10 @@ const PreferencesSection = () => {
             </AccordionItem>
 
             {/* Section 3: Localisation */}
-            <AccordionItem value="localisation" className="border rounded-xl px-4 bg-gradient-to-br from-cyan-50/30 to-blue-50/30 dark:from-cyan-950/10 dark:to-blue-950/10">
+            <AccordionItem
+              value="localisation"
+              className="border rounded-xl px-4 bg-gradient-to-br from-cyan-50/30 to-blue-50/30 dark:from-cyan-950/10 dark:to-blue-950/10"
+            >
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 shadow-sm">
@@ -1565,10 +1626,10 @@ const PreferencesSection = () => {
                     <button
                       onClick={() => updateDisplayPreferences({ timeFormat: '12h' })}
                       className={cn(
-                        "p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105 relative",
+                        'p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105 relative',
                         displayPreferences.timeFormat === '12h'
-                          ? "border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/20 dark:to-blue-950/20 shadow-md"
-                          : "border-border hover:border-cyan-300 dark:hover:border-cyan-700"
+                          ? 'border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/20 dark:to-blue-950/20 shadow-md'
+                          : 'border-border hover:border-cyan-300 dark:hover:border-cyan-700'
                       )}
                     >
                       <div className="font-semibold text-sm">12 heures</div>
@@ -1580,10 +1641,10 @@ const PreferencesSection = () => {
                     <button
                       onClick={() => updateDisplayPreferences({ timeFormat: '24h' })}
                       className={cn(
-                        "p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105 relative",
+                        'p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105 relative',
                         displayPreferences.timeFormat === '24h'
-                          ? "border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/20 dark:to-blue-950/20 shadow-md"
-                          : "border-border hover:border-cyan-300 dark:hover:border-cyan-700"
+                          ? 'border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/20 dark:to-blue-950/20 shadow-md'
+                          : 'border-border hover:border-cyan-300 dark:hover:border-cyan-700'
                       )}
                     >
                       <div className="font-semibold text-sm">24 heures</div>
@@ -1614,7 +1675,10 @@ const PreferencesSection = () => {
               <div className="space-y-1">
                 <div>HTML Classes: {document.documentElement.className}</div>
                 <div>HTML Lang: {document.documentElement.lang}</div>
-                <div>--primary: {getComputedStyle(document.documentElement).getPropertyValue('--primary')}</div>
+                <div>
+                  --primary:{' '}
+                  {getComputedStyle(document.documentElement).getPropertyValue('--primary')}
+                </div>
               </div>
             </div>
           </details>
@@ -1640,9 +1704,7 @@ const AboutSection = () => {
             <CardTitle className="text-2xl">À propos</CardTitle>
           </div>
         </div>
-        <CardDescription className="text-base">
-          Informations sur l'application
-        </CardDescription>
+        <CardDescription className="text-base">Informations sur l'application</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Logo et version */}
@@ -1702,9 +1764,7 @@ const AboutSection = () => {
 
         {/* Copyright */}
         <div className="pt-4 border-t text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2024 GestiHôtel. Tous droits réservés.
-          </p>
+          <p className="text-sm text-muted-foreground">© 2024 GestiHôtel. Tous droits réservés.</p>
           <p className="text-xs text-muted-foreground mt-2">
             Plateforme de gestion hôtelière complète
           </p>
@@ -1777,16 +1837,22 @@ const UsersManagementSection = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-5 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-xl border border-blue-100 dark:border-blue-900">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Total</span>
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Total
+                  </span>
                   <Users className="h-4 w-4 text-blue-600" />
                 </div>
-                <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">{users.length}</div>
+                <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                  {users.length}
+                </div>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">utilisateurs</p>
               </div>
 
               <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-100 dark:border-green-900">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300">Actifs</span>
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    Actifs
+                  </span>
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 </div>
                 <div className="text-3xl font-bold text-green-900 dark:text-green-100">
@@ -1797,7 +1863,9 @@ const UsersManagementSection = () => {
 
               <div className="p-5 bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-xl border border-gray-100 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Inactifs</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Inactifs
+                  </span>
                   <AlertCircle className="h-4 w-4 text-gray-600" />
                 </div>
                 <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
@@ -1820,7 +1888,8 @@ const UsersManagementSection = () => {
                       <div className="relative">
                         <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-md">
                           <span className="text-base font-semibold text-white">
-                            {user.firstName?.[0]}{user.lastName?.[0]}
+                            {user.firstName?.[0]}
+                            {user.lastName?.[0]}
                           </span>
                         </div>
                         {user.status === 'active' && (
@@ -1841,12 +1910,17 @@ const UsersManagementSection = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className={cn(
-                        "px-3 py-1 text-xs font-medium rounded-full",
-                        user.role === 'admin' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
-                        user.role === 'super_admin' && 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
-                        !['admin', 'super_admin'].includes(user.role) && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
-                      )}>
+                      <span
+                        className={cn(
+                          'px-3 py-1 text-xs font-medium rounded-full',
+                          user.role === 'admin' &&
+                            'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
+                          user.role === 'super_admin' &&
+                            'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
+                          !['admin', 'super_admin'].includes(user.role) &&
+                            'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                        )}
+                      >
                         {user.role}
                       </span>
                       <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
@@ -1896,14 +1970,32 @@ const EstablishmentsManagementSection = () => {
               Gérez vos propriétés et leurs configurations
             </CardDescription>
           </div>
-          <Button
-            onClick={() => navigate('/app/establishments')}
-            className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
-          >
-            <Building2 size={16} className="mr-2" />
-            Voir tous
-            <ChevronRight size={16} className="ml-1" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/app/settings/features')}
+              className="hover:bg-purple-50 dark:hover:bg-purple-950/20"
+            >
+              <Zap size={16} className="mr-2" />
+              Fonctionnalités
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/app/settings/establishment')}
+              className="hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+            >
+              <SettingsIcon size={16} className="mr-2" />
+              Paramètres
+            </Button>
+            <Button
+              onClick={() => navigate('/app/establishments')}
+              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+            >
+              <Building2 size={16} className="mr-2" />
+              Voir tous
+              <ChevronRight size={16} className="ml-1" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -1936,22 +2028,30 @@ const EstablishmentsManagementSection = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-5 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-xl border border-blue-100 dark:border-blue-900">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Établissements</span>
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Établissements
+                  </span>
                   <Building2 className="h-4 w-4 text-blue-600" />
                 </div>
-                <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">{establishments.length}</div>
+                <div className="text-3xl font-bold text-blue-900 dark:text-blue-100">
+                  {establishments.length}
+                </div>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">propriétés gérées</p>
               </div>
 
               <div className="p-5 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-xl border border-green-100 dark:border-green-900">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-green-700 dark:text-green-300">Chambres totales</span>
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    Chambres totales
+                  </span>
                   <Layout className="h-4 w-4 text-green-600" />
                 </div>
                 <div className="text-3xl font-bold text-green-900 dark:text-green-100">
                   {establishments.reduce((sum: number, e: any) => sum + (e.totalRooms || 0), 0)}
                 </div>
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">chambres disponibles</p>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  chambres disponibles
+                </p>
               </div>
             </div>
 
@@ -1990,7 +2090,7 @@ const EstablishmentsManagementSection = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           navigate(`/app/establishments/${establishment.id}/edit`);
                         }}

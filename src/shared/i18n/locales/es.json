@@ -2,6 +2,8 @@
   "nav": {
     "dashboard": "Panel",
     "interventions": "Intervenciones",
+    "templates": "Plantillas",
+    "suppliers": "Proveedores",
     "rooms": "Habitaciones",
     "planning": "Planificación",
     "notifications": "Notificaciones",

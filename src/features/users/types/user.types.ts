@@ -15,21 +15,17 @@ import type { UserRole, Permission } from './role.types';
 
 /**
  * Statut d'un utilisateur
+ * - ACTIVE: Actif - peut se connecter
+ * - INACTIVE: Inactif - ne peut pas se connecter
+ * - PENDING: En attente d'activation
+ * - SUSPENDED: Suspendu temporairement
+ * - BANNED: Banni définitivement
  */
 export enum UserStatus {
-  /** Actif - peut se connecter */
   ACTIVE = 'active',
-
-  /** Inactif - ne peut pas se connecter */
   INACTIVE = 'inactive',
-
-  /** En attente d'activation */
   PENDING = 'pending',
-
-  /** Suspendu temporairement */
   SUSPENDED = 'suspended',
-
-  /** Banni définitivement */
   BANNED = 'banned',
 }
 

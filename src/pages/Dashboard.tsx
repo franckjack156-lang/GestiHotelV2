@@ -13,22 +13,12 @@
  * - Filtres par période
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useInterventions } from '@/features/interventions/hooks/useInterventions';
-import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
-import {
-  ClipboardList,
-  Users,
-  Building2,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Plus,
-  ArrowRight,
-} from 'lucide-react';
+import { useFeature } from '@/features/establishments/hooks/useFeature';
+import { ClipboardList, AlertCircle, CheckCircle2, Clock, Plus, ArrowRight } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
   Card,
@@ -45,7 +35,6 @@ import {
   SelectValue,
 } from '@/shared/components/ui/select';
 import { StatCard, EmptyState, LoadingSkeleton } from '@/shared/components/ui-extended';
-import { InterventionCard } from '@/features/interventions/components/cards/InterventionCard';
 import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
 import { PriorityBadge } from '@/features/interventions/components/badges/PriorityBadge';
 import {
@@ -105,11 +94,11 @@ const filterInterventionsByPeriod = (
 // COMPONENT
 // ============================================================================
 
-export const DashboardPage = () => {
+const DashboardPageComponent = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { establishmentId } = useCurrentEstablishment();
-  const { allInterventions, isLoading, stats } = useInterventions();
+  const { allInterventions, isLoading } = useInterventions();
+  const { hasFeature } = useFeature();
 
   const [period, setPeriod] = useState<PeriodFilter>('week');
 
@@ -269,10 +258,12 @@ export const DashboardPage = () => {
             </SelectContent>
           </Select>
 
-          <Button onClick={() => navigate('/app/interventions/create')}>
-            <Plus size={16} className="mr-2" />
-            Nouvelle intervention
-          </Button>
+          {hasFeature('interventionQuickCreate') && (
+            <Button onClick={() => navigate('/app/interventions/create')}>
+              <Plus size={16} className="mr-2" />
+              Nouvelle intervention
+            </Button>
+          )}
         </div>
       </div>
 
@@ -314,77 +305,81 @@ export const DashboardPage = () => {
       </div>
 
       {/* Graphiques */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Évolution sur 7 jours */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Évolution (7 derniers jours)</CardTitle>
-            <CardDescription>Nombre d'interventions par jour</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData.evolutionData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="total" stroke="#3b82f6" name="Total" />
-                <Line type="monotone" dataKey="completed" stroke="#10b981" name="Terminées" />
-                <Line type="monotone" dataKey="pending" stroke="#fbbf24" name="En attente" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+      {hasFeature('dashboard') && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Évolution sur 7 jours */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Évolution (7 derniers jours)</CardTitle>
+              <CardDescription>Nombre d'interventions par jour</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData.evolutionData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="total" stroke="#3b82f6" name="Total" />
+                  <Line type="monotone" dataKey="completed" stroke="#10b981" name="Terminées" />
+                  <Line type="monotone" dataKey="pending" stroke="#fbbf24" name="En attente" />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
 
-        {/* Répartition par statut */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Répartition par statut</CardTitle>
-            <CardDescription>Distribution des interventions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData.statusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={entry => `${entry.name}: ${entry.value}`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Répartition par statut */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Répartition par statut</CardTitle>
+              <CardDescription>Distribution des interventions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={chartData.statusData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={entry => `${entry.name}: ${entry.value}`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {chartData.statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Répartition par priorité */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Répartition par priorité</CardTitle>
-          <CardDescription>Nombre d'interventions par niveau de priorité</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData.priorityData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#8b5cf6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      {hasFeature('dashboard') && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Répartition par priorité</CardTitle>
+            <CardDescription>Nombre d'interventions par niveau de priorité</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData.priorityData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8b5cf6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Contenu principal */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -505,10 +500,14 @@ export const DashboardPage = () => {
                 icon={<ClipboardList size={48} />}
                 title="Aucune intervention"
                 description="Il n'y a aucune intervention pour le moment"
-                action={{
-                  label: 'Créer une intervention',
-                  onClick: () => navigate('/app/interventions/create'),
-                }}
+                action={
+                  hasFeature('interventionQuickCreate')
+                    ? {
+                        label: 'Créer une intervention',
+                        onClick: () => navigate('/app/interventions/create'),
+                      }
+                    : undefined
+                }
               />
             ) : (
               <div className="space-y-4">
@@ -556,5 +555,9 @@ export const DashboardPage = () => {
     </div>
   );
 };
+
+DashboardPageComponent.displayName = 'DashboardPage';
+
+export const DashboardPage = memo(DashboardPageComponent);
 
 export default DashboardPage;

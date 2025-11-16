@@ -16,7 +16,8 @@ import type {
   UsersListConfig,
   UserStats,
 } from '../types/user.types';
-import { UserStatus } from '../types/user.types';
+// TODO: UserStatus imported but unused
+// import { UserStatus } from '../types/user.types';
 import type { UserRole } from '../types/role.types';
 
 // ============================================================================
@@ -290,7 +291,7 @@ export const useUserStore = create<UserState>()(
           }
 
           if (filters.department) {
-            filtered = filtered.filter(u => u.jobTitle === filters.department);
+            filtered = filtered.filter(u => (u as UserProfile).jobTitle === filters.department);
           }
 
           if (filters.activeOnly) {

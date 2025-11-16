@@ -4,7 +4,7 @@
  * Affichage détaillé d'une intervention
  */
 
-import { useState } from 'react';
+import { useState, memo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
@@ -16,7 +16,6 @@ import {
   Clock,
   User,
   Building2,
-  FileText,
   Image as ImageIcon,
   X,
   Eye,
@@ -37,7 +36,6 @@ import {
 import { StatusBadge } from '../badges/StatusBadge';
 import { TypeBadge } from '../badges/TypeBadge';
 import { PriorityBadge } from '../badges/PriorityBadge';
-import { INTERVENTION_TYPE_LABELS, CATEGORY_LABELS } from '@/shared/types/status.types';
 import type { Intervention } from '../../types/intervention.types';
 
 interface InterventionDetailsProps {
@@ -49,7 +47,7 @@ interface InterventionDetailsProps {
   canDelete?: boolean;
 }
 
-export const InterventionDetails = ({
+const InterventionDetailsComponent = ({
   intervention,
   onEdit,
   onDelete,
@@ -63,7 +61,6 @@ export const InterventionDetails = ({
     title,
     description,
     type,
-    category,
     status,
     priority,
     location,
@@ -71,7 +68,6 @@ export const InterventionDetails = ({
     floor,
     building,
     createdAt,
-    updatedAt,
     scheduledAt,
     startedAt,
     completedAt,
@@ -88,14 +84,14 @@ export const InterventionDetails = ({
     viewsCount,
   } = intervention;
 
-  // Formatage des dates
-  const formatDate = (timestamp: any, formatStr = 'dd MMMM yyyy à HH:mm') => {
+  // Formatage des dates - memoized
+  const formatDate = useCallback((timestamp: any, formatStr = 'dd MMMM yyyy à HH:mm') => {
     if (!timestamp) return '-';
     return format(timestamp.toDate(), formatStr, { locale: fr });
-  };
+  }, []);
 
-  // Calculer la durée
-  const formatDuration = (minutes?: number) => {
+  // Calculer la durée - memoized
+  const formatDuration = useCallback((minutes?: number) => {
     if (!minutes) return '-';
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
@@ -103,7 +99,15 @@ export const InterventionDetails = ({
       return `${hours}h ${mins > 0 ? `${mins}min` : ''}`;
     }
     return `${mins}min`;
-  };
+  }, []);
+
+  const handlePhotoClick = useCallback((url: string) => {
+    setSelectedPhoto(url);
+  }, []);
+
+  const handleClosePhoto = useCallback(() => {
+    setSelectedPhoto(null);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -182,9 +186,7 @@ export const InterventionDetails = ({
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">
-                {description}
-              </p>
+              <p className="whitespace-pre-wrap text-gray-700 dark:text-gray-300">{description}</p>
             </CardContent>
           </Card>
 
@@ -203,7 +205,7 @@ export const InterventionDetails = ({
                     <div
                       key={photo.id}
                       className="relative aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setSelectedPhoto(photo.url)}
+                      onClick={() => handlePhotoClick(photo.url)}
                     >
                       <img
                         src={photo.url}
@@ -258,9 +260,7 @@ export const InterventionDetails = ({
                 <MapPin size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-500 dark:text-gray-400">Localisation</p>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {location}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{location}</p>
                 </div>
               </div>
 
@@ -403,7 +403,9 @@ export const InterventionDetails = ({
               <CardContent>
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <Eye size={16} />
-                  <span>{viewsCount} consultation{viewsCount !== 1 ? 's' : ''}</span>
+                  <span>
+                    {viewsCount} consultation{viewsCount !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -415,13 +417,13 @@ export const InterventionDetails = ({
       {selectedPhoto && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setSelectedPhoto(null)}
+          onClick={handleClosePhoto}
         >
           <Button
             variant="ghost"
             size="icon"
             className="absolute top-4 right-4 text-white hover:bg-white/10"
-            onClick={() => setSelectedPhoto(null)}
+            onClick={handleClosePhoto}
           >
             <X className="h-6 w-6" />
           </Button>
@@ -435,3 +437,7 @@ export const InterventionDetails = ({
     </div>
   );
 };
+
+InterventionDetailsComponent.displayName = 'InterventionDetails';
+
+export const InterventionDetails = memo(InterventionDetailsComponent);

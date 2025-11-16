@@ -2,7 +2,7 @@
  * ============================================================================
  * USERS COMPONENTS - INDEX
  * ============================================================================
- * 
+ *
  * Export centralisé de tous les composants Users
  */
 
@@ -44,9 +44,4 @@ export { UserStatus } from '../types/user.types';
 
 export type { UserRole } from '../types/role.types';
 
-export {
-  ROLE_LABELS,
-  ROLE_DESCRIPTIONS,
-  ROLE_COLORS,
-  Permission,
-} from '../types/role.types';
+export { ROLE_LABELS, ROLE_DESCRIPTIONS, ROLE_COLORS, Permission } from '../types/role.types';

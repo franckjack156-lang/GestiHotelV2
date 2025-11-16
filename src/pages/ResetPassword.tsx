@@ -1,6 +1,6 @@
 /**
  * ResetPassword Page
- * 
+ *
  * Page de réinitialisation du mot de passe
  */
 
@@ -50,9 +50,7 @@ export const ResetPasswordPage = () => {
           <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Email envoyé !
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Email envoyé !</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Vérifiez votre boîte mail pour réinitialiser votre mot de passe.
           </p>
@@ -71,9 +69,7 @@ export const ResetPasswordPage = () => {
   return (
     <div className="w-full max-w-md space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Mot de passe oublié ?
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mot de passe oublié ?</h1>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           Entrez votre email pour recevoir un lien de réinitialisation
         </p>
@@ -99,9 +95,7 @@ export const ResetPasswordPage = () => {
               disabled={isLoading}
             />
           </div>
-          {errors.email && (
-            <p className="text-sm text-red-600">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>

@@ -10,41 +10,22 @@ import {
   UserPlus,
   Clock,
   CheckCircle,
-  AlertTriangle,
   FileText,
   Image,
   Package,
   ArrowRight,
+  Loader2,
+  Mail,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Intervention } from '../../types/intervention.types';
+import type { HistoryEventType } from '../../types/subcollections.types';
 import { cn } from '@/shared/lib/utils';
+import { useHistory } from '../../hooks/useHistory';
 
 interface HistoryTabProps {
   intervention: Intervention;
-}
-
-type HistoryEventType =
-  | 'created'
-  | 'status_change'
-  | 'assigned'
-  | 'updated'
-  | 'comment_added'
-  | 'photo_added'
-  | 'part_added'
-  | 'time_added';
-
-interface HistoryEvent {
-  id: string;
-  type: HistoryEventType;
-  timestamp: Date;
-  userName: string;
-  userRole?: string;
-  description: string;
-  oldValue?: string;
-  newValue?: string;
-  details?: string;
 }
 
 const EVENT_CONFIG: Record<
@@ -93,17 +74,57 @@ const EVENT_CONFIG: Record<
     bgColor: 'bg-yellow-100',
     label: 'Pièce',
   },
+  part_status_changed: {
+    icon: Package,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
+    label: 'Pièce',
+  },
   time_added: {
     icon: Clock,
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-100',
     label: 'Temps',
   },
+  completed: {
+    icon: CheckCircle,
+    color: 'text-green-600',
+    bgColor: 'bg-green-100',
+    label: 'Complété',
+  },
+  validated: {
+    icon: CheckCircle,
+    color: 'text-emerald-600',
+    bgColor: 'bg-emerald-100',
+    label: 'Validé',
+  },
+  email_sent: {
+    icon: Mail,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+    label: 'Email',
+  },
+};
+
+/**
+ * Convertir les rôles techniques en labels lisibles
+ */
+const formatUserRole = (role: string | undefined): string => {
+  if (!role) return '';
+
+  const roleLabels: Record<string, string> = {
+    super_admin: 'Super Admin',
+    admin: 'Administrateur',
+    manager: 'Responsable',
+    technician: 'Technicien',
+    viewer: 'Lecteur',
+  };
+
+  return roleLabels[role] || role;
 };
 
 export const HistoryTab = ({ intervention }: HistoryTabProps) => {
-  // TODO: Récupérer l'historique depuis Firestore
-  const history: HistoryEvent[] = [];
+  const { events: history, isLoading } = useHistory(intervention.id);
 
   const getEventIcon = (type: HistoryEventType) => {
     return EVENT_CONFIG[type]?.icon || FileText;
@@ -131,7 +152,7 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Changements statut</p>
                 <p className="text-2xl font-bold">
-                  {history.filter((e) => e.type === 'status_change').length}
+                  {history.filter(e => e.type === 'status_change').length}
                 </p>
               </div>
               <ArrowRight className="h-8 w-8 text-purple-500" />
@@ -145,7 +166,7 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Photos ajoutées</p>
                 <p className="text-2xl font-bold">
-                  {history.filter((e) => e.type === 'photo_added').length}
+                  {history.filter(e => e.type === 'photo_added').length}
                 </p>
               </div>
               <Image className="h-8 w-8 text-pink-500" />
@@ -159,7 +180,7 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Pièces ajoutées</p>
                 <p className="text-2xl font-bold">
-                  {history.filter((e) => e.type === 'part_added').length}
+                  {history.filter(e => e.type === 'part_added').length}
                 </p>
               </div>
               <Package className="h-8 w-8 text-yellow-500" />
@@ -177,7 +198,12 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {history.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+              <p className="text-gray-600 dark:text-gray-400">Chargement de l'historique...</p>
+            </div>
+          ) : history.length === 0 ? (
             <div className="text-center py-12">
               <History className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">Aucun historique</p>
@@ -215,9 +241,13 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
                             <Badge variant="secondary" className="text-xs">
                               {config.label}
                             </Badge>
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {format(event.timestamp, 'dd MMM yyyy à HH:mm', { locale: fr })}
-                            </span>
+                            {event.createdAt && (
+                              <span className="text-sm text-gray-600 dark:text-gray-400">
+                                {format(event.createdAt.toDate(), 'dd MMM yyyy à HH:mm', {
+                                  locale: fr,
+                                })}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -231,7 +261,7 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
                             <span className="font-medium">{event.userName}</span>
                             {event.userRole && (
                               <Badge variant="outline" className="text-xs">
-                                {event.userRole}
+                                {formatUserRole(event.userRole)}
                               </Badge>
                             )}
                           </div>
@@ -301,7 +331,9 @@ export const HistoryTab = ({ intervention }: HistoryTabProps) => {
           {intervention.lastViewedAt && (
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Dernière vue</span>
-              <span>{format(intervention.lastViewedAt.toDate(), 'PPP à HH:mm', { locale: fr })}</span>
+              <span>
+                {format(intervention.lastViewedAt.toDate(), 'PPP à HH:mm', { locale: fr })}
+              </span>
             </div>
           )}
         </CardContent>

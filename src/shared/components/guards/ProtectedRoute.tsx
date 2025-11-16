@@ -1,6 +1,6 @@
 /**
  * ProtectedRoute Component
- * 
+ *
  * Guard pour protéger les routes nécessitant une authentification
  */
 

@@ -6,8 +6,10 @@
 
 import { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
-import { router } from './router';
+import { router } from './router.lazy'; // Lazy loading enabled for better performance
 import { offlineSyncManager } from '@/core/services/offlineSync';
+import { PWAInstallPrompt, PWAUpdatePrompt } from '@/shared/components/pwa';
+import ErrorBoundary from '@/shared/components/error/ErrorBoundary';
 
 export const App = () => {
   // Initialiser le gestionnaire de synchronisation offline
@@ -21,8 +23,14 @@ export const App = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <RouterProvider router={router} />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <RouterProvider router={router} />
+
+        {/* PWA Components */}
+        <PWAInstallPrompt />
+        <PWAUpdatePrompt />
+      </div>
+    </ErrorBoundary>
   );
 };

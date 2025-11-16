@@ -5,7 +5,10 @@
  */
 
 import { useState, useCallback } from 'react';
-import { initializeEstablishment, isEstablishmentInitialized } from '../services/establishmentInitService';
+import {
+  initializeEstablishment,
+  isEstablishmentInitialized,
+} from '../services/establishmentInitService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
 import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
@@ -20,19 +23,19 @@ export const useEstablishmentInit = () => {
    */
   const initialize = useCallback(
     async (establishmentId: string, features?: EstablishmentFeatures): Promise<boolean> => {
-      if (!user?.uid) {
+      if (!user?.id) {
         toast.error('Vous devez être connecté');
         return false;
       }
 
       setInitializing(true);
       try {
-        await initializeEstablishment(establishmentId, user.uid, features);
+        await initializeEstablishment(establishmentId, user.id, features);
         toast.success('Établissement initialisé avec succès');
         return true;
       } catch (error: any) {
         console.error('Error initializing establishment:', error);
-        toast.error('Erreur lors de l\'initialisation', {
+        toast.error("Erreur lors de l'initialisation", {
           description: error.message,
         });
         return false;
@@ -46,21 +49,18 @@ export const useEstablishmentInit = () => {
   /**
    * Vérifier si un établissement est initialisé
    */
-  const checkInitialized = useCallback(
-    async (establishmentId: string): Promise<boolean> => {
-      setChecking(true);
-      try {
-        const initialized = await isEstablishmentInitialized(establishmentId);
-        return initialized;
-      } catch (error) {
-        console.error('Error checking initialization:', error);
-        return false;
-      } finally {
-        setChecking(false);
-      }
-    },
-    []
-  );
+  const checkInitialized = useCallback(async (establishmentId: string): Promise<boolean> => {
+    setChecking(true);
+    try {
+      const initialized = await isEstablishmentInitialized(establishmentId);
+      return initialized;
+    } catch (error) {
+      console.error('Error checking initialization:', error);
+      return false;
+    } finally {
+      setChecking(false);
+    }
+  }, []);
 
   /**
    * Initialiser si nécessaire

@@ -1,6 +1,6 @@
 /**
  * Status & Priority Types
- * 
+ *
  * Types pour les statuts et priorités des interventions
  */
 
@@ -8,24 +8,24 @@
  * Statuts d'intervention
  */
 export enum InterventionStatus {
-  DRAFT = 'draft',               // Brouillon
-  PENDING = 'pending',           // En attente
-  ASSIGNED = 'assigned',         // Assignée
-  IN_PROGRESS = 'in_progress',   // En cours
-  ON_HOLD = 'on_hold',          // En pause
-  COMPLETED = 'completed',       // Terminée
-  VALIDATED = 'validated',       // Validée
-  CANCELLED = 'cancelled',       // Annulée
+  DRAFT = 'draft', // Brouillon
+  PENDING = 'pending', // En attente
+  ASSIGNED = 'assigned', // Assignée
+  IN_PROGRESS = 'in_progress', // En cours
+  ON_HOLD = 'on_hold', // En pause
+  COMPLETED = 'completed', // Terminée
+  VALIDATED = 'validated', // Validée
+  CANCELLED = 'cancelled', // Annulée
 }
 
 /**
  * Priorités d'intervention
  */
 export enum InterventionPriority {
-  LOW = 'low',           // Basse
-  NORMAL = 'normal',     // Normale
-  HIGH = 'high',         // Haute
-  URGENT = 'urgent',     // Urgente
+  LOW = 'low', // Basse
+  NORMAL = 'normal', // Normale
+  HIGH = 'high', // Haute
+  URGENT = 'urgent', // Urgente
   CRITICAL = 'critical', // Critique
 }
 
@@ -33,34 +33,34 @@ export enum InterventionPriority {
  * Types d'intervention
  */
 export enum InterventionType {
-  PLUMBING = 'plumbing',           // Plomberie
-  ELECTRICITY = 'electricity',     // Électricité
-  HEATING = 'heating',             // Chauffage
+  PLUMBING = 'plumbing', // Plomberie
+  ELECTRICITY = 'electricity', // Électricité
+  HEATING = 'heating', // Chauffage
   AIR_CONDITIONING = 'air_conditioning', // Climatisation
-  CARPENTRY = 'carpentry',         // Menuiserie
-  PAINTING = 'painting',           // Peinture
-  CLEANING = 'cleaning',           // Nettoyage
-  LOCKSMITH = 'locksmith',         // Serrurerie
-  GLAZING = 'glazing',             // Vitrerie
-  MASONRY = 'masonry',             // Maçonnerie
-  APPLIANCE = 'appliance',         // Électroménager
-  FURNITURE = 'furniture',         // Mobilier
-  IT = 'it',                       // Informatique
-  SECURITY = 'security',           // Sécurité
-  GARDEN = 'garden',               // Jardinage
-  POOL = 'pool',                   // Piscine
-  OTHER = 'other',                 // Autre
+  CARPENTRY = 'carpentry', // Menuiserie
+  PAINTING = 'painting', // Peinture
+  CLEANING = 'cleaning', // Nettoyage
+  LOCKSMITH = 'locksmith', // Serrurerie
+  GLAZING = 'glazing', // Vitrerie
+  MASONRY = 'masonry', // Maçonnerie
+  APPLIANCE = 'appliance', // Électroménager
+  FURNITURE = 'furniture', // Mobilier
+  IT = 'it', // Informatique
+  SECURITY = 'security', // Sécurité
+  GARDEN = 'garden', // Jardinage
+  POOL = 'pool', // Piscine
+  OTHER = 'other', // Autre
 }
 
 /**
  * Catégories d'intervention
  */
 export enum InterventionCategory {
-  MAINTENANCE = 'maintenance',     // Maintenance préventive
-  REPAIR = 'repair',               // Réparation
-  INSTALLATION = 'installation',   // Installation
-  INSPECTION = 'inspection',       // Inspection
-  EMERGENCY = 'emergency',         // Urgence
+  MAINTENANCE = 'maintenance', // Maintenance préventive
+  REPAIR = 'repair', // Réparation
+  INSTALLATION = 'installation', // Installation
+  INSPECTION = 'inspection', // Inspection
+  EMERGENCY = 'emergency', // Urgence
 }
 
 /**
@@ -82,12 +82,17 @@ export const STATUS_LABELS: Record<InterventionStatus, string> = {
  */
 export const STATUS_COLORS: Record<InterventionStatus, string> = {
   [InterventionStatus.DRAFT]: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-  [InterventionStatus.PENDING]: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  [InterventionStatus.PENDING]:
+    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   [InterventionStatus.ASSIGNED]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  [InterventionStatus.IN_PROGRESS]: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-  [InterventionStatus.ON_HOLD]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  [InterventionStatus.COMPLETED]: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  [InterventionStatus.VALIDATED]: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
+  [InterventionStatus.IN_PROGRESS]:
+    'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  [InterventionStatus.ON_HOLD]:
+    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  [InterventionStatus.COMPLETED]:
+    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  [InterventionStatus.VALIDATED]:
+    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
   [InterventionStatus.CANCELLED]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
 
@@ -122,9 +127,11 @@ export const PRIORITY_LABELS: Record<InterventionPriority, string> = {
 export const PRIORITY_COLORS: Record<InterventionPriority, string> = {
   [InterventionPriority.LOW]: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
   [InterventionPriority.NORMAL]: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  [InterventionPriority.HIGH]: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  [InterventionPriority.HIGH]:
+    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   [InterventionPriority.URGENT]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  [InterventionPriority.CRITICAL]: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  [InterventionPriority.CRITICAL]:
+    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
 };
 
 /**
@@ -176,10 +183,7 @@ export const CATEGORY_LABELS: Record<InterventionCategory, string> = {
  * Transitions de statut autorisées
  */
 export const ALLOWED_STATUS_TRANSITIONS: Record<InterventionStatus, InterventionStatus[]> = {
-  [InterventionStatus.DRAFT]: [
-    InterventionStatus.PENDING,
-    InterventionStatus.CANCELLED,
-  ],
+  [InterventionStatus.DRAFT]: [InterventionStatus.PENDING, InterventionStatus.CANCELLED],
   [InterventionStatus.PENDING]: [
     InterventionStatus.ASSIGNED,
     InterventionStatus.IN_PROGRESS,
@@ -195,10 +199,7 @@ export const ALLOWED_STATUS_TRANSITIONS: Record<InterventionStatus, Intervention
     InterventionStatus.COMPLETED,
     InterventionStatus.CANCELLED,
   ],
-  [InterventionStatus.ON_HOLD]: [
-    InterventionStatus.IN_PROGRESS,
-    InterventionStatus.CANCELLED,
-  ],
+  [InterventionStatus.ON_HOLD]: [InterventionStatus.IN_PROGRESS, InterventionStatus.CANCELLED],
   [InterventionStatus.COMPLETED]: [
     InterventionStatus.VALIDATED,
     InterventionStatus.IN_PROGRESS, // Réouverture possible

@@ -1,6 +1,6 @@
 /**
  * Footer Component
- * 
+ *
  * Footer de l'application
  */
 

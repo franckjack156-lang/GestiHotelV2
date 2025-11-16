@@ -17,7 +17,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Filter,
+  // Filter, // TODO: Imported but unused
   Users,
   DoorClosed,
   Clock,
@@ -66,7 +66,8 @@ type GroupMode = 'default' | 'technician' | 'room';
 export const PlanningPage = () => {
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
-  const { allInterventions, isLoading } = useInterventions();
+  // TODO: isLoading unused
+  const { allInterventions } = useInterventions();
 
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const [groupMode, setGroupMode] = useState<GroupMode>('default');

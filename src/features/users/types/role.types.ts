@@ -12,24 +12,19 @@
 
 /**
  * Rôles utilisateur dans l'application
+ * - SUPER_ADMIN: Super Admin - Accès total, gestion multi-établissements
+ * - ADMIN: Admin - Gestion complète d'un établissement
+ * - MANAGER: Manager - Gestion quotidienne, création interventions, assignation
+ * - TECHNICIAN: Technicien - Exécute les interventions
+ * - RECEPTIONIST: Réceptionniste - Création interventions de base
+ * - VIEWER: Viewer - Lecture seule
  */
 export enum UserRole {
-  /** Super Admin - Accès total, gestion multi-établissements */
   SUPER_ADMIN = 'super_admin',
-
-  /** Admin - Gestion complète d'un établissement */
   ADMIN = 'admin',
-
-  /** Manager - Gestion quotidienne, création interventions, assignation */
   MANAGER = 'manager',
-
-  /** Technicien - Exécute les interventions */
   TECHNICIAN = 'technician',
-
-  /** Réceptionniste - Création interventions de base */
   RECEPTIONIST = 'receptionist',
-
-  /** Viewer - Lecture seule */
   VIEWER = 'viewer',
 }
 
@@ -78,119 +73,76 @@ export const ROLE_COLORS: Record<UserRole, string> = {
  */
 export enum Permission {
   // ========== INTERVENTIONS ==========
-  /** Voir les interventions */
   INTERVENTIONS_VIEW = 'interventions.view',
-  /** Voir toutes les interventions (pas seulement les siennes) */
   INTERVENTIONS_VIEW_ALL = 'interventions.view_all',
-  /** Créer une intervention */
   INTERVENTIONS_CREATE = 'interventions.create',
-  /** Modifier une intervention */
   INTERVENTIONS_EDIT = 'interventions.edit',
-  /** Modifier toutes les interventions */
   INTERVENTIONS_EDIT_ALL = 'interventions.edit_all',
-  /** Supprimer une intervention */
   INTERVENTIONS_DELETE = 'interventions.delete',
-  /** Assigner une intervention à un technicien */
   INTERVENTIONS_ASSIGN = 'interventions.assign',
-  /** Changer le statut d'une intervention */
   INTERVENTIONS_CHANGE_STATUS = 'interventions.change_status',
-  /** Modifier la priorité */
   INTERVENTIONS_CHANGE_PRIORITY = 'interventions.change_priority',
-  /** Exporter les interventions */
+  INTERVENTIONS_CLOSE = 'interventions.close',
   INTERVENTIONS_EXPORT = 'interventions.export',
-  /** Voir l'historique */
   INTERVENTIONS_VIEW_HISTORY = 'interventions.view_history',
 
   // ========== USERS ==========
-  /** Voir les utilisateurs */
   USERS_VIEW = 'users.view',
-  /** Créer un utilisateur */
   USERS_CREATE = 'users.create',
-  /** Modifier un utilisateur */
   USERS_EDIT = 'users.edit',
-  /** Supprimer un utilisateur */
   USERS_DELETE = 'users.delete',
-  /** Gérer les rôles et permissions */
   USERS_MANAGE_ROLES = 'users.manage_roles',
-  /** Inviter des utilisateurs */
   USERS_INVITE = 'users.invite',
 
   // ========== ESTABLISHMENTS ==========
-  /** Voir les établissements */
   ESTABLISHMENTS_VIEW = 'establishments.view',
-  /** Créer un établissement */
   ESTABLISHMENTS_CREATE = 'establishments.create',
-  /** Modifier un établissement */
   ESTABLISHMENTS_EDIT = 'establishments.edit',
-  /** Supprimer un établissement */
   ESTABLISHMENTS_DELETE = 'establishments.delete',
-  /** Changer d'établissement */
   ESTABLISHMENTS_SWITCH = 'establishments.switch',
 
   // ========== ROOMS ==========
-  /** Voir les chambres */
   ROOMS_VIEW = 'rooms.view',
-  /** Créer une chambre */
   ROOMS_CREATE = 'rooms.create',
-  /** Modifier une chambre */
   ROOMS_EDIT = 'rooms.edit',
-  /** Supprimer une chambre */
   ROOMS_DELETE = 'rooms.delete',
-  /** Bloquer/débloquer une chambre */
   ROOMS_BLOCK = 'rooms.block',
 
   // ========== PLANNING ==========
-  /** Voir le planning */
   PLANNING_VIEW = 'planning.view',
-  /** Modifier le planning */
   PLANNING_EDIT = 'planning.edit',
-  /** Réorganiser les interventions */
   PLANNING_REORDER = 'planning.reorder',
 
   // ========== ANALYTICS ==========
-  /** Voir les analytics */
   ANALYTICS_VIEW = 'analytics.view',
-  /** Voir les analytics avancées */
   ANALYTICS_ADVANCED = 'analytics.advanced',
-  /** Exporter les rapports */
   ANALYTICS_EXPORT = 'analytics.export',
 
   // ========== SETTINGS ==========
-  /** Voir les paramètres */
   SETTINGS_VIEW = 'settings.view',
-  /** Modifier les paramètres */
   SETTINGS_EDIT = 'settings.edit',
-  /** Gérer les listes de référence */
   SETTINGS_REFERENCE_LISTS = 'settings.reference_lists',
 
   // ========== NOTIFICATIONS ==========
-  /** Envoyer des notifications */
+  NOTIFICATIONS_VIEW = 'notifications.view',
   NOTIFICATIONS_SEND = 'notifications.send',
-  /** Configurer les notifications */
+  NOTIFICATIONS_MANAGE = 'notifications.manage',
   NOTIFICATIONS_CONFIGURE = 'notifications.configure',
 
   // ========== MESSAGES ==========
-  /** Envoyer des messages */
   MESSAGES_SEND = 'messages.send',
-  /** Voir tous les messages */
   MESSAGES_VIEW_ALL = 'messages.view_all',
 
   // ========== TEMPLATES ==========
-  /** Voir les templates */
   TEMPLATES_VIEW = 'templates.view',
-  /** Créer des templates */
   TEMPLATES_CREATE = 'templates.create',
-  /** Modifier des templates */
   TEMPLATES_EDIT = 'templates.edit',
-  /** Supprimer des templates */
   TEMPLATES_DELETE = 'templates.delete',
 
   // ========== IMPORTS ==========
-  /** Importer des données */
   IMPORTS_EXECUTE = 'imports.execute',
 
   // ========== SUPER ADMIN ONLY ==========
-  /** Accès système complet */
   SYSTEM_ADMIN = 'system.admin',
 }
 

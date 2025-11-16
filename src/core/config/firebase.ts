@@ -1,6 +1,6 @@
 /**
  * Firebase Configuration
- * 
+ *
  * Initialisation des services Firebase :
  * - Authentication
  * - Firestore Database
@@ -13,6 +13,7 @@ import { initializeApp, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
+import { getFunctions, type Functions } from 'firebase/functions';
 import { getAnalytics, type Analytics, isSupported } from 'firebase/analytics';
 import { getPerformance, type FirebasePerformance } from 'firebase/performance';
 
@@ -39,7 +40,7 @@ const validateConfig = () => {
   ];
 
   const missingKeys = requiredKeys.filter(
-    (key) => !firebaseConfig[key as keyof typeof firebaseConfig]
+    key => !firebaseConfig[key as keyof typeof firebaseConfig]
   );
 
   if (missingKeys.length > 0) {
@@ -60,6 +61,7 @@ export const app: FirebaseApp = initializeApp(firebaseConfig);
 export const auth: Auth = getAuth(app);
 export const db: Firestore = getFirestore(app);
 export const storage: FirebaseStorage = getStorage(app);
+export const functions: Functions = getFunctions(app, 'europe-west1');
 
 // Analytics (seulement en production et si supporté)
 let analyticsInstance: Analytics | null = null;
@@ -67,14 +69,16 @@ let performanceInstance: FirebasePerformance | null = null;
 
 if (import.meta.env.PROD) {
   // Initialiser Analytics de manière asynchrone
-  isSupported().then((supported) => {
-    if (supported) {
-      analyticsInstance = getAnalytics(app);
-      console.log('✅ Firebase Analytics initialized');
-    }
-  }).catch((error) => {
-    console.warn('⚠️ Firebase Analytics not supported:', error);
-  });
+  isSupported()
+    .then(supported => {
+      if (supported) {
+        analyticsInstance = getAnalytics(app);
+        console.log('✅ Firebase Analytics initialized');
+      }
+    })
+    .catch(error => {
+      console.warn('⚠️ Firebase Analytics not supported:', error);
+    });
 
   // Initialiser Performance Monitoring
   try {

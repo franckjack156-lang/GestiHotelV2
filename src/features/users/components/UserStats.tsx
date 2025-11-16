@@ -8,13 +8,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import type { UserStats as UserStatsType } from '../types/user.types';
 import { UserRole, ROLE_LABELS } from '../types/role.types';
-import {
-  Users,
-  UserCheck,
-  UserX,
-  TrendingUp,
-  Activity,
-} from 'lucide-react';
+import { Users, UserCheck, UserX, TrendingUp, Activity } from 'lucide-react';
 
 interface UserStatsProps {
   /** Statistiques */
@@ -94,9 +88,7 @@ export const UserStats: React.FC<UserStatsProps> = ({ stats, isLoading }) => {
             <CardContent>
               <div className="text-2xl font-bold">{kpi.value}</div>
               {kpi.subtitle && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {kpi.subtitle}
-                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{kpi.subtitle}</p>
               )}
             </CardContent>
           </Card>
@@ -115,9 +107,7 @@ export const UserStats: React.FC<UserStatsProps> = ({ stats, isLoading }) => {
               return (
                 <div key={role} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">
-                      {ROLE_LABELS[role as UserRole]}
-                    </span>
+                    <span className="font-medium">{ROLE_LABELS[role as UserRole]}</span>
                     <span className="text-gray-600 dark:text-gray-400">
                       {count} ({percentage}%)
                     </span>

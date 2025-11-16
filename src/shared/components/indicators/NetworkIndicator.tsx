@@ -15,14 +15,7 @@ import { offlineSyncManager } from '@/core/services/offlineSync';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
-import {
-  WifiOff,
-  Wifi,
-  RefreshCw,
-  XCircle,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { WifiOff, Wifi, RefreshCw, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const NetworkIndicator = () => {
@@ -88,10 +81,7 @@ export const NetworkIndicator = () => {
     <div className="flex items-center gap-2">
       {/* Badge statut réseau */}
       {!isOnline && (
-        <Badge
-          variant="destructive"
-          className="flex items-center gap-1.5 px-2 py-1 animate-pulse"
-        >
+        <Badge variant="destructive" className="flex items-center gap-1.5 px-2 py-1 animate-pulse">
           <WifiOff className="h-3 w-3" />
           <span className="text-xs font-medium">Hors ligne</span>
         </Badge>
@@ -99,40 +89,25 @@ export const NetworkIndicator = () => {
 
       {/* Badge qualité connexion (si en ligne) */}
       {isOnline && effectiveType && effectiveType !== '4g' && (
-        <Badge
-          variant="secondary"
-          className="flex items-center gap-1.5 px-2 py-1"
-        >
+        <Badge variant="secondary" className="flex items-center gap-1.5 px-2 py-1">
           <AlertCircle className="h-3 w-3" />
-          <span className="text-xs font-medium">
-            Connexion lente ({effectiveType})
-          </span>
+          <span className="text-xs font-medium">Connexion lente ({effectiveType})</span>
         </Badge>
       )}
 
       {/* Badge sync en attente */}
       {syncStatus.pending > 0 && (
-        <Badge
-          variant="outline"
-          className="flex items-center gap-1.5 px-2 py-1"
-        >
+        <Badge variant="outline" className="flex items-center gap-1.5 px-2 py-1">
           <RefreshCw className="h-3 w-3" />
-          <span className="text-xs font-medium">
-            {syncStatus.pending} en attente
-          </span>
+          <span className="text-xs font-medium">{syncStatus.pending} en attente</span>
         </Badge>
       )}
 
       {/* Badge sync échoués */}
       {syncStatus.failed > 0 && (
-        <Badge
-          variant="destructive"
-          className="flex items-center gap-1.5 px-2 py-1"
-        >
+        <Badge variant="destructive" className="flex items-center gap-1.5 px-2 py-1">
           <XCircle className="h-3 w-3" />
-          <span className="text-xs font-medium">
-            {syncStatus.failed} échoué(s)
-          </span>
+          <span className="text-xs font-medium">{syncStatus.failed} échoué(s)</span>
         </Badge>
       )}
 
@@ -183,11 +158,10 @@ export const OfflineBanner = () => {
       <WifiOff className="h-4 w-4 text-amber-600 dark:text-amber-400" />
       <AlertDescription className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-amber-900 dark:text-amber-100">
-            Mode hors ligne
-          </span>
+          <span className="font-medium text-amber-900 dark:text-amber-100">Mode hors ligne</span>
           <span className="text-sm text-amber-700 dark:text-amber-300">
-            Vos modifications seront synchronisées automatiquement lorsque la connexion sera rétablie
+            Vos modifications seront synchronisées automatiquement lorsque la connexion sera
+            rétablie
           </span>
         </div>
       </AlertDescription>

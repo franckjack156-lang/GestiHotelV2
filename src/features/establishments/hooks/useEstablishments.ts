@@ -9,9 +9,9 @@ import { useEstablishmentStore } from '../stores/establishmentStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import establishmentService from '../services/establishmentService';
 import type {
+  Establishment,
   CreateEstablishmentData,
   UpdateEstablishmentData,
-  EstablishmentFilters,
 } from '@/shared/types/establishment.types';
 
 export const useEstablishments = () => {
@@ -23,7 +23,6 @@ export const useEstablishments = () => {
     error,
     filters,
     setEstablishments,
-    addEstablishment,
     updateEstablishmentInList,
     removeEstablishment,
     setCurrentEstablishment,
@@ -123,8 +122,8 @@ export const useEstablishments = () => {
 
         await establishmentService.updateEstablishment(establishmentId, data);
 
-        // Mettre à jour localement
-        updateEstablishmentInList(establishmentId, data);
+        // Mettre à jour localement - cast car UpdateEstablishmentData est compatible avec Partial<Establishment>
+        updateEstablishmentInList(establishmentId, data as Partial<Establishment>);
 
         return true;
       } catch (err: any) {

@@ -14,8 +14,13 @@ import {
   markSyncComplete,
   incrementSyncRetries,
   clearFailedSyncs,
+  type PendingSync,
 } from './offlineDatabase';
-import { createIntervention } from '@/features/interventions/services/interventionService';
+import {
+  createIntervention,
+  updateIntervention,
+  deleteIntervention,
+} from '@/features/interventions/services/interventionService';
 import { toast } from 'sonner';
 
 // ============================================================================
@@ -104,7 +109,7 @@ export class OfflineSyncManager {
   /**
    * Synchroniser une opération
    */
-  private async syncOperation(sync: any) {
+  private async syncOperation(sync: PendingSync): Promise<void> {
     switch (sync.collection) {
       case 'interventions':
         return this.syncIntervention(sync);
@@ -119,24 +124,28 @@ export class OfflineSyncManager {
   /**
    * Synchroniser une intervention
    */
-  private async syncIntervention(sync: any) {
+  private async syncIntervention(sync: PendingSync): Promise<void> {
     const { operation, data, documentId } = sync;
 
     switch (operation) {
       case 'create':
-        await createIntervention(
-          data.establishmentId,
-          data.createdBy,
-          data
-        );
+        if (!data.createdBy) {
+          throw new Error('createdBy is required for intervention creation');
+        }
+        // Cast les données vers le type CreateInterventionData
+        await createIntervention(data.establishmentId, data.createdBy, data as any);
         break;
       case 'update':
-        // TODO: Implémenter updateIntervention avec le bon format
-        console.log('Update intervention:', documentId, data);
+        // Synchroniser la mise à jour de l'intervention
+        // Cast les données vers le type UpdateInterventionData
+        await updateIntervention(data.establishmentId, documentId, data as any);
         break;
       case 'delete':
-        // TODO: Implémenter deleteIntervention
-        console.log('Delete intervention:', documentId);
+        // Synchroniser la suppression de l'intervention (soft delete)
+        if (!data.userId) {
+          throw new Error('userId is required for intervention deletion');
+        }
+        await deleteIntervention(data.establishmentId, documentId, data.userId);
         break;
     }
   }
@@ -144,7 +153,7 @@ export class OfflineSyncManager {
   /**
    * Synchroniser une chambre
    */
-  private async syncRoom(sync: any) {
+  private async syncRoom(sync: PendingSync): Promise<void> {
     // TODO: Implémenter la synchronisation des chambres
     console.log('Sync room:', sync);
   }
@@ -163,7 +172,7 @@ export class OfflineSyncManager {
     const pendingSyncs = await getPendingSyncs();
     return {
       pending: pendingSyncs.length,
-      failed: pendingSyncs.filter((s) => s.retries > 0).length,
+      failed: pendingSyncs.filter(s => s.retries > 0).length,
       isSyncing: this.isSyncing,
     };
   }

@@ -12,7 +12,7 @@ import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
 import { InterventionPriority } from '@/shared/types/status.types';
 
 interface PriorityBadgeProps {
-  priority: InterventionPriority | string;
+  priority?: InterventionPriority | string;
   showIcon?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -26,6 +26,11 @@ export const PriorityBadge = ({
 }: PriorityBadgeProps) => {
   const { getItemByValue } = useAllReferenceLists({ realtime: false, autoLoad: true });
 
+  // Ne pas afficher le badge si la priorité est undefined ou vide
+  if (!priority) {
+    return null;
+  }
+
   // Récupérer l'item de la liste de référence
   const priorityItem = getItemByValue('interventionPriorities', priority);
 
@@ -35,7 +40,7 @@ export const PriorityBadge = ({
       showIcon={showIcon}
       size={size}
       className={className}
-      fallbackLabel={String(priority) || 'Non défini'}
+      fallbackLabel={String(priority)}
     />
   );
 };

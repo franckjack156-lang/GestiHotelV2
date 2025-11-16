@@ -28,6 +28,7 @@ src/features/messaging/
 ## 📊 Statistiques
 
 ### Code Source
+
 - **Composants React**: 4 principaux
 - **Lignes de code**: 2,393 lignes
 - **Fichiers TypeScript**: 6
@@ -35,20 +36,21 @@ src/features/messaging/
 
 ### Tailles des Fichiers
 
-| Fichier | Lignes | Taille |
-|---------|--------|--------|
-| ChatWindow.tsx | 647 | ~22 KB |
-| MessageInput.tsx | 460 | ~14 KB |
-| MessagingExample.tsx | 446 | ~14 KB |
-| NewConversationDialog.tsx | 420 | ~13 KB |
-| ConversationList.tsx | 400 | ~13 KB |
-| index.ts | 20 | <1 KB |
+| Fichier                   | Lignes | Taille |
+| ------------------------- | ------ | ------ |
+| ChatWindow.tsx            | 647    | ~22 KB |
+| MessageInput.tsx          | 460    | ~14 KB |
+| MessagingExample.tsx      | 446    | ~14 KB |
+| NewConversationDialog.tsx | 420    | ~13 KB |
+| ConversationList.tsx      | 400    | ~13 KB |
+| index.ts                  | 20     | <1 KB  |
 
 ---
 
 ## 🎯 Composants par Responsabilité
 
 ### UI Components (View Layer)
+
 ```
 ConversationList      → Affiche la liste des conversations
 ChatWindow            → Affiche la fenêtre de chat
@@ -57,11 +59,13 @@ NewConversationDialog → Crée de nouvelles conversations
 ```
 
 ### Services (Data Layer)
+
 ```
 messageService → CRUD pour messages et conversations (Firebase)
 ```
 
 ### Types (Type Layer)
+
 ```
 message.types → Définitions TypeScript pour tout le module
 ```
@@ -91,10 +95,12 @@ User Interaction
 ## 📦 Dépendances
 
 ### React & TypeScript
+
 - react: ^19.x
 - typescript: ^5.x
 
 ### UI Components (shadcn/ui)
+
 - avatar
 - badge
 - button
@@ -108,12 +114,14 @@ User Interaction
 - label
 
 ### Utilitaires
+
 - date-fns: Formatage dates
 - lucide-react: Icônes
 - sonner: Toasts
 - tailwindcss: Styling
 
 ### Firebase
+
 - firebase/firestore: Base de données
 - firebase/storage: Fichiers (à implémenter)
 
@@ -122,27 +130,30 @@ User Interaction
 ## 🚀 Points d'Entrée
 
 ### Pour Utiliser les Composants
+
 ```typescript
 import {
   ConversationList,
   ChatWindow,
   MessageInput,
-  NewConversationDialog
+  NewConversationDialog,
 } from '@/features/messaging/components';
 ```
 
 ### Pour Utiliser les Services
+
 ```typescript
 import { messageService } from '@/features/messaging/services/messageService';
 ```
 
 ### Pour Utiliser les Types
+
 ```typescript
 import type {
   Conversation,
   Message,
   SendMessageData,
-  CreateConversationData
+  CreateConversationData,
 } from '@/features/messaging/types/message.types';
 ```
 
@@ -150,13 +161,13 @@ import type {
 
 ## 📝 Fichiers de Documentation
 
-| Fichier | Description | Pages |
-|---------|-------------|-------|
-| **README.md** | Guide d'utilisation complet des composants | ~200 lignes |
-| **IMPLEMENTATION.md** | Détails techniques et statistiques | ~400 lignes |
-| **TESTING.md** | Guide de tests avec exemples | ~500 lignes |
-| **COMPOSANTS_CREES.md** | Récapitulatif général | ~150 lignes |
-| **STRUCTURE.md** | Ce fichier - vue d'ensemble | ~200 lignes |
+| Fichier                 | Description                                | Pages       |
+| ----------------------- | ------------------------------------------ | ----------- |
+| **README.md**           | Guide d'utilisation complet des composants | ~200 lignes |
+| **IMPLEMENTATION.md**   | Détails techniques et statistiques         | ~400 lignes |
+| **TESTING.md**          | Guide de tests avec exemples               | ~500 lignes |
+| **COMPOSANTS_CREES.md** | Récapitulatif général                      | ~150 lignes |
+| **STRUCTURE.md**        | Ce fichier - vue d'ensemble                | ~200 lignes |
 
 **Total documentation**: ~1,450 lignes
 
@@ -165,6 +176,7 @@ import type {
 ## 🎨 Architecture des Composants
 
 ### ConversationList
+
 ```
 ConversationList
   ├── Header (Titre + Bouton Nouveau)
@@ -181,6 +193,7 @@ ConversationList
 ```
 
 ### ChatWindow
+
 ```
 ChatWindow
   ├── Header
@@ -204,6 +217,7 @@ ChatWindow
 ```
 
 ### MessageInput
+
 ```
 MessageInput
   ├── Reply Preview (if replyTo)
@@ -217,6 +231,7 @@ MessageInput
 ```
 
 ### NewConversationDialog
+
 ```
 NewConversationDialog
   ├── Dialog Header
@@ -239,12 +254,14 @@ NewConversationDialog
 ## 🔐 Sécurité
 
 ### Validation Côté Client
+
 - ✅ Taille des fichiers (max 10MB)
 - ✅ Types de fichiers autorisés
 - ✅ Validation des entrées (nom groupe, etc.)
 - ✅ Sanitization des mentions
 
 ### À Implémenter Côté Backend
+
 - ⏳ Validation Firestore Rules
 - ⏳ Authentification utilisateur
 - ⏳ Autorisation lecture/écriture
@@ -288,6 +305,7 @@ NewConversationDialog
 ## 📈 Évolutivité
 
 ### Prêt pour
+
 - ✅ Scroll infini (pagination)
 - ✅ Recherche temps réel
 - ✅ Filtres multiples
@@ -295,6 +313,7 @@ NewConversationDialog
 - ✅ Responsive (mobile/tablet/desktop)
 
 ### À Ajouter Plus Tard
+
 - ⏳ Édition de messages
 - ⏳ Suppression de messages
 - ⏳ Forwards

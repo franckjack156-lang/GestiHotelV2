@@ -10,19 +10,11 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/shared/components/ui/avatar';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Label } from '@/shared/components/ui/label';
-import {
-  MessageSquare,
-  Send,
-  Paperclip,
-  User,
-  Lock,
-  Globe,
-  Edit2,
-  Trash2,
-} from 'lucide-react';
+import { MessageSquare, Send, Paperclip, Lock, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
+import { useComments } from '../../hooks/useComments';
 import { toast } from 'sonner';
 
 interface CommentsTabProps {
@@ -30,13 +22,23 @@ interface CommentsTabProps {
 }
 
 export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
-  const { user } = useAuth();
+  const { establishmentId } = useCurrentEstablishment();
   const [newComment, setNewComment] = useState('');
   const [isInternal, setIsInternal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
 
-  // TODO: Récupérer les commentaires depuis Firestore
-  const comments: any[] = [];
+  // Utiliser le hook pour les commentaires
+  const {
+    comments,
+    loading,
+    submitting,
+    addComment,
+    editComment,
+    removeComment,
+    canEdit,
+    canDelete,
+  } = useComments(interventionId, establishmentId || '');
 
   const handleSubmit = async () => {
     if (!newComment.trim()) {
@@ -44,24 +46,39 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      // TODO: Appel API pour créer le commentaire
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success('Commentaire ajouté');
+    const success = await addComment({
+      content: newComment,
+      contentType: 'text',
+    });
+
+    if (success) {
       setNewComment('');
       setIsInternal(false);
-    } catch (error) {
-      toast.error('Erreur lors de l\'ajout du commentaire');
-    } finally {
-      setIsSubmitting(false);
     }
+  };
+
+  const handleEdit = async (commentId: string) => {
+    if (!editContent.trim()) {
+      toast.error('Le commentaire ne peut pas être vide');
+      return;
+    }
+
+    const success = await editComment(commentId, editContent);
+    if (success) {
+      setEditingId(null);
+      setEditContent('');
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!confirm('Supprimer ce commentaire ?')) return;
+    await removeComment(commentId);
   };
 
   const getInitials = (name: string) => {
     return name
       .split(' ')
-      .map((n) => n[0])
+      .map(n => n[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
@@ -81,7 +98,7 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
           <Textarea
             placeholder="Saisissez votre commentaire..."
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={e => setNewComment(e.target.value)}
             rows={4}
             className="resize-none"
           />
@@ -93,9 +110,12 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
                 <Checkbox
                   id="internal"
                   checked={isInternal}
-                  onCheckedChange={(checked) => setIsInternal(checked as boolean)}
+                  onCheckedChange={checked => setIsInternal(checked as boolean)}
                 />
-                <Label htmlFor="internal" className="text-sm cursor-pointer flex items-center gap-2">
+                <Label
+                  htmlFor="internal"
+                  className="text-sm cursor-pointer flex items-center gap-2"
+                >
                   <Lock className="h-3.5 w-3.5" />
                   Commentaire interne (non visible par le client)
                 </Label>
@@ -108,9 +128,18 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
               </Button>
             </div>
 
-            <Button onClick={handleSubmit} disabled={isSubmitting || !newComment.trim()}>
-              <Send className="mr-2 h-4 w-4" />
-              {isSubmitting ? 'Envoi...' : 'Envoyer'}
+            <Button onClick={handleSubmit} disabled={submitting || !newComment.trim()}>
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  Envoyer
+                </>
+              )}
             </Button>
           </div>
         </CardContent>
@@ -119,14 +148,24 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
       {/* Timeline des commentaires */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Historique des commentaires</CardTitle>
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span>Historique des commentaires</span>
+            {loading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {comments.length === 0 ? (
+          {loading && comments.length === 0 ? (
+            <div className="text-center py-12">
+              <Loader2 className="h-12 w-12 text-gray-400 mx-auto mb-4 animate-spin" />
+              <p className="text-gray-600 dark:text-gray-400">Chargement des commentaires...</p>
+            </div>
+          ) : comments.length === 0 ? (
             <div className="text-center py-12">
               <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 dark:text-gray-400">Aucun commentaire pour le moment</p>
-              <p className="text-sm text-gray-500 mt-2">Soyez le premier à commenter cette intervention</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Soyez le premier à commenter cette intervention
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -149,52 +188,103 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
 
                     {/* Contenu du commentaire */}
                     <div className="flex-1 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-gray-900 dark:text-white">
-                              {comment.authorName}
-                            </span>
-                            {comment.authorRole && (
-                              <Badge variant="secondary" className="text-xs">
-                                {comment.authorRole}
-                              </Badge>
-                            )}
-                            {comment.isInternal && (
-                              <Badge variant="outline" className="text-xs text-amber-600 border-amber-600">
-                                <Lock className="h-3 w-3 mr-1" />
-                                Interne
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-500">
-                              {format(comment.createdAt, 'dd MMM yyyy à HH:mm', { locale: fr })}
-                            </span>
-                            {comment.isEdited && (
-                              <span className="text-xs text-gray-400 italic">(modifié)</span>
-                            )}
+                      {/* Mode édition */}
+                      {editingId === comment.id ? (
+                        <div className="space-y-3">
+                          <Textarea
+                            value={editContent}
+                            onChange={e => setEditContent(e.target.value)}
+                            rows={3}
+                            className="resize-none"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingId(null);
+                                setEditContent('');
+                              }}
+                            >
+                              Annuler
+                            </Button>
+                            <Button size="sm" onClick={() => handleEdit(comment.id)}>
+                              Enregistrer
+                            </Button>
                           </div>
                         </div>
+                      ) : (
+                        <>
+                          {/* Header */}
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-gray-900 dark:text-white">
+                                  {comment.authorName}
+                                </span>
+                                {comment.authorRole && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {comment.authorRole}
+                                  </Badge>
+                                )}
+                                {comment.contentType === 'system' && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs text-blue-600 border-blue-600"
+                                  >
+                                    Système
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-gray-500">
+                                  {comment.createdAt?.toDate &&
+                                    format(comment.createdAt.toDate(), 'dd MMM yyyy à HH:mm', {
+                                      locale: fr,
+                                    })}
+                                </span>
+                                {comment.isEdited && (
+                                  <span className="text-xs text-gray-400 italic">(modifié)</span>
+                                )}
+                              </div>
+                            </div>
 
-                        {/* Actions (si c'est l'auteur) */}
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600">
-                            <Edit2 className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
+                            {/* Actions (si l'utilisateur peut modifier/supprimer) */}
+                            {comment.contentType !== 'system' && (
+                              <div className="flex items-center gap-1">
+                                {canEdit(comment) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-400 hover:text-gray-600"
+                                    onClick={() => {
+                                      setEditingId(comment.id);
+                                      setEditContent(comment.content);
+                                    }}
+                                  >
+                                    <Edit2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                                {canDelete(comment) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-gray-400 hover:text-red-600"
+                                    onClick={() => handleDelete(comment.id)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </div>
 
-                      {/* Contenu */}
-                      <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {comment.content}
-                      </p>
-
-                      {/* TODO: Pièces jointes si présentes */}
+                          {/* Contenu */}
+                          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                            {comment.content}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

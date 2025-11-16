@@ -65,7 +65,7 @@ const interventionTypesDefault: ListConfig = {
  */
 const interventionPrioritiesDefault: ListConfig = {
   name: 'Priorités',
-  description: "Niveaux de priorité des interventions",
+  description: 'Niveaux de priorité des interventions',
   allowCustom: false,
   isRequired: true,
   isSystem: true, // Système car utilisé dans la logique métier
@@ -144,11 +144,33 @@ const interventionLocationsDefault: ListConfig = {
   name: "Localisations d'intervention",
   description: 'Lieux où se déroulent les interventions',
   allowCustom: true,
-  isRequired: true,
+  isRequired: false,
   isSystem: false,
-  items: [
-    createItem('chambre', 'Chambre', 1, { color: 'blue', icon: 'DoorClosed' }),
-  ],
+  items: [],
+};
+
+/**
+ * Étages
+ */
+const floorsDefault: ListConfig = {
+  name: 'Étages',
+  description: 'Niveaux et étages du bâtiment',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [],
+};
+
+/**
+ * Bâtiments
+ */
+const buildingsDefault: ListConfig = {
+  name: 'Bâtiments',
+  description: 'Bâtiments et ailes de l\'établissement',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [],
 };
 
 /**
@@ -219,7 +241,7 @@ const expenseCategoriesDefault: ListConfig = {
   isSystem: false,
   items: [
     createItem('materials', 'Matériaux', 1, { color: 'amber', icon: 'Package' }),
-    createItem('labor', 'Main-d\'œuvre', 2, { color: 'blue', icon: 'Users' }),
+    createItem('labor', "Main-d'œuvre", 2, { color: 'blue', icon: 'Users' }),
     createItem('equipment', 'Équipement', 3, { color: 'purple', icon: 'Wrench' }),
     createItem('external', 'Prestation externe', 4, { color: 'indigo', icon: 'Building' }),
     createItem('emergency', 'Urgence', 5, { color: 'red', icon: 'AlertCircle' }),
@@ -256,6 +278,10 @@ export const DEFAULT_REFERENCE_LISTS: Record<string, ListConfig> = {
   interventionStatuses: interventionStatusesDefault,
   interventionLocations: interventionLocationsDefault,
 
+  // Localisation
+  floors: floorsDefault,
+  buildings: buildingsDefault,
+
   // Chambres (si feature activée)
   roomTypes: roomTypesDefault,
   roomStatuses: roomStatusesDefault,
@@ -276,6 +302,8 @@ export const getEssentialLists = (): Record<string, ListConfig> => {
     interventionCategories: interventionCategoriesDefault,
     interventionStatuses: interventionStatusesDefault,
     interventionLocations: interventionLocationsDefault,
+    floors: floorsDefault,
+    buildings: buildingsDefault,
   };
 };
 

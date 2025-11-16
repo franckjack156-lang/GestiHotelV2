@@ -29,17 +29,17 @@ import {
   onSnapshot,
   Timestamp,
   type Unsubscribe,
-  writeBatch,
+  // writeBatch, // TODO: Imported but unused
 } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   updateProfile,
-  updateEmail,
-  updatePassword,
-  deleteUser as deleteAuthUser,
+  // updateEmail, // TODO: Imported but unused
+  // updatePassword, // TODO: Imported but unused
+  // deleteUser as deleteAuthUser, // TODO: Imported but unused
   signOut,
-  type User as FirebaseUser,
+  // type User as FirebaseUser, // TODO: Imported but unused
 } from 'firebase/auth';
 import { db, auth } from '@/core/config/firebase';
 import type {
@@ -52,7 +52,6 @@ import type {
   UserSortOptions,
   UserStats,
   InviteUserData,
-  UserInvitation,
 } from '../types/user.types';
 import { UserStatus } from '../types/user.types';
 import type { UserRole } from '../types/role.types';

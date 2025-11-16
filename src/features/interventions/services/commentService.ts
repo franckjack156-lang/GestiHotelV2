@@ -9,14 +9,15 @@ import {
   doc,
   addDoc,
   updateDoc,
-  deleteDoc,
+  // deleteDoc, // TODO: Imported but unused
   query,
   where,
   orderBy,
   getDocs,
   onSnapshot,
   serverTimestamp,
-  Timestamp,
+  // Timestamp, // TODO: Imported but unused
+  // getDoc, // TODO: Imported but unused
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import type {
@@ -25,6 +26,8 @@ import type {
   UpdateCommentData,
   SystemActionData,
 } from '../types/comment.types';
+import { logCommentAdded } from './historyService';
+import { notifyMention } from '@/shared/services/notificationService';
 
 const COLLECTION_NAME = 'comments';
 
@@ -60,6 +63,46 @@ export const createComment = async (
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), commentData);
     console.log('✅ Commentaire créé:', docRef.id);
+
+    // Logger dans l'historique
+    try {
+      await logCommentAdded(establishmentId, interventionId, userId, userName, userRole);
+    } catch (error) {
+      console.warn('⚠️ Erreur logging historique commentaire:', error);
+    }
+
+    // Envoyer des notifications aux personnes mentionnées
+    if (data.mentions && data.mentions.length > 0) {
+      try {
+        // Récupérer le titre de l'intervention
+        // TODO: interventionDoc unused
+        // const interventionDoc = await getDoc(
+        //   doc(db, 'establishments', establishmentId, 'interventions', interventionId)
+        // );
+        // TODO: interventionTitle is computed but never used
+        // const interventionTitle = interventionDoc.exists()
+        //   ? interventionDoc.data().title
+        //   : 'Intervention';
+
+        // Envoyer une notification à chaque personne mentionnée (sauf l'auteur)
+        for (const mentionedUserId of data.mentions) {
+          if (mentionedUserId !== userId) {
+            await notifyMention(
+              mentionedUserId,
+              establishmentId,
+              interventionId,
+              userName,
+              data.content.substring(0, 100)
+            );
+          }
+        }
+
+        console.log(`✅ ${data.mentions.length} notifications de mention envoyées`);
+      } catch (error) {
+        console.warn("⚠️ Impossible d'envoyer les notifications de mention:", error);
+      }
+    }
+
     return docRef.id;
   } catch (error) {
     console.error('❌ Erreur création commentaire:', error);
@@ -140,7 +183,7 @@ export const getComments = async (interventionId: string): Promise<Comment[]> =>
           ...doc.data(),
           createdAt: doc.data().createdAt,
           updatedAt: doc.data().updatedAt,
-        } as Comment)
+        }) as Comment
     );
   } catch (error) {
     console.error('❌ Erreur chargement commentaires:', error);
@@ -172,7 +215,7 @@ export const subscribeToComments = (
             ...doc.data(),
             createdAt: doc.data().createdAt,
             updatedAt: doc.data().updatedAt,
-          } as Comment)
+          }) as Comment
       );
       callback(comments);
     },
@@ -185,10 +228,7 @@ export const subscribeToComments = (
 /**
  * Mettre à jour un commentaire
  */
-export const updateComment = async (
-  commentId: string,
-  data: UpdateCommentData
-): Promise<void> => {
+export const updateComment = async (commentId: string, data: UpdateCommentData): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTION_NAME, commentId);
     await updateDoc(docRef, {

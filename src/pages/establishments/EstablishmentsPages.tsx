@@ -12,7 +12,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -40,14 +40,6 @@ import {
   CardTitle,
 } from '@/shared/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog';
-import {
   DataTable,
   EmptyState,
   ConfirmDialog,
@@ -56,9 +48,8 @@ import {
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { toast } from 'sonner';
-import type { Establishment } from '@/features/establishments/types/establishment.types';
+import type { Establishment, CreateEstablishmentData } from '@/shared/types/establishment.types';
 import { EstablishmentType } from '@/shared/types/establishment.types';
-import type { CreateEstablishmentData } from '@/shared/types/establishment.types';
 import {
   Select,
   SelectContent,
@@ -73,15 +64,15 @@ import {
 
 const establishmentSchema = z.object({
   name: z.string().min(3, 'Le nom doit contenir au moins 3 caractères'),
-  type: z.nativeEnum(EstablishmentType, { required_error: 'Le type est requis' }),
+  type: z.nativeEnum(EstablishmentType, { message: 'Le type est requis' }),
   address: z.string().min(5, "L'adresse est requise"),
   city: z.string().min(2, 'La ville est requise'),
   postalCode: z.string().min(4, 'Le code postal est requis'),
-  country: z.string().default('France'),
+  country: z.string().optional(),
   phone: z.string().optional(),
-  email: z.string().email('Email invalide').optional(),
+  email: z.string().email('Email invalide').optional().or(z.literal('')),
   description: z.string().optional(),
-  totalRooms: z.coerce.number().min(1, 'Le nombre de chambres est requis').default(10),
+  totalRooms: z.number().min(1, 'Le nombre de chambres est requis').optional(),
 });
 
 type EstablishmentFormData = z.infer<typeof establishmentSchema>;
@@ -92,20 +83,24 @@ type EstablishmentFormData = z.infer<typeof establishmentSchema>;
 
 export const EstablishmentsListPage = () => {
   const navigate = useNavigate();
-  const { establishments, isLoading, deleteEstablishment, isDeleting } = useEstablishments();
+  const { establishments, isLoading, deleteEstablishment } = useEstablishments();
   const { establishmentId, setEstablishmentId } = useCurrentEstablishment();
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
     if (!deleteId) return;
 
+    setIsDeleting(true);
     try {
       await deleteEstablishment(deleteId);
       toast.success('Établissement supprimé');
       setDeleteId(null);
     } catch (error) {
       toast.error('Erreur lors de la suppression');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -121,7 +116,7 @@ export const EstablishmentsListPage = () => {
           </div>
           <div>
             <p className="font-medium">{item.name}</p>
-            <p className="text-sm text-gray-500">{item.city}</p>
+            <p className="text-sm text-gray-500">{item.address.city}</p>
           </div>
         </div>
       ),
@@ -143,16 +138,16 @@ export const EstablishmentsListPage = () => {
       label: 'Contact',
       render: (item: Establishment) => (
         <div className="text-sm space-y-1">
-          {item.phone && (
+          {item.contact.phone && (
             <div className="flex items-center gap-2">
               <Phone size={14} className="text-gray-400" />
-              <span>{item.phone}</span>
+              <span>{item.contact.phone}</span>
             </div>
           )}
-          {item.email && (
+          {item.contact.email && (
             <div className="flex items-center gap-2">
               <Mail size={14} className="text-gray-400" />
-              <span>{item.email}</span>
+              <span>{item.contact.email}</span>
             </div>
           )}
         </div>
@@ -254,8 +249,8 @@ const EstablishmentForm = ({ establishment, onSubmit, isLoading }: Establishment
   const navigate = useNavigate();
 
   const form = useForm<EstablishmentFormData>({
-    resolver: zodResolver(establishmentSchema),
-    defaultValues: establishment || {
+    resolver: zodResolver(establishmentSchema) as any,
+    defaultValues: (establishment as any) || {
       country: 'France',
     },
   });
@@ -271,7 +266,7 @@ const EstablishmentForm = ({ establishment, onSubmit, isLoading }: Establishment
   const typeValue = watch('type');
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div className="md:col-span-2">
           <Label htmlFor="name">Nom de l'établissement *</Label>
@@ -281,7 +276,10 @@ const EstablishmentForm = ({ establishment, onSubmit, isLoading }: Establishment
 
         <div>
           <Label htmlFor="type">Type d'établissement *</Label>
-          <Select value={typeValue} onValueChange={value => setValue('type', value as EstablishmentType)}>
+          <Select
+            value={typeValue}
+            onValueChange={value => setValue('type', value as EstablishmentType)}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un type" />
             </SelectTrigger>
@@ -300,7 +298,9 @@ const EstablishmentForm = ({ establishment, onSubmit, isLoading }: Establishment
         <div>
           <Label htmlFor="totalRooms">Nombre de chambres *</Label>
           <Input type="number" {...register('totalRooms')} placeholder="Ex: 50" />
-          {errors.totalRooms && <p className="text-sm text-red-600 mt-1">{errors.totalRooms.message}</p>}
+          {errors.totalRooms && (
+            <p className="text-sm text-red-600 mt-1">{errors.totalRooms.message}</p>
+          )}
         </div>
 
         <div className="md:col-span-2">
@@ -363,21 +363,23 @@ const EstablishmentForm = ({ establishment, onSubmit, isLoading }: Establishment
 
 export const CreateEstablishmentPage = () => {
   const navigate = useNavigate();
-  const { createEstablishment, isCreating } = useEstablishments();
+  const { createEstablishment } = useEstablishments();
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleSubmit = async (data: EstablishmentFormData) => {
+    setIsCreating(true);
     try {
       // Transform form data to CreateEstablishmentData
       const createData: CreateEstablishmentData = {
         name: data.name,
         type: data.type,
-        totalRooms: data.totalRooms,
+        totalRooms: data.totalRooms || 10,
         description: data.description,
         address: {
           street: data.address,
           city: data.city,
           postalCode: data.postalCode,
-          country: data.country,
+          country: data.country || 'France',
         },
         contact: {
           email: data.email || '',
@@ -392,6 +394,8 @@ export const CreateEstablishmentPage = () => {
       }
     } catch (error) {
       toast.error('Erreur lors de la création');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -421,7 +425,8 @@ export const CreateEstablishmentPage = () => {
 
 export const EditEstablishmentPage = () => {
   const navigate = useNavigate();
-  const { establishments, updateEstablishment, isUpdating } = useEstablishments();
+  const { establishments, updateEstablishment } = useEstablishments();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // TODO: Récupérer l'ID depuis les params et trouver l'établissement
   const establishment = establishments[0]; // Placeholder
@@ -429,12 +434,15 @@ export const EditEstablishmentPage = () => {
   const handleSubmit = async (data: EstablishmentFormData) => {
     if (!establishment) return;
 
+    setIsUpdating(true);
     try {
-      await updateEstablishment(establishment.id, data);
+      await updateEstablishment(establishment.id, data as any);
       toast.success('Établissement modifié');
       navigate('/app/establishments');
     } catch (error) {
       toast.error('Erreur lors de la modification');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -513,13 +521,205 @@ export const EstablishmentSwitcher = () => {
                   )}
                   <div className="flex-1">
                     <p className="font-medium">{establishment.name}</p>
-                    <p className="text-xs text-gray-500">{establishment.city}</p>
+                    <p className="text-xs text-gray-500">
+                      {establishment.address?.city || 'Non spécifié'}
+                    </p>
                   </div>
                 </div>
               </button>
             ))}
           </div>
         </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// PAGE DÉTAILS (LECTURE SEULE)
+// ============================================================================
+
+export const EstablishmentDetailPage = () => {
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { establishments, isLoading } = useEstablishments();
+
+  const establishment = establishments.find(e => e.id === id);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (!establishment) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <EmptyState
+          icon={<Building2 className="h-12 w-12" />}
+          title="Établissement introuvable"
+          description="Cet établissement n'existe pas ou a été supprimé"
+          action={{
+            label: 'Retour à la liste',
+            onClick: () => navigate('/app/establishments'),
+          }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{establishment.name}</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Détails de l'établissement</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/app/settings/establishment')}>
+            <Settings className="mr-2 h-4 w-4" />
+            Paramètres
+          </Button>
+          <Button onClick={() => navigate(`/app/establishments/${establishment.id}/edit`)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Modifier
+          </Button>
+        </div>
+      </div>
+
+      {/* Informations principales */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Informations générales
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-gray-600 dark:text-gray-400">Nom</Label>
+              <p className="text-lg font-medium mt-1">{establishment.name}</p>
+            </div>
+            <div>
+              <Label className="text-gray-600 dark:text-gray-400">Type</Label>
+              <p className="text-lg font-medium mt-1 capitalize">{establishment.type}</p>
+            </div>
+          </div>
+
+          {establishment.description && (
+            <div>
+              <Label className="text-gray-600 dark:text-gray-400">Description</Label>
+              <p className="text-base mt-1">{establishment.description}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-gray-600 dark:text-gray-400">Nombre de chambres</Label>
+              <p className="text-lg font-medium mt-1">{establishment.totalRooms}</p>
+            </div>
+            {establishment.totalFloors && (
+              <div>
+                <Label className="text-gray-600 dark:text-gray-400">Nombre d'étages</Label>
+                <p className="text-lg font-medium mt-1">{establishment.totalFloors}</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Adresse et contact */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5" />
+              Adresse
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-base">{establishment.address.street}</p>
+              <p className="text-base">
+                {establishment.address.postalCode} {establishment.address.city}
+              </p>
+              <p className="text-base">{establishment.address.country}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Contact
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {establishment.contact.phone && (
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-gray-500" />
+                <a
+                  href={`tel:${establishment.contact.phone}`}
+                  className="text-base hover:underline"
+                >
+                  {establishment.contact.phone}
+                </a>
+              </div>
+            )}
+            {establishment.contact.email && (
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-gray-500" />
+                <a
+                  href={`mailto:${establishment.contact.email}`}
+                  className="text-base hover:underline"
+                >
+                  {establishment.contact.email}
+                </a>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Statistiques */}
+      {establishment.stats && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Statistiques
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div>
+                <Label className="text-gray-600 dark:text-gray-400">Interventions totales</Label>
+                <p className="text-2xl font-bold mt-1">{establishment.stats.totalInterventions}</p>
+              </div>
+              <div>
+                <Label className="text-gray-600 dark:text-gray-400">En attente</Label>
+                <p className="text-2xl font-bold mt-1 text-orange-600">
+                  {establishment.stats.pendingInterventions}
+                </p>
+              </div>
+              <div>
+                <Label className="text-gray-600 dark:text-gray-400">Complétées</Label>
+                <p className="text-2xl font-bold mt-1 text-green-600">
+                  {establishment.stats.completedInterventions}
+                </p>
+              </div>
+              <div>
+                <Label className="text-gray-600 dark:text-gray-400">Utilisateurs actifs</Label>
+                <p className="text-2xl font-bold mt-1">{establishment.stats.activeUsers}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -533,5 +733,6 @@ export default {
   EstablishmentsListPage,
   CreateEstablishmentPage,
   EditEstablishmentPage,
+  EstablishmentDetailPage,
   EstablishmentSwitcher,
 };

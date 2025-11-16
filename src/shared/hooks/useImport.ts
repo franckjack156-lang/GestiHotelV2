@@ -39,7 +39,7 @@ export const useImportInterventions = (establishmentId: string, userId: string) 
       for (let i = 0; i < interventions.length; i += batchSize) {
         const batch = interventions.slice(i, i + batchSize);
         await Promise.all(
-          batch.map((intervention) =>
+          batch.map(intervention =>
             createIntervention(establishmentId, userId, intervention as any)
           )
         );
@@ -63,7 +63,10 @@ export const useImportRooms = (establishmentId: string, userId: string) => {
     return await importRooms(file);
   };
 
-  const handleConfirm = async (data: RoomImportRow[], createRoomFn: (room: any) => Promise<string | null>) => {
+  const handleConfirm = async (
+    data: RoomImportRow[],
+    createRoomFn: (room: any) => Promise<string | null>
+  ) => {
     setIsImporting(true);
     try {
       const rooms = convertToRooms(data, establishmentId, userId);
@@ -72,9 +75,7 @@ export const useImportRooms = (establishmentId: string, userId: string) => {
       const batchSize = 10;
       for (let i = 0; i < rooms.length; i += batchSize) {
         const batch = rooms.slice(i, i + batchSize);
-        await Promise.all(
-          batch.map((room) => createRoomFn(room))
-        );
+        await Promise.all(batch.map(room => createRoomFn(room)));
       }
     } finally {
       setIsImporting(false);

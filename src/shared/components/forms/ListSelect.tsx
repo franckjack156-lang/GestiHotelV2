@@ -2,16 +2,16 @@
  * ============================================================================
  * LIST SELECT COMPONENT - COMPLET
  * ============================================================================
- * 
+ *
  * Composant Select universel pour listes de référence
- * 
+ *
  * Variantes:
  * ✅ Select simple
  * ✅ Select avec badges
  * ✅ Multi-select
  * ✅ Badge dynamique (affichage seul)
  * ✅ Autocomplete
- * 
+ *
  * Destination: src/shared/components/form/ListSelect.tsx
  */
 
@@ -62,10 +62,7 @@ interface MultiSelectProps extends BaseListSelectProps {
 // ICÔNE HELPER
 // ============================================================================
 
-const ItemIcon: React.FC<{ iconName?: string; className?: string }> = ({
-  iconName,
-  className,
-}) => {
+const ItemIcon: React.FC<{ iconName?: string; className?: string }> = ({ iconName, className }) => {
   if (!iconName) return null;
 
   const Icon = (LucideIcons as any)[iconName];
@@ -93,7 +90,13 @@ export const ListSelect: React.FC<SingleSelectProps> = ({
   required = false,
   error,
 }) => {
-  const { activeItems, isLoading, error: loadError, isEmpty, getItemByValue } = useReferenceList(listKey);
+  const {
+    activeItems,
+    isLoading,
+    error: loadError,
+    isEmpty,
+    getItemByValue,
+  } = useReferenceList(listKey);
 
   const selectedItem = useMemo(() => {
     return value ? getItemByValue(value) : undefined;
@@ -157,7 +160,7 @@ export const ListSelect: React.FC<SingleSelectProps> = ({
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {activeItems.map((item) => (
+          {activeItems.map(item => (
             <SelectItem key={item.id} value={item.value}>
               <div className="flex items-center gap-2">
                 {showIcon && item.icon && (
@@ -212,7 +215,7 @@ export const ListMultiSelect: React.FC<MultiSelectProps> = ({
 
   const handleToggle = (value: string) => {
     if (values.includes(value)) {
-      onChange(values.filter((v) => v !== value));
+      onChange(values.filter(v => v !== value));
     } else {
       if (maxSelections && values.length >= maxSelections) {
         return;
@@ -241,20 +244,17 @@ export const ListMultiSelect: React.FC<MultiSelectProps> = ({
 
   return (
     <div className={cn('space-y-2', className)}>
-      {activeItems.map((item) => {
+      {activeItems.map(item => {
         const isChecked = values.includes(item.value);
         const isDisabled =
-          disabled ||
-          (!isChecked && maxSelections !== undefined && values.length >= maxSelections);
+          disabled || (!isChecked && maxSelections !== undefined && values.length >= maxSelections);
 
         return (
           <label
             key={item.id}
             className={cn(
               'flex items-center gap-3 p-3 border rounded-md cursor-pointer transition-colors',
-              isDisabled
-                ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-gray-50',
+              isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50',
               isChecked && 'bg-blue-50 border-blue-300'
             )}
           >
@@ -306,10 +306,10 @@ export const ListAutocomplete: React.FC<SingleSelectProps> = ({
 
   const filteredItems = useMemo(() => {
     if (!search) return activeItems;
-    
+
     const lowerSearch = search.toLowerCase();
     return activeItems.filter(
-      (item) =>
+      item =>
         item.label.toLowerCase().includes(lowerSearch) ||
         item.value.toLowerCase().includes(lowerSearch) ||
         item.description?.toLowerCase().includes(lowerSearch)
@@ -333,7 +333,7 @@ export const ListAutocomplete: React.FC<SingleSelectProps> = ({
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <Input
           value={selectedItem ? selectedItem.label : search}
-          onChange={(e) => {
+          onChange={e => {
             setSearch(e.target.value);
             setIsOpen(true);
           }}
@@ -346,17 +346,12 @@ export const ListAutocomplete: React.FC<SingleSelectProps> = ({
 
       {isOpen && !disabled && (
         <>
-          <div
-            className="fixed inset-0 z-10"
-            onClick={() => setIsOpen(false)}
-          />
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
           <div className="absolute z-20 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
             {filteredItems.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500">
-                Aucun résultat
-              </div>
+              <div className="px-3 py-2 text-sm text-gray-500">Aucun résultat</div>
             ) : (
-              filteredItems.map((item) => (
+              filteredItems.map(item => (
                 <button
                   key={item.id}
                   type="button"
@@ -429,15 +424,12 @@ export const DynamicBadge: React.FC<{
       variant="outline"
       className={cn(
         'inline-flex items-center gap-1.5 font-medium',
-        item.color &&
-          `bg-${item.color}-100 text-${item.color}-800 border-${item.color}-300`,
+        item.color && `bg-${item.color}-100 text-${item.color}-800 border-${item.color}-300`,
         sizeClasses[size],
         className
       )}
     >
-      {showIcon && item.icon && (
-        <ItemIcon iconName={item.icon} className={iconSizes[size]} />
-      )}
+      {showIcon && item.icon && <ItemIcon iconName={item.icon} className={iconSizes[size]} />}
       {item.label}
     </Badge>
   );
@@ -463,14 +455,8 @@ export const MultipleBadges: React.FC<{
 
   return (
     <div className={cn('flex flex-wrap gap-1', className)}>
-      {visibleValues.map((value) => (
-        <DynamicBadge
-          key={value}
-          listKey={listKey}
-          value={value}
-          showIcon={showIcon}
-          size={size}
-        />
+      {visibleValues.map(value => (
+        <DynamicBadge key={value} listKey={listKey} value={value} showIcon={showIcon} size={size} />
       ))}
       {hiddenCount > 0 && (
         <Badge variant="secondary" className="text-xs">

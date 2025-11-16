@@ -1,6 +1,6 @@
 /**
  * LoginForm Component
- * 
+ *
  * Formulaire de connexion avec email/mot de passe et Google
  */
 
@@ -98,9 +98,7 @@ export const LoginForm = () => {
               disabled={isLoading}
             />
           </div>
-          {errors.email && (
-            <p className="text-sm text-red-600">{errors.email.message}</p>
-          )}
+          {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
         </div>
 
         {/* Mot de passe */}
@@ -124,9 +122,7 @@ export const LoginForm = () => {
               {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-          {errors.password && (
-            <p className="text-sm text-red-600">{errors.password.message}</p>
-          )}
+          {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
         </div>
 
         {/* Mot de passe oublié */}

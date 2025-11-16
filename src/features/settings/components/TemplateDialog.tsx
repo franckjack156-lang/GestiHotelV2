@@ -31,7 +31,8 @@ import {
   Sparkles,
   AlertCircle,
 } from 'lucide-react';
-import * as LucideIcons from 'lucide-react';
+// TODO: LucideIcons imported but unused
+// import * as LucideIcons from 'lucide-react';
 import { getAvailableTemplates, applyTemplate } from '@/shared/services/listTemplatesService';
 import { cn } from '@/shared/utils/cn';
 

@@ -1,6 +1,6 @@
 /**
  * Establishment Types
- * 
+ *
  * Types pour la gestion des établissements hôteliers
  */
 
@@ -28,28 +28,55 @@ export type EstablishmentCategory = 1 | 2 | 3 | 4 | 5;
  * Chaque feature peut être activée/désactivée par établissement
  */
 export interface EstablishmentFeatures {
-  // Core features
+  // Core features (INDISPENSABLES - toujours activées)
   interventions: FeatureConfig;
-  rooms: FeatureConfig;
-  planning: FeatureConfig;
-  analytics: FeatureConfig;
+  interventionQuickCreate: FeatureConfig;
+  history: FeatureConfig;
 
-  // Communication features
-  messaging: FeatureConfig;
-  notifications: FeatureConfig;
+  // Interventions - Fonctionnalités optionnelles
+  interventionGuidedCreate: FeatureConfig;
+  interventionTemplates: FeatureConfig;
+  interventionImportExport: FeatureConfig;
+  interventionRecurrence: FeatureConfig;
+  interventionPlanning: FeatureConfig;
+
+  // Communication
+  comments: FeatureConfig;
+  emailNotifications: FeatureConfig;
   pushNotifications: FeatureConfig;
+  internalChat: FeatureConfig;
 
-  // Data management features
-  exports: FeatureConfig;
-  tags: FeatureConfig;
+  // Médias
   photos: FeatureConfig;
-
-  // Advanced features
-  qrcodes: FeatureConfig;
-  templates: FeatureConfig;
+  documents: FeatureConfig;
   signatures: FeatureConfig;
-  validation: FeatureConfig;
-  advancedAnalytics: FeatureConfig;
+
+  // Pièces et stocks
+  parts: FeatureConfig;
+  partsOrderEmail: FeatureConfig;
+  inventory: FeatureConfig;
+  suppliers: FeatureConfig;
+
+  // Temps et facturation
+  timeTracking: FeatureConfig;
+  manualTimeEntry: FeatureConfig;
+  invoicing: FeatureConfig;
+  financialReports: FeatureConfig;
+
+  // Analytique
+  dashboard: FeatureConfig;
+  customReports: FeatureConfig;
+  advancedStatistics: FeatureConfig;
+  dataExport: FeatureConfig;
+
+  // Chambres et espaces
+  rooms: FeatureConfig;
+  roomsQRCode: FeatureConfig;
+
+  // Intégrations
+  apiAccess: FeatureConfig;
+  webhooks: FeatureConfig;
+  thirdPartyIntegrations: FeatureConfig;
 }
 
 /**
@@ -61,42 +88,42 @@ export interface Establishment extends TimestampedDocument {
   displayName: string;
   type: EstablishmentType;
   category?: EstablishmentCategory;
-  
+
   // Description
   description?: string;
-  
+
   // Adresse et contact
   address: Address;
   contact: Contact;
   website?: string;
-  
+
   // Capacité
   totalRooms: number;
   totalFloors?: number;
-  
+
   // Logo et branding
   logoUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
-  
+
   // Statut
   isActive: boolean;
-  
+
   // Configuration des fonctionnalités
   features: EstablishmentFeatures;
-  
+
   // Informations légales
   siret?: string;
   vatNumber?: string;
   legalName?: string;
-  
+
   // Paramètres
   settings: EstablishmentSettings;
-  
+
   // Métadonnées
   ownerId: string; // userId du propriétaire
   managerIds: string[]; // userIds des managers
-  
+
   // Statistiques
   stats?: EstablishmentStats;
 }
@@ -107,24 +134,27 @@ export interface Establishment extends TimestampedDocument {
 export interface EstablishmentSettings {
   // Fuseau horaire
   timezone: string;
-  
+
   // Langue par défaut
   defaultLanguage: 'fr' | 'en';
-  
+
   // Devises
   currency: string;
-  
+
   // Format de date
   dateFormat: string;
   timeFormat: '12h' | '24h';
-  
+
   // Numérotation des interventions
   interventionPrefix: string;
   interventionStartNumber: number;
-  
+
   // Notifications
   notificationEmail?: string;
-  
+
+  // Email pour les commandes de pièces
+  orderEmail?: string;
+
   // Intégrations
   integrations?: {
     pms?: {
@@ -133,7 +163,7 @@ export interface EstablishmentSettings {
       apiKey?: string;
     };
   };
-  
+
   // Heures d'ouverture
   businessHours?: {
     [key: string]: {
@@ -235,28 +265,55 @@ export const ESTABLISHMENT_TYPE_LABELS: Record<EstablishmentType, string> = {
  * Configuration par défaut des features
  */
 export const DEFAULT_ESTABLISHMENT_FEATURES: EstablishmentFeatures = {
-  // Core features (activées par défaut)
+  // Core features (INDISPENSABLES - toujours activées)
   interventions: { enabled: true },
-  rooms: { enabled: true },
-  planning: { enabled: true },
-  analytics: { enabled: true },
+  interventionQuickCreate: { enabled: true },
+  history: { enabled: true },
 
-  // Communication features
-  messaging: { enabled: true },
-  notifications: { enabled: true },
-  pushNotifications: { enabled: false }, // Nécessite configuration supplémentaire
+  // Interventions - Fonctionnalités optionnelles
+  interventionGuidedCreate: { enabled: true },
+  interventionTemplates: { enabled: false },
+  interventionImportExport: { enabled: true },
+  interventionRecurrence: { enabled: false },
+  interventionPlanning: { enabled: true },
 
-  // Data management features
-  exports: { enabled: true },
-  tags: { enabled: true },
+  // Communication
+  comments: { enabled: true },
+  emailNotifications: { enabled: true },
+  pushNotifications: { enabled: false },
+  internalChat: { enabled: false },
+
+  // Médias
   photos: { enabled: true },
-
-  // Advanced features (désactivées par défaut)
-  qrcodes: { enabled: false },
-  templates: { enabled: false },
+  documents: { enabled: false },
   signatures: { enabled: false },
-  validation: { enabled: true },
-  advancedAnalytics: { enabled: false },
+
+  // Pièces et stocks
+  parts: { enabled: true },
+  partsOrderEmail: { enabled: true },
+  inventory: { enabled: false },
+  suppliers: { enabled: false },
+
+  // Temps et facturation
+  timeTracking: { enabled: true },
+  manualTimeEntry: { enabled: true },
+  invoicing: { enabled: false },
+  financialReports: { enabled: false },
+
+  // Analytique
+  dashboard: { enabled: true },
+  customReports: { enabled: false },
+  advancedStatistics: { enabled: false },
+  dataExport: { enabled: true },
+
+  // Chambres et espaces
+  rooms: { enabled: true },
+  roomsQRCode: { enabled: false },
+
+  // Intégrations
+  apiAccess: { enabled: false },
+  webhooks: { enabled: false },
+  thirdPartyIntegrations: { enabled: false },
 };
 
 /**
@@ -267,138 +324,344 @@ export interface FeatureMetadata {
   label: string;
   description: string;
   icon: string; // Lucide icon name
-  category: 'core' | 'communication' | 'data' | 'advanced';
+  category:
+    | 'core'
+    | 'interventions'
+    | 'communication'
+    | 'media'
+    | 'parts'
+    | 'time'
+    | 'analytics'
+    | 'rooms'
+    | 'integrations';
+  isRequired?: boolean; // Fonctionnalité indispensable (ne peut pas être désactivée)
   requiresConfig?: boolean;
   dependsOn?: (keyof EstablishmentFeatures)[];
+  badge?: 'new' | 'beta' | 'premium' | 'coming-soon';
 }
 
 /**
  * Catalogue des features disponibles
  */
 export const FEATURES_CATALOG: FeatureMetadata[] = [
-  // Core features
+  // ==================================================
+  // CORE - Fonctionnalités indispensables
+  // ==================================================
   {
     key: 'interventions',
-    label: 'Interventions',
-    description: 'Gestion des interventions de maintenance',
+    label: 'Gestion des interventions',
+    description: 'CRUD des interventions de maintenance',
     icon: 'ClipboardList',
     category: 'core',
+    isRequired: true,
   },
   {
-    key: 'rooms',
-    label: 'Chambres',
-    description: 'Gestion des chambres et espaces',
-    icon: 'DoorClosed',
+    key: 'interventionQuickCreate',
+    label: 'Création rapide',
+    description: "Formulaire simplifié de création d'intervention",
+    icon: 'Zap',
     category: 'core',
-  },
-  {
-    key: 'planning',
-    label: 'Planning',
-    description: 'Calendrier et planification des interventions',
-    icon: 'Calendar',
-    category: 'core',
+    isRequired: true,
     dependsOn: ['interventions'],
   },
   {
-    key: 'analytics',
-    label: 'Analytics de base',
-    description: 'Statistiques et rapports simples',
-    icon: 'BarChart3',
+    key: 'history',
+    label: 'Historique',
+    description: 'Traçabilité complète des modifications',
+    icon: 'History',
     category: 'core',
+    isRequired: true,
+    dependsOn: ['interventions'],
   },
 
-  // Communication features
+  // ==================================================
+  // INTERVENTIONS - Fonctionnalités optionnelles
+  // ==================================================
   {
-    key: 'messaging',
-    label: 'Messagerie',
-    description: 'Commentaires et discussions sur les interventions',
+    key: 'interventionGuidedCreate',
+    label: 'Création guidée',
+    description: 'Wizard étape par étape pour créer une intervention',
+    icon: 'Navigation',
+    category: 'interventions',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'interventionTemplates',
+    label: "Modèles d'intervention",
+    description: 'Templates pré-remplis pour interventions récurrentes',
+    icon: 'FileText',
+    category: 'interventions',
+    dependsOn: ['interventions'],
+    badge: 'coming-soon',
+  },
+  {
+    key: 'interventionImportExport',
+    label: 'Import/Export',
+    description: "Import et export d'interventions (Excel, CSV)",
+    icon: 'ArrowUpDown',
+    category: 'interventions',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'interventionRecurrence',
+    label: 'Récurrence',
+    description: 'Interventions récurrentes automatiques',
+    icon: 'Repeat',
+    category: 'interventions',
+    dependsOn: ['interventions'],
+    badge: 'coming-soon',
+  },
+  {
+    key: 'interventionPlanning',
+    label: 'Planning',
+    description: 'Vue calendrier et planification',
+    icon: 'Calendar',
+    category: 'interventions',
+    dependsOn: ['interventions'],
+  },
+
+  // ==================================================
+  // COMMUNICATION
+  // ==================================================
+  {
+    key: 'comments',
+    label: 'Commentaires',
+    description: 'Discussions et commentaires sur les interventions',
     icon: 'MessageSquare',
     category: 'communication',
     dependsOn: ['interventions'],
   },
   {
-    key: 'notifications',
-    label: 'Notifications',
-    description: 'Notifications dans l\'application',
-    icon: 'Bell',
+    key: 'emailNotifications',
+    label: 'Notifications email',
+    description: 'Alertes par email',
+    icon: 'Mail',
     category: 'communication',
   },
   {
     key: 'pushNotifications',
-    label: 'Notifications Push',
-    description: 'Notifications push sur appareils mobiles',
+    label: 'Notifications push',
+    description: 'Notifications mobiles en temps réel',
     icon: 'BellRing',
     category: 'communication',
     requiresConfig: true,
-    dependsOn: ['notifications'],
+    badge: 'coming-soon',
+  },
+  {
+    key: 'internalChat',
+    label: 'Chat interne',
+    description: 'Messagerie instantanée entre techniciens',
+    icon: 'MessagesSquare',
+    category: 'communication',
+    badge: 'coming-soon',
   },
 
-  // Data management features
-  {
-    key: 'exports',
-    label: 'Export de données',
-    description: 'Export en Excel, PDF, CSV',
-    icon: 'Download',
-    category: 'data',
-  },
-  {
-    key: 'tags',
-    label: 'Gestion des tags',
-    description: 'Étiquettes personnalisées pour les interventions',
-    icon: 'Tag',
-    category: 'data',
-    dependsOn: ['interventions'],
-  },
+  // ==================================================
+  // MÉDIAS
+  // ==================================================
   {
     key: 'photos',
     label: 'Photos',
-    description: 'Photos attachées aux interventions',
+    description: 'Photos avant/pendant/après intervention',
     icon: 'Camera',
-    category: 'data',
+    category: 'media',
     dependsOn: ['interventions'],
   },
-
-  // Advanced features
   {
-    key: 'qrcodes',
-    label: 'QR Codes',
-    description: 'Génération et scan de QR codes',
-    icon: 'QrCode',
-    category: 'advanced',
-  },
-  {
-    key: 'templates',
-    label: 'Templates',
-    description: 'Modèles d\'interventions pré-remplis',
-    icon: 'FileText',
-    category: 'advanced',
+    key: 'documents',
+    label: 'Documents',
+    description: 'Pièces jointes (PDF, Word, etc.)',
+    icon: 'Paperclip',
+    category: 'media',
     dependsOn: ['interventions'],
+    badge: 'coming-soon',
   },
   {
     key: 'signatures',
-    label: 'Signatures',
-    description: 'Signature électronique des interventions',
+    label: 'Signatures électroniques',
+    description: 'Signature numérique des interventions',
     icon: 'PenTool',
-    category: 'advanced',
+    category: 'media',
+    dependsOn: ['interventions'],
+    badge: 'premium',
+  },
+
+  // ==================================================
+  // PIÈCES ET STOCKS
+  // ==================================================
+  {
+    key: 'parts',
+    label: 'Gestion des pièces',
+    description: 'Liste des pièces par intervention',
+    icon: 'Package',
+    category: 'parts',
     dependsOn: ['interventions'],
   },
   {
-    key: 'validation',
-    label: 'Validation',
-    description: 'Workflow de validation des interventions',
-    icon: 'CheckCircle',
-    category: 'advanced',
+    key: 'partsOrderEmail',
+    label: 'Commande par email',
+    description: 'Envoi automatique de commandes de pièces',
+    icon: 'Send',
+    category: 'parts',
+    dependsOn: ['parts'],
+    badge: 'new',
+  },
+  {
+    key: 'inventory',
+    label: 'Gestion des stocks',
+    description: 'Suivi des stocks de pièces détachées',
+    icon: 'Database',
+    category: 'parts',
+    dependsOn: ['parts'],
+    badge: 'coming-soon',
+  },
+  {
+    key: 'suppliers',
+    label: 'Fournisseurs',
+    description: 'Base de données des fournisseurs',
+    icon: 'Truck',
+    category: 'parts',
+    dependsOn: ['parts'],
+    badge: 'coming-soon',
+  },
+
+  // ==================================================
+  // TEMPS ET FACTURATION
+  // ==================================================
+  {
+    key: 'timeTracking',
+    label: 'Chronomètre',
+    description: 'Suivi du temps en temps réel',
+    icon: 'Timer',
+    category: 'time',
     dependsOn: ['interventions'],
   },
   {
-    key: 'advancedAnalytics',
-    label: 'Analytics avancées',
-    description: 'Rapports détaillés et analytics personnalisées',
+    key: 'manualTimeEntry',
+    label: 'Saisie manuelle',
+    description: 'Ajout manuel de sessions de temps',
+    icon: 'Clock',
+    category: 'time',
+    dependsOn: ['interventions'],
+  },
+  {
+    key: 'invoicing',
+    label: 'Facturation',
+    description: 'Génération de factures',
+    icon: 'FileText',
+    category: 'time',
+    dependsOn: ['timeTracking'],
+    badge: 'premium',
+  },
+  {
+    key: 'financialReports',
+    label: 'Rapports financiers',
+    description: 'Analyses de rentabilité',
+    icon: 'DollarSign',
+    category: 'time',
+    dependsOn: ['invoicing'],
+    badge: 'premium',
+  },
+
+  // ==================================================
+  // ANALYTIQUE
+  // ==================================================
+  {
+    key: 'dashboard',
+    label: 'Tableau de bord',
+    description: "Vue d'ensemble et statistiques de base",
+    icon: 'BarChart3',
+    category: 'analytics',
+  },
+  {
+    key: 'customReports',
+    label: 'Rapports personnalisés',
+    description: 'Création de rapports sur mesure',
+    icon: 'FileBarChart',
+    category: 'analytics',
+    dependsOn: ['dashboard'],
+    badge: 'premium',
+  },
+  {
+    key: 'advancedStatistics',
+    label: 'Statistiques avancées',
+    description: 'Analyses approfondies et prédictions',
     icon: 'TrendingUp',
-    category: 'advanced',
-    dependsOn: ['analytics'],
+    category: 'analytics',
+    dependsOn: ['dashboard'],
+    badge: 'premium',
+  },
+  {
+    key: 'dataExport',
+    label: 'Export de données',
+    description: 'Export Excel, PDF, CSV',
+    icon: 'Download',
+    category: 'analytics',
+  },
+
+  // ==================================================
+  // CHAMBRES ET ESPACES
+  // ==================================================
+  {
+    key: 'rooms',
+    label: 'Gestion des chambres',
+    description: 'Base de données des chambres et espaces',
+    icon: 'DoorClosed',
+    category: 'rooms',
+  },
+  {
+    key: 'roomsQRCode',
+    label: 'QR Codes chambres',
+    description: 'Génération et scan de QR codes par chambre',
+    icon: 'QrCode',
+    category: 'rooms',
+    dependsOn: ['rooms'],
+    badge: 'coming-soon',
+  },
+
+  // ==================================================
+  // INTÉGRATIONS
+  // ==================================================
+  {
+    key: 'apiAccess',
+    label: 'Accès API',
+    description: 'API REST pour intégrations externes',
+    icon: 'Code',
+    category: 'integrations',
+    badge: 'premium',
+  },
+  {
+    key: 'webhooks',
+    label: 'Webhooks',
+    description: 'Notifications automatiques vers systèmes tiers',
+    icon: 'Webhook',
+    category: 'integrations',
+    badge: 'premium',
+  },
+  {
+    key: 'thirdPartyIntegrations',
+    label: 'Intégrations tierces',
+    description: 'Connexion avec PMS et autres logiciels',
+    icon: 'Plug',
+    category: 'integrations',
+    badge: 'coming-soon',
   },
 ];
+
+/**
+ * Labels des catégories de fonctionnalités
+ */
+export const FEATURE_CATEGORY_LABELS: Record<FeatureMetadata['category'], string> = {
+  core: 'Fonctionnalités essentielles',
+  interventions: 'Interventions',
+  communication: 'Communication',
+  media: 'Médias',
+  parts: 'Pièces et stocks',
+  time: 'Temps et facturation',
+  analytics: 'Analytique',
+  rooms: 'Chambres',
+  integrations: 'Intégrations',
+};
 
 /**
  * Paramètres par défaut

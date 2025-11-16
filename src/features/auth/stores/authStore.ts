@@ -1,6 +1,6 @@
 /**
  * Auth Store
- * 
+ *
  * Store Zustand pour gérer l'état d'authentification
  */
 
@@ -8,6 +8,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { User as FirebaseUser } from 'firebase/auth';
 import type { User, UserRole } from '@/shared/types';
+import { ROLE_PERMISSIONS, Permission } from '@/features/users/types/role.types';
 
 interface AuthState {
   // État
@@ -16,7 +17,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  
+
   // Actions
   setUser: (user: User | null) => void;
   setFirebaseUser: (user: FirebaseUser | null) => void;
@@ -24,7 +25,7 @@ interface AuthState {
   setError: (error: string | null) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
-  
+
   // Helpers
   hasRole: (role: UserRole) => boolean;
   hasPermission: (permission: string) => boolean;
@@ -43,24 +44,24 @@ export const useAuthStore = create<AuthState>()(
         error: null,
 
         // Actions
-        setUser: (user) =>
+        setUser: user =>
           set({
             user,
             isAuthenticated: !!user,
             error: null,
           }),
 
-        setFirebaseUser: (firebaseUser) =>
+        setFirebaseUser: firebaseUser =>
           set({
             firebaseUser,
           }),
 
-        setLoading: (loading) =>
+        setLoading: loading =>
           set({
             isLoading: loading,
           }),
 
-        setError: (error) =>
+        setError: error =>
           set({
             error,
           }),
@@ -73,30 +74,34 @@ export const useAuthStore = create<AuthState>()(
             error: null,
           }),
 
-        updateUser: (updates) =>
-          set((state) => ({
+        updateUser: updates =>
+          set(state => ({
             user: state.user ? { ...state.user, ...updates } : null,
           })),
 
         // Helpers
-        hasRole: (role) => {
+        hasRole: role => {
           const { user } = get();
           return user?.role === role;
         },
 
-        hasPermission: (permission) => {
+        hasPermission: permission => {
           const { user } = get();
           if (!user) return false;
 
           // Super admin a toutes les permissions
           if (user.role === 'super_admin') return true;
 
-          // Vérifier dans les permissions du rôle
-          // TODO: Implémenter la vérification avec ROLE_PERMISSIONS
-          return false;
+          // Récupérer les permissions du rôle de l'utilisateur
+          const rolePermissions = ROLE_PERMISSIONS[user.role as UserRole];
+          if (!rolePermissions) return false;
+
+          // Vérifier si la permission est dans la liste des permissions du rôle
+          // Convertir la string en Permission enum si nécessaire
+          return rolePermissions.some((perm: Permission) => perm === permission);
         },
 
-        canAccessEstablishment: (establishmentId) => {
+        canAccessEstablishment: establishmentId => {
           const { user } = get();
           if (!user) return false;
 
@@ -109,7 +114,7 @@ export const useAuthStore = create<AuthState>()(
       }),
       {
         name: 'auth-storage',
-        partialize: (state) => ({
+        partialize: state => ({
           user: state.user,
           isAuthenticated: state.isAuthenticated,
         }),

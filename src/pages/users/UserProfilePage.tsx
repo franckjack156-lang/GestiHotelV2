@@ -15,7 +15,6 @@ import {
   PowerOff,
   Mail,
   Phone,
-  MapPin,
   Calendar,
   Briefcase,
   Award,
@@ -39,12 +38,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 
 import { UserAvatar, RoleBadge, StatusBadge, UserDeleteDialog } from '@/features/users/components';
 import { useUser, useUserActions } from '@/features/users/hooks/useUsers';
+import type { UserProfile } from '@/features/users/types/user.types';
+import { toDate } from '@/shared/utils/dateUtils';
 
 export const UserProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isLoading } = useUser(id);
+  const { user: userData, isLoading } = useUser(id);
   const { deleteUser, toggleActive, isDeleting } = useUserActions();
+
+  // Cast user to UserProfile for extended properties
+  const user = userData as UserProfile | undefined;
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -116,16 +120,16 @@ export const UserProfilePage = () => {
             )}
           </Button>
 
-          <Button variant="outline" size="sm" onClick={() => navigate(`/app/users/${user.id}/edit`)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/app/users/${user.id}/edit`)}
+          >
             <Edit className="mr-1.5 h-3.5 w-3.5" />
             Modifier
           </Button>
 
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowDeleteDialog(true)}
-          >
+          <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
             <Trash2 className="mr-1.5 h-3.5 w-3.5" />
             Supprimer
           </Button>
@@ -136,12 +140,17 @@ export const UserProfilePage = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-start gap-6">
-            <UserAvatar user={user} size="2xl" className="flex-shrink-0" />
+            <UserAvatar
+              photoURL={user.photoURL}
+              displayName={user.displayName}
+              size="lg"
+              className="flex-shrink-0"
+            />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-2 flex-wrap">
                 <h2 className="text-2xl font-bold">{user.displayName}</h2>
-                <StatusBadge status={user.isActive ? 'active' : 'inactive'} />
+                <StatusBadge status={user.status} />
                 {user.isTechnician && (
                   <Badge className="bg-blue-600 gap-1">
                     <Wrench className="h-3 w-3" />
@@ -171,9 +180,7 @@ export const UserProfilePage = () => {
                     {user.jobTitle}
                   </Badge>
                 )}
-                {user.department && (
-                  <Badge variant="outline">{user.department}</Badge>
-                )}
+                {user.department && <Badge variant="outline">{user.department}</Badge>}
               </div>
 
               {user.bio && (
@@ -309,7 +316,7 @@ export const UserProfilePage = () => {
                   <p className="text-xs text-gray-500 mb-1">Membre depuis</p>
                   <p className="font-medium">
                     {user.createdAt
-                      ? format(user.createdAt.toDate(), 'PPP', { locale: fr })
+                      ? format(toDate(user.createdAt), 'PPP', { locale: fr })
                       : 'Non disponible'}
                   </p>
                 </div>
@@ -318,7 +325,7 @@ export const UserProfilePage = () => {
                   <p className="text-xs text-gray-500 mb-1">Dernière connexion</p>
                   <p className="font-medium">
                     {user.lastLoginAt
-                      ? format(user.lastLoginAt.toDate(), 'PPP à HH:mm', { locale: fr })
+                      ? format(toDate(user.lastLoginAt), 'PPP à HH:mm', { locale: fr })
                       : 'Jamais connecté'}
                   </p>
                 </div>
@@ -327,7 +334,7 @@ export const UserProfilePage = () => {
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Date de naissance</p>
                     <p className="font-medium">
-                      {format(user.birthDate.toDate(), 'PPP', { locale: fr })}
+                      {format(toDate(user.birthDate), 'PPP', { locale: fr })}
                     </p>
                   </div>
                 )}
@@ -460,10 +467,10 @@ export const UserProfilePage = () => {
                         user.experienceLevel === 'expert'
                           ? 'bg-purple-600'
                           : user.experienceLevel === 'senior'
-                          ? 'bg-blue-600'
-                          : user.experienceLevel === 'intermediate'
-                          ? 'bg-green-600'
-                          : 'bg-gray-600'
+                            ? 'bg-blue-600'
+                            : user.experienceLevel === 'intermediate'
+                              ? 'bg-green-600'
+                              : 'bg-gray-600'
                       }
                     >
                       {user.experienceLevel === 'expert' && 'Expert'}
@@ -501,10 +508,10 @@ export const UserProfilePage = () => {
 
       {/* Dialog de suppression */}
       <UserDeleteDialog
-        isOpen={showDeleteDialog}
+        open={showDeleteDialog}
+        user={user}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDelete}
-        userName={user.displayName}
         isDeleting={isDeleting}
       />
     </div>

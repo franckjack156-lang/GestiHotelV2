@@ -26,7 +26,8 @@
  * Destination: src/shared/types/reference-lists.types.ts
  */
 
-import { Timestamp } from 'firebase/firestore';
+// TODO: Timestamp imported but unused
+// import { Timestamp } from 'firebase/firestore';
 
 // ============================================================================
 // CORE TYPES
@@ -132,6 +133,9 @@ export type PredefinedListKey =
   | 'interventionCategories'
   | 'interventionStatuses'
   | 'interventionLocations'
+  // Localisation
+  | 'floors'
+  | 'buildings'
   // Équipements
   | 'equipmentTypes'
   | 'equipmentBrands'
@@ -173,6 +177,8 @@ export const PREDEFINED_LIST_KEYS: PredefinedListKey[] = [
   'interventionCategories',
   'interventionStatuses',
   'interventionLocations',
+  'floors',
+  'buildings',
   'equipmentTypes',
   'equipmentBrands',
   'equipmentLocations',
@@ -297,9 +303,9 @@ export interface ImportPreview {
 }
 
 /**
- * Options d'export
+ * Options d'export des listes de référence
  */
-export interface ExportOptions {
+export interface ReferenceListsExportOptions {
   format: 'xlsx' | 'csv' | 'json';
   includeInactive: boolean;
   includeMetadata: boolean;
@@ -606,6 +612,8 @@ export const LIST_LABELS: Record<PredefinedListKey, string> = {
   interventionCategories: "Catégories d'intervention",
   interventionStatuses: "Statuts d'intervention",
   interventionLocations: "Localisations d'intervention",
+  floors: 'Étages',
+  buildings: 'Bâtiments',
   equipmentTypes: "Types d'équipement",
   equipmentBrands: "Marques d'équipement",
   equipmentLocations: "Emplacements d'équipement",

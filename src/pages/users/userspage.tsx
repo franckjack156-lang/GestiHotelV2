@@ -2,7 +2,9 @@
  * UsersPage - Liste des utilisateurs
  */
 
-import React, { useState } from 'react';
+// TODO: React imported but unused
+// import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { useUsers, useUserActions } from '@/features/users/hooks/useUsers';

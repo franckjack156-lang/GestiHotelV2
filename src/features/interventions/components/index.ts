@@ -5,8 +5,10 @@
  */
 
 // Badges
-export { StatusBadge } from './badges/typebadge';
+export { StatusBadge } from './badges/StatusBadge';
+export { TypeBadge } from './badges/TypeBadge';
 export { PriorityBadge } from './badges/PriorityBadge';
+export { StatusBadgeDropdown } from './StatusBadgeDropdown';
 
 // Cards
 export { InterventionCard } from './cards/InterventionCard';

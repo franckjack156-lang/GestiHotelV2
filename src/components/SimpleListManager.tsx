@@ -8,7 +8,7 @@
  * Utilisation: import SimpleListManager from './SimpleListManager'
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
 import referenceListsService from '@/shared/services/referenceListsService';
 
@@ -37,12 +37,9 @@ export const SimpleListManager = () => {
       await referenceListsService.createList('default', 'system', listKey, {
         name: listName,
         description: '',
-        icon: 'List',
-        color: 'blue',
         allowCustom: true,
         isRequired: false,
         isSystem: false,
-        items: [],
       });
       await reload();
       alert('✅ Liste créée !');
@@ -70,7 +67,6 @@ export const SimpleListManager = () => {
         label,
         color: 'blue',
         icon: 'Circle',
-        order: data?.lists[listKey]?.items.length || 0,
       });
       await reload();
       alert('✅ Item ajouté !');

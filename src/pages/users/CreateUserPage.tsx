@@ -2,7 +2,8 @@
  * CreateUserPage - Création utilisateur
  */
 
-import React from 'react';
+// TODO: React imported but unused
+// import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';

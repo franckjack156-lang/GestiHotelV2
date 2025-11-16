@@ -10,10 +10,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
-import {
-  useInterventionWizard,
-  WIZARD_STEPS,
-} from '@/features/interventions/hooks/useInterventionWizard';
+import { useInterventionWizard } from '@/features/interventions/hooks/useInterventionWizard';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
 
 // Import des étapes

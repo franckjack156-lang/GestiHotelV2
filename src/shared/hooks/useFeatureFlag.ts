@@ -49,17 +49,23 @@ export const useFeatureFlags = (
   return useMemo(() => {
     if (!currentEstablishment) {
       // Toutes les features désactivées par défaut
-      return featureKeys.reduce((acc, key) => {
-        acc[key] = false;
-        return acc;
-      }, {} as Record<string, boolean>);
+      return featureKeys.reduce(
+        (acc, key) => {
+          acc[key] = false;
+          return acc;
+        },
+        {} as Record<string, boolean>
+      );
     }
 
-    return featureKeys.reduce((acc, key) => {
-      const feature = currentEstablishment.features?.[key];
-      acc[key] = feature?.enabled ?? false;
-      return acc;
-    }, {} as Record<string, boolean>);
+    return featureKeys.reduce(
+      (acc, key) => {
+        const feature = currentEstablishment.features?.[key];
+        acc[key] = feature?.enabled ?? false;
+        return acc;
+      },
+      {} as Record<string, boolean>
+    );
   }, [currentEstablishment, featureKeys]);
 };
 
@@ -85,9 +91,7 @@ export const useAllFeatures = (): EstablishmentFeatures | null => {
  * @example
  * const canUseAdvanced = useRequiresFeatures(['interventions', 'planning', 'analytics']);
  */
-export const useRequiresFeatures = (
-  featureKeys: (keyof EstablishmentFeatures)[]
-): boolean => {
+export const useRequiresFeatures = (featureKeys: (keyof EstablishmentFeatures)[]): boolean => {
   const { currentEstablishment } = useEstablishmentStore();
 
   return useMemo(() => {
@@ -108,9 +112,7 @@ export const useRequiresFeatures = (
  * @param featureKeys - Array de clés de features
  * @returns true si au moins une feature est activée
  */
-export const useHasAnyFeature = (
-  featureKeys: (keyof EstablishmentFeatures)[]
-): boolean => {
+export const useHasAnyFeature = (featureKeys: (keyof EstablishmentFeatures)[]): boolean => {
   const { currentEstablishment } = useEstablishmentStore();
 
   return useMemo(() => {
@@ -141,9 +143,7 @@ export interface FeatureStatus {
  * @param featureKey - Clé de la feature
  * @returns Statut détaillé de la feature
  */
-export const useFeatureStatus = (
-  featureKey: keyof EstablishmentFeatures
-): FeatureStatus => {
+export const useFeatureStatus = (featureKey: keyof EstablishmentFeatures): FeatureStatus => {
   const { currentEstablishment } = useEstablishmentStore();
 
   return useMemo(() => {

@@ -4,7 +4,7 @@
  * ============================================================================
  */
 
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -27,7 +27,7 @@ import {
 import { UserAvatar } from './UserAvatar';
 import { RoleBadge } from './RoleBadge';
 import { StatusBadge } from './StatusBadge';
-import type { User, UserSortOptions } from '../types/user.types';
+import type { User, UserProfile, UserSortOptions } from '../types/user.types';
 import {
   MoreVertical,
   Edit,
@@ -39,7 +39,8 @@ import {
   Power,
   PowerOff,
 } from 'lucide-react';
-import { cn } from '@/shared/utils/cn';
+// TODO: cn imported but unused
+// import { cn } from '@/shared/utils/cn';
 
 interface UsersTableProps {
   /** Liste d'utilisateurs */
@@ -60,7 +61,7 @@ interface UsersTableProps {
   visibleColumns?: string[];
 }
 
-export const UsersTable: React.FC<UsersTableProps> = ({
+const UsersTableComponent: React.FC<UsersTableProps> = ({
   users,
   sortOptions,
   onSortChange,
@@ -71,34 +72,64 @@ export const UsersTable: React.FC<UsersTableProps> = ({
   visibleColumns = ['displayName', 'email', 'role', 'status', 'lastLoginAt'],
 }) => {
   /**
-   * Render sort icon
+   * Render sort icon - memoized
    */
-  const renderSortIcon = (field: UserSortOptions['field']) => {
-    if (!sortOptions || sortOptions.field !== field) {
-      return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
-    }
-    return sortOptions.direction === 'asc' ? (
-      <ArrowUp className="h-4 w-4" />
-    ) : (
-      <ArrowDown className="h-4 w-4" />
-    );
-  };
+  const renderSortIcon = useCallback(
+    (field: UserSortOptions['field']) => {
+      if (!sortOptions || sortOptions.field !== field) {
+        return <ArrowUpDown className="h-4 w-4 text-gray-400" />;
+      }
+      return sortOptions.direction === 'asc' ? (
+        <ArrowUp className="h-4 w-4" />
+      ) : (
+        <ArrowDown className="h-4 w-4" />
+      );
+    },
+    [sortOptions]
+  );
 
   /**
-   * Handle sort click
+   * Handle sort click - memoized
    */
-  const handleSortClick = (field: UserSortOptions['field']) => {
-    if (onSortChange) {
-      onSortChange(field);
-    }
-  };
+  const handleSortClick = useCallback(
+    (field: UserSortOptions['field']) => {
+      if (onSortChange) {
+        onSortChange(field);
+      }
+    },
+    [onSortChange]
+  );
+
+  const handleView = useCallback(
+    (user: User) => {
+      onView?.(user);
+    },
+    [onView]
+  );
+
+  const handleEdit = useCallback(
+    (user: User) => {
+      onEdit?.(user);
+    },
+    [onEdit]
+  );
+
+  const handleDelete = useCallback(
+    (user: User) => {
+      onDelete?.(user);
+    },
+    [onDelete]
+  );
+
+  const handleToggleActive = useCallback(
+    (user: User) => {
+      onToggleActive?.(user);
+    },
+    [onToggleActive]
+  );
 
   if (users.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        Aucun utilisateur trouvé
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">Aucun utilisateur trouvé</div>;
   }
 
   return (
@@ -146,9 +177,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
             )}
 
             {/* Statut */}
-            {visibleColumns.includes('status') && (
-              <TableHead>Statut</TableHead>
-            )}
+            {visibleColumns.includes('status') && <TableHead>Statut</TableHead>}
 
             {/* Dernière connexion */}
             {visibleColumns.includes('lastLoginAt') && (
@@ -169,7 +198,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
         </TableHeader>
 
         <TableBody>
-          {users.map((user) => (
+          {users.map(user => (
             <TableRow key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
               {/* Utilisateur */}
               {visibleColumns.includes('displayName') && (
@@ -178,15 +207,13 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     to={`/app/users/${user.id}`}
                     className="flex items-center gap-3 hover:text-indigo-600 dark:hover:text-indigo-400"
                   >
-                    <UserAvatar
-                      photoURL={user.photoURL}
-                      displayName={user.displayName}
-                      size="sm"
-                    />
+                    <UserAvatar photoURL={user.photoURL} displayName={user.displayName} size="sm" />
                     <div>
                       <div className="font-medium">{user.displayName}</div>
-                      {user.jobTitle && (
-                        <div className="text-xs text-gray-500">{user.jobTitle}</div>
+                      {(user as UserProfile).jobTitle && (
+                        <div className="text-xs text-gray-500">
+                          {(user as UserProfile).jobTitle}
+                        </div>
                       )}
                     </div>
                   </Link>
@@ -247,17 +274,17 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onView?.(user)}>
+                    <DropdownMenuItem onClick={() => handleView(user)}>
                       <Eye className="mr-2 h-4 w-4" />
                       Voir
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => onEdit?.(user)}>
+                    <DropdownMenuItem onClick={() => handleEdit(user)}>
                       <Edit className="mr-2 h-4 w-4" />
                       Modifier
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => onToggleActive?.(user)}>
+                    <DropdownMenuItem onClick={() => handleToggleActive(user)}>
                       {user.isActive ? (
                         <>
                           <PowerOff className="mr-2 h-4 w-4" />
@@ -274,7 +301,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
-                      onClick={() => onDelete?.(user)}
+                      onClick={() => handleDelete(user)}
                       className="text-red-600 dark:text-red-400"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
@@ -290,3 +317,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
     </div>
   );
 };
+
+UsersTableComponent.displayName = 'UsersTable';
+
+export const UsersTable = memo(UsersTableComponent);

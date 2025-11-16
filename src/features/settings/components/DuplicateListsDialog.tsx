@@ -49,7 +49,6 @@ import {
   FileStack,
   AlertTriangle,
 } from 'lucide-react';
-import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
 import referenceListsService from '@/shared/services/referenceListsService';
 import type { ListKey } from '@/shared/types/reference-lists.types';
 import type { EstablishmentSummary } from '@/shared/types/establishment.types';
@@ -97,21 +96,43 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
-  // Charger les listes de l'établissement source
-  const {
-    data: sourceLists,
-    isLoading: sourceLoading,
-    error: sourceError,
-  } = useAllReferenceLists({
-    establishmentId: config.sourceEstablishmentId,
-    autoLoad: !!config.sourceEstablishmentId,
-  });
+  // État pour les listes source et cible
+  const [sourceLists, setSourceLists] = useState<any>(null);
+  const [sourceLoading, setSourceLoading] = useState(false);
+  const [sourceError, setSourceError] = useState<string | null>(null);
+  const [targetLists, setTargetLists] = useState<any>(null);
+  const [, setTargetLoading] = useState(false);
 
-  // Charger les listes de l'établissement cible (si sélectionné)
-  const { data: targetLists, isLoading: targetLoading } = useAllReferenceLists({
-    establishmentId: config.targetEstablishmentId,
-    autoLoad: !!config.targetEstablishmentId && step === 'confirm',
-  });
+  // Charger les listes de l'établissement source
+  useEffect(() => {
+    if (!config.sourceEstablishmentId) return;
+
+    setSourceLoading(true);
+    setSourceError(null);
+    referenceListsService
+      .getAllLists(config.sourceEstablishmentId)
+      .then(data => {
+        setSourceLists(data);
+        setSourceError(null);
+      })
+      .catch(err => {
+        setSourceError(err.message);
+        setSourceLists(null);
+      })
+      .finally(() => setSourceLoading(false));
+  }, [config.sourceEstablishmentId]);
+
+  // Charger les listes de l'établissement cible
+  useEffect(() => {
+    if (!config.targetEstablishmentId || step !== 'confirm') return;
+
+    setTargetLoading(true);
+    referenceListsService
+      .getAllLists(config.targetEstablishmentId)
+      .then(data => setTargetLists(data))
+      .catch(() => setTargetLists(null))
+      .finally(() => setTargetLoading(false));
+  }, [config.targetEstablishmentId, step]);
 
   // Reset au changement d'établissement source
   useEffect(() => {
@@ -637,11 +658,8 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
                 Retour
               </Button>
             )}
-            <Button
-              onClick={step === 'done' ? () => onOpenChange(false) : handleNext}
-              disabled={!canProceed() || sourceLoading}
-            >
-              {step === 'confirm' ? 'Dupliquer' : step === 'done' ? 'Fermer' : 'Suivant'}
+            <Button onClick={handleNext} disabled={!canProceed() || sourceLoading}>
+              {step === 'confirm' ? 'Dupliquer' : 'Suivant'}
             </Button>
           </DialogFooter>
         )}

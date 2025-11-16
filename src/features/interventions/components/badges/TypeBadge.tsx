@@ -12,7 +12,7 @@ import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
 import { InterventionType } from '@/shared/types/status.types';
 
 interface TypeBadgeProps {
-  type: InterventionType | string;
+  type?: InterventionType | string;
   showIcon?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -26,6 +26,11 @@ export const TypeBadge = ({
 }: TypeBadgeProps) => {
   const { getItemByValue } = useAllReferenceLists({ realtime: false, autoLoad: true });
 
+  // Ne pas afficher le badge si le type est undefined ou vide
+  if (!type) {
+    return null;
+  }
+
   // Récupérer l'item de la liste de référence
   const typeItem = getItemByValue('interventionTypes', type);
 
@@ -35,7 +40,7 @@ export const TypeBadge = ({
       showIcon={showIcon}
       size={size}
       className={className}
-      fallbackLabel={String(type) || 'Non défini'}
+      fallbackLabel={String(type)}
     />
   );
 };

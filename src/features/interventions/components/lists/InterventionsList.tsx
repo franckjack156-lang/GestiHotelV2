@@ -1,9 +1,10 @@
 /**
  * InterventionsList Component
- * 
+ *
  * Liste des interventions avec pagination
  */
 
+import { memo, useCallback } from 'react';
 import { Grid3x3, List, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { InterventionCard } from '../cards/InterventionCard';
@@ -22,7 +23,7 @@ interface InterventionsListProps {
   onPageChange?: (page: number) => void;
 }
 
-export const InterventionsList = ({
+const InterventionsListComponent = ({
   interventions,
   isLoading = false,
   view = 'grid',
@@ -35,6 +36,27 @@ export const InterventionsList = ({
 }: InterventionsListProps) => {
   const { navigateToDetails } = useInterventionActions();
 
+  const handleViewChange = useCallback(
+    (newView: 'grid' | 'list' | 'compact') => {
+      onViewChange?.(newView);
+    },
+    [onViewChange]
+  );
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      onPageChange?.(page);
+    },
+    [onPageChange]
+  );
+
+  const handleInterventionClick = useCallback(
+    (id: string) => {
+      navigateToDetails(id);
+    },
+    [navigateToDetails]
+  );
+
   // Vue vide
   if (!isLoading && interventions.length === 0) {
     return (
@@ -46,8 +68,8 @@ export const InterventionsList = ({
           Aucune intervention trouvée
         </h3>
         <p className="text-gray-600 dark:text-gray-400 text-center max-w-md">
-          Aucune intervention ne correspond à vos critères de recherche.
-          Essayez de modifier vos filtres.
+          Aucune intervention ne correspond à vos critères de recherche. Essayez de modifier vos
+          filtres.
         </p>
       </div>
     );
@@ -58,10 +80,7 @@ export const InterventionsList = ({
     return (
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-64 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-lg"
-          />
+          <div key={i} className="h-64 bg-gray-200 dark:bg-gray-800 animate-pulse rounded-lg" />
         ))}
       </div>
     );
@@ -75,14 +94,14 @@ export const InterventionsList = ({
           <Button
             variant={view === 'grid' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onViewChange('grid')}
+            onClick={() => handleViewChange('grid')}
           >
             <Grid3x3 size={16} />
           </Button>
           <Button
             variant={view === 'list' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => onViewChange('list')}
+            onClick={() => handleViewChange('list')}
           >
             <List size={16} />
           </Button>
@@ -95,15 +114,15 @@ export const InterventionsList = ({
           view === 'grid'
             ? 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
             : view === 'list'
-            ? 'flex flex-col gap-4'
-            : 'grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+              ? 'flex flex-col gap-4'
+              : 'grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
         }
       >
-        {interventions.map((intervention) => (
+        {interventions.map(intervention => (
           <InterventionCard
             key={intervention.id}
             intervention={intervention}
-            onClick={() => navigateToDetails(intervention.id)}
+            onClick={() => handleInterventionClick(intervention.id)}
             showPhotos={showPhotos}
             showAssignee={showAssignee}
           />
@@ -116,18 +135,18 @@ export const InterventionsList = ({
           <div className="text-sm text-gray-600 dark:text-gray-400">
             Page {currentPage} sur {totalPages}
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(currentPage - 1)}
+              onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
             >
               <ChevronLeft size={16} />
               Précédent
             </Button>
-            
+
             {/* Numéros de pages */}
             <div className="hidden sm:flex items-center gap-1">
               {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
@@ -147,7 +166,7 @@ export const InterventionsList = ({
                     key={i}
                     variant={currentPage === pageNum ? 'default' : 'outline'}
                     size="sm"
-                    onClick={() => onPageChange(pageNum)}
+                    onClick={() => handlePageChange(pageNum)}
                     className="w-10"
                   >
                     {pageNum}
@@ -155,11 +174,11 @@ export const InterventionsList = ({
                 );
               })}
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onPageChange(currentPage + 1)}
+              onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
               Suivant
@@ -171,3 +190,7 @@ export const InterventionsList = ({
     </div>
   );
 };
+
+InterventionsListComponent.displayName = 'InterventionsList';
+
+export const InterventionsList = memo(InterventionsListComponent);

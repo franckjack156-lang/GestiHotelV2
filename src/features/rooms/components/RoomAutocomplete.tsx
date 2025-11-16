@@ -20,7 +20,7 @@
  * ```
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Badge } from '@/shared/components/ui/badge';
 import {
   Command,
@@ -29,11 +29,7 @@ import {
   CommandInput,
   CommandItem,
 } from '@/components/ui/command';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import {
   Dialog,
   DialogContent,
@@ -104,7 +100,7 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
   const { currentEstablishment } = useCurrentEstablishment();
 
   // Charger toutes les chambres
-  const { rooms, isLoading, error: loadError, createRoom, isCreating } = useRooms(currentEstablishment?.id || '');
+  const { rooms, isLoading, createRoom, isCreating } = useRooms(currentEstablishment?.id || '');
 
   // Filtrer les chambres selon le terme de recherche
   const filteredRooms = useMemo(() => {
@@ -112,15 +108,13 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
     if (!searchTerm) return rooms;
 
     const term = searchTerm.toLowerCase();
-    return rooms.filter((room) =>
-      room.number.toLowerCase().includes(term)
-    );
+    return rooms.filter(room => room.number.toLowerCase().includes(term));
   }, [rooms, searchTerm]);
 
   // Trouver la chambre sélectionnée
   const selectedRoom = useMemo(() => {
     if (!value || !rooms) return null;
-    return rooms.find((room) => room.number === value) || null;
+    return rooms.find(room => room.number === value) || null;
   }, [value, rooms]);
 
   // ============================================================================
@@ -160,7 +154,7 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
     if (roomId) {
       // Attendre un peu que le listener temps réel reçoive la nouvelle chambre
       setTimeout(() => {
-        const createdRoom = rooms?.find((r) => r.id === roomId);
+        const createdRoom = rooms?.find(r => r.id === roomId);
         if (createdRoom) {
           onChange(createdRoom);
         }
@@ -212,12 +206,13 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
     );
   };
 
-  const getRoomDisplayText = (room: Room): string => {
-    const parts = [room.number];
-    if (room.building) parts.push(room.building);
-    parts.push(`Étage ${room.floor}`);
-    return parts.join(' · ');
-  };
+  // TODO: getRoomDisplayText is computed but never used
+  // const getRoomDisplayText = (room: Room): string => {
+  //   const parts = [room.number];
+  //   if (room.building) parts.push(room.building);
+  //   parts.push(`Étage ${room.floor}`);
+  //   return parts.join(' · ');
+  // };
 
   // ============================================================================
   // RENDER
@@ -233,15 +228,8 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
     );
   }
 
-  // Erreur de chargement
-  if (loadError) {
-    return (
-      <Alert variant="destructive" className={className}>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>{loadError}</AlertDescription>
-      </Alert>
-    );
-  }
+  // Pas d'affichage d'erreur car useRooms ne retourne pas d'erreur
+  // Les erreurs sont gérées via toast dans le hook
 
   // Aucune chambre disponible - afficher quand même l'autocomplete avec option de création
   const hasNoRooms = !rooms || rooms.length === 0;
@@ -264,8 +252,8 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full justify-between",
-              !value && "text-muted-foreground",
+              'w-full justify-between',
+              !value && 'text-muted-foreground',
               error && 'border-red-500',
               className
             )}
@@ -276,13 +264,15 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
                 <Building2 className="h-4 w-4" />
                 {selectedRoom.number}
               </div>
+            ) : hasNoRooms ? (
+              'Créer une nouvelle chambre...'
             ) : (
-              hasNoRooms ? "Créer une nouvelle chambre..." : placeholder
+              placeholder
             )}
             {selectedRoom ? (
               <X
                 className="h-4 w-4 opacity-50 hover:opacity-100"
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   handleClear();
                 }}
@@ -314,7 +304,7 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
               </div>
             </CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
-              {filteredRooms.map((room) => {
+              {filteredRooms.map(room => {
                 const isSelected = selectedRoom?.id === room.id;
 
                 return (
@@ -381,7 +371,7 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
               <Input
                 id="roomNumber"
                 value={newRoomData.number}
-                onChange={(e) => setNewRoomData({ ...newRoomData, number: e.target.value })}
+                onChange={e => setNewRoomData({ ...newRoomData, number: e.target.value })}
                 placeholder="Ex: 301"
               />
             </div>
@@ -393,7 +383,9 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
                   id="floor"
                   type="number"
                   value={newRoomData.floor}
-                  onChange={(e) => setNewRoomData({ ...newRoomData, floor: parseInt(e.target.value) || 0 })}
+                  onChange={e =>
+                    setNewRoomData({ ...newRoomData, floor: parseInt(e.target.value) || 0 })
+                  }
                   placeholder="0"
                 />
               </div>
@@ -404,7 +396,9 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
                   id="capacity"
                   type="number"
                   value={newRoomData.capacity}
-                  onChange={(e) => setNewRoomData({ ...newRoomData, capacity: parseInt(e.target.value) || 1 })}
+                  onChange={e =>
+                    setNewRoomData({ ...newRoomData, capacity: parseInt(e.target.value) || 1 })
+                  }
                   placeholder="1"
                   min={1}
                 />
@@ -416,7 +410,7 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
               <Input
                 id="building"
                 value={newRoomData.building || ''}
-                onChange={(e) => setNewRoomData({ ...newRoomData, building: e.target.value })}
+                onChange={e => setNewRoomData({ ...newRoomData, building: e.target.value })}
                 placeholder="Ex: Bâtiment A"
               />
             </div>
@@ -426,7 +420,7 @@ export const RoomAutocomplete: React.FC<RoomAutocompleteProps> = ({
               <select
                 id="type"
                 value={newRoomData.type}
-                onChange={(e) => setNewRoomData({ ...newRoomData, type: e.target.value as any })}
+                onChange={e => setNewRoomData({ ...newRoomData, type: e.target.value as any })}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="single">Simple</option>

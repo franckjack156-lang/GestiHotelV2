@@ -94,7 +94,7 @@ export const useAuth = () => {
     return user?.role === role;
   };
 
-  const hasPermission = (permission: string): boolean => {
+  const hasPermission = (_permission: string): boolean => {
     if (!user) return false;
     if (user.role === 'super_admin') return true;
     return false;

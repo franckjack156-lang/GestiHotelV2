@@ -60,7 +60,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
-  Info,
+  // Info, // TODO: Imported but unused
   Sparkles,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
@@ -74,6 +74,7 @@ import type {
 import { PREDEFINED_LIST_KEYS, LIST_LABELS } from '@/shared/types/reference-lists.types';
 import { cn } from '@/shared/utils/cn';
 import { TemplateDialog } from './TemplateDialog';
+import { GenerateFloorsDialog } from './GenerateFloorsDialog';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
@@ -420,10 +421,12 @@ export const ReferenceListsManager: React.FC = () => {
 
   const [selectedListKey, setSelectedListKey] = useState<ListKey>('interventionTypes');
   const [searchTerm, setSearchTerm] = useState('');
+  const [listSearchTerm, setListSearchTerm] = useState(''); // Recherche dans les listes
   const [showInactive, setShowInactive] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ReferenceItem | null>(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showGenerateFloorsDialog, setShowGenerateFloorsDialog] = useState(false);
 
   const {
     listConfig,
@@ -433,9 +436,32 @@ export const ReferenceListsManager: React.FC = () => {
     updateItem,
     deleteItem,
     reorderItems,
-    isLoading: listLoading,
-    establishmentId,
+    // TODO: listLoading and establishmentId unused
+    // isLoading: listLoading,
+    // establishmentId,
   } = useReferenceList(selectedListKey);
+
+  // Filtrer et trier les listes alphabétiquement
+  const filteredListKeys = useMemo(() => {
+    if (!data?.lists) return [];
+
+    let keys = PREDEFINED_LIST_KEYS.filter(key => data.lists[key]);
+
+    // Filtrer par recherche
+    if (listSearchTerm) {
+      const lower = listSearchTerm.toLowerCase();
+      keys = keys.filter(key =>
+        LIST_LABELS[key as PredefinedListKey]?.toLowerCase().includes(lower)
+      );
+    }
+
+    // Trier alphabétiquement par label
+    return keys.sort((a, b) => {
+      const labelA = LIST_LABELS[a as PredefinedListKey] || a;
+      const labelB = LIST_LABELS[b as PredefinedListKey] || b;
+      return labelA.localeCompare(labelB, 'fr');
+    });
+  }, [data?.lists, listSearchTerm]);
 
   const filteredItems = useMemo(() => {
     let filtered = showInactive ? items : activeItems;
@@ -582,7 +608,18 @@ export const ReferenceListsManager: React.FC = () => {
           <CardTitle>Sélectionner une liste</CardTitle>
           <CardDescription>Choisissez la liste que vous souhaitez gérer</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Barre de recherche pour les listes */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              value={listSearchTerm}
+              onChange={e => setListSearchTerm(e.target.value)}
+              placeholder="Rechercher une liste..."
+              className="pl-10"
+            />
+          </div>
+
           <Select
             value={selectedListKey}
             onValueChange={value => setSelectedListKey(value as ListKey)}
@@ -591,22 +628,28 @@ export const ReferenceListsManager: React.FC = () => {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {PREDEFINED_LIST_KEYS.filter(key => data.lists[key]).map(key => {
-                const list = data.lists[key];
-                const activeCount = list?.items.filter(i => i.isActive).length || 0;
-                const totalCount = list?.items.length || 0;
+              {filteredListKeys.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  Aucune liste trouvée
+                </div>
+              ) : (
+                filteredListKeys.map(key => {
+                  const list = data.lists[key];
+                  const activeCount = list?.items.filter(i => i.isActive).length || 0;
+                  const totalCount = list?.items.length || 0;
 
-                return (
-                  <SelectItem key={key} value={key}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{LIST_LABELS[key as PredefinedListKey]}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        {activeCount} / {totalCount}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                );
-              })}
+                  return (
+                    <SelectItem key={key} value={key}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{LIST_LABELS[key as PredefinedListKey]}</span>
+                        <Badge variant="secondary" className="ml-2">
+                          {activeCount} / {totalCount}
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                  );
+                })
+              )}
             </SelectContent>
           </Select>
         </CardContent>
@@ -629,10 +672,25 @@ export const ReferenceListsManager: React.FC = () => {
               )}
             </div>
 
-            <Button onClick={handleAdd} size="lg" className="gap-2">
-              <Plus className="h-5 w-5" />
-              Ajouter un item
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Bouton Générer pour les étages */}
+              {selectedListKey === 'floors' && (
+                <Button
+                  onClick={() => setShowGenerateFloorsDialog(true)}
+                  size="lg"
+                  variant="outline"
+                  className="gap-2"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  Générer automatiquement
+                </Button>
+              )}
+
+              <Button onClick={handleAdd} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                Ajouter un item
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
@@ -737,6 +795,15 @@ export const ReferenceListsManager: React.FC = () => {
         onSuccess={handleTemplateSuccess}
         establishmentId={currentEstablishment?.id || ''}
         userId={user?.id || ''}
+      />
+
+      <GenerateFloorsDialog
+        open={showGenerateFloorsDialog}
+        onClose={() => setShowGenerateFloorsDialog(false)}
+        establishmentId={currentEstablishment?.id || ''}
+        userId={user?.id || ''}
+        defaultTotalFloors={currentEstablishment?.totalFloors || 0}
+        onSuccess={handleTemplateSuccess}
       />
     </div>
   );

@@ -60,15 +60,16 @@ export const enrichInterventions = async (
   const userCache = new Map<string, string>();
 
   const enriched = await Promise.all(
-    interventions.map(async (intervention) => {
+    interventions.map(async intervention => {
       const enrichedIntervention = { ...intervention };
 
       // Enrichir createdByName si manquant
       if (!enrichedIntervention.createdByName && enrichedIntervention.createdBy) {
         // Vérifier que createdBy est bien une string
-        const createdById = typeof enrichedIntervention.createdBy === 'string'
-          ? enrichedIntervention.createdBy
-          : String(enrichedIntervention.createdBy);
+        const createdById =
+          typeof enrichedIntervention.createdBy === 'string'
+            ? enrichedIntervention.createdBy
+            : String(enrichedIntervention.createdBy);
 
         if (userCache.has(createdById)) {
           enrichedIntervention.createdByName = userCache.get(createdById)!;
@@ -94,9 +95,10 @@ export const enrichInterventions = async (
       // Enrichir assignedToName si manquant
       if (!enrichedIntervention.assignedToName && enrichedIntervention.assignedTo) {
         // Vérifier que assignedTo est bien une string
-        const assignedToId = typeof enrichedIntervention.assignedTo === 'string'
-          ? enrichedIntervention.assignedTo
-          : String(enrichedIntervention.assignedTo);
+        const assignedToId =
+          typeof enrichedIntervention.assignedTo === 'string'
+            ? enrichedIntervention.assignedTo
+            : String(enrichedIntervention.assignedTo);
 
         if (userCache.has(assignedToId)) {
           enrichedIntervention.assignedToName = userCache.get(assignedToId)!;

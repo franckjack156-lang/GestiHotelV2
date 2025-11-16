@@ -1,6 +1,6 @@
 /**
  * PhotosStep Component
- * 
+ *
  * Étape 5 : Upload de photos avec compression automatique
  */
 
@@ -265,11 +265,9 @@ export const PhotosStep = ({ data, onUpdate }: PhotosStepProps) => {
               </p>
               <p className="text-xs text-gray-500">
                 Taille totale:{' '}
-                {(
-                  currentPhotos.reduce((acc, photo) => acc + photo.size, 0) /
-                  1024 /
-                  1024
-                ).toFixed(2)}{' '}
+                {(currentPhotos.reduce((acc, photo) => acc + photo.size, 0) / 1024 / 1024).toFixed(
+                  2
+                )}{' '}
                 MB
               </p>
             </>

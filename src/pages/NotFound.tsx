@@ -1,6 +1,6 @@
 /**
  * NotFound Page
- * 
+ *
  * Page 404 - Page non trouvée
  */
 
@@ -18,9 +18,7 @@ export const NotFoundPage = () => {
         </div>
 
         {/* Message */}
-        <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">
-          Page non trouvée
-        </h2>
+        <h2 className="mb-4 text-3xl font-bold text-gray-900 dark:text-white">Page non trouvée</h2>
         <p className="mb-8 text-gray-600 dark:text-gray-400">
           Désolé, la page que vous recherchez n'existe pas ou a été déplacée.
         </p>

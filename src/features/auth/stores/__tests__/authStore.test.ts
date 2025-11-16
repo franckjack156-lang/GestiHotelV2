@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import type { User } from '@/shared/types';
+import { UserRole } from '@/features/users/types/role.types';
 
 describe('authStore', () => {
   // Réinitialiser le store avant chaque test
@@ -153,12 +154,12 @@ describe('authStore', () => {
       // Mettre à jour
       useAuthStore.getState().updateUser({
         displayName: 'Updated Name',
-        phone: '0123456789',
+        phoneNumber: '0123456789',
       });
 
       const state = useAuthStore.getState();
       expect(state.user?.displayName).toBe('Updated Name');
-      expect(state.user?.phone).toBe('0123456789');
+      expect(state.user?.phoneNumber).toBe('0123456789');
       expect(state.user?.email).toBe('test@example.com'); // Inchangé
     });
 
@@ -188,12 +189,12 @@ describe('authStore', () => {
 
       useAuthStore.getState().setUser(mockUser);
 
-      expect(useAuthStore.getState().hasRole('admin')).toBe(true);
-      expect(useAuthStore.getState().hasRole('technician')).toBe(false);
+      expect(useAuthStore.getState().hasRole(UserRole.ADMIN)).toBe(true);
+      expect(useAuthStore.getState().hasRole(UserRole.TECHNICIAN)).toBe(false);
     });
 
     it('devrait retourner false si user est null', () => {
-      expect(useAuthStore.getState().hasRole('admin')).toBe(false);
+      expect(useAuthStore.getState().hasRole(UserRole.ADMIN)).toBe(false);
     });
   });
 

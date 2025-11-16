@@ -1,6 +1,6 @@
 /**
  * Register Page
- * 
+ *
  * Page d'inscription de l'application
  */
 

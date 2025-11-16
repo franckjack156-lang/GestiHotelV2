@@ -11,24 +11,57 @@ VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'GestiHôtel',
+        name: 'GestiHôtel - Gestion Hôtelière',
         short_name: 'GestiHôtel',
-        description: 'Application de gestion des interventions hôtelières',
+        description:
+          'Application de gestion des interventions, maintenance et services hôteliers. Suivi en temps réel, planning, messagerie et reporting.',
         theme_color: '#4f46e5',
         background_color: '#ffffff',
         display: 'standalone',
+        orientation: 'portrait',
+        scope: '/',
+        start_url: '/',
+        categories: ['productivity', 'business', 'utilities'],
+        lang: 'fr-FR',
+        dir: 'ltr',
         icons: [
+          {
+            src: 'pwa-64x64.png',
+            sizes: '64x64',
+            type: 'image/png',
+          },
           {
             src: 'pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
           },
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
-          }
-        ]
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
+        screenshots: [
+          {
+            src: 'screenshots/dashboard.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            label: 'Dashboard principal',
+          },
+          {
+            src: 'screenshots/interventions.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            label: 'Gestion des interventions',
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],

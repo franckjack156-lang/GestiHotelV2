@@ -14,6 +14,7 @@ import type { Intervention } from '@/features/interventions/types/intervention.t
 import type { User } from '@/features/users/types/user.types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { toDate } from '@/shared/utils/dateUtils';
 
 // ============================================================================
 // TYPES
@@ -182,17 +183,17 @@ const prepareUsersData = (users: User[]) => {
     Prénom: user.firstName || '',
     'Nom de famille': user.lastName || '',
     Rôle: user.role,
-    Statut: user.status,
+    Statut: (user as any).status || 'active',
     Téléphone: user.phoneNumber || '',
-    Poste: user.jobTitle || '',
-    Département: user.department || '',
+    Poste: (user as any).jobTitle || '',
+    Département: (user as any).department || '',
     Actif: user.isActive ? 'Oui' : 'Non',
     'Email vérifié': user.emailVerified ? 'Oui' : 'Non',
-    'Date création': user.createdAt?.toDate
-      ? format(user.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: fr })
+    'Date création': user.createdAt
+      ? format(toDate(user.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr })
       : '',
-    'Dernière connexion': user.lastLoginAt?.toDate
-      ? format(user.lastLoginAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: fr })
+    'Dernière connexion': user.lastLoginAt
+      ? format(toDate(user.lastLoginAt), 'dd/MM/yyyy HH:mm', { locale: fr })
       : '',
   }));
 };
@@ -263,7 +264,8 @@ export const exportAnalyticsReport = (
  * Générer un PDF simple (utilise print du navigateur)
  * Pour un vrai PDF, on devrait utiliser jsPDF ou pdfmake
  */
-export const exportToPDF = (elementId: string, filename: string): void => {
+// TODO: elementId and filename parameters unused
+export const exportToPDF = (): void => {
   // Pour l'instant, on utilise window.print()
   // Dans une vraie implementation, on utiliserait jsPDF
   window.print();
@@ -308,9 +310,15 @@ export const preparePrintContent = (intervention: Intervention): string => {
 // ============================================================================
 
 /**
- * Télécharger un template Excel pour l'import
+ * @deprecated Utiliser downloadInterventionsTemplate depuis @/shared/services/templateGeneratorService
+ * Cette fonction est conservée pour compatibilité mais ne devrait plus être utilisée
  */
 export const downloadInterventionsTemplate = (): void => {
+  console.warn(
+    'downloadInterventionsTemplate depuis exportService est déprécié. ' +
+    'Utilisez downloadInterventionsTemplate depuis templateGeneratorService à la place.'
+  );
+
   const template = [
     {
       Titre: 'Exemple intervention',

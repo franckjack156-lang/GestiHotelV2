@@ -13,15 +13,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import {
-  Search,
-  Plus,
-  Pin,
-  Users,
-  Wrench,
-  CheckCheck,
-  Circle,
-} from 'lucide-react';
+import { Search, Plus, Pin, Users, Wrench, CheckCheck, Circle } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Conversation, ConversationType } from '../types/message.types';
@@ -37,6 +29,7 @@ export interface ConversationListProps {
   onSelect: (id: string) => void;
   onNewConversation: () => void;
   currentUserId: string;
+  isLoading?: boolean;
   typingIndicators?: Record<string, { userId: string; userName: string }[]>;
 }
 
@@ -44,18 +37,13 @@ export interface ConversationListProps {
 // UTILS
 // ============================================================================
 
-const getConversationName = (
-  conversation: Conversation,
-  currentUserId: string
-): string => {
+const getConversationName = (conversation: Conversation, currentUserId: string): string => {
   if (conversation.name) {
     return conversation.name;
   }
 
   if (conversation.type === 'direct') {
-    const otherParticipant = conversation.participants.find(
-      (p) => p.userId !== currentUserId
-    );
+    const otherParticipant = conversation.participants.find(p => p.userId !== currentUserId);
     return otherParticipant?.name || 'Utilisateur inconnu';
   }
 
@@ -75,9 +63,7 @@ const getConversationAvatar = (
   }
 
   if (conversation.type === 'direct') {
-    const otherParticipant = conversation.participants.find(
-      (p) => p.userId !== currentUserId
-    );
+    const otherParticipant = conversation.participants.find(p => p.userId !== currentUserId);
     return {
       url: otherParticipant?.avatar,
       fallback: otherParticipant?.name?.[0] || 'U',
@@ -91,15 +77,10 @@ const getConversationAvatar = (
   return { fallback: conversation.name?.[0] || 'G' };
 };
 
-const getOnlineStatus = (
-  conversation: Conversation,
-  currentUserId: string
-): boolean => {
+const getOnlineStatus = (conversation: Conversation, currentUserId: string): boolean => {
   if (conversation.type !== 'direct') return false;
 
-  const otherParticipant = conversation.participants.find(
-    (p) => p.userId !== currentUserId
-  );
+  const otherParticipant = conversation.participants.find(p => p.userId !== currentUserId);
 
   return otherParticipant?.isOnline || false;
 };
@@ -121,6 +102,18 @@ const formatTimestamp = (date: Date | any): string => {
 const truncateText = (text: string, maxLength: number = 50): string => {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
+};
+
+const toDate = (timestamp: any): Date => {
+  if (timestamp?.toDate) {
+    return timestamp.toDate();
+  } else if (timestamp instanceof Date) {
+    return timestamp;
+  } else if (typeof timestamp === 'number') {
+    return new Date(timestamp);
+  } else {
+    return new Date();
+  }
 };
 
 // ============================================================================
@@ -192,10 +185,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
             {isPinned && <Pin className="h-3 w-3 text-blue-600 flex-shrink-0" />}
             {getTypeIcon()}
             <h3
-              className={cn(
-                'text-sm font-semibold truncate',
-                unreadCount > 0 && 'text-foreground'
-              )}
+              className={cn('text-sm font-semibold truncate', unreadCount > 0 && 'text-foreground')}
             >
               {name}
             </h3>
@@ -221,9 +211,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
               <p
                 className={cn(
                   'text-sm truncate',
-                  unreadCount > 0
-                    ? 'text-foreground font-medium'
-                    : 'text-muted-foreground'
+                  unreadCount > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'
                 )}
               >
                 {conversation.lastMessage.senderId === currentUserId && (
@@ -233,9 +221,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({
                 {truncateText(conversation.lastMessage.content, 40)}
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground italic">
-                Aucun message
-              </p>
+              <p className="text-sm text-muted-foreground italic">Aucun message</p>
             )}
           </div>
 
@@ -275,13 +261,13 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
     // Filtre par type
     if (filter !== 'all') {
-      filtered = filtered.filter((c) => c.type === filter);
+      filtered = filtered.filter(c => c.type === filter);
     }
 
     // Filtre par recherche
     if (search) {
       const searchLower = search.toLowerCase();
-      filtered = filtered.filter((c) => {
+      filtered = filtered.filter(c => {
         const name = getConversationName(c, currentUserId).toLowerCase();
         const lastMessage = c.lastMessage?.content.toLowerCase() || '';
         return name.includes(searchLower) || lastMessage.includes(searchLower);
@@ -297,14 +283,10 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         return bPinned - aPinned;
       }
 
-      const aTime = a.lastMessage?.createdAt
-        ? (a.lastMessage.createdAt as any)?.toDate?.() || a.lastMessage.createdAt
-        : new Date(0);
-      const bTime = b.lastMessage?.createdAt
-        ? (b.lastMessage.createdAt as any)?.toDate?.() || b.lastMessage.createdAt
-        : new Date(0);
+      const aTime = a.lastMessage?.createdAt ? toDate(a.lastMessage.createdAt) : new Date(0);
+      const bTime = b.lastMessage?.createdAt ? toDate(b.lastMessage.createdAt) : new Date(0);
 
-      return new Date(bTime).getTime() - new Date(aTime).getTime();
+      return bTime.getTime() - aTime.getTime();
     });
   }, [conversations, filter, search, currentUserId]);
 
@@ -315,11 +297,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         {/* Titre + Bouton nouveau */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Messagerie</h2>
-          <Button
-            size="sm"
-            onClick={onNewConversation}
-            className="gap-2"
-          >
+          <Button size="sm" onClick={onNewConversation} className="gap-2">
             <Plus className="h-4 w-4" />
             Nouveau
           </Button>
@@ -331,13 +309,13 @@ export const ConversationList: React.FC<ConversationListProps> = ({
           <Input
             placeholder="Rechercher..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
 
         {/* Filtres par type */}
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as any)}>
+        <Tabs value={filter} onValueChange={v => setFilter(v as any)}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all" className="text-xs">
               Tous
@@ -362,23 +340,16 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Circle className="h-12 w-12 text-muted-foreground/50 mb-3" />
               <p className="text-sm text-muted-foreground">
-                {search
-                  ? 'Aucune conversation trouvée'
-                  : 'Aucune conversation pour le moment'}
+                {search ? 'Aucune conversation trouvée' : 'Aucune conversation pour le moment'}
               </p>
               {!search && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  onClick={onNewConversation}
-                  className="mt-2"
-                >
+                <Button variant="link" size="sm" onClick={onNewConversation} className="mt-2">
                   Créer une nouvelle conversation
                 </Button>
               )}
             </div>
           ) : (
-            filteredConversations.map((conversation) => {
+            filteredConversations.map(conversation => {
               const typing = typingIndicators[conversation.id];
               return (
                 <ConversationItem
@@ -388,7 +359,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                   currentUserId={currentUserId}
                   onClick={() => onSelect(conversation.id)}
                   isTyping={typing && typing.length > 0}
-                  typingUsers={typing?.map((t) => t.userName)}
+                  typingUsers={typing?.map(t => t.userName)}
                 />
               );
             })

@@ -6,14 +6,17 @@
  * Page complète et moderne pour afficher tous les détails d'un utilisateur
  */
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toDate } from '@/shared/utils/dateUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
 import { Separator } from '@/shared/components/ui/separator';
 import { UserAvatar, RoleBadge, StatusBadge, UserDeleteDialog } from '@/features/users/components';
 import { useUser, useUserActions } from '@/features/users/hooks/useUsers';
+import type { UserProfile } from '@/features/users/types/user.types';
+import { UserStatus } from '@/features/users/types/user.types';
 import {
   ArrowLeft,
   Edit,
@@ -22,15 +25,11 @@ import {
   PowerOff,
   Mail,
   Phone,
-  MapPin,
   Briefcase,
-  Building,
   Calendar,
   Clock,
   Shield,
-  Award,
   Wrench,
-  Users,
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
@@ -41,8 +40,11 @@ import { fr } from 'date-fns/locale';
 export const UserDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, isLoading } = useUser(id);
+  const { user: userData, isLoading } = useUser(id);
   const { deleteUser, toggleActive, isDeleting } = useUserActions();
+
+  // Cast user to UserProfile for extended properties
+  const user = userData as UserProfile | undefined;
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -92,7 +94,7 @@ export const UserDetailsPage = () => {
                 {user.displayName}
               </h1>
               <div className="flex flex-wrap items-center gap-3">
-                <StatusBadge status={user.isActive ? 'active' : 'inactive'} />
+                <StatusBadge status={user.isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE} />
                 <RoleBadge role={user.role} />
                 {user.isTechnician && (
                   <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -145,7 +147,12 @@ export const UserDetailsPage = () => {
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
-                <UserAvatar user={user} size="2xl" className="mb-4" />
+                <UserAvatar
+                  photoURL={user.photoURL}
+                  displayName={user.displayName}
+                  size="xl"
+                  className="mb-4"
+                />
                 <h2 className="text-xl font-bold mb-1">{user.displayName}</h2>
                 {user.jobTitle && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{user.jobTitle}</p>
@@ -177,7 +184,7 @@ export const UserDetailsPage = () => {
                   <div className="flex-1">
                     <p className="text-gray-600 dark:text-gray-400">Membre depuis</p>
                     <p className="font-medium">
-                      {user.createdAt ? format(user.createdAt.toDate(), 'PPP', { locale: fr }) : '-'}
+                      {user.createdAt ? format(toDate(user.createdAt), 'PPP', { locale: fr }) : '-'}
                     </p>
                   </div>
                 </div>
@@ -187,7 +194,7 @@ export const UserDetailsPage = () => {
                     <p className="text-gray-600 dark:text-gray-400">Dernière connexion</p>
                     <p className="font-medium">
                       {user.lastLoginAt
-                        ? format(user.lastLoginAt.toDate(), 'PPP à HH:mm', { locale: fr })
+                        ? format(toDate(user.lastLoginAt), 'PPP à HH:mm', { locale: fr })
                         : 'Jamais'}
                     </p>
                   </div>
@@ -283,7 +290,11 @@ export const UserDetailsPage = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {user.specialties.map((specialty, index) => (
-                        <Badge key={index} variant="outline" className="bg-blue-50 dark:bg-blue-950">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-blue-50 dark:bg-blue-950"
+                        >
                           {specialty}
                         </Badge>
                       ))}
@@ -311,7 +322,7 @@ export const UserDetailsPage = () => {
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Statut du compte</p>
                 <div className="flex items-center gap-2">
-                  <StatusBadge status={user.isActive ? 'active' : 'inactive'} />
+                  <StatusBadge status={user.isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE} />
                   {user.emailVerified ? (
                     <Badge variant="outline" className="text-green-600 border-green-600">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -343,7 +354,9 @@ export const UserDetailsPage = () => {
           {/* Métadonnées système */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm">Informations système</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                Informations système
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="grid md:grid-cols-2 gap-4">
@@ -361,7 +374,7 @@ export const UserDetailsPage = () => {
                   <p className="text-gray-600 dark:text-gray-400">Date de création</p>
                   <p className="text-xs">
                     {user.createdAt
-                      ? format(user.createdAt.toDate(), 'PPP à HH:mm', { locale: fr })
+                      ? format(toDate(user.createdAt), 'PPP à HH:mm', { locale: fr })
                       : '-'}
                   </p>
                 </div>
@@ -369,7 +382,7 @@ export const UserDetailsPage = () => {
                   <p className="text-gray-600 dark:text-gray-400">Dernière modification</p>
                   <p className="text-xs">
                     {user.updatedAt
-                      ? format(user.updatedAt.toDate(), 'PPP à HH:mm', { locale: fr })
+                      ? format(toDate(user.updatedAt), 'PPP à HH:mm', { locale: fr })
                       : '-'}
                   </p>
                 </div>
@@ -381,10 +394,10 @@ export const UserDetailsPage = () => {
 
       {/* Dialog de suppression */}
       <UserDeleteDialog
-        isOpen={showDeleteDialog}
+        open={showDeleteDialog}
+        user={user}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDelete}
-        userName={user.displayName}
         isDeleting={isDeleting}
       />
     </div>

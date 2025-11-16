@@ -1,6 +1,6 @@
 /**
  * useInterventions Hook
- * 
+ *
  * Hook principal pour gérer les interventions avec temps réel
  */
 
@@ -30,10 +30,11 @@ export const useInterventions = () => {
     resetFilters,
     setSortOptions,
     setListConfig,
-    updateStats,
+    // updateStats, // TODO: Imported but unused
   } = useInterventionStore();
 
-  const establishmentId = currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
+  const establishmentId =
+    currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
 
   /**
    * Charger les interventions avec temps réel
@@ -51,11 +52,11 @@ export const useInterventions = () => {
       filters,
       sortOptions,
       listConfig.itemsPerPage * 3, // Charger 3 pages à la fois pour la pagination côté client
-      (interventions) => {
+      interventions => {
         setInterventions(interventions);
         setLoading(false);
       },
-      (error) => {
+      error => {
         setError(error.message);
         setLoading(false);
       }
@@ -83,14 +84,14 @@ export const useInterventions = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const interventions = await interventionService.getInterventions(
         establishmentId,
         filters,
         sortOptions,
         listConfig.itemsPerPage * 3
       );
-      
+
       setInterventions(interventions);
     } catch (error: any) {
       setError(error.message);
@@ -190,20 +191,20 @@ export const useInterventions = () => {
     sortOptions,
     listConfig,
     stats,
-    
+
     // Pagination
     currentPage,
     totalItems: interventions.length,
     totalPages: Math.ceil(interventions.length / listConfig.itemsPerPage),
     itemsPerPage: listConfig.itemsPerPage,
-    
+
     // Actions
     refresh,
     applyFilters,
     clearFilters,
     changeSort,
     changeView,
-    
+
     // Utilitaires
     hasActiveFilters: hasActiveFilters(),
     filteredCount: getFilteredCount(),

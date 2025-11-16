@@ -1,21 +1,16 @@
 /**
  * Intervention Types
- * 
+ *
  * Types complets pour la gestion des interventions
  */
 
 import type { Timestamp } from 'firebase/firestore';
-import type { 
-  TimestampedDocument, 
-  Photo, 
-  HistoryEntry,
-  Tag 
-} from '@/shared/types/common.types';
-import type { 
-  InterventionStatus, 
-  InterventionPriority, 
+import type { TimestampedDocument, Photo, Tag } from '@/shared/types/common.types';
+import type {
+  InterventionStatus,
+  InterventionPriority,
   InterventionType,
-  InterventionCategory 
+  InterventionCategory,
 } from '@/shared/types/status.types';
 
 /**
@@ -24,7 +19,7 @@ import type {
 export interface Intervention extends TimestampedDocument {
   // Établissement
   establishmentId: string;
-  
+
   // Informations de base
   title: string;
   description: string;
@@ -32,52 +27,61 @@ export interface Intervention extends TimestampedDocument {
   category: InterventionCategory;
   priority: InterventionPriority;
   status: InterventionStatus;
-  
+
   // Localisation
   roomNumber?: string;
   floor?: number;
   location: string; // Description textuelle du lieu
   building?: string;
-  
+
   // Assignation
   assignedTo?: string; // userId du technicien
   assignedToName?: string; // Nom du technicien (dénormalisé)
   assignedAt?: Timestamp;
   createdBy: string; // userId du créateur
   createdByName?: string; // Nom du créateur (dénormalisé)
-  
+
   // Dates et durées
   scheduledAt?: Timestamp;
   startedAt?: Timestamp;
   completedAt?: Timestamp;
   estimatedDuration?: number; // en minutes
   actualDuration?: number; // en minutes
-  
+
+  // SLA et deadlines
+  dueDate?: Timestamp; // Date limite de résolution
+  slaTarget?: number; // Objectif SLA en minutes (calculé selon priorité)
+  responseTime?: number; // Temps de première réponse en minutes
+  resolutionTime?: number; // Temps de résolution en minutes
+  slaStatus?: 'on_track' | 'at_risk' | 'breached'; // Statut SLA
+  slaBreachedAt?: Timestamp; // Date de dépassement du SLA
+  firstResponseAt?: Timestamp; // Date de première réponse (assignation ou premier commentaire)
+
   // Photos
   photos: Photo[];
   photosCount: number;
-  
+
   // Commentaires et notes
   internalNotes?: string; // Notes internes (non visibles par le client)
   resolutionNotes?: string; // Notes de résolution
-  
+
   // Métadonnées
   tags?: Tag[];
   reference?: string; // Référence unique (ex: INT-2024-001)
   externalReference?: string; // Référence externe (PMS, etc.)
-  
+
   // Statut avancé
   isUrgent: boolean;
   isBlocking: boolean; // Bloque-t-elle la chambre ?
   requiresValidation: boolean;
   validatedBy?: string;
   validatedAt?: Timestamp;
-  
+
   // Statistiques
   viewsCount: number;
   lastViewedAt?: Timestamp;
   lastViewedBy?: string;
-  
+
   // Soft delete
   isDeleted: boolean;
   deletedAt?: Timestamp;
@@ -105,6 +109,7 @@ export interface CreateInterventionData {
   isUrgent?: boolean;
   isBlocking?: boolean;
   photos?: File[];
+  dueDate?: Date; // Date limite personnalisée
 }
 
 /**
@@ -129,6 +134,7 @@ export interface UpdateInterventionData {
   tags?: Tag[];
   isUrgent?: boolean;
   isBlocking?: boolean;
+  dueDate?: Date;
 }
 
 /**
@@ -171,11 +177,11 @@ export interface InterventionFilters {
 /**
  * Options de tri
  */
-export type InterventionSortField = 
-  | 'createdAt' 
-  | 'updatedAt' 
-  | 'scheduledAt' 
-  | 'priority' 
+export type InterventionSortField =
+  | 'createdAt'
+  | 'updatedAt'
+  | 'scheduledAt'
+  | 'priority'
   | 'status'
   | 'title';
 
@@ -379,4 +385,25 @@ export interface PartsOrderEmail {
   recipientEmail: string;
   recipientName?: string;
   message?: string;
+}
+
+/**
+ * Statut SLA
+ */
+export type SLAStatus = 'on_track' | 'at_risk' | 'breached';
+
+/**
+ * Informations SLA calculées
+ */
+export interface SLAInfo {
+  status: SLAStatus;
+  targetMinutes: number;
+  elapsedMinutes: number;
+  remainingMinutes: number;
+  percentageUsed: number;
+  dueDate: Date;
+  isBreached: boolean;
+  breachedAt?: Date;
+  responseTime?: number;
+  resolutionTime?: number;
 }

@@ -28,7 +28,7 @@ jobs:
         run: npm run lint
       
       - name: Check formatting with Prettier
-        run: npm run format -- --check
+        run: npm run format:check
 
   type-check:
     name: TypeScript Type Check

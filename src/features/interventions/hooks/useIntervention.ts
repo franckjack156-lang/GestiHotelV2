@@ -41,7 +41,13 @@ export const useIntervention = (interventionId: string) => {
     setError(null);
 
     // Utiliser la même structure que le service : establishments/{establishmentId}/interventions/{interventionId}
-    const docRef = doc(db, 'establishments', currentEstablishment.id, 'interventions', interventionId);
+    const docRef = doc(
+      db,
+      'establishments',
+      currentEstablishment.id,
+      'interventions',
+      interventionId
+    );
 
     const unsubscribe = onSnapshot(
       docRef,

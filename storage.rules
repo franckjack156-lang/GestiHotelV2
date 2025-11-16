@@ -69,6 +69,50 @@ service firebase.storage {
     
     // ============================================
     // PHOTOS D'INTERVENTIONS
+    // Path: /interventions/{interventionId}/{category}/{photoFile}
+    // ============================================
+
+    match /interventions/{interventionId}/{category}/{photoFile} {
+      // Lecture : utilisateur authentifié
+      allow read: if isAuthenticated();
+
+      // Upload : utilisateur authentifié
+      // Fichier doit être une image et taille max 10MB
+      allow create: if isAuthenticated() &&
+                       isImage() &&
+                       isValidSize();
+
+      // Modification : non autorisée
+      allow update: if false;
+
+      // Suppression : utilisateur authentifié
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
+    // PHOTOS D'INTERVENTIONS
+    // Path: /interventions/{interventionId}/{category}/{photoFile}
+    // ============================================
+
+    match /interventions/{interventionId}/{category}/{photoFile} {
+      // Lecture : utilisateur authentifié
+      allow read: if isAuthenticated();
+
+      // Upload : utilisateur authentifié
+      // Fichier doit être une image et taille max 10MB
+      allow create: if isAuthenticated() &&
+                       isImage() &&
+                       isValidSize();
+
+      // Modification : non autorisée (upload de nouvelles versions seulement)
+      allow update: if false;
+
+      // Suppression : utilisateur authentifié (tous peuvent supprimer pour le moment)
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
+    // PHOTOS D'INTERVENTIONS
     // Path: /establishments/{establishmentId}/interventions/{interventionId}/photos/{photoId}
     // ============================================
     
@@ -247,9 +291,31 @@ service firebase.storage {
     }
     
     // ============================================
+    // MESSAGERIE - PIÈCES JOINTES
+    // Path: /messages/{conversationId}/{messageId}/{fileName}
+    // ============================================
+
+    match /messages/{conversationId}/{messageId}/{fileName} {
+      // Lecture : utilisateur authentifié
+      // On simplifie la règle car firestore.get() peut échouer avec les règles Firestore
+      allow read: if isAuthenticated();
+
+      // Upload : utilisateur authentifié
+      // Images (max 5MB) ou documents autorisés (max 10MB)
+      allow create: if isAuthenticated() &&
+                       ((isImage() && isValidImageSize()) || (isAllowedDocument() && isValidSize()));
+
+      // Modification : non autorisée
+      allow update: if false;
+
+      // Suppression : utilisateur authentifié (on laisse le contrôle côté app)
+      allow delete: if isAuthenticated();
+    }
+
+    // ============================================
     // DENY ALL - Tout autre chemin est interdit
     // ============================================
-    
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -13,9 +13,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, CheckCheck, Trash2, Filter, Settings, X } from 'lucide-react';
+import { Bell, Check, CheckCheck } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Card, CardContent } from '@/shared/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -23,13 +23,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { EmptyState, LoadingSkeleton, UserAvatar } from '@/shared/components/ui-extended';
+import { EmptyState, LoadingSkeleton } from '@/shared/components/ui-extended';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import notificationService, {
   type Notification,
   type NotificationType,
 } from '@/shared/services/notificationService';
-import { format, isToday, isYesterday, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 

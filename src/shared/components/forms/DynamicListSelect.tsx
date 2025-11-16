@@ -95,7 +95,8 @@ export const DynamicListSelect: React.FC<DynamicListSelectProps> = ({
   disabled = false,
   showIcons = true,
   showColors = true,
-  showDescriptions = false,
+  // TODO: showDescriptions unused
+  // showDescriptions = false,
   includeInactive = false,
   allowEmpty = false,
   error,
@@ -166,35 +167,18 @@ export const DynamicListSelect: React.FC<DynamicListSelectProps> = ({
     );
   }
 
-  // Aucun item disponible
-  if (!items || items.length === 0) {
-    return (
-      <Alert className={className}>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Aucun élément disponible dans cette liste.
-          {listConfig?.allowCustom && (
-            <span className="block mt-1 text-xs">
-              Vous pouvez ajouter des éléments dans les paramètres.
-            </span>
-          )}
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // Si aucun item disponible, afficher quand même le Select avec un message
+  const hasItems = items && items.length > 0;
 
   return (
     <div className="space-y-2">
       <Select
-        value={value || (allowEmpty ? undefined : '')}
-        onValueChange={onChange}
+        value={value || (allowEmpty ? '__EMPTY__' : '')}
+        onValueChange={(val) => onChange(val === '__EMPTY__' ? '' : val)}
         disabled={disabled}
       >
         <SelectTrigger
-          className={cn(
-            error && 'border-red-500 focus:ring-red-500',
-            className
-          )}
+          className={cn(error && 'border-red-500 focus:ring-red-500', className)}
           onFocus={onFocus}
           onBlur={onBlur}
         >
@@ -214,37 +198,37 @@ export const DynamicListSelect: React.FC<DynamicListSelectProps> = ({
 
         <SelectContent>
           {allowEmpty && (
-            <SelectItem value="">
+            <SelectItem value="__EMPTY__">
               <span className="text-muted-foreground italic">Aucun</span>
             </SelectItem>
           )}
 
-          {items.map(item => (
-            <SelectItem
-              key={item.id}
-              value={item.value}
-              disabled={!item.isActive}
-            >
-              <div className="flex items-center gap-2">
-                {showIcons && (
-                  <span className={getColorClass(item.color)}>
-                    {getIcon(item.icon)}
+          {hasItems ? (
+            items.map(item => (
+              <SelectItem key={item.id} value={item.value} disabled={!item.isActive}>
+                <div className="flex items-center gap-2">
+                  {showIcons && (
+                    <span className={getColorClass(item.color)}>{getIcon(item.icon)}</span>
+                  )}
+                  <span className={cn(getColorClass(item.color), !item.isActive && 'opacity-50')}>
+                    {item.label}
                   </span>
-                )}
-                <span className={cn(
-                  getColorClass(item.color),
-                  !item.isActive && 'opacity-50'
-                )}>
-                  {item.label}
-                </span>
-                {!item.isActive && (
-                  <Badge variant="outline" className="text-xs">
-                    Inactif
-                  </Badge>
-                )}
-              </div>
-            </SelectItem>
-          ))}
+                  {!item.isActive && (
+                    <Badge variant="outline" className="text-xs">
+                      Inactif
+                    </Badge>
+                  )}
+                </div>
+              </SelectItem>
+            ))
+          ) : (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              <p>Aucun élément disponible.</p>
+              {listConfig?.allowCustom && (
+                <p className="text-xs mt-1">Ajoutez des éléments dans les paramètres.</p>
+              )}
+            </div>
+          )}
         </SelectContent>
       </Select>
 
@@ -258,9 +242,7 @@ export const DynamicListSelect: React.FC<DynamicListSelectProps> = ({
 
       {/* Information sur la liste */}
       {listConfig && listConfig.description && !error && (
-        <p className="text-xs text-muted-foreground">
-          {listConfig.description}
-        </p>
+        <p className="text-xs text-muted-foreground">{listConfig.description}</p>
       )}
     </div>
   );
@@ -273,54 +255,42 @@ export const DynamicListSelect: React.FC<DynamicListSelectProps> = ({
 /**
  * Select pour les types d'intervention
  */
-export const InterventionTypeSelect: React.FC<
-  Omit<DynamicListSelectProps, 'listKey'>
-> = props => (
+export const InterventionTypeSelect: React.FC<Omit<DynamicListSelectProps, 'listKey'>> = props => (
   <DynamicListSelect listKey="interventionTypes" {...props} />
 );
 
 /**
  * Select pour les catégories
  */
-export const CategorySelect: React.FC<
-  Omit<DynamicListSelectProps, 'listKey'>
-> = props => (
+export const CategorySelect: React.FC<Omit<DynamicListSelectProps, 'listKey'>> = props => (
   <DynamicListSelect listKey="categories" {...props} />
 );
 
 /**
  * Select pour les priorités
  */
-export const PrioritySelect: React.FC<
-  Omit<DynamicListSelectProps, 'listKey'>
-> = props => (
+export const PrioritySelect: React.FC<Omit<DynamicListSelectProps, 'listKey'>> = props => (
   <DynamicListSelect listKey="priorities" {...props} />
 );
 
 /**
  * Select pour les statuts
  */
-export const StatusSelect: React.FC<
-  Omit<DynamicListSelectProps, 'listKey'>
-> = props => (
+export const StatusSelect: React.FC<Omit<DynamicListSelectProps, 'listKey'>> = props => (
   <DynamicListSelect listKey="statuses" {...props} />
 );
 
 /**
  * Select pour les types de chambre
  */
-export const RoomTypeSelect: React.FC<
-  Omit<DynamicListSelectProps, 'listKey'>
-> = props => (
+export const RoomTypeSelect: React.FC<Omit<DynamicListSelectProps, 'listKey'>> = props => (
   <DynamicListSelect listKey="roomTypes" {...props} />
 );
 
 /**
  * Select pour les zones communes
  */
-export const CommonAreaSelect: React.FC<
-  Omit<DynamicListSelectProps, 'listKey'>
-> = props => (
+export const CommonAreaSelect: React.FC<Omit<DynamicListSelectProps, 'listKey'>> = props => (
   <DynamicListSelect listKey="commonAreas" {...props} />
 );
 

@@ -20,43 +20,29 @@
  * - et plus...
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import {
   Search,
-  Filter,
-  Download,
-  Upload,
   X,
   ChevronLeft,
   ChevronRight,
-  Calendar,
-  Image as ImageIcon,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
   Clock,
-  User,
   TrendingUp,
   TrendingDown,
-  Minus,
   ZoomIn,
   ZoomOut,
   RotateCw,
-  Trash2,
-  Edit,
-  Eye,
-  MoreVertical,
   ArrowUpDown,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
-import { Label } from '@/shared/components/ui/label';
 import {
   Card,
   CardContent,
-  CardDescription,
+  // CardDescription, // TODO: Imported but unused
   CardHeader,
   CardTitle,
 } from '@/shared/components/ui/card';
@@ -68,19 +54,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/shared/components/ui/dropdown-menu';
 import { cn } from '@/shared/lib/utils';
 
 // ============================================================================

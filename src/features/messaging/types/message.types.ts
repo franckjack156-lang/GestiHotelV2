@@ -61,6 +61,7 @@ export interface Message {
 
   // Timestamps
   createdAt: Date | Timestamp;
+  clientCreatedAt?: number; // Timestamp client pour garantir l'ordre
   updatedAt?: Date | Timestamp;
   deletedAt?: Date | Timestamp;
 
@@ -133,6 +134,10 @@ export interface Conversation {
   // Épinglage
   isPinned?: boolean;
   pinnedBy?: string[];
+
+  // Suppression (masquage pour l'utilisateur)
+  deletedBy?: Record<string, number>; // userId -> timestamp de dernière suppression (pour filtrer les messages)
+  hiddenBy?: string[]; // userId[] -> utilisateurs qui ont caché la conversation (pour la visibilité)
 }
 
 export interface ConversationParticipant {

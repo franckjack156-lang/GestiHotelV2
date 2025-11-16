@@ -16,16 +16,20 @@ import {
   where,
   orderBy,
   limit,
-  startAfter,
   onSnapshot,
   Timestamp,
-  DocumentSnapshot,
   QueryConstraint,
   serverTimestamp,
-  increment,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import { enrichInterventions } from '../utils/enrichInterventions';
+import { logStatusChange, logAssignment } from './historyService';
+import {
+  notifyInterventionAssigned,
+  notifyInterventionUrgent,
+  notifyStatusChanged,
+} from '@/shared/services/notificationService';
+import { calculateDueDate, SLA_TARGETS } from './slaService';
 import type {
   Intervention,
   CreateInterventionData,
@@ -84,7 +88,7 @@ export const createIntervention = async (
     }
 
     // Base data - only required fields
-    const interventionData: any = {
+    const interventionData: Record<string, unknown> = {
       establishmentId,
       title: data.title,
       status: 'pending' as InterventionStatus,
@@ -108,15 +112,14 @@ export const createIntervention = async (
     if (data.description !== undefined && data.description !== '') {
       interventionData.description = data.description;
     }
-    if (data.type !== undefined && data.type !== '') {
+    if (data.type !== undefined) {
       interventionData.type = data.type;
     }
-    if (data.category !== undefined && data.category !== '') {
+    if (data.category !== undefined) {
       interventionData.category = data.category;
     }
-    if (data.priority !== undefined && data.priority !== '') {
-      interventionData.priority = data.priority;
-    }
+    // Priorité: utiliser la valeur fournie ou 'normal' par défaut
+    interventionData.priority = data.priority || 'normal';
 
     if (data.roomNumber !== undefined && data.roomNumber !== '') {
       interventionData.roomNumber = data.roomNumber;
@@ -169,8 +172,51 @@ export const createIntervention = async (
       interventionData.internalNotes = data.internalNotes;
     }
 
+    // Calculer les champs SLA
+    const priority = (data.priority || 'normal') as keyof typeof SLA_TARGETS;
+    const createdDate = new Date();
+    const customDueDate = data.dueDate;
+    const dueDate = calculateDueDate(createdDate, priority, customDueDate);
+
+    interventionData.slaTarget = SLA_TARGETS[priority];
+    interventionData.dueDate = Timestamp.fromDate(dueDate);
+    interventionData.slaStatus = 'on_track';
+
+    // Si l'intervention est assignée à la création, marquer la première réponse
+    if (data.assignedTo) {
+      interventionData.firstResponseAt = serverTimestamp();
+      interventionData.responseTime = 0; // Assignation immédiate
+    }
+
     const docRef = await addDoc(collectionRef, interventionData);
     console.log('✅ Intervention créée:', docRef.id);
+
+    // Envoyer une notification si urgente
+    if (interventionData.isUrgent) {
+      try {
+        // Récupérer tous les admins de l'établissement pour les notifier
+        const usersQuery = query(
+          collection(db, 'users'),
+          where('establishmentIds', 'array-contains', establishmentId),
+          where('role', 'in', ['admin', 'super_admin'])
+        );
+        const usersSnapshot = await getDocs(usersQuery);
+        const adminIds = usersSnapshot.docs.map(doc => doc.id);
+
+        if (adminIds.length > 0) {
+          await notifyInterventionUrgent(
+            adminIds,
+            establishmentId,
+            docRef.id,
+            interventionData.title as string
+          );
+          console.log('✅ Notifications urgentes envoyées');
+        }
+      } catch (error) {
+        console.warn("⚠️ Impossible d'envoyer les notifications urgentes:", error);
+      }
+    }
+
     return docRef.id;
   } catch (error) {
     console.error('❌ Erreur création intervention:', error);
@@ -232,6 +278,23 @@ export const updateIntervention = async (
       updateData.estimatedDuration = data.estimatedDuration;
     }
 
+    // Gérer les changements de date limite personnalisée
+    if (data.dueDate) {
+      updateData.dueDate = Timestamp.fromDate(data.dueDate);
+    }
+
+    // Si la priorité change, recalculer la date limite SLA (sauf si date personnalisée)
+    if (data.priority !== undefined && !data.dueDate) {
+      const currentDoc = await getDoc(docRef);
+      if (currentDoc.exists()) {
+        const currentData = currentDoc.data();
+        const createdAt = currentData.createdAt?.toDate() || new Date();
+        const newDueDate = calculateDueDate(createdAt, data.priority);
+        updateData.dueDate = Timestamp.fromDate(newDueDate);
+        updateData.slaTarget = SLA_TARGETS[data.priority];
+      }
+    }
+
     await updateDoc(docRef, updateData);
   } catch (error) {
     console.error('❌ Erreur mise à jour:', error);
@@ -250,6 +313,17 @@ export const changeStatus = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
+
+    // Récupérer l'intervention actuelle pour obtenir l'ancien statut
+    const interventionDoc = await getDoc(docRef);
+    if (!interventionDoc.exists()) {
+      throw new Error('Intervention non trouvée');
+    }
+
+    const interventionData = interventionDoc.data();
+    const oldStatus = interventionData.status;
+    const interventionTitle = interventionData.title || 'Intervention';
+
     const updateData: Record<string, any> = {
       status: statusData.newStatus,
       updatedAt: serverTimestamp(),
@@ -257,14 +331,108 @@ export const changeStatus = async (
 
     if (statusData.newStatus === 'in_progress') {
       updateData.startedAt = serverTimestamp();
+      // Marquer la première réponse si pas encore définie
+      if (!interventionData.firstResponseAt) {
+        updateData.firstResponseAt = serverTimestamp();
+        const createdAt = interventionData.createdAt?.toDate();
+        if (createdAt) {
+          const responseTime = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60));
+          updateData.responseTime = responseTime;
+        }
+      }
     } else if (statusData.newStatus === 'completed') {
+      const completedAt = new Date();
       updateData.completedAt = serverTimestamp();
+
+      // Calculer le temps de résolution
+      const createdAt = interventionData.createdAt?.toDate();
+      if (createdAt) {
+        const resolutionTime = Math.floor((completedAt.getTime() - createdAt.getTime()) / (1000 * 60));
+        updateData.resolutionTime = resolutionTime;
+
+        // Vérifier si le SLA a été respecté
+        const dueDate = interventionData.dueDate?.toDate();
+        if (dueDate && completedAt > dueDate) {
+          updateData.slaStatus = 'breached';
+          updateData.slaBreachedAt = Timestamp.fromDate(dueDate);
+        } else {
+          updateData.slaStatus = 'on_track';
+        }
+      }
+
       if (statusData.resolutionNotes) {
         updateData.resolutionNotes = statusData.resolutionNotes;
       }
     }
 
     await updateDoc(docRef, updateData);
+
+    // Notifier les personnes concernées du changement de statut
+    try {
+      const statusLabels: Record<string, string> = {
+        pending: 'En attente',
+        assigned: 'Assignée',
+        in_progress: 'En cours',
+        completed: 'Terminée',
+        cancelled: 'Annulée',
+        on_hold: 'En pause',
+      };
+
+      // Notifier le créateur et la personne assignée (s'ils sont différents de celui qui change le statut)
+      const usersToNotify: string[] = [];
+
+      if (interventionData.createdBy && interventionData.createdBy !== userId) {
+        usersToNotify.push(interventionData.createdBy);
+      }
+
+      if (
+        interventionData.assignedTo &&
+        interventionData.assignedTo !== userId &&
+        !usersToNotify.includes(interventionData.assignedTo)
+      ) {
+        usersToNotify.push(interventionData.assignedTo);
+      }
+
+      // Envoyer les notifications
+      for (const userToNotify of usersToNotify) {
+        await notifyStatusChanged(
+          userToNotify,
+          establishmentId,
+          interventionId,
+          interventionTitle,
+          statusLabels[oldStatus] || oldStatus,
+          statusLabels[statusData.newStatus] || statusData.newStatus
+        );
+      }
+
+      if (usersToNotify.length > 0) {
+        console.log(`✅ ${usersToNotify.length} notifications de changement de statut envoyées`);
+      }
+    } catch (error) {
+      console.warn("⚠️ Impossible d'envoyer les notifications de changement de statut:", error);
+    }
+
+    // Logger le changement de statut dans l'historique
+    try {
+      // Récupérer les infos utilisateur
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const userName = userDoc.exists()
+        ? userDoc.data().displayName || userDoc.data().email || 'Utilisateur'
+        : 'Utilisateur';
+      const userRole = userDoc.exists() ? userDoc.data().role : undefined;
+
+      await logStatusChange(
+        establishmentId,
+        interventionId,
+        userId,
+        userName,
+        userRole,
+        oldStatus,
+        statusData.newStatus
+      );
+    } catch (error) {
+      console.warn('⚠️ Erreur logging historique statut:', error);
+    }
   } catch (error) {
     console.error('❌ Erreur changement statut:', error);
     throw new Error('Impossible de changer le statut');
@@ -277,29 +445,96 @@ export const changeStatus = async (
 export const assignIntervention = async (
   establishmentId: string,
   interventionId: string,
-  assignmentData: AssignmentData
+  assignmentData: AssignmentData,
+  assignedByUserId?: string
 ): Promise<void> => {
   try {
-    // Récupérer le nom du technicien assigné
+    // Récupérer l'intervention pour obtenir son titre
+    const interventionDoc = await getDoc(
+      doc(db, 'establishments', establishmentId, 'interventions', interventionId)
+    );
+    const interventionTitle = interventionDoc.exists()
+      ? interventionDoc.data().title
+      : 'Intervention';
+
+    // Récupérer le nom du technicien assigné et celui qui fait l'assignation
     let assignedToName = 'Inconnu';
+    let assignedByName = 'Système';
+
     try {
       const techDoc = await getDoc(doc(db, 'users', assignmentData.technicianId));
       if (techDoc.exists()) {
         const techData = techDoc.data();
         assignedToName = techData.displayName || techData.email || 'Inconnu';
       }
+
+      if (assignedByUserId) {
+        const assignerDoc = await getDoc(doc(db, 'users', assignedByUserId));
+        if (assignerDoc.exists()) {
+          const assignerData = assignerDoc.data();
+          assignedByName = assignerData.displayName || assignerData.email || 'Système';
+        }
+      }
     } catch (error) {
-      console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+      console.warn('⚠️ Impossible de récupérer les noms des utilisateurs:', error);
     }
 
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
-    await updateDoc(docRef, {
+    const updateData: Record<string, any> = {
       assignedTo: assignmentData.technicianId,
-      assignedToName, // Ajouter le nom du technicien
+      assignedToName,
       assignedAt: serverTimestamp(),
       status: 'assigned',
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    // Marquer la première réponse si pas encore définie
+    const interventionData = interventionDoc.data();
+    if (interventionData && !interventionData.firstResponseAt) {
+      updateData.firstResponseAt = serverTimestamp();
+      const createdAt = interventionData.createdAt?.toDate();
+      if (createdAt) {
+        const responseTime = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60));
+        updateData.responseTime = responseTime;
+      }
+    }
+
+    await updateDoc(docRef, updateData);
+
+    // Envoyer notification au technicien assigné
+    try {
+      await notifyInterventionAssigned(
+        assignmentData.technicianId,
+        establishmentId,
+        interventionId,
+        interventionTitle,
+        assignedByName
+      );
+      console.log("✅ Notification d'assignation envoyée");
+    } catch (error) {
+      console.warn("⚠️ Impossible d'envoyer la notification d'assignation:", error);
+    }
+
+    // Logger l'assignation dans l'historique
+    try {
+      // Récupérer les infos de l'utilisateur qui fait l'assignation
+      const userDoc = await getDoc(doc(db, 'users', assignmentData.technicianId));
+      const userName = userDoc.exists()
+        ? userDoc.data().displayName || userDoc.data().email || 'Utilisateur'
+        : 'Utilisateur';
+      const userRole = userDoc.exists() ? userDoc.data().role : undefined;
+
+      await logAssignment(
+        establishmentId,
+        interventionId,
+        assignmentData.technicianId,
+        userName,
+        userRole,
+        assignedToName
+      );
+    } catch (error) {
+      console.warn('⚠️ Erreur logging historique assignation:', error);
+    }
   } catch (error) {
     console.error('❌ Erreur assignation:', error);
     throw new Error("Impossible d'assigner l'intervention");

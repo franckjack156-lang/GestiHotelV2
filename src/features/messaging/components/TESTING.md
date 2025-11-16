@@ -623,6 +623,7 @@ npm run test:coverage
 ```
 
 Objectifs de coverage :
+
 - **Statements** : > 80%
 - **Branches** : > 75%
 - **Functions** : > 80%
@@ -633,6 +634,7 @@ Objectifs de coverage :
 ## 📋 Checklist de Tests
 
 ### ConversationList
+
 - [ ] Affichage de la liste
 - [ ] Filtres par type
 - [ ] Recherche
@@ -643,6 +645,7 @@ Objectifs de coverage :
 - [ ] État vide
 
 ### ChatWindow
+
 - [ ] Affichage des messages
 - [ ] Envoi de message
 - [ ] Réponse à un message
@@ -653,6 +656,7 @@ Objectifs de coverage :
 - [ ] État vide
 
 ### MessageInput
+
 - [ ] Saisie de texte
 - [ ] Envoi au click
 - [ ] Envoi au Enter
@@ -664,6 +668,7 @@ Objectifs de coverage :
 - [ ] Typing indicators
 
 ### NewConversationDialog
+
 - [ ] Affichage du dialog
 - [ ] Recherche utilisateurs
 - [ ] Sélection utilisateurs

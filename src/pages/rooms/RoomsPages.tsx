@@ -11,7 +11,7 @@
  * - Vue par étage
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -40,12 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/shared/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -99,7 +94,7 @@ const ROOM_TYPES = {
 // LISTE CHAMBRES
 // ============================================================================
 
-export const RoomsListPage = () => {
+const RoomsListPageComponent = () => {
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
   const { user } = useAuth();
@@ -195,7 +190,7 @@ export const RoomsListPage = () => {
       });
       setImportDialogOpen(false);
     } catch (error) {
-      toast.error('Erreur lors de l\'import', {
+      toast.error("Erreur lors de l'import", {
         description: error instanceof Error ? error.message : 'Une erreur est survenue',
       });
     }
@@ -251,11 +246,11 @@ export const RoomsListPage = () => {
       label: 'Actions',
       width: '200px',
       render: (item: Room) => (
-        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               navigate(`/app/rooms/${item.id}`);
             }}
@@ -265,7 +260,7 @@ export const RoomsListPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               navigate(`/app/rooms/${item.id}/edit`);
             }}
@@ -276,7 +271,7 @@ export const RoomsListPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 handleUnblock(item.id);
               }}
@@ -288,7 +283,7 @@ export const RoomsListPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation();
                 setBlockDialogRoom(item);
               }}
@@ -300,7 +295,7 @@ export const RoomsListPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               setDeleteId(item.id);
             }}
@@ -497,7 +492,7 @@ export const RoomsListPage = () => {
         templateDownloadFn={downloadRoomsTemplate}
         onImport={importHook.handleImport}
         onConfirm={handleImportConfirm}
-        renderPreview={(data) => (
+        renderPreview={data => (
           <div className="max-h-60 overflow-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 dark:bg-gray-800">
@@ -531,6 +526,10 @@ export const RoomsListPage = () => {
   );
 };
 
+RoomsListPageComponent.displayName = 'RoomsListPage';
+
+export const RoomsListPage = memo(RoomsListPageComponent);
+
 // ============================================================================
 // FORMULAIRE CHAMBRE
 // ============================================================================
@@ -541,11 +540,11 @@ interface RoomFormProps {
   isLoading?: boolean;
 }
 
-export const RoomForm = ({ room, onSubmit, isLoading }: RoomFormProps) => {
+const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   const navigate = useNavigate();
 
   const form = useForm<RoomFormData>({
-    resolver: zodResolver(roomSchema),
+    resolver: zodResolver(roomSchema) as any,
     defaultValues: room || {
       type: 'double',
       capacity: 2,
@@ -560,7 +559,7 @@ export const RoomForm = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   } = form;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <Label htmlFor="number">Numéro de chambre *</Label>
@@ -621,11 +620,15 @@ export const RoomForm = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   );
 };
 
+RoomFormComponent.displayName = 'RoomForm';
+
+export const RoomForm = memo(RoomFormComponent);
+
 // ============================================================================
 // PAGE CRÉATION
 // ============================================================================
 
-export const CreateRoomPage = () => {
+const CreateRoomPageComponent = () => {
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
   const { createRoom, isCreating } = useRooms(establishmentId!);
@@ -659,6 +662,10 @@ export const CreateRoomPage = () => {
     </div>
   );
 };
+
+CreateRoomPageComponent.displayName = 'CreateRoomPage';
+
+export const CreateRoomPage = memo(CreateRoomPageComponent);
 
 // ============================================================================
 // EXPORTS
