@@ -309,6 +309,44 @@ export function ImportDialog<T>({
               </div>
             </div>
 
+            {/* Warnings */}
+            {importResult.warnings && importResult.warnings.length > 0 && (
+              <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+                <AlertCircle className="h-4 w-4 text-orange-600" />
+                <AlertDescription>
+                  <span className="font-medium text-orange-800 dark:text-orange-200">
+                    {importResult.warnings.length} avertissement(s) détecté(s)
+                  </span>
+                  <div className="mt-3 max-h-40 overflow-y-auto space-y-2">
+                    {importResult.warnings.slice(0, 10).map((warning, idx) => (
+                      <div
+                        key={idx}
+                        className="text-xs bg-orange-100 dark:bg-orange-950/30 p-2 rounded space-y-1"
+                      >
+                        <div className="font-medium text-orange-900 dark:text-orange-100">
+                          {warning.field && `${warning.field.toUpperCase()}: `}
+                          {warning.message}
+                        </div>
+                        {warning.suggestion && (
+                          <div className="text-orange-700 dark:text-orange-300 italic">
+                            💡 {warning.suggestion}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {importResult.warnings.length > 10 && (
+                      <p className="text-xs italic text-orange-700 dark:text-orange-300">
+                        ... et {importResult.warnings.length - 10} autre(s) avertissement(s)
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-xs text-orange-700 dark:text-orange-300 mt-3">
+                    ℹ️ Les valeurs manquantes peuvent être créées manuellement dans les listes de référence après l'import.
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Errors */}
             {importResult.errors.length > 0 && (
               <Alert variant="destructive">

@@ -772,10 +772,45 @@ export const importRooms = async (
 export const convertToInterventions = (
   data: InterventionImportRow[],
   establishmentId: string,
-  createdBy: string,
-  createdByName: string
+  currentUserId: string,
+  currentUserName: string,
+  establishmentUsers: Array<{ id: string; displayName: string; firstName: string; lastName: string }> = []
 ): Partial<Intervention>[] => {
   return data.map(row => {
+    // ========== MATCHING UTILISATEURS ==========
+    // Matcher le créateur par nom complet (case-insensitive)
+    let createdBy = currentUserId;
+    let createdByName = currentUserName;
+
+    if (row.createur && row.createur.trim()) {
+      const creatorName = row.createur.trim().toLowerCase();
+      const matchedCreator = establishmentUsers.find(
+        user => user.displayName.toLowerCase() === creatorName
+      );
+
+      if (matchedCreator) {
+        createdBy = matchedCreator.id;
+        createdByName = matchedCreator.displayName;
+      }
+      // Si non trouvé, on garde l'utilisateur actuel (fallback)
+    }
+
+    // Matcher le technicien par nom complet (case-insensitive)
+    let assignedTo: string | undefined = undefined;
+    let assignedToName: string | undefined = undefined;
+
+    if (row.technicien && row.technicien.trim()) {
+      const technicianName = row.technicien.trim().toLowerCase();
+      const matchedTechnician = establishmentUsers.find(
+        user => user.displayName.toLowerCase() === technicianName
+      );
+
+      if (matchedTechnician) {
+        assignedTo = matchedTechnician.id;
+        assignedToName = matchedTechnician.displayName;
+      }
+      // Si non trouvé, on laisse vide (ne sera pas assigné)
+    }
     // Parse l'étage en nombre si possible
     let floorNumber: number | undefined = undefined;
     if (row.etage && row.etage.trim()) {
@@ -855,6 +890,10 @@ export const convertToInterventions = (
       establishmentId,
       createdBy,
       createdByName,
+
+      // ========== ASSIGNATION ==========
+      assignedTo: assignedTo || undefined,
+      assignedToName: assignedToName || undefined,
 
       // ========== FLAGS ==========
       isUrgent: row.priorite?.toLowerCase() === 'urgent' || row.priorite?.toLowerCase() === 'critical',

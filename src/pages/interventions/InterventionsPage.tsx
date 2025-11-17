@@ -99,7 +99,11 @@ const InterventionsPageComponent = () => {
   const [activeIntervention, setActiveIntervention] = useState<Intervention | null>(null);
 
   const { deleteIntervention, isDeleting, updateIntervention } = useInterventionActions();
-  const importHook = useImportInterventions(establishmentId || '', user?.id || '');
+  const importHook = useImportInterventions(
+    establishmentId || '',
+    user?.id || '',
+    user?.displayName || user?.email || 'Utilisateur'
+  );
 
   // Drag & Drop sensors
   const sensors = useSensors(
