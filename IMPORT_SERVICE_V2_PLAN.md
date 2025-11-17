@@ -8,8 +8,8 @@
    - `ImportResult` inclut maintenant `warnings` et `missingValues`
 
 2. **Schéma de validation mis à jour**
-   - 3 champs obligatoires: titre, description, statut
-   - TYPE et PRIORITE maintenant optionnels ✅
+   - 2 champs obligatoires: titre, statut
+   - DESCRIPTION, TYPE et PRIORITE maintenant optionnels ✅
    - Tous les 21 champs du template V2.0 supportés
 
 3. **Mapping des colonnes mis à jour**

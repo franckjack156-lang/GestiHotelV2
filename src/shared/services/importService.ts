@@ -77,11 +77,15 @@ export interface ImportOptions {
  */
 const InterventionImportSchema = z.object({
   // ============================================================================
-  // CHAMPS OBLIGATOIRES (3) ⚠️
+  // CHAMPS OBLIGATOIRES (2) ⚠️
   // ============================================================================
   titre: z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne peut pas dépasser 200 caractères'),
-  description: z.string().min(1, 'La description est requise').max(5000, 'La description ne peut pas dépasser 5000 caractères'),
   statut: z.string().min(1, 'Le statut est requis'),
+
+  // ============================================================================
+  // CHAMP DESCRIPTION (optionnel mais recommandé)
+  // ============================================================================
+  description: z.string().max(5000, 'La description ne peut pas dépasser 5000 caractères').optional().default(''),
 
   // ============================================================================
   // CHAMPS OPTIONNELS - Classification (4)

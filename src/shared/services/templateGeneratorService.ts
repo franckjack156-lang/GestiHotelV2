@@ -16,7 +16,7 @@ export const generateInterventionsTemplate = (): Blob => {
   // En-têtes avec indication des champs obligatoires
   const headers = {
     titre: 'TITRE *',
-    description: 'DESCRIPTION *',
+    description: 'DESCRIPTION',
     statut: 'STATUT *',
     type: 'TYPE',
     categorie: 'CATEGORIE',
@@ -41,7 +41,7 @@ export const generateInterventionsTemplate = (): Blob => {
   // Ligne d'instructions détaillées
   const instructions = {
     titre: '* = Champ obligatoire',
-    description: 'Description détaillée du problème',
+    description: 'Description détaillée du problème (recommandé)',
     statut: 'nouveau | en_attente | assigne | en_cours | en_pause | termine | annule | reporte',
     type: 'plumbing | electricity | heating | air_conditioning | carpentry | painting | cleaning | locksmith | glazing | masonry | appliance | furniture | it | security | garden | pool | other',
     categorie: 'maintenance | repair | installation | inspection | emergency',
@@ -175,7 +175,7 @@ export const generateInterventionsTemplate = (): Blob => {
   // Ajouter une feuille d'aide (21 champs)
   const helpData = [
     { Champ: 'TITRE *', Description: 'Titre court et descriptif de intervention (OBLIGATOIRE)', Exemple: 'Fuite eau chambre 301' },
-    { Champ: 'DESCRIPTION *', Description: 'Description détaillée du problème (OBLIGATOIRE)', Exemple: 'Fuite importante au niveau du lavabo' },
+    { Champ: 'DESCRIPTION', Description: 'Description détaillée du problème (recommandé)', Exemple: 'Fuite importante au niveau du lavabo' },
     { Champ: 'STATUT *', Description: 'Statut de intervention (OBLIGATOIRE)', Exemple: 'nouveau, en_attente, assigne, en_cours, en_pause, termine, annule, reporte' },
     { Champ: 'TYPE', Description: 'Type intervention (optionnel)', Exemple: 'plumbing, electricity, heating, air_conditioning, carpentry, painting, cleaning, etc.' },
     { Champ: 'CATEGORIE', Description: 'Catégorie intervention (optionnel)', Exemple: 'maintenance, repair, installation, inspection, emergency' },

@@ -4,12 +4,11 @@
 
 Nouveau template Excel avec **21 colonnes** pour l'import d'interventions, incluant les données de création ET de vie des interventions.
 
-## ✅ Champs Obligatoires (3)
+## ✅ Champs Obligatoires (2)
 
 | Colonne | Description | Exemple |
 |---------|-------------|---------|
 | **TITRE *** | Titre court et descriptif | "Fuite eau chambre 301" |
-| **DESCRIPTION *** | Description détaillée du problème | "Fuite importante au niveau du lavabo" |
 | **STATUT *** | Statut de l'intervention | "nouveau", "en_cours", "termine" |
 
 ### Valeurs possibles pour STATUT:
@@ -22,10 +21,11 @@ Nouveau template Excel avec **21 colonnes** pour l'import d'interventions, inclu
 - `annule` - Intervention annulée
 - `reporte` - Intervention reportée
 
-## 📝 Champs Optionnels - Classification (4)
+## 📝 Champs Optionnels - Description et Classification (5)
 
 | Colonne | Description | Exemple |
 |---------|-------------|---------|
+| **DESCRIPTION** | Description détaillée du problème (recommandé) | "Fuite importante au niveau du lavabo" |
 | **TYPE** | Type d'intervention | "plumbing", "electricity" |
 | **CATEGORIE** | Catégorie d'intervention | "maintenance", "repair", "emergency" |
 | **PRIORITE** | Niveau de priorité | "low", "normal", "high", "urgent", "critical" |
