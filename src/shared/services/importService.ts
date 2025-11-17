@@ -276,6 +276,48 @@ const normalizeObject = (
   return normalized;
 };
 
+// ============================================================================
+// NORMALISATION DES STATUTS (FR → EN)
+// ============================================================================
+
+/**
+ * Map des statuts français vers anglais (pour compatibilité import Excel)
+ */
+const STATUS_FR_TO_EN: Record<string, string> = {
+  nouveau: 'draft',
+  brouillon: 'draft',
+  en_attente: 'pending',
+  attente: 'pending',
+  assigne: 'assigned',
+  assignee: 'assigned',
+  en_cours: 'in_progress',
+  encours: 'in_progress',
+  en_pause: 'on_hold',
+  pause: 'on_hold',
+  termine: 'completed',
+  terminee: 'completed',
+  complete: 'completed',
+  valide: 'validated',
+  validee: 'validated',
+  annule: 'cancelled',
+  annulee: 'cancelled',
+  reporte: 'cancelled', // Reporté = annulé pour le moment
+  reportee: 'cancelled',
+};
+
+/**
+ * Normalise un statut (gère le français et l'anglais)
+ */
+const normalizeStatus = (status: string): string => {
+  const normalized = status.toLowerCase().trim();
+  // Si le statut est en français, le traduire
+  return STATUS_FR_TO_EN[normalized] || normalized;
+};
+
+// ============================================================================
+// MAPPING DES COLONNES EXCEL VERS SCHÉMA
+// ============================================================================
+
 /**
  * Mapping des colonnes pour interventions - VERSION 2.0 (21 colonnes)
  */
@@ -534,12 +576,11 @@ const detectMissingValues = (
     }
 
     // Vérifier STATUT (obligatoire)
-    if (
-      row.statut &&
-      row.statut.trim() &&
-      !existingLists.statuses.includes(row.statut.toLowerCase())
-    ) {
-      missing.statuses.add(row.statut);
+    if (row.statut && row.statut.trim()) {
+      const normalizedStatus = normalizeStatus(row.statut);
+      if (!existingLists.statuses.includes(normalizedStatus)) {
+        missing.statuses.add(row.statut); // Garder la valeur originale pour le message d'erreur
+      }
     }
 
     // Vérifier NUMERO DE CHAMBRE (si liste fournie)
@@ -705,7 +746,11 @@ export const importInterventions = async (
       // Filtrer les données valides : retirer les lignes avec statut invalide
       const validDataFiltered = validData.filter(row => {
         if (!row.statut) return true; // Pas de statut = on garde (sera géré par Zod)
-        return !missingValues.statuses.has(row.statut);
+        const normalizedStatus = normalizeStatus(row.statut);
+        // Vérifier si le statut normalisé est dans les statuts manquants
+        return !Array.from(missingValues.statuses).some(
+          invalidStatus => normalizeStatus(invalidStatus) === normalizedStatus
+        );
       });
 
       // Remplacer validData par la version filtrée
@@ -1073,7 +1118,7 @@ export const convertToInterventions = (
       // ========== CHAMPS OBLIGATOIRES ==========
       title: row.titre,
       description: row.description,
-      status: (row.statut || 'nouveau') as InterventionStatus,
+      status: (normalizeStatus(row.statut || 'nouveau')) as InterventionStatus,
 
       // ========== CHAMPS OPTIONNELS - Classification ==========
       type: (row.type && row.type.trim() ? row.type : undefined) as InterventionType | undefined,

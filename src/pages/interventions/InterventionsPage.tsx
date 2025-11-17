@@ -524,6 +524,7 @@ const InterventionsPageComponent = () => {
         templateDownloadFn={downloadInterventionsTemplate}
         onImport={importHook.handleImport}
         onConfirm={handleImportConfirm}
+        onCreateMissingValues={importHook.handleCreateMissingValues}
         renderPreview={data => (
           <div className="max-h-60 overflow-auto">
             <table className="w-full text-sm">

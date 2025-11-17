@@ -15,14 +15,18 @@ import {
   type ImportResult,
   type InterventionImportRow,
   type RoomImportRow,
+  type MissingListValues,
 } from '@/shared/services/importService';
 import { createIntervention } from '@/features/interventions/services/interventionService';
 import type { CreateRoomData } from '@/features/rooms/types/room.types';
 import type { CreateInterventionData } from '@/features/interventions/types/intervention.types';
 import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
+import referenceListsService from '@/shared/services/referenceListsService';
 import userService from '@/features/users/services/userService';
 import type { User } from '@/features/users/types/user.types';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
 // ============================================================================
 // HOOK PRINCIPAL
@@ -35,8 +39,10 @@ export const useImportInterventions = (
 ) => {
   const [isImporting, setIsImporting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const { data: referenceLists } = useAllReferenceLists({ realtime: false, autoLoad: true });
+  const { data: referenceLists, reload } = useAllReferenceLists({ realtime: false, autoLoad: true });
   const { rooms } = useRooms(establishmentId);
+  const { user } = useAuth();
+  const { currentEstablishment } = useCurrentEstablishment();
 
   // Charger les utilisateurs de l'établissement au montage
   useEffect(() => {
@@ -122,10 +128,69 @@ export const useImportInterventions = (
     }
   };
 
+  const handleCreateMissingValues = async (missingValues: MissingListValues) => {
+    if (!currentEstablishment?.id || !user?.id) {
+      throw new Error('Établissement ou utilisateur non trouvé');
+    }
+
+    const createdCount = {
+      types: 0,
+      categories: 0,
+      priorities: 0,
+      locations: 0,
+    };
+
+    // Créer les types manquants
+    for (const value of missingValues.types) {
+      await referenceListsService.addItem(currentEstablishment.id, user.id, 'interventionTypes', {
+        value,
+        label: value,
+        color: 'blue',
+      });
+      createdCount.types++;
+    }
+
+    // Créer les catégories manquantes
+    for (const value of missingValues.categories) {
+      await referenceListsService.addItem(currentEstablishment.id, user.id, 'interventionCategories', {
+        value,
+        label: value,
+        color: 'green',
+      });
+      createdCount.categories++;
+    }
+
+    // Créer les priorités manquantes
+    for (const value of missingValues.priorities) {
+      await referenceListsService.addItem(currentEstablishment.id, user.id, 'interventionPriorities', {
+        value,
+        label: value,
+        color: 'orange',
+      });
+      createdCount.priorities++;
+    }
+
+    // Créer les localisations manquantes
+    for (const value of missingValues.locations) {
+      await referenceListsService.addItem(currentEstablishment.id, user.id, 'locations', {
+        value,
+        label: value,
+        color: 'purple',
+      });
+      createdCount.locations++;
+    }
+
+    // Recharger les listes
+    await reload();
+
+    console.log('Valeurs créées:', createdCount);
+  };
+
   return {
     isImporting,
     handleImport,
     handleConfirm,
+    handleCreateMissingValues,
   };
 };
 

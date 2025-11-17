@@ -53,6 +53,7 @@ export interface ImportDialogProps<T> {
   onImport: (file: File) => Promise<ImportResult<T>>;
   onConfirm: (data: T[]) => Promise<void>;
   renderPreview?: (data: T[]) => React.ReactNode;
+  onCreateMissingValues?: (missingValues: ImportResult<T>['missingValues']) => Promise<void>; // Nouvelle fonction pour créer les valeurs manquantes
 }
 
 type Step = 'upload' | 'preview' | 'importing' | 'success';
@@ -73,11 +74,13 @@ export function ImportDialog<T>({
   onImport,
   onConfirm,
   renderPreview,
+  onCreateMissingValues,
 }: ImportDialogProps<T>) {
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<ImportResult<T> | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isCreatingValues, setIsCreatingValues] = useState(false);
 
   // ============================================================================
   // HANDLERS
@@ -140,6 +143,32 @@ export function ImportDialog<T>({
       toast.error("Erreur lors de l'analyse du fichier");
       console.error(error);
       setStep('upload');
+    }
+  };
+
+  const handleCreateMissingValues = async () => {
+    if (!importResult || !importResult.missingValues || !onCreateMissingValues) return;
+
+    setIsCreatingValues(true);
+    toast.loading('Création des valeurs manquantes...');
+
+    try {
+      await onCreateMissingValues(importResult.missingValues);
+      toast.dismiss();
+      toast.success('Valeurs créées avec succès !', {
+        description: 'Vous pouvez maintenant réimporter votre fichier',
+      });
+
+      // Réinitialiser pour permettre un nouvel import
+      setStep('upload');
+      setFile(null);
+      setImportResult(null);
+    } catch (error) {
+      toast.dismiss();
+      toast.error('Erreur lors de la création des valeurs');
+      console.error(error);
+    } finally {
+      setIsCreatingValues(false);
     }
   };
 
@@ -314,9 +343,32 @@ export function ImportDialog<T>({
               <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
                 <AlertCircle className="h-4 w-4 text-orange-600" />
                 <AlertDescription>
-                  <span className="font-medium text-orange-800 dark:text-orange-200">
-                    {importResult.warnings.length} avertissement(s) détecté(s)
-                  </span>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-medium text-orange-800 dark:text-orange-200">
+                      {importResult.warnings.length} avertissement(s) détecté(s)
+                    </span>
+                    {onCreateMissingValues && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCreateMissingValues}
+                        disabled={isCreatingValues}
+                        className="bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 border-orange-300"
+                      >
+                        {isCreatingValues ? (
+                          <>
+                            <span className="animate-spin mr-2">⏳</span>
+                            Création...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Créer toutes les valeurs
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                   <div className="mt-3 max-h-40 overflow-y-auto space-y-2">
                     {importResult.warnings.slice(0, 10).map((warning, idx) => (
                       <div
@@ -341,7 +393,7 @@ export function ImportDialog<T>({
                     )}
                   </div>
                   <p className="text-xs text-orange-700 dark:text-orange-300 mt-3">
-                    ℹ️ Les valeurs manquantes peuvent être créées manuellement dans les listes de référence après l'import.
+                    ℹ️ Cliquez sur "Créer toutes les valeurs" pour ajouter automatiquement les valeurs manquantes aux listes de référence, puis réimportez votre fichier.
                   </p>
                 </AlertDescription>
               </Alert>
