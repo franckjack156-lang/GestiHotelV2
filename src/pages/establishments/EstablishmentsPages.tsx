@@ -27,6 +27,7 @@ import {
   Users,
   Settings,
   Check,
+  ListChecks,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
@@ -50,6 +51,8 @@ import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurr
 import { toast } from 'sonner';
 import type { Establishment, CreateEstablishmentData } from '@/shared/types/establishment.types';
 import { EstablishmentType } from '@/shared/types/establishment.types';
+import { initializeEstablishmentLists } from '@/features/establishments/services/establishmentInitService';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   Select,
   SelectContent,
@@ -363,8 +366,11 @@ const EstablishmentForm = ({ establishment, onSubmit, isLoading }: Establishment
 
 export const CreateEstablishmentPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { createEstablishment } = useEstablishments();
   const [isCreating, setIsCreating] = useState(false);
+  const [isInitializingLists, setIsInitializingLists] = useState(false);
+  const [createdEstablishmentId, setCreatedEstablishmentId] = useState<string | null>(null);
 
   const handleSubmit = async (data: EstablishmentFormData) => {
     setIsCreating(true);
@@ -389,15 +395,91 @@ export const CreateEstablishmentPage = () => {
 
       const id = await createEstablishment(createData);
       if (id) {
-        toast.success('Établissement créé');
-        navigate('/app/establishments');
+        setCreatedEstablishmentId(id);
+        toast.success('Établissement créé avec succès');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la création');
     } finally {
       setIsCreating(false);
     }
   };
+
+  const handleInitializeLists = async () => {
+    if (!createdEstablishmentId || !user) return;
+
+    setIsInitializingLists(true);
+    try {
+      await initializeEstablishmentLists(createdEstablishmentId, user.id);
+      toast.success('Listes déroulantes initialisées avec succès');
+      navigate('/app/establishments');
+    } catch {
+      toast.error("Erreur lors de l'initialisation des listes");
+    } finally {
+      setIsInitializingLists(false);
+    }
+  };
+
+  const handleSkipInitialization = () => {
+    navigate('/app/establishments');
+  };
+
+  // Si l'établissement vient d'être créé, afficher le dialogue d'initialisation
+  if (createdEstablishmentId) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ListChecks className="h-6 w-6 text-green-600" />
+              Établissement créé avec succès
+            </CardTitle>
+            <CardDescription>
+              Voulez-vous initialiser les listes déroulantes par défaut ?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                Que contiennent les listes par défaut ?
+              </h3>
+              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                <li>Types d'interventions (Plomberie, Électricité, Climatisation, etc.)</li>
+                <li>Catégories (Maintenance, Réparation, Installation, etc.)</li>
+                <li>Priorités (Basse, Normale, Haute, Urgente, Critique)</li>
+                <li>Statuts d'interventions</li>
+                <li>Localisations (Chambre, Couloir, Hall, Cuisine, etc.)</li>
+                <li>Et bien d'autres listes essentielles...</li>
+              </ul>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={handleSkipInitialization}
+                disabled={isInitializingLists}
+              >
+                Ignorer pour le moment
+              </Button>
+              <Button onClick={handleInitializeLists} disabled={isInitializingLists}>
+                {isInitializingLists ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Initialisation...
+                  </>
+                ) : (
+                  <>
+                    <ListChecks className="mr-2 h-4 w-4" />
+                    Initialiser les listes
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
