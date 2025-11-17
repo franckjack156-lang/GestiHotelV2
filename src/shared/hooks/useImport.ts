@@ -84,7 +84,7 @@ export const useImportInterventions = (
               (item: { value: string }) => item.value
             ) || [],
           locations:
-            referenceLists.lists['locations']?.items?.map(
+            referenceLists.lists['interventionLocations']?.items?.map(
               (item: { value: string }) => item.value
             ) || [],
           statuses:
@@ -182,11 +182,16 @@ export const useImportInterventions = (
 
     // Créer les localisations manquantes
     for (const value of missingValues.locations) {
-      await referenceListsService.addItem(currentEstablishment.id, user.id, 'locations', {
-        value,
-        label: value,
-        color: 'purple',
-      });
+      await referenceListsService.addItem(
+        currentEstablishment.id,
+        user.id,
+        'interventionLocations',
+        {
+          value,
+          label: value,
+          color: 'purple',
+        }
+      );
       createdCount.locations++;
     }
 
