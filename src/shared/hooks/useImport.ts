@@ -68,40 +68,41 @@ export const useImportInterventions = (
     // dans existingLists ci-dessous pour préserver la casse
 
     // Préparer les listes existantes pour la détection des valeurs manquantes
-    // IMPORTANT: On garde les valeurs originales (avec leur casse) pour préserver l'orthographe
+    // IMPORTANT: On utilise les LABELS (affichage) au lieu des VALUES (technique)
+    // pour permettre aux utilisateurs d'écrire "Salle de pause" au lieu de "sallepause"
     const existingLists = referenceLists
       ? {
           types:
             referenceLists.lists['interventionTypes']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || [],
           categories:
             referenceLists.lists['interventionCategories']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || [],
           priorities:
             referenceLists.lists['interventionPriorities']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || [],
           locations:
             referenceLists.lists['interventionLocations']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || [],
           statuses:
             referenceLists.lists['interventionStatuses']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || [],
           // Combiner les chambres ET les listes de référence pour floors/buildings
           rooms: [...new Set(rooms.map(r => r.number))], // Garder la casse originale
           floors: [
             ...(referenceLists.lists['floors']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || []),
             ...new Set(rooms.map(r => r.floor?.toString() || '').filter(f => f)),
           ],
           buildings: [
             ...(referenceLists.lists['buildings']?.items?.map(
-              (item: { value: string }) => item.value
+              (item: { label: string }) => item.label
             ) || []),
             ...new Set(rooms.map(r => r.building || '').filter(b => b)),
           ],
