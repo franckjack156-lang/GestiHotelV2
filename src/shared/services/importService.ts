@@ -60,6 +60,11 @@ export interface MissingListValues {
   priorities: Set<string>;
   locations: Set<string>;
   statuses: Set<string>;
+  rooms: Set<string>; // Numéros de chambre inconnus
+  floors: Set<string>; // Étages inconnus
+  buildings: Set<string>; // Bâtiments inconnus
+  technicians: Set<string>; // Noms de techniciens non trouvés
+  creators: Set<string>; // Noms de créateurs non trouvés
 }
 
 export interface ImportOptions {
@@ -79,13 +84,20 @@ const InterventionImportSchema = z.object({
   // ============================================================================
   // CHAMPS OBLIGATOIRES (2) ⚠️
   // ============================================================================
-  titre: z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne peut pas dépasser 200 caractères'),
+  titre: z
+    .string()
+    .min(1, 'Le titre est requis')
+    .max(200, 'Le titre ne peut pas dépasser 200 caractères'),
   statut: z.string().min(1, 'Le statut est requis'),
 
   // ============================================================================
   // CHAMP DESCRIPTION (optionnel mais recommandé)
   // ============================================================================
-  description: z.string().max(5000, 'La description ne peut pas dépasser 5000 caractères').optional().default(''),
+  description: z
+    .string()
+    .max(5000, 'La description ne peut pas dépasser 5000 caractères')
+    .optional()
+    .default(''),
 
   // ============================================================================
   // CHAMPS OPTIONNELS - Classification (4)
@@ -93,20 +105,40 @@ const InterventionImportSchema = z.object({
   type: z.string().optional().default(''),
   categorie: z.string().optional().default(''),
   priorite: z.string().optional().default(''),
-  localisation: z.string().max(200, 'La localisation ne peut pas dépasser 200 caractères').optional().default(''),
+  localisation: z
+    .string()
+    .max(200, 'La localisation ne peut pas dépasser 200 caractères')
+    .optional()
+    .default(''),
 
   // ============================================================================
   // CHAMPS OPTIONNELS - Localisation détaillée (3)
   // ============================================================================
-  numerochambre: z.string().max(20, 'Le numéro de chambre ne peut pas dépasser 20 caractères').optional().default(''),
+  numerochambre: z
+    .string()
+    .max(20, 'Le numéro de chambre ne peut pas dépasser 20 caractères')
+    .optional()
+    .default(''),
   etage: z.string().optional().default(''),
-  batiment: z.string().max(50, 'Le bâtiment ne peut pas dépasser 50 caractères').optional().default(''),
+  batiment: z
+    .string()
+    .max(50, 'Le bâtiment ne peut pas dépasser 50 caractères')
+    .optional()
+    .default(''),
 
   // ============================================================================
   // CHAMPS OPTIONNELS - Personnes (2)
   // ============================================================================
-  technicien: z.string().max(100, 'Le nom du technicien ne peut pas dépasser 100 caractères').optional().default(''),
-  createur: z.string().max(100, 'Le nom du créateur ne peut pas dépasser 100 caractères').optional().default(''),
+  technicien: z
+    .string()
+    .max(100, 'Le nom du technicien ne peut pas dépasser 100 caractères')
+    .optional()
+    .default(''),
+  createur: z
+    .string()
+    .max(100, 'Le nom du créateur ne peut pas dépasser 100 caractères')
+    .optional()
+    .default(''),
 
   // ============================================================================
   // CHAMPS OPTIONNELS - Dates et durée (4)
@@ -119,11 +151,23 @@ const InterventionImportSchema = z.object({
   // ============================================================================
   // CHAMPS OPTIONNELS - Notes et métadonnées (4)
   // ============================================================================
-  notesinternes: z.string().max(2000, 'Les notes internes ne peuvent pas dépasser 2000 caractères').optional().default(''),
-  notesresolution: z.string().max(2000, 'Les notes de résolution ne peuvent pas dépasser 2000 caractères').optional().default(''),
+  notesinternes: z
+    .string()
+    .max(2000, 'Les notes internes ne peuvent pas dépasser 2000 caractères')
+    .optional()
+    .default(''),
+  notesresolution: z
+    .string()
+    .max(2000, 'Les notes de résolution ne peuvent pas dépasser 2000 caractères')
+    .optional()
+    .default(''),
   datelimite: z.string().optional().default(''),
   tags: z.string().optional().default(''),
-  referenceexterne: z.string().max(100, 'La référence externe ne peut pas dépasser 100 caractères').optional().default(''),
+  referenceexterne: z
+    .string()
+    .max(100, 'La référence externe ne peut pas dépasser 100 caractères')
+    .optional()
+    .default(''),
 });
 
 /**
@@ -209,7 +253,10 @@ const normalizeKey = (key: string): string => {
 /**
  * Normalise les clés d'un objet pour correspondre au schéma
  */
-const normalizeObject = (obj: Record<string, unknown>, keyMapping: Record<string, string>): Record<string, unknown> => {
+const normalizeObject = (
+  obj: Record<string, unknown>,
+  keyMapping: Record<string, string>
+): Record<string, unknown> => {
   const normalized: Record<string, unknown> = {};
 
   // Vérifier que obj existe et est un objet
@@ -434,6 +481,10 @@ const detectMissingValues = (
     priorities: string[];
     locations: string[];
     statuses: string[];
+    rooms?: string[]; // Optionnel : numéros de chambre existants
+    floors?: string[]; // Optionnel : étages existants
+    buildings?: string[]; // Optionnel : bâtiments existants
+    users?: Array<{ displayName: string }>; // Optionnel : utilisateurs pour matching
   }
 ): MissingListValues => {
   const missing: MissingListValues = {
@@ -442,6 +493,11 @@ const detectMissingValues = (
     priorities: new Set(),
     locations: new Set(),
     statuses: new Set(),
+    rooms: new Set(),
+    floors: new Set(),
+    buildings: new Set(),
+    technicians: new Set(),
+    creators: new Set(),
   };
 
   data.forEach(row => {
@@ -451,23 +507,82 @@ const detectMissingValues = (
     }
 
     // Vérifier CATEGORIE (si renseignée)
-    if (row.categorie && row.categorie.trim() && !existingLists.categories.includes(row.categorie.toLowerCase())) {
+    if (
+      row.categorie &&
+      row.categorie.trim() &&
+      !existingLists.categories.includes(row.categorie.toLowerCase())
+    ) {
       missing.categories.add(row.categorie);
     }
 
     // Vérifier PRIORITE (si renseignée)
-    if (row.priorite && row.priorite.trim() && !existingLists.priorities.includes(row.priorite.toLowerCase())) {
+    if (
+      row.priorite &&
+      row.priorite.trim() &&
+      !existingLists.priorities.includes(row.priorite.toLowerCase())
+    ) {
       missing.priorities.add(row.priorite);
     }
 
     // Vérifier LOCALISATION (si renseignée)
-    if (row.localisation && row.localisation.trim() && !existingLists.locations.includes(row.localisation.toLowerCase())) {
+    if (
+      row.localisation &&
+      row.localisation.trim() &&
+      !existingLists.locations.includes(row.localisation.toLowerCase())
+    ) {
       missing.locations.add(row.localisation);
     }
 
     // Vérifier STATUT (obligatoire)
-    if (row.statut && row.statut.trim() && !existingLists.statuses.includes(row.statut.toLowerCase())) {
+    if (
+      row.statut &&
+      row.statut.trim() &&
+      !existingLists.statuses.includes(row.statut.toLowerCase())
+    ) {
       missing.statuses.add(row.statut);
+    }
+
+    // Vérifier NUMERO DE CHAMBRE (si liste fournie)
+    if (existingLists.rooms && row.numerochambre && row.numerochambre.trim()) {
+      if (!existingLists.rooms.includes(row.numerochambre.toLowerCase())) {
+        missing.rooms.add(row.numerochambre);
+      }
+    }
+
+    // Vérifier ETAGE (si liste fournie)
+    if (existingLists.floors && row.etage && row.etage.trim()) {
+      if (!existingLists.floors.includes(row.etage.toLowerCase())) {
+        missing.floors.add(row.etage);
+      }
+    }
+
+    // Vérifier BATIMENT (si liste fourni)
+    if (existingLists.buildings && row.batiment && row.batiment.trim()) {
+      if (!existingLists.buildings.includes(row.batiment.toLowerCase())) {
+        missing.buildings.add(row.batiment);
+      }
+    }
+
+    // Vérifier TECHNICIEN (si liste users fournie)
+    if (existingLists.users && row.technicien && row.technicien.trim()) {
+      const technicianName = row.technicien.trim().toLowerCase();
+      const found = existingLists.users.some(
+        user => user.displayName.toLowerCase() === technicianName
+      );
+      if (!found) {
+        missing.technicians.add(row.technicien);
+      }
+    }
+
+    // Vérifier CREATEUR (si liste users fournie)
+    if (existingLists.users && row.createur && row.createur.trim()) {
+      const creatorName = row.createur.trim().toLowerCase();
+      const found = existingLists.users.some(
+        user => user.displayName.toLowerCase() === creatorName
+      );
+      if (!found) {
+        missing.creators.add(row.createur);
+      }
     }
   });
 
@@ -490,6 +605,10 @@ export const importInterventions = async (
     priorities: string[];
     locations: string[];
     statuses: string[];
+    rooms?: string[];
+    floors?: string[];
+    buildings?: string[];
+    users?: Array<{ displayName: string }>;
   }
 ): Promise<ImportResult<InterventionImportRow>> => {
   const { skipEmptyRows = true, maxRows = 1000, startRow = 0 } = options;
@@ -556,12 +675,44 @@ export const importInterventions = async (
           priorities: new Set<string>(),
           locations: new Set<string>(),
           statuses: new Set<string>(),
+          rooms: new Set<string>(),
+          floors: new Set<string>(),
+          buildings: new Set<string>(),
+          technicians: new Set<string>(),
+          creators: new Set<string>(),
         };
 
     // Générer des warnings pour les valeurs manquantes
     const warnings: ImportWarning[] = [];
 
     if (existingLists) {
+      // ⚠️ STATUTS INVALIDES = ERREUR BLOQUANTE
+      // Les lignes avec statut invalide doivent être rejetées
+      missingValues.statuses.forEach(invalidStatus => {
+        // Trouver toutes les lignes avec ce statut invalide
+        validData.forEach((row, index) => {
+          if (row.statut && row.statut.toLowerCase() === invalidStatus.toLowerCase()) {
+            errors.push({
+              row: index + startRow + 2, // +2 pour header + 0-indexed
+              field: 'statut',
+              message: `Le statut "${invalidStatus}" n'existe pas dans la liste des statuts. Cette ligne sera rejetée.`,
+              value: invalidStatus,
+            });
+          }
+        });
+      });
+
+      // Filtrer les données valides : retirer les lignes avec statut invalide
+      const validDataFiltered = validData.filter(row => {
+        if (!row.statut) return true; // Pas de statut = on garde (sera géré par Zod)
+        return !missingValues.statuses.has(row.statut);
+      });
+
+      // Remplacer validData par la version filtrée
+      validData.length = 0;
+      validData.push(...validDataFiltered);
+
+      // ✅ AUTRES CHAMPS = WARNINGS NON-BLOQUANTS
       // Warnings pour les types manquants
       missingValues.types.forEach(value => {
         warnings.push({
@@ -606,14 +757,59 @@ export const importInterventions = async (
         });
       });
 
-      // Warnings pour les statuts manquants
-      missingValues.statuses.forEach(value => {
+      // Warnings pour les numéros de chambre inconnus
+      missingValues.rooms.forEach(value => {
         warnings.push({
           row: 0,
-          field: 'statut',
-          message: `La valeur "${value}" n'existe pas dans la liste des statuts`,
+          field: 'numerochambre',
+          message: `La chambre "${value}" n'existe pas dans votre liste de chambres`,
           value,
-          suggestion: 'Voulez-vous créer cette valeur dans la liste des statuts ?',
+          suggestion: 'Voulez-vous créer cette chambre ?',
+        });
+      });
+
+      // Warnings pour les étages inconnus
+      missingValues.floors.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'etage',
+          message: `L'étage "${value}" n'existe pas dans votre liste d'étages`,
+          value,
+          suggestion: 'Voulez-vous créer cet étage dans la liste ?',
+        });
+      });
+
+      // Warnings pour les bâtiments inconnus
+      missingValues.buildings.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'batiment',
+          message: `Le bâtiment "${value}" n'existe pas dans votre liste de bâtiments`,
+          value,
+          suggestion: 'Voulez-vous créer ce bâtiment dans la liste ?',
+        });
+      });
+
+      // Warnings pour les techniciens inconnus
+      missingValues.technicians.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'technicien',
+          message: `Le technicien "${value}" n'a pas été trouvé dans votre liste d'utilisateurs`,
+          value,
+          suggestion: "Vérifiez l'orthographe du nom ou créez cet utilisateur",
+        });
+      });
+
+      // Warnings pour les créateurs inconnus
+      missingValues.creators.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'createur',
+          message: `Le créateur "${value}" n'a pas été trouvé dans votre liste d'utilisateurs`,
+          value,
+          suggestion:
+            "L'intervention sera créée avec votre nom. Vérifiez l'orthographe ou créez cet utilisateur",
         });
       });
     }
@@ -648,6 +844,11 @@ export const importInterventions = async (
         priorities: new Set(),
         locations: new Set(),
         statuses: new Set(),
+        rooms: new Set(),
+        floors: new Set(),
+        buildings: new Set(),
+        technicians: new Set(),
+        creators: new Set(),
       },
       stats: {
         total: 0,
@@ -731,6 +932,11 @@ export const importRooms = async (
         priorities: new Set(),
         locations: new Set(),
         statuses: new Set(),
+        rooms: new Set(),
+        floors: new Set(),
+        buildings: new Set(),
+        technicians: new Set(),
+        creators: new Set(),
       },
       stats: {
         total: data.length,
@@ -756,6 +962,11 @@ export const importRooms = async (
         priorities: new Set(),
         locations: new Set(),
         statuses: new Set(),
+        rooms: new Set(),
+        floors: new Set(),
+        buildings: new Set(),
+        technicians: new Set(),
+        creators: new Set(),
       },
       stats: {
         total: 0,
@@ -774,7 +985,12 @@ export const convertToInterventions = (
   establishmentId: string,
   currentUserId: string,
   currentUserName: string,
-  establishmentUsers: Array<{ id: string; displayName: string; firstName: string; lastName: string }> = []
+  establishmentUsers: Array<{
+    id: string;
+    displayName: string;
+    firstName: string;
+    lastName: string;
+  }> = []
 ): Partial<Intervention>[] => {
   return data.map(row => {
     // ========== MATCHING UTILISATEURS ==========
@@ -861,8 +1077,12 @@ export const convertToInterventions = (
 
       // ========== CHAMPS OPTIONNELS - Classification ==========
       type: (row.type && row.type.trim() ? row.type : undefined) as InterventionType | undefined,
-      category: (row.categorie && row.categorie.trim() ? row.categorie : undefined) as InterventionCategory | undefined,
-      priority: (row.priorite && row.priorite.trim() ? row.priorite : 'normal') as InterventionPriority,
+      category: (row.categorie && row.categorie.trim() ? row.categorie : undefined) as
+        | InterventionCategory
+        | undefined,
+      priority: (row.priorite && row.priorite.trim()
+        ? row.priorite
+        : 'normal') as InterventionPriority,
 
       // ========== LOCALISATION ==========
       location: row.localisation || '',
@@ -896,7 +1116,8 @@ export const convertToInterventions = (
       assignedToName: assignedToName || undefined,
 
       // ========== FLAGS ==========
-      isUrgent: row.priorite?.toLowerCase() === 'urgent' || row.priorite?.toLowerCase() === 'critical',
+      isUrgent:
+        row.priorite?.toLowerCase() === 'urgent' || row.priorite?.toLowerCase() === 'critical',
       isBlocking: false, // Non géré dans V2.0
       requiresValidation: false,
 

@@ -20,6 +20,7 @@ import { createIntervention } from '@/features/interventions/services/interventi
 import type { CreateRoomData } from '@/features/rooms/types/room.types';
 import type { CreateInterventionData } from '@/features/interventions/types/intervention.types';
 import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
+import { useRooms } from '@/features/rooms/hooks/useRooms';
 import userService from '@/features/users/services/userService';
 import type { User } from '@/features/users/types/user.types';
 
@@ -27,10 +28,15 @@ import type { User } from '@/features/users/types/user.types';
 // HOOK PRINCIPAL
 // ============================================================================
 
-export const useImportInterventions = (establishmentId: string, userId: string, userName?: string) => {
+export const useImportInterventions = (
+  establishmentId: string,
+  userId: string,
+  userName?: string
+) => {
   const [isImporting, setIsImporting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const { data: referenceLists } = useAllReferenceLists({ realtime: false, autoLoad: true });
+  const { rooms } = useRooms(establishmentId);
 
   // Charger les utilisateurs de l'établissement au montage
   useEffect(() => {
@@ -49,14 +55,40 @@ export const useImportInterventions = (establishmentId: string, userId: string, 
   }, [establishmentId]);
 
   const handleImport = async (file: File): Promise<ImportResult<InterventionImportRow>> => {
+    // Extraire les listes de valeurs uniques des chambres
+    const roomNumbers = [...new Set(rooms.map(r => r.number.toLowerCase()))];
+    const floors = [
+      ...new Set(rooms.map(r => r.floor?.toString().toLowerCase() || '').filter(f => f)),
+    ];
+    const buildings = [...new Set(rooms.map(r => r.building?.toLowerCase() || '').filter(b => b))];
+
     // Préparer les listes existantes pour la détection des valeurs manquantes
     const existingLists = referenceLists
       ? {
-          types: referenceLists.lists['interventionTypes']?.items?.map((item: { value: string }) => item.value.toLowerCase()) || [],
-          categories: referenceLists.lists['interventionCategories']?.items?.map((item: { value: string }) => item.value.toLowerCase()) || [],
-          priorities: referenceLists.lists['interventionPriorities']?.items?.map((item: { value: string }) => item.value.toLowerCase()) || [],
-          locations: referenceLists.lists['locations']?.items?.map((item: { value: string }) => item.value.toLowerCase()) || [],
-          statuses: referenceLists.lists['interventionStatuses']?.items?.map((item: { value: string }) => item.value.toLowerCase()) || [],
+          types:
+            referenceLists.lists['interventionTypes']?.items?.map((item: { value: string }) =>
+              item.value.toLowerCase()
+            ) || [],
+          categories:
+            referenceLists.lists['interventionCategories']?.items?.map((item: { value: string }) =>
+              item.value.toLowerCase()
+            ) || [],
+          priorities:
+            referenceLists.lists['interventionPriorities']?.items?.map((item: { value: string }) =>
+              item.value.toLowerCase()
+            ) || [],
+          locations:
+            referenceLists.lists['locations']?.items?.map((item: { value: string }) =>
+              item.value.toLowerCase()
+            ) || [],
+          statuses:
+            referenceLists.lists['interventionStatuses']?.items?.map((item: { value: string }) =>
+              item.value.toLowerCase()
+            ) || [],
+          rooms: roomNumbers,
+          floors: floors,
+          buildings: buildings,
+          users: users.map(u => ({ displayName: u.displayName })),
         }
       : undefined;
 
