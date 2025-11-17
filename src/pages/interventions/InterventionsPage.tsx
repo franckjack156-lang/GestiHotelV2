@@ -82,6 +82,7 @@ import { useInterventionActions } from '@/features/interventions/hooks/useInterv
 import { ConfirmDialog } from '@/shared/components/ui-extended';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 import { cn } from '@/shared/lib/utils';
+import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 
 const InterventionsPageComponent = () => {
   const navigate = useNavigate();
@@ -90,11 +91,20 @@ const InterventionsPageComponent = () => {
   const { user } = useAuth();
 
   const { interventions, isLoading, error, filters, stats } = useInterventions();
+  const { displayPreferences } = useUserPreferences();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+
+  // Utiliser la vue par défaut depuis les préférences
+  const [viewMode, setViewMode] = useState<'kanban' | 'table'>(() => {
+    const defaultView = displayPreferences.defaultView;
+    // Mapper les valeurs des préférences aux valeurs du viewMode
+    if (defaultView === 'list' || defaultView === 'calendar') return 'table';
+    return 'kanban'; // Pour 'grid' ou toute autre valeur
+  });
   const [interventionToDelete, setInterventionToDelete] = useState<string | null>(null);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeIntervention, setActiveIntervention] = useState<Intervention | null>(null);
 
@@ -154,6 +164,27 @@ const InterventionsPageComponent = () => {
       setInterventionToDelete(null);
     } catch (error) {
       toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  const handleDeleteAllConfirm = async () => {
+    try {
+      const toastId = toast.loading(
+        `Suppression de ${interventions.length} intervention(s) en cours...`
+      );
+
+      // Supprimer par lots de 10
+      const batchSize = 10;
+      for (let i = 0; i < interventions.length; i += batchSize) {
+        const batch = interventions.slice(i, i + batchSize);
+        await Promise.all(batch.map(intervention => deleteIntervention(intervention.id)));
+      }
+
+      toast.success(`${interventions.length} intervention(s) supprimée(s)`, { id: toastId });
+      setShowDeleteAllDialog(false);
+      handleRefresh();
+    } catch (error) {
+      toast.error('Erreur lors de la suppression massive');
     }
   };
 
@@ -251,6 +282,19 @@ const InterventionsPageComponent = () => {
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Actualiser
           </Button>
+
+          {/* Bouton SuperAdmin pour supprimer toutes les interventions */}
+          {user?.role === 'super_admin' && interventions.length > 0 && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setShowDeleteAllDialog(true)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Supprimer tout ({interventions.length})
+            </Button>
+          )}
 
           {canCreateInterventions && (
             <>
@@ -467,6 +511,7 @@ const InterventionsPageComponent = () => {
           onInterventionClick={handleInterventionClick}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          itemsPerPage={displayPreferences.itemsPerPage}
         />
       )}
 
@@ -513,6 +558,18 @@ const InterventionsPageComponent = () => {
         title="Supprimer l'intervention"
         description="Êtes-vous sûr de vouloir supprimer cette intervention ?"
         confirmLabel="Supprimer"
+        variant="danger"
+        isLoading={isDeleting}
+      />
+
+      {/* Dialog de confirmation pour suppression totale (SuperAdmin uniquement) */}
+      <ConfirmDialog
+        isOpen={showDeleteAllDialog}
+        onClose={() => setShowDeleteAllDialog(false)}
+        onConfirm={handleDeleteAllConfirm}
+        title="Supprimer TOUTES les interventions"
+        description={`⚠️ ATTENTION: Cette action est IRRÉVERSIBLE et supprimera définitivement les ${interventions.length} intervention(s) de cet établissement. Êtes-vous absolument certain de vouloir continuer ?`}
+        confirmLabel={`Oui, supprimer ${interventions.length} intervention(s)`}
         variant="danger"
         isLoading={isDeleting}
       />
@@ -812,6 +869,7 @@ interface TableViewProps {
   onInterventionClick: (id: string) => void;
   onEdit: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  itemsPerPage: number;
 }
 
 const TableViewComponent = ({
@@ -819,8 +877,23 @@ const TableViewComponent = ({
   onInterventionClick,
   onEdit,
   onDelete,
+  itemsPerPage,
 }: TableViewProps) => {
   const { user } = useAuth();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Pagination
+  const totalPages = Math.ceil(interventions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentInterventions = interventions.slice(startIndex, endIndex);
+
+  // Reset page when interventions change
+  useState(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  });
 
   // Couleurs par statut - memoized
   const getStatusColor = useCallback((status: InterventionStatus) => {
@@ -873,7 +946,7 @@ const TableViewComponent = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {interventions.map(intervention => {
+            {currentInterventions.map(intervention => {
               const canEdit =
                 user?.role === 'admin' ||
                 user?.role === 'super_admin' ||
@@ -964,6 +1037,63 @@ const TableViewComponent = ({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="px-6 py-4 border-t flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Affichage de {startIndex + 1} à {Math.min(endIndex, interventions.length)} sur{' '}
+            {interventions.length} intervention(s)
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Précédent
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                // Afficher seulement quelques pages autour de la page courante
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="min-w-[40px]"
+                    >
+                      {page}
+                    </Button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <span key={page} className="px-2 text-muted-foreground">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Suivant
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
