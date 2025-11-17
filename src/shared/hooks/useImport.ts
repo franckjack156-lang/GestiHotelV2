@@ -145,6 +145,22 @@ export const useImportInterventions = (
       throw new Error('Établissement ou utilisateur non trouvé');
     }
 
+    /**
+     * Convertit un label lisible en value technique (minuscules + underscores)
+     * Ex: "Salle de pause" → "salle_de_pause"
+     */
+    const normalizeToValue = (label: string): string => {
+      return label
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_') // Remplacer espaces par underscores
+        .normalize('NFD') // Décomposer les caractères accentués
+        .replace(/[\u0300-\u036f]/g, '') // Enlever les accents
+        .replace(/[^a-z0-9_]/g, '') // Garder seulement minuscules, chiffres et underscores
+        .replace(/_+/g, '_') // Remplacer plusieurs underscores consécutifs par un seul
+        .replace(/^_|_$/g, ''); // Enlever underscores au début et à la fin
+    };
+
     const createdCount = {
       types: 0,
       categories: 0,
@@ -153,24 +169,24 @@ export const useImportInterventions = (
     };
 
     // Créer les types manquants
-    for (const value of missingValues.types) {
+    for (const label of missingValues.types) {
       await referenceListsService.addItem(currentEstablishment.id, user.id, 'interventionTypes', {
-        value,
-        label: value,
+        value: normalizeToValue(label),
+        label: label,
         color: 'blue',
       });
       createdCount.types++;
     }
 
     // Créer les catégories manquantes
-    for (const value of missingValues.categories) {
+    for (const label of missingValues.categories) {
       await referenceListsService.addItem(
         currentEstablishment.id,
         user.id,
         'interventionCategories',
         {
-          value,
-          label: value,
+          value: normalizeToValue(label),
+          label: label,
           color: 'green',
         }
       );
@@ -178,14 +194,14 @@ export const useImportInterventions = (
     }
 
     // Créer les priorités manquantes
-    for (const value of missingValues.priorities) {
+    for (const label of missingValues.priorities) {
       await referenceListsService.addItem(
         currentEstablishment.id,
         user.id,
         'interventionPriorities',
         {
-          value,
-          label: value,
+          value: normalizeToValue(label),
+          label: label,
           color: 'orange',
         }
       );
@@ -193,14 +209,14 @@ export const useImportInterventions = (
     }
 
     // Créer les localisations manquantes
-    for (const value of missingValues.locations) {
+    for (const label of missingValues.locations) {
       await referenceListsService.addItem(
         currentEstablishment.id,
         user.id,
         'interventionLocations',
         {
-          value,
-          label: value,
+          value: normalizeToValue(label),
+          label: label,
           color: 'purple',
         }
       );
