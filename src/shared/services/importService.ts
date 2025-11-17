@@ -14,7 +14,13 @@ import * as XLSX from 'xlsx';
 import { z } from 'zod';
 import { Timestamp } from 'firebase/firestore';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
-import type { Room } from '@/features/rooms/types/room.types';
+import type { CreateRoomData, RoomType } from '@/features/rooms/types/room.types';
+import type {
+  InterventionStatus,
+  InterventionPriority,
+  InterventionType,
+  InterventionCategory,
+} from '@/shared/types/status.types';
 
 // ============================================================================
 // TYPES
@@ -24,6 +30,8 @@ export interface ImportResult<T> {
   success: boolean;
   data: T[];
   errors: ImportError[];
+  warnings: ImportWarning[];
+  missingValues: MissingListValues;
   stats: {
     total: number;
     valid: number;
@@ -35,7 +43,23 @@ export interface ImportError {
   row: number;
   field?: string;
   message: string;
-  value?: any;
+  value?: unknown;
+}
+
+export interface ImportWarning {
+  row: number;
+  field: string;
+  message: string;
+  value: unknown;
+  suggestion?: string;
+}
+
+export interface MissingListValues {
+  types: Set<string>;
+  categories: Set<string>;
+  priorities: Set<string>;
+  locations: Set<string>;
+  statuses: Set<string>;
 }
 
 export interface ImportOptions {
@@ -49,43 +73,53 @@ export interface ImportOptions {
 // ============================================================================
 
 /**
- * Schema pour l'import d'interventions - VERSION COMPLÈTE
+ * Schema pour l'import d'interventions - VERSION 2.0 (21 colonnes)
  */
 const InterventionImportSchema = z.object({
   // ============================================================================
-  // CHAMPS OBLIGATOIRES ⚠️
+  // CHAMPS OBLIGATOIRES (3) ⚠️
   // ============================================================================
-  titre: z.string().min(3, 'Le titre doit contenir au moins 3 caractères').max(100, 'Le titre ne peut pas dépasser 100 caractères'),
-  type: z.string().min(1, 'Le type est requis'),
-  priorite: z.enum(['basse', 'normale', 'haute', 'urgente'], {
-    message: 'La priorité doit être: basse, normale, haute ou urgente',
-  }),
+  titre: z.string().min(1, 'Le titre est requis').max(200, 'Le titre ne peut pas dépasser 200 caractères'),
+  description: z.string().min(1, 'La description est requise').max(5000, 'La description ne peut pas dépasser 5000 caractères'),
+  statut: z.string().min(1, 'Le statut est requis'),
 
   // ============================================================================
-  // CHAMPS OPTIONNELS - Informations de base
+  // CHAMPS OPTIONNELS - Classification (4)
   // ============================================================================
-  description: z.string().max(2000, 'La description ne peut pas dépasser 2000 caractères').optional().default(''),
+  type: z.string().optional().default(''),
   categorie: z.string().optional().default(''),
+  priorite: z.string().optional().default(''),
+  localisation: z.string().max(200, 'La localisation ne peut pas dépasser 200 caractères').optional().default(''),
 
   // ============================================================================
-  // CHAMPS OPTIONNELS - Localisation
+  // CHAMPS OPTIONNELS - Localisation détaillée (3)
   // ============================================================================
-  localisation: z.string().max(200, 'La localisation ne peut pas dépasser 200 caractères').optional().default(''),
-  chambre: z.string().max(20, 'Le numéro de chambre ne peut pas dépasser 20 caractères').optional().default(''),
+  numerochambre: z.string().max(20, 'Le numéro de chambre ne peut pas dépasser 20 caractères').optional().default(''),
   etage: z.string().optional().default(''),
   batiment: z.string().max(50, 'Le bâtiment ne peut pas dépasser 50 caractères').optional().default(''),
 
   // ============================================================================
-  // CHAMPS OPTIONNELS - Flags
+  // CHAMPS OPTIONNELS - Personnes (2)
   // ============================================================================
-  urgent: z.enum(['oui', 'non', 'true', 'false', '1', '0', 'yes', 'no', 'y', 'n', 'o', '']).optional().default('non'),
-  bloquant: z.enum(['oui', 'non', 'true', 'false', '1', '0', 'yes', 'no', 'y', 'n', 'o', '']).optional().default('non'),
+  technicien: z.string().max(100, 'Le nom du technicien ne peut pas dépasser 100 caractères').optional().default(''),
+  createur: z.string().max(100, 'Le nom du créateur ne peut pas dépasser 100 caractères').optional().default(''),
 
   // ============================================================================
-  // CHAMPS OPTIONNELS - Notes (pour futures versions)
+  // CHAMPS OPTIONNELS - Dates et durée (4)
   // ============================================================================
-  notesinternes: z.string().max(1000, 'Les notes internes ne peuvent pas dépasser 1000 caractères').optional().default(''),
-  referenceexterne: z.string().max(50, 'La référence externe ne peut pas dépasser 50 caractères').optional().default(''),
+  datecreation: z.string().optional().default(''),
+  dateplanifiee: z.string().optional().default(''),
+  heureplanifiee: z.string().optional().default(''),
+  dureeestimee: z.string().optional().default(''),
+
+  // ============================================================================
+  // CHAMPS OPTIONNELS - Notes et métadonnées (4)
+  // ============================================================================
+  notesinternes: z.string().max(2000, 'Les notes internes ne peuvent pas dépasser 2000 caractères').optional().default(''),
+  notesresolution: z.string().max(2000, 'Les notes de résolution ne peuvent pas dépasser 2000 caractères').optional().default(''),
+  datelimite: z.string().optional().default(''),
+  tags: z.string().optional().default(''),
+  referenceexterne: z.string().max(100, 'La référence externe ne peut pas dépasser 100 caractères').optional().default(''),
 });
 
 /**
@@ -123,7 +157,7 @@ export type RoomImportRow = z.infer<typeof RoomImportSchema>;
 /**
  * Parse un fichier Excel et retourne les données brutes
  */
-export const parseExcelFile = (file: File): Promise<any[]> => {
+export const parseExcelFile = (file: File): Promise<Record<string, unknown>[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -140,10 +174,10 @@ export const parseExcelFile = (file: File): Promise<any[]> => {
         const jsonData = XLSX.utils.sheet_to_json(worksheet, {
           raw: false, // Convertir tout en string
           defval: '', // Valeur par défaut pour cellules vides
-        });
+        }) as Record<string, unknown>[];
 
         resolve(jsonData);
-      } catch (error) {
+      } catch {
         reject(new Error('Erreur lors de la lecture du fichier Excel'));
       }
     };
@@ -171,8 +205,8 @@ const normalizeKey = (key: string): string => {
 /**
  * Normalise les clés d'un objet pour correspondre au schéma
  */
-const normalizeObject = (obj: any, keyMapping: Record<string, string>): any => {
-  const normalized: any = {};
+const normalizeObject = (obj: Record<string, unknown>, keyMapping: Record<string, string>): Record<string, unknown> => {
+  const normalized: Record<string, unknown> = {};
 
   // Vérifier que obj existe et est un objet
   if (!obj || typeof obj !== 'object') {
@@ -192,18 +226,21 @@ const normalizeObject = (obj: any, keyMapping: Record<string, string>): any => {
 };
 
 /**
- * Mapping des colonnes pour interventions - VERSION COMPLÈTE
+ * Mapping des colonnes pour interventions - VERSION 2.0 (21 colonnes)
  */
 const INTERVENTION_KEY_MAPPING: Record<string, string> = {
   // Titre
   titre: 'titre',
   title: 'titre',
-  nom: 'titre',
-  name: 'titre',
 
   // Description
   description: 'description',
   desc: 'description',
+
+  // Statut (nouveau dans V2)
+  statut: 'statut',
+  status: 'statut',
+  etat: 'statut',
 
   // Type
   type: 'type',
@@ -222,11 +259,11 @@ const INTERVENTION_KEY_MAPPING: Record<string, string> = {
   emplacement: 'localisation',
   lieu: 'localisation',
 
-  // Chambre
-  chambre: 'chambre',
-  room: 'chambre',
-  numerochambre: 'chambre',
-  roomnumber: 'chambre',
+  // Numéro chambre
+  numerochambre: 'numerochambre',
+  chambre: 'numerochambre',
+  room: 'numerochambre',
+  roomnumber: 'numerochambre',
 
   // Étage
   etage: 'etage',
@@ -237,20 +274,53 @@ const INTERVENTION_KEY_MAPPING: Record<string, string> = {
   batiment: 'batiment',
   building: 'batiment',
 
-  // Urgent
-  urgent: 'urgent',
-  urgence: 'urgent',
-  isurgent: 'urgent',
+  // Technicien (nouveau format dans V2)
+  technicien: 'technicien',
+  technician: 'technicien',
+  assignea: 'technicien',
 
-  // Bloquant
-  bloquant: 'bloquant',
-  blocking: 'bloquant',
-  isblocking: 'bloquant',
+  // Créateur (nouveau dans V2)
+  createur: 'createur',
+  creator: 'createur',
+  creepar: 'createur',
+
+  // Date création (nouveau dans V2)
+  datecreation: 'datecreation',
+  creationdate: 'datecreation',
+  datecrea: 'datecreation',
+
+  // Date planifiée
+  dateplanifiee: 'dateplanifiee',
+  scheduleddate: 'dateplanifiee',
+  dateprevue: 'dateplanifiee',
+
+  // Heure planifiée
+  heureplanifiee: 'heureplanifiee',
+  scheduledtime: 'heureplanifiee',
+  heure: 'heureplanifiee',
+
+  // Durée estimée
+  dureeestimee: 'dureeestimee',
+  estimatedduration: 'dureeestimee',
+  duree: 'dureeestimee',
 
   // Notes internes
   notesinternes: 'notesinternes',
   internalnotes: 'notesinternes',
   notes: 'notesinternes',
+
+  // Notes résolution (nouveau dans V2)
+  notesresolution: 'notesresolution',
+  resolutionnotes: 'notesresolution',
+
+  // Date limite
+  datelimite: 'datelimite',
+  duedate: 'datelimite',
+  deadline: 'datelimite',
+
+  // Tags (nouveau dans V2)
+  tags: 'tags',
+  etiquettes: 'tags',
 
   // Référence externe
   referenceexterne: 'referenceexterne',
@@ -294,6 +364,113 @@ const ROOM_KEY_MAPPING: Record<string, string> = {
 };
 
 // ============================================================================
+// FONCTIONS UTILITAIRES POUR DATES
+// ============================================================================
+
+/**
+ * Parse une date au format JJ/MM/AAAA
+ */
+const parseDate = (dateStr: string): Date | null => {
+  if (!dateStr || !dateStr.trim()) return null;
+
+  const parts = dateStr.trim().split('/');
+  if (parts.length !== 3) return null;
+
+  const day = parseInt(parts[0]);
+  const month = parseInt(parts[1]) - 1; // 0-indexed
+  const year = parseInt(parts[2]);
+
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  if (day < 1 || day > 31 || month < 0 || month > 11 || year < 1900) return null;
+
+  const date = new Date(year, month, day);
+
+  // Vérifier que la date est valide
+  if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+    return null;
+  }
+
+  return date;
+};
+
+/**
+ * Parse une date + heure (JJ/MM/AAAA + HH:MM)
+ */
+const parseDateTime = (dateStr: string, timeStr: string): Date | null => {
+  const date = parseDate(dateStr);
+  if (!date) return null;
+
+  if (!timeStr || !timeStr.trim()) return date;
+
+  const timeParts = timeStr.trim().split(':');
+  if (timeParts.length !== 2) return date;
+
+  const hours = parseInt(timeParts[0]);
+  const minutes = parseInt(timeParts[1]);
+
+  if (isNaN(hours) || isNaN(minutes)) return date;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return date;
+
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+};
+
+// ============================================================================
+// DÉTECTION DES VALEURS MANQUANTES DANS LES LISTES
+// ============================================================================
+
+/**
+ * Détecte les valeurs qui n'existent pas dans les listes de référence
+ */
+const detectMissingValues = (
+  data: InterventionImportRow[],
+  existingLists: {
+    types: string[];
+    categories: string[];
+    priorities: string[];
+    locations: string[];
+    statuses: string[];
+  }
+): MissingListValues => {
+  const missing: MissingListValues = {
+    types: new Set(),
+    categories: new Set(),
+    priorities: new Set(),
+    locations: new Set(),
+    statuses: new Set(),
+  };
+
+  data.forEach(row => {
+    // Vérifier TYPE (si renseigné)
+    if (row.type && row.type.trim() && !existingLists.types.includes(row.type.toLowerCase())) {
+      missing.types.add(row.type);
+    }
+
+    // Vérifier CATEGORIE (si renseignée)
+    if (row.categorie && row.categorie.trim() && !existingLists.categories.includes(row.categorie.toLowerCase())) {
+      missing.categories.add(row.categorie);
+    }
+
+    // Vérifier PRIORITE (si renseignée)
+    if (row.priorite && row.priorite.trim() && !existingLists.priorities.includes(row.priorite.toLowerCase())) {
+      missing.priorities.add(row.priorite);
+    }
+
+    // Vérifier LOCALISATION (si renseignée)
+    if (row.localisation && row.localisation.trim() && !existingLists.locations.includes(row.localisation.toLowerCase())) {
+      missing.locations.add(row.localisation);
+    }
+
+    // Vérifier STATUT (obligatoire)
+    if (row.statut && row.statut.trim() && !existingLists.statuses.includes(row.statut.toLowerCase())) {
+      missing.statuses.add(row.statut);
+    }
+  });
+
+  return missing;
+};
+
+// ============================================================================
 // FONCTIONS D'IMPORT
 // ============================================================================
 
@@ -302,7 +479,14 @@ const ROOM_KEY_MAPPING: Record<string, string> = {
  */
 export const importInterventions = async (
   file: File,
-  options: ImportOptions = {}
+  options: ImportOptions = {},
+  existingLists?: {
+    types: string[];
+    categories: string[];
+    priorities: string[];
+    locations: string[];
+    statuses: string[];
+  }
 ): Promise<ImportResult<InterventionImportRow>> => {
   const { skipEmptyRows = true, maxRows = 1000, startRow = 0 } = options;
 
@@ -342,7 +526,7 @@ export const importInterventions = async (
         validData.push(validated);
       } catch (error) {
         if (error instanceof z.ZodError && Array.isArray(error.issues)) {
-          error.issues.forEach((err: any) => {
+          error.issues.forEach(err => {
             errors.push({
               row: rowNumber,
               field: err.path.join('.'),
@@ -359,10 +543,83 @@ export const importInterventions = async (
       }
     });
 
+    // Détecter les valeurs manquantes dans les listes (si existingLists fourni)
+    const missingValues = existingLists
+      ? detectMissingValues(validData, existingLists)
+      : {
+          types: new Set<string>(),
+          categories: new Set<string>(),
+          priorities: new Set<string>(),
+          locations: new Set<string>(),
+          statuses: new Set<string>(),
+        };
+
+    // Générer des warnings pour les valeurs manquantes
+    const warnings: ImportWarning[] = [];
+
+    if (existingLists) {
+      // Warnings pour les types manquants
+      missingValues.types.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'type',
+          message: `La valeur "${value}" n'existe pas dans la liste des types`,
+          value,
+          suggestion: 'Voulez-vous créer cette valeur dans la liste des types ?',
+        });
+      });
+
+      // Warnings pour les catégories manquantes
+      missingValues.categories.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'categorie',
+          message: `La valeur "${value}" n'existe pas dans la liste des catégories`,
+          value,
+          suggestion: 'Voulez-vous créer cette valeur dans la liste des catégories ?',
+        });
+      });
+
+      // Warnings pour les priorités manquantes
+      missingValues.priorities.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'priorite',
+          message: `La valeur "${value}" n'existe pas dans la liste des priorités`,
+          value,
+          suggestion: 'Voulez-vous créer cette valeur dans la liste des priorités ?',
+        });
+      });
+
+      // Warnings pour les localisations manquantes
+      missingValues.locations.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'localisation',
+          message: `La valeur "${value}" n'existe pas dans la liste des localisations`,
+          value,
+          suggestion: 'Voulez-vous créer cette valeur dans la liste des localisations ?',
+        });
+      });
+
+      // Warnings pour les statuts manquants
+      missingValues.statuses.forEach(value => {
+        warnings.push({
+          row: 0,
+          field: 'statut',
+          message: `La valeur "${value}" n'existe pas dans la liste des statuts`,
+          value,
+          suggestion: 'Voulez-vous créer cette valeur dans la liste des statuts ?',
+        });
+      });
+    }
+
     return {
       success: errors.length === 0,
       data: validData,
       errors,
+      warnings,
+      missingValues,
       stats: {
         total: data.length,
         valid: validData.length,
@@ -380,6 +637,14 @@ export const importInterventions = async (
           message: error instanceof Error ? error.message : 'Erreur lors de la lecture du fichier',
         },
       ],
+      warnings: [],
+      missingValues: {
+        types: new Set(),
+        categories: new Set(),
+        priorities: new Set(),
+        locations: new Set(),
+        statuses: new Set(),
+      },
       stats: {
         total: 0,
         valid: 0,
@@ -434,7 +699,7 @@ export const importRooms = async (
         validData.push(validated);
       } catch (error) {
         if (error instanceof z.ZodError && Array.isArray(error.issues)) {
-          error.issues.forEach((err: any) => {
+          error.issues.forEach(err => {
             errors.push({
               row: rowNumber,
               field: err.path.join('.'),
@@ -455,6 +720,14 @@ export const importRooms = async (
       success: errors.length === 0,
       data: validData,
       errors,
+      warnings: [],
+      missingValues: {
+        types: new Set(),
+        categories: new Set(),
+        priorities: new Set(),
+        locations: new Set(),
+        statuses: new Set(),
+      },
       stats: {
         total: data.length,
         valid: validData.length,
@@ -472,6 +745,14 @@ export const importRooms = async (
           message: error instanceof Error ? error.message : 'Erreur lors de la lecture du fichier',
         },
       ],
+      warnings: [],
+      missingValues: {
+        types: new Set(),
+        categories: new Set(),
+        priorities: new Set(),
+        locations: new Set(),
+        statuses: new Set(),
+      },
       stats: {
         total: 0,
         valid: 0,
@@ -482,12 +763,13 @@ export const importRooms = async (
 };
 
 /**
- * Convertit les données d'import en objets Intervention pour Firestore - VERSION COMPLÈTE
+ * Convertit les données d'import en objets Intervention pour Firestore - VERSION V2.0 (21 colonnes)
  */
 export const convertToInterventions = (
   data: InterventionImportRow[],
   establishmentId: string,
-  createdBy: string
+  createdBy: string,
+  createdByName: string
 ): Partial<Intervention>[] => {
   return data.map(row => {
     // Parse l'étage en nombre si possible
@@ -499,54 +781,97 @@ export const convertToInterventions = (
       }
     }
 
+    // Parse la durée estimée en nombre
+    let estimatedDurationMinutes: number | undefined = undefined;
+    if (row.dureeestimee && row.dureeestimee.trim()) {
+      const parsed = parseInt(row.dureeestimee);
+      if (!isNaN(parsed) && parsed > 0) {
+        estimatedDurationMinutes = parsed;
+      }
+    }
+
+    // Parser les dates
+    const createdAt = row.datecreation ? parseDate(row.datecreation) : new Date();
+    const scheduledAt =
+      row.dateplanifiee && row.heureplanifiee
+        ? parseDateTime(row.dateplanifiee, row.heureplanifiee)
+        : row.dateplanifiee
+          ? parseDate(row.dateplanifiee)
+          : undefined;
+    const dueDate = row.datelimite ? parseDate(row.datelimite) : undefined;
+
+    // Parser les tags
+    const tags = row.tags
+      ? row.tags
+          .split(',')
+          .map(t => t.trim())
+          .filter(t => t.length > 0)
+          .map(label => ({
+            id: `tag_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            label,
+            color: '#3b82f6', // Couleur par défaut bleu
+          }))
+      : [];
+
     // Construire l'objet intervention
     const intervention: Partial<Intervention> = {
-      // Champs obligatoires
+      // ========== CHAMPS OBLIGATOIRES ==========
       title: row.titre,
-      type: row.type as any,
-      priority: row.priorite as any,
-      status: 'pending' as any,
-      establishmentId,
-      createdBy,
+      description: row.description,
+      status: (row.statut || 'nouveau') as InterventionStatus,
 
-      // Champs de base
-      description: row.description || '',
-      category: row.categorie as any || undefined,
+      // ========== CHAMPS OPTIONNELS - Classification ==========
+      type: (row.type && row.type.trim() ? row.type : undefined) as InterventionType | undefined,
+      category: (row.categorie && row.categorie.trim() ? row.categorie : undefined) as InterventionCategory | undefined,
+      priority: (row.priorite && row.priorite.trim() ? row.priorite : 'normal') as InterventionPriority,
 
-      // Localisation
+      // ========== LOCALISATION ==========
       location: row.localisation || '',
-      roomNumber: row.chambre || undefined,
+      roomNumber: row.numerochambre || undefined,
       floor: floorNumber,
       building: row.batiment || undefined,
 
-      // Flags
-      isUrgent: ['oui', 'true', '1', 'yes', 'y', 'o'].includes(row.urgent?.toLowerCase() || ''),
-      isBlocking: ['oui', 'true', '1', 'yes', 'y', 'o'].includes(row.bloquant?.toLowerCase() || ''),
+      // ========== DATES ==========
+      createdAt: createdAt ? Timestamp.fromDate(createdAt) : Timestamp.now(),
+      scheduledAt: scheduledAt ? Timestamp.fromDate(scheduledAt) : undefined,
+      dueDate: dueDate ? Timestamp.fromDate(dueDate) : undefined,
+      estimatedDuration: estimatedDurationMinutes,
 
-      // Notes (si présentes)
-      internalNotes: row.notesinternes || undefined,
-      externalReference: row.referenceexterne || undefined,
+      // ========== NOTES ==========
+      internalNotes: row.notesinternes && row.notesinternes.trim() ? row.notesinternes : undefined,
+      resolutionNotes:
+        row.notesresolution && row.notesresolution.trim() ? row.notesresolution : undefined,
 
-      // Métadonnées
+      // ========== MÉTADONNÉES ==========
+      tags: tags.length > 0 ? tags : undefined,
+      externalReference:
+        row.referenceexterne && row.referenceexterne.trim() ? row.referenceexterne : undefined,
+
+      // ========== SYSTÈME ==========
+      establishmentId,
+      createdBy,
+      createdByName,
+
+      // ========== FLAGS ==========
+      isUrgent: row.priorite?.toLowerCase() === 'urgent' || row.priorite?.toLowerCase() === 'critical',
+      isBlocking: false, // Non géré dans V2.0
+      requiresValidation: false,
+
+      // ========== MÉTADONNÉES PAR DÉFAUT ==========
       photos: [],
       photosCount: 0,
       viewsCount: 0,
-      requiresValidation: false,
       isDeleted: false,
     };
 
-    return intervention as any;
+    return intervention;
   });
 };
 
 /**
- * Convertit les données d'import en objets Room pour Firestore
+ * Convertit les données d'import en objets CreateRoomData
  */
-export const convertToRooms = (
-  data: RoomImportRow[],
-  establishmentId: string,
-  createdBy: string
-): Partial<Room>[] => {
+export const convertToRooms = (data: RoomImportRow[]): CreateRoomData[] => {
   return data.map(row => {
     // Parse les équipements si présents
     let amenities: string[] | undefined = undefined;
@@ -557,34 +882,16 @@ export const convertToRooms = (
         .filter(a => a.length > 0);
     }
 
-    // Construire l'objet sans les valeurs undefined
-    const room: Partial<Room> = {
+    // Construire l'objet CreateRoomData
+    const room: CreateRoomData = {
       number: row.numero,
       floor: parseInt(row.etage) || 0,
-      type: row.type as any,
+      type: row.type as RoomType,
       capacity: row.capacite,
-      description: row.description || '',
-      status: 'available' as const,
-      isBlocked: false,
-      establishmentId,
-      createdBy,
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      description: row.description || undefined,
+      building: row.batiment && row.batiment.trim() ? row.batiment : undefined,
+      amenities: amenities && amenities.length > 0 ? amenities : undefined,
     };
-
-    // Ajouter les champs optionnels seulement s'ils ont une valeur
-    if (row.batiment && row.batiment.trim()) {
-      room.building = row.batiment;
-    }
-    if (row.prix !== undefined) {
-      room.price = row.prix;
-    }
-    if (row.surface !== undefined) {
-      room.area = row.surface;
-    }
-    if (amenities && amenities.length > 0) {
-      room.amenities = amenities;
-    }
 
     return room;
   });

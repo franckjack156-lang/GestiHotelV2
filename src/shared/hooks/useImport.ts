@@ -17,12 +17,14 @@ import {
   type RoomImportRow,
 } from '@/shared/services/importService';
 import { createIntervention } from '@/features/interventions/services/interventionService';
+import type { CreateRoomData } from '@/features/rooms/types/room.types';
+import type { CreateInterventionData } from '@/features/interventions/types/intervention.types';
 
 // ============================================================================
 // HOOK PRINCIPAL
 // ============================================================================
 
-export const useImportInterventions = (establishmentId: string, userId: string) => {
+export const useImportInterventions = (establishmentId: string, userId: string, userName?: string) => {
   const [isImporting, setIsImporting] = useState(false);
 
   const handleImport = async (file: File): Promise<ImportResult<InterventionImportRow>> => {
@@ -32,7 +34,7 @@ export const useImportInterventions = (establishmentId: string, userId: string) 
   const handleConfirm = async (data: InterventionImportRow[]) => {
     setIsImporting(true);
     try {
-      const interventions = convertToInterventions(data, establishmentId, userId);
+      const interventions = convertToInterventions(data, establishmentId, userId, userName || 'Utilisateur');
 
       // Créer les interventions en batch (par groupes de 10)
       const batchSize = 10;
@@ -40,7 +42,7 @@ export const useImportInterventions = (establishmentId: string, userId: string) 
         const batch = interventions.slice(i, i + batchSize);
         await Promise.all(
           batch.map(intervention =>
-            createIntervention(establishmentId, userId, intervention as any)
+            createIntervention(establishmentId, userId, intervention as CreateInterventionData)
           )
         );
       }
@@ -56,7 +58,7 @@ export const useImportInterventions = (establishmentId: string, userId: string) 
   };
 };
 
-export const useImportRooms = (establishmentId: string, userId: string) => {
+export const useImportRooms = () => {
   const [isImporting, setIsImporting] = useState(false);
 
   const handleImport = async (file: File): Promise<ImportResult<RoomImportRow>> => {
@@ -65,11 +67,11 @@ export const useImportRooms = (establishmentId: string, userId: string) => {
 
   const handleConfirm = async (
     data: RoomImportRow[],
-    createRoomFn: (room: any) => Promise<string | null>
+    createRoomFn: (room: CreateRoomData) => Promise<string | null>
   ) => {
     setIsImporting(true);
     try {
-      const rooms = convertToRooms(data, establishmentId, userId);
+      const rooms = convertToRooms(data);
 
       // Créer les chambres en batch (par groupes de 10)
       const batchSize = 10;

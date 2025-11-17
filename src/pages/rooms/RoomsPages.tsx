@@ -111,7 +111,7 @@ const RoomsListPageComponent = () => {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // Hook d'import
-  const importHook = useImportRooms(establishmentId || '', user?.id || '');
+  const importHook = useImportRooms();
 
   // Filtrer les chambres
   const filteredRooms = useMemo(() => {
