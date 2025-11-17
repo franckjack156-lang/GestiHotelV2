@@ -91,9 +91,20 @@ export const useImportInterventions = (
             referenceLists.lists['interventionStatuses']?.items?.map(
               (item: { value: string }) => item.value
             ) || [],
+          // Combiner les chambres ET les listes de référence pour floors/buildings
           rooms: [...new Set(rooms.map(r => r.number))], // Garder la casse originale
-          floors: [...new Set(rooms.map(r => r.floor?.toString() || '').filter(f => f))],
-          buildings: [...new Set(rooms.map(r => r.building || '').filter(b => b))],
+          floors: [
+            ...(referenceLists.lists['floors']?.items?.map(
+              (item: { value: string }) => item.value
+            ) || []),
+            ...new Set(rooms.map(r => r.floor?.toString() || '').filter(f => f)),
+          ],
+          buildings: [
+            ...(referenceLists.lists['buildings']?.items?.map(
+              (item: { value: string }) => item.value
+            ) || []),
+            ...new Set(rooms.map(r => r.building || '').filter(b => b)),
+          ],
           users: users.map(u => ({ displayName: u.displayName })),
         }
       : undefined;
