@@ -39,7 +39,10 @@ export const useImportInterventions = (
 ) => {
   const [isImporting, setIsImporting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
-  const { data: referenceLists, reload } = useAllReferenceLists({ realtime: false, autoLoad: true });
+  const { data: referenceLists, reload } = useAllReferenceLists({
+    realtime: false,
+    autoLoad: true,
+  });
   const { rooms } = useRooms(establishmentId);
   const { user } = useAuth();
   const { currentEstablishment } = useCurrentEstablishment();
@@ -61,39 +64,36 @@ export const useImportInterventions = (
   }, [establishmentId]);
 
   const handleImport = async (file: File): Promise<ImportResult<InterventionImportRow>> => {
-    // Extraire les listes de valeurs uniques des chambres
-    const roomNumbers = [...new Set(rooms.map(r => r.number.toLowerCase()))];
-    const floors = [
-      ...new Set(rooms.map(r => r.floor?.toString().toLowerCase() || '').filter(f => f)),
-    ];
-    const buildings = [...new Set(rooms.map(r => r.building?.toLowerCase() || '').filter(b => b))];
+    // Note: Ces variables ne sont plus utilisées car on passe directement les valeurs originales
+    // dans existingLists ci-dessous pour préserver la casse
 
     // Préparer les listes existantes pour la détection des valeurs manquantes
+    // IMPORTANT: On garde les valeurs originales (avec leur casse) pour préserver l'orthographe
     const existingLists = referenceLists
       ? {
           types:
-            referenceLists.lists['interventionTypes']?.items?.map((item: { value: string }) =>
-              item.value.toLowerCase()
+            referenceLists.lists['interventionTypes']?.items?.map(
+              (item: { value: string }) => item.value
             ) || [],
           categories:
-            referenceLists.lists['interventionCategories']?.items?.map((item: { value: string }) =>
-              item.value.toLowerCase()
+            referenceLists.lists['interventionCategories']?.items?.map(
+              (item: { value: string }) => item.value
             ) || [],
           priorities:
-            referenceLists.lists['interventionPriorities']?.items?.map((item: { value: string }) =>
-              item.value.toLowerCase()
+            referenceLists.lists['interventionPriorities']?.items?.map(
+              (item: { value: string }) => item.value
             ) || [],
           locations:
-            referenceLists.lists['locations']?.items?.map((item: { value: string }) =>
-              item.value.toLowerCase()
+            referenceLists.lists['locations']?.items?.map(
+              (item: { value: string }) => item.value
             ) || [],
           statuses:
-            referenceLists.lists['interventionStatuses']?.items?.map((item: { value: string }) =>
-              item.value.toLowerCase()
+            referenceLists.lists['interventionStatuses']?.items?.map(
+              (item: { value: string }) => item.value
             ) || [],
-          rooms: roomNumbers,
-          floors: floors,
-          buildings: buildings,
+          rooms: [...new Set(rooms.map(r => r.number))], // Garder la casse originale
+          floors: [...new Set(rooms.map(r => r.floor?.toString() || '').filter(f => f))],
+          buildings: [...new Set(rooms.map(r => r.building || '').filter(b => b))],
           users: users.map(u => ({ displayName: u.displayName })),
         }
       : undefined;
@@ -152,21 +152,31 @@ export const useImportInterventions = (
 
     // Créer les catégories manquantes
     for (const value of missingValues.categories) {
-      await referenceListsService.addItem(currentEstablishment.id, user.id, 'interventionCategories', {
-        value,
-        label: value,
-        color: 'green',
-      });
+      await referenceListsService.addItem(
+        currentEstablishment.id,
+        user.id,
+        'interventionCategories',
+        {
+          value,
+          label: value,
+          color: 'green',
+        }
+      );
       createdCount.categories++;
     }
 
     // Créer les priorités manquantes
     for (const value of missingValues.priorities) {
-      await referenceListsService.addItem(currentEstablishment.id, user.id, 'interventionPriorities', {
-        value,
-        label: value,
-        color: 'orange',
-      });
+      await referenceListsService.addItem(
+        currentEstablishment.id,
+        user.id,
+        'interventionPriorities',
+        {
+          value,
+          label: value,
+          color: 'orange',
+        }
+      );
       createdCount.priorities++;
     }
 

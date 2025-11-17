@@ -513,6 +513,17 @@ const parseDateTime = (dateStr: string, timeStr: string): Date | null => {
 // ============================================================================
 
 /**
+ * Vérifie si une valeur existe dans une liste (insensible à la casse)
+ * @param value - Valeur à chercher
+ * @param list - Liste de valeurs existantes
+ * @returns true si la valeur existe (insensible à la casse), false sinon
+ */
+const existsInList = (value: string, list: string[]): boolean => {
+  const normalizedValue = value.trim().toLowerCase();
+  return list.some(item => item.toLowerCase() === normalizedValue);
+};
+
+/**
  * Détecte les valeurs qui n'existent pas dans les listes de référence
  */
 const detectMissingValues = (
@@ -543,63 +554,63 @@ const detectMissingValues = (
   };
 
   data.forEach(row => {
-    // Vérifier TYPE (si renseigné)
-    if (row.type && row.type.trim() && !existingLists.types.includes(row.type.toLowerCase())) {
+    // Vérifier TYPE (si renseigné) - INSENSIBLE À LA CASSE
+    if (row.type && row.type.trim() && !existsInList(row.type, existingLists.types)) {
       missing.types.add(row.type);
     }
 
-    // Vérifier CATEGORIE (si renseignée)
+    // Vérifier CATEGORIE (si renseignée) - INSENSIBLE À LA CASSE
     if (
       row.categorie &&
       row.categorie.trim() &&
-      !existingLists.categories.includes(row.categorie.toLowerCase())
+      !existsInList(row.categorie, existingLists.categories)
     ) {
       missing.categories.add(row.categorie);
     }
 
-    // Vérifier PRIORITE (si renseignée)
+    // Vérifier PRIORITE (si renseignée) - INSENSIBLE À LA CASSE
     if (
       row.priorite &&
       row.priorite.trim() &&
-      !existingLists.priorities.includes(row.priorite.toLowerCase())
+      !existsInList(row.priorite, existingLists.priorities)
     ) {
       missing.priorities.add(row.priorite);
     }
 
-    // Vérifier LOCALISATION (si renseignée)
+    // Vérifier LOCALISATION (si renseignée) - INSENSIBLE À LA CASSE
     if (
       row.localisation &&
       row.localisation.trim() &&
-      !existingLists.locations.includes(row.localisation.toLowerCase())
+      !existsInList(row.localisation, existingLists.locations)
     ) {
       missing.locations.add(row.localisation);
     }
 
-    // Vérifier STATUT (obligatoire)
+    // Vérifier STATUT (obligatoire) - INSENSIBLE À LA CASSE + MAPPING FR/EN
     if (row.statut && row.statut.trim()) {
       const normalizedStatus = normalizeStatus(row.statut);
-      if (!existingLists.statuses.includes(normalizedStatus)) {
+      if (!existsInList(normalizedStatus, existingLists.statuses)) {
         missing.statuses.add(row.statut); // Garder la valeur originale pour le message d'erreur
       }
     }
 
-    // Vérifier NUMERO DE CHAMBRE (si liste fournie)
+    // Vérifier NUMERO DE CHAMBRE (si liste fournie) - INSENSIBLE À LA CASSE
     if (existingLists.rooms && row.numerochambre && row.numerochambre.trim()) {
-      if (!existingLists.rooms.includes(row.numerochambre.toLowerCase())) {
+      if (!existsInList(row.numerochambre, existingLists.rooms)) {
         missing.rooms.add(row.numerochambre);
       }
     }
 
-    // Vérifier ETAGE (si liste fournie)
+    // Vérifier ETAGE (si liste fournie) - INSENSIBLE À LA CASSE
     if (existingLists.floors && row.etage && row.etage.trim()) {
-      if (!existingLists.floors.includes(row.etage.toLowerCase())) {
+      if (!existsInList(row.etage, existingLists.floors)) {
         missing.floors.add(row.etage);
       }
     }
 
-    // Vérifier BATIMENT (si liste fourni)
+    // Vérifier BATIMENT (si liste fourni) - INSENSIBLE À LA CASSE
     if (existingLists.buildings && row.batiment && row.batiment.trim()) {
-      if (!existingLists.buildings.includes(row.batiment.toLowerCase())) {
+      if (!existsInList(row.batiment, existingLists.buildings)) {
         missing.buildings.add(row.batiment);
       }
     }
@@ -1118,7 +1129,7 @@ export const convertToInterventions = (
       // ========== CHAMPS OBLIGATOIRES ==========
       title: row.titre,
       description: row.description,
-      status: (normalizeStatus(row.statut || 'nouveau')) as InterventionStatus,
+      status: normalizeStatus(row.statut || 'nouveau') as InterventionStatus,
 
       // ========== CHAMPS OPTIONNELS - Classification ==========
       type: (row.type && row.type.trim() ? row.type : undefined) as InterventionType | undefined,
