@@ -16,7 +16,7 @@
  * Design moderne inspiré de Vercel, Linear et Stripe
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import {
   User,
@@ -53,7 +53,6 @@ import {
   Sparkles,
   Zap,
   Volume2,
-  // VolumeX, // TODO: Imported but unused
   MessageSquare,
   FileText,
   ChevronRight,
@@ -92,7 +91,9 @@ import { useUsers } from '@/features/users/hooks/useUsers';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 import { cn } from '@/shared/lib/utils';
-import type { EstablishmentSummary } from '@/shared/types/establishment.types';
+import type { Establishment, EstablishmentSummary } from '@/shared/types/establishment.types';
+import type { User as UserData } from '@/features/users/types/user.types';
+import type { LucideIcon } from 'lucide-react';
 
 // ============================================================================
 // TYPES
@@ -111,6 +112,38 @@ interface SecurityFormData {
   currentPassword: string;
   newPassword: string;
   confirmPassword: string;
+}
+
+interface NotificationOptionProps {
+  icon: LucideIcon;
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  accentColor: string;
+}
+
+interface ThemeOptionProps {
+  value: string;
+  icon: LucideIcon;
+  label: string;
+  description: string;
+}
+
+interface ColorOptionProps {
+  value: string;
+  color: string;
+}
+
+interface DensityOptionProps {
+  value: string;
+  label: string;
+  description: string;
+  preview: React.ReactNode;
+}
+
+interface ProfileSectionProps {
+  user: UserData | null;
 }
 
 // ============================================================================
@@ -294,7 +327,7 @@ export const SettingsPage = () => {
 // SECTION PROFIL
 // ============================================================================
 
-const ProfileSection = ({ user }: any) => {
+const ProfileSection = ({ user }: ProfileSectionProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   // TODO: hasChanges unused
   // const [hasChanges, setHasChanges] = useState(false);
@@ -305,8 +338,8 @@ const ProfileSection = ({ user }: any) => {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
       phoneNumber: user?.phoneNumber || '',
-      jobTitle: user?.jobTitle || '',
-      department: user?.department || '',
+      jobTitle: (user as { jobTitle?: string })?.jobTitle || '',
+      department: (user as { department?: string })?.department || '',
     },
   });
 
@@ -326,7 +359,7 @@ const ProfileSection = ({ user }: any) => {
         description: 'Vos informations ont été enregistrées',
       });
       // setHasChanges(false);
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la mise à jour', {
         description: 'Veuillez réessayer',
       });
@@ -524,7 +557,7 @@ const NotificationsSection = () => {
     checked,
     onChange,
     accentColor,
-  }: any) => (
+  }: NotificationOptionProps) => (
     <div className="group flex items-center justify-between p-4 rounded-lg hover:bg-muted/50 transition-colors duration-200">
       <div className="flex items-start gap-3 flex-1">
         <div
@@ -927,9 +960,9 @@ const SecuritySection = () => {
   };
 
   // Mettre à jour la force du mot de passe
-  useState(() => {
+  useEffect(() => {
     setPasswordStrength(calculatePasswordStrength(newPassword || ''));
-  });
+  }, [newPassword]);
 
   const onSubmit = async (data: SecurityFormData) => {
     if (data.newPassword !== data.confirmPassword) {
@@ -954,7 +987,7 @@ const SecuritySection = () => {
         description: 'Votre nouveau mot de passe est maintenant actif',
       });
       reset();
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la modification', {
         description: 'Veuillez réessayer',
       });
@@ -1188,9 +1221,9 @@ const PreferencesSection = () => {
     }
   };
 
-  const ThemeOption = ({ value, icon: Icon, label, description }: any) => (
+  const ThemeOption = ({ value, icon: Icon, label, description }: ThemeOptionProps) => (
     <button
-      onClick={() => handleThemeChange(value)}
+      onClick={() => handleThemeChange(value as 'light' | 'dark' | 'auto')}
       className={cn(
         'group relative p-4 border-2 rounded-xl transition-all duration-300 hover:scale-105',
         displayPreferences.theme === value
@@ -1217,10 +1250,13 @@ const PreferencesSection = () => {
     </button>
   );
 
-  // TODO: name parameter unused
-  const ColorOption = ({ value, color }: any) => (
+  const ColorOption = ({ value, color }: ColorOptionProps) => (
     <button
-      onClick={() => updateDisplayPreferences({ themeColor: value })}
+      onClick={() =>
+        updateDisplayPreferences({
+          themeColor: value as 'red' | 'orange' | 'green' | 'blue' | 'purple' | 'pink',
+        })
+      }
       className={cn(
         'group relative p-2.5 border-2 rounded-xl transition-all duration-300 hover:scale-105',
         displayPreferences.themeColor === value
@@ -1237,9 +1273,11 @@ const PreferencesSection = () => {
     </button>
   );
 
-  const DensityOption = ({ value, label, description, preview }: any) => (
+  const DensityOption = ({ value, label, description, preview }: DensityOptionProps) => (
     <button
-      onClick={() => updateDisplayPreferences({ density: value })}
+      onClick={() =>
+        updateDisplayPreferences({ density: value as 'compact' | 'comfortable' | 'spacious' })
+      }
       className={cn(
         'group relative p-4 border-2 rounded-xl transition-all duration-300 hover:scale-105',
         displayPreferences.density === value
@@ -1404,12 +1442,7 @@ const PreferencesSection = () => {
                         name: 'Rose',
                       },
                     ].map(color => (
-                      <ColorOption
-                        key={color.value}
-                        value={color.value}
-                        color={color.color}
-                        name={color.name}
-                      />
+                      <ColorOption key={color.value} value={color.value} color={color.color} />
                     ))}
                   </div>
                 </div>
@@ -1519,7 +1552,11 @@ const PreferencesSection = () => {
                     ].map(({ value, label, icon: Icon }) => (
                       <button
                         key={value}
-                        onClick={() => updateDisplayPreferences({ defaultView: value as any })}
+                        onClick={() =>
+                          updateDisplayPreferences({
+                            defaultView: value as 'grid' | 'list' | 'calendar',
+                          })
+                        }
                         className={cn(
                           'p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105',
                           displayPreferences.defaultView === value
@@ -1860,7 +1897,7 @@ const UsersManagementSection = () => {
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 </div>
                 <div className="text-3xl font-bold text-green-900 dark:text-green-100">
-                  {users.filter((u: any) => u.status === 'active').length}
+                  {users.filter((u: UserData) => u.status === 'active').length}
                 </div>
                 <p className="text-xs text-green-600 dark:text-green-400 mt-1">en ligne</p>
               </div>
@@ -1873,7 +1910,7 @@ const UsersManagementSection = () => {
                   <AlertCircle className="h-4 w-4 text-gray-600" />
                 </div>
                 <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  {users.filter((u: any) => u.status === 'inactive').length}
+                  {users.filter((u: UserData) => u.status === 'inactive').length}
                 </div>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">hors ligne</p>
               </div>
@@ -1881,7 +1918,7 @@ const UsersManagementSection = () => {
 
             {/* Liste d'utilisateurs */}
             <div className="space-y-3">
-              {users.slice(0, 5).map((user: any) => (
+              {users.slice(0, 5).map((user: UserData) => (
                 <div
                   key={user.id}
                   className="group p-4 border-2 rounded-xl hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/10 cursor-pointer transition-all duration-200"
@@ -2034,7 +2071,10 @@ const EstablishmentsManagementSection = () => {
                   <Layout className="h-4 w-4 text-green-600" />
                 </div>
                 <div className="text-3xl font-bold text-green-900 dark:text-green-100">
-                  {establishments.reduce((sum: number, e: any) => sum + (e.totalRooms || 0), 0)}
+                  {establishments.reduce(
+                    (sum: number, e: Establishment) => sum + (e.totalRooms || 0),
+                    0
+                  )}
                 </div>
                 <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                   chambres disponibles
@@ -2057,7 +2097,7 @@ const EstablishmentsManagementSection = () => {
 
             {/* Liste d'établissements */}
             <div className="space-y-3">
-              {establishments.map((establishment: any) => (
+              {establishments.map((establishment: Establishment) => (
                 <div
                   key={establishment.id}
                   className="group p-4 border-2 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all duration-200"
@@ -2076,7 +2116,7 @@ const EstablishmentsManagementSection = () => {
                           </span>
                           <span className="flex items-center gap-1">
                             <Globe className="h-3.5 w-3.5" />
-                            {establishment.city}
+                            {(establishment as { city?: string }).city || 'N/A'}
                           </span>
                           <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
                             <Layout className="h-3.5 w-3.5" />
@@ -2108,7 +2148,7 @@ const EstablishmentsManagementSection = () => {
                             logoUrl: establishment.logoUrl,
                             isActive: establishment.isActive,
                             totalRooms: establishment.totalRooms,
-                            city: establishment.address?.city || establishment.city || '',
+                            city: establishment.address.city,
                           });
                         }}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
@@ -2127,17 +2167,14 @@ const EstablishmentsManagementSection = () => {
         {deleteEstablishment && firebaseUser && (
           <DeleteEstablishmentDialog
             open={!!deleteEstablishment}
-            onOpenChange={(open) => !open && setDeleteEstablishment(null)}
+            onOpenChange={open => !open && setDeleteEstablishment(null)}
             establishment={deleteEstablishment}
             userId={firebaseUser.uid}
             onSuccess={handleDeleteSuccess}
           />
         )}
 
-        <CreateEstablishmentDialog
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-        />
+        <CreateEstablishmentDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
       </CardContent>
     </Card>
   );
