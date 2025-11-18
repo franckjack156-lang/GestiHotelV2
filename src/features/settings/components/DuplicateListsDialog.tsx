@@ -97,10 +97,14 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
   const [progress, setProgress] = useState(0);
 
   // État pour les listes source et cible
-  const [sourceLists, setSourceLists] = useState<any>(null);
+  const [sourceLists, setSourceLists] = useState<Awaited<
+    ReturnType<typeof referenceListsService.getAllLists>
+  > | null>(null);
   const [sourceLoading, setSourceLoading] = useState(false);
   const [sourceError, setSourceError] = useState<string | null>(null);
-  const [targetLists, setTargetLists] = useState<any>(null);
+  const [targetLists, setTargetLists] = useState<Awaited<
+    ReturnType<typeof referenceListsService.getAllLists>
+  > | null>(null);
   const [, setTargetLoading] = useState(false);
 
   // Charger les listes de l'établissement source
@@ -227,8 +231,9 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
         setStep('done');
         onSuccess?.();
       }, 500);
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors de la duplication');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Erreur lors de la duplication');
       setStep('confirm');
       setProgress(0);
     }
@@ -344,7 +349,7 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
           </div>
         );
 
-      case 'select-lists':
+      case 'select-lists': {
         if (!sourceLists) return null;
 
         const allListKeys = Object.keys(sourceLists.lists) as ListKey[];
@@ -373,6 +378,7 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
                   >
                     <Checkbox
                       checked={isSelected}
+                      onClick={e => e.stopPropagation()}
                       onCheckedChange={() => handleToggleList(listKey)}
                     />
                     <div className="flex-1">
@@ -393,6 +399,7 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
             </p>
           </div>
         );
+      }
 
       case 'select-target':
         return (
@@ -470,7 +477,7 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
           </div>
         );
 
-      case 'confirm':
+      case 'confirm': {
         const conflictingLists = getConflictingLists();
 
         return (
@@ -551,6 +558,7 @@ export const DuplicateListsDialog: React.FC<DuplicateListsDialogProps> = ({
             </div>
           </div>
         );
+      }
 
       case 'processing':
         return (
