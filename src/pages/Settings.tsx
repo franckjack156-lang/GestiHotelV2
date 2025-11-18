@@ -66,6 +66,7 @@ import {
 } from 'lucide-react';
 import { ReferenceListsOrchestrator } from '@/features/settings/components/ReferenceListsOrchestrator';
 import { DeleteEstablishmentDialog } from '@/features/establishments/components/DeleteEstablishmentDialog';
+import { CreateEstablishmentDialog } from '@/features/establishments/components/CreateEstablishmentDialog';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
@@ -1959,6 +1960,7 @@ const EstablishmentsManagementSection = () => {
   const { establishments, isLoading, loadEstablishments } = useEstablishments();
   const { firebaseUser } = useAuth();
   const [deleteEstablishment, setDeleteEstablishment] = useState<EstablishmentSummary | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const handleDeleteSuccess = () => {
     toast.success('Établissement supprimé définitivement');
@@ -2044,7 +2046,7 @@ const EstablishmentsManagementSection = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Mes établissements</h3>
               <Button
-                onClick={() => navigate('/app/settings/establishment')}
+                onClick={() => setCreateDialogOpen(true)}
                 size="sm"
                 className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
               >
@@ -2131,6 +2133,11 @@ const EstablishmentsManagementSection = () => {
             onSuccess={handleDeleteSuccess}
           />
         )}
+
+        <CreateEstablishmentDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+        />
       </CardContent>
     </Card>
   );

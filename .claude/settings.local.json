@@ -10,7 +10,8 @@
       "Bash(git reset:*)",
       "Bash(firebase firestore:rules:*)",
       "Bash(firebase projects:list:*)",
-      "Bash(firebase deploy:*)"
+      "Bash(firebase deploy:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []
