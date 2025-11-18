@@ -30,8 +30,10 @@ import {
   ESTABLISHMENT_TYPE_LABELS,
   type EstablishmentCategory,
 } from '@/shared/types/establishment.types';
-import { Building2, Phone, Mail, Globe, CheckCircle2, Loader2 } from 'lucide-react';
+import { Building2, Phone, Mail, Globe, CheckCircle2, Loader2, Building } from 'lucide-react';
 import { toast } from 'sonner';
+import { GenerateFloorsDialog } from '@/features/settings/components/GenerateFloorsDialog';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 interface CreateEstablishmentDialogProps {
   open: boolean;
@@ -56,13 +58,13 @@ interface FormData {
   phone: string;
   website?: string;
   totalRooms: number;
-  totalFloors?: number;
 }
 
 const STEPS = [
   { id: 1, title: 'Informations', description: 'Détails de base' },
   { id: 2, title: 'Adresse', description: 'Localisation' },
   { id: 3, title: 'Contact & Capacité', description: 'Coordonnées et chambres' },
+  { id: 4, title: 'Étages (optionnel)', description: 'Génération automatique' },
 ];
 
 export const CreateEstablishmentDialog = ({
@@ -71,8 +73,11 @@ export const CreateEstablishmentDialog = ({
 }: CreateEstablishmentDialogProps) => {
   const navigate = useNavigate();
   const { createEstablishment, isLoading } = useEstablishments();
+  const { user } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [createdEstablishmentId, setCreatedEstablishmentId] = useState<string | null>(null);
+  const [showFloorsDialog, setShowFloorsDialog] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     type: EstablishmentType.HOTEL,
@@ -97,6 +102,8 @@ export const CreateEstablishmentDialog = ({
         return !!formData.street && !!formData.city && !!formData.country;
       case 3:
         return !!formData.email && !!formData.phone && formData.totalRooms > 0;
+      case 4:
+        return true; // Étape 4 est optionnelle
       default:
         return false;
     }
@@ -112,7 +119,7 @@ export const CreateEstablishmentDialog = ({
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async () => {
+  const handleCreateEstablishment = async () => {
     if (!validateStep(3)) return;
 
     const establishmentId = await createEstablishment({
@@ -132,36 +139,42 @@ export const CreateEstablishmentDialog = ({
       },
       website: formData.website,
       totalRooms: formData.totalRooms,
-      totalFloors: formData.totalFloors,
     });
 
     if (establishmentId) {
+      setCreatedEstablishmentId(establishmentId);
       toast.success('Établissement créé !', {
         description: `${formData.name} a été créé avec succès et initialisé automatiquement.`,
       });
 
-      // Fermer le dialog et réinitialiser
-      onOpenChange(false);
-      setCurrentStep(1);
-      setFormData({
-        name: '',
-        type: EstablishmentType.HOTEL,
-        street: '',
-        city: '',
-        zipCode: '',
-        country: 'France',
-        email: '',
-        phone: '',
-        totalRooms: 10,
-      });
-
-      // Rediriger vers les paramètres du nouvel établissement
-      navigate('/app/settings/establishment');
+      // Passer à l'étape 4 (génération des étages)
+      setCurrentStep(4);
     } else {
       toast.error('Erreur', {
         description: "Impossible de créer l'établissement. Veuillez réessayer.",
       });
     }
+  };
+
+  const handleFinish = () => {
+    // Fermer le dialog et réinitialiser
+    onOpenChange(false);
+    setCurrentStep(1);
+    setCreatedEstablishmentId(null);
+    setFormData({
+      name: '',
+      type: EstablishmentType.HOTEL,
+      street: '',
+      city: '',
+      zipCode: '',
+      country: 'France',
+      email: '',
+      phone: '',
+      totalRooms: 10,
+    });
+
+    // Rediriger vers la page des paramètres de l'établissement
+    navigate('/app/settings/establishment');
   };
 
   const renderStep1 = () => (
@@ -343,31 +356,48 @@ export const CreateEstablishmentDialog = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="totalRooms">
-            Nombre de chambres <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="totalRooms"
-            type="number"
-            min="1"
-            value={formData.totalRooms}
-            onChange={e => updateFormData('totalRooms', parseInt(e.target.value) || 0)}
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="totalRooms">
+          Nombre de chambres <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="totalRooms"
+          type="number"
+          min="1"
+          value={formData.totalRooms}
+          onChange={e => updateFormData('totalRooms', parseInt(e.target.value) || 0)}
+        />
+      </div>
+    </div>
+  );
 
-        <div className="space-y-2">
-          <Label htmlFor="totalFloors">Nombre d'étages</Label>
-          <Input
-            id="totalFloors"
-            type="number"
-            min="1"
-            placeholder="Optionnel"
-            value={formData.totalFloors || ''}
-            onChange={e => updateFormData('totalFloors', parseInt(e.target.value) || undefined)}
-          />
+  const renderStep4 = () => (
+    <div className="space-y-4">
+      <div className="text-center space-y-4 py-8">
+        <div className="inline-flex p-4 rounded-full bg-emerald-50 dark:bg-emerald-950/20 mb-2">
+          <Building className="h-12 w-12 text-emerald-500" />
         </div>
+        <h3 className="text-lg font-semibold">Génération des étages</h3>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Vous pouvez maintenant générer automatiquement les étages de votre établissement avec le
+          configurateur avancé.
+        </p>
+        <div className="flex flex-col gap-3 mt-6">
+          <Button
+            onClick={() => setShowFloorsDialog(true)}
+            className="bg-emerald-500 hover:bg-emerald-600"
+            size="lg"
+          >
+            <Building className="mr-2 h-4 w-4" />
+            Générer les étages maintenant
+          </Button>
+          <Button onClick={handleFinish} variant="outline" size="lg">
+            Passer cette étape
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-4">
+          💡 Vous pourrez toujours générer les étages plus tard depuis les paramètres
+        </p>
       </div>
     </div>
   );
@@ -380,6 +410,8 @@ export const CreateEstablishmentDialog = ({
         return renderStep2();
       case 3:
         return renderStep3();
+      case 4:
+        return renderStep4();
       default:
         return null;
     }
@@ -445,46 +477,62 @@ export const CreateEstablishmentDialog = ({
         <div className="py-4">{renderStepContent()}</div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t">
-          <Button variant="outline" onClick={handleBack} disabled={currentStep === 1 || isLoading}>
-            Retour
-          </Button>
-
-          <div className="flex gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Annuler
+        {currentStep !== 4 && (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <Button variant="outline" onClick={handleBack} disabled={currentStep === 1 || isLoading}>
+              Retour
             </Button>
 
-            {currentStep < STEPS.length ? (
-              <Button
-                onClick={handleNext}
-                disabled={!validateStep(currentStep)}
-                className="bg-emerald-500 hover:bg-emerald-600"
-              >
-                Suivant
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>
+                Annuler
               </Button>
-            ) : (
-              <Button
-                onClick={handleSubmit}
-                disabled={!validateStep(3) || isLoading}
-                className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={16} className="mr-2 animate-spin" />
-                    Création en cours...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 size={16} className="mr-2" />
-                    Créer l'établissement
-                  </>
-                )}
-              </Button>
-            )}
+
+              {currentStep < 3 ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={!validateStep(currentStep)}
+                  className="bg-emerald-500 hover:bg-emerald-600"
+                >
+                  Suivant
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleCreateEstablishment}
+                  disabled={!validateStep(3) || isLoading}
+                  className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={16} className="mr-2 animate-spin" />
+                      Création en cours...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={16} className="mr-2" />
+                      Créer l'établissement
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
+
+      {/* Dialog de génération des étages */}
+      {showFloorsDialog && createdEstablishmentId && user && (
+        <GenerateFloorsDialog
+          open={showFloorsDialog}
+          onClose={() => setShowFloorsDialog(false)}
+          establishmentId={createdEstablishmentId}
+          userId={user.id}
+          onSuccess={() => {
+            setShowFloorsDialog(false);
+            handleFinish();
+          }}
+        />
+      )}
     </Dialog>
   );
 };
