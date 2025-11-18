@@ -28,6 +28,7 @@ import {
 import { db } from '@/core/config/firebase';
 import * as XLSX from 'xlsx';
 import * as LucideIcons from 'lucide-react';
+import { removeUndefinedFields } from '@/shared/utils/firestore';
 import type {
   EstablishmentReferenceLists,
   ListKey,
@@ -935,13 +936,17 @@ export const duplicateLists = async (userId: string, input: DuplicateListsInput)
       if (!sourceList) continue;
 
       if (input.overwrite || !newLists[listKey]) {
-        newLists[listKey] = sourceList;
+        // Nettoyer les valeurs undefined avant de copier
+        newLists[listKey] = removeUndefinedFields(sourceList);
       }
     }
 
+    // Nettoyer l'objet complet avant la mise à jour Firestore
+    const cleanedLists = removeUndefinedFields(newLists);
+
     const docRef = getListsDocPath(input.toEstablishmentId);
     await updateDoc(docRef, {
-      lists: newLists,
+      lists: cleanedLists,
       lastModified: serverTimestamp(),
       modifiedBy: userId,
     });
@@ -953,7 +958,7 @@ export const duplicateLists = async (userId: string, input: DuplicateListsInput)
       'multiple',
       'multiple',
       targetLists?.lists,
-      newLists
+      cleanedLists
     );
 
     console.log('✅ Listes dupliquées');
