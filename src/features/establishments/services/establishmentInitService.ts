@@ -137,11 +137,10 @@ export const resetEstablishmentLists = async (
 
 // Importer getDoc qui manquait
 import { getDoc, updateDoc } from 'firebase/firestore';
-import { getEssentialLists } from '@/shared/services/defaultReferenceLists';
 
 /**
  * Ajouter les listes manquantes à un établissement existant
- * Utile pour les migrations après ajout de nouvelles listes essentielles
+ * Utile pour les migrations après ajout de nouvelles listes prédéfinies
  *
  * @param establishmentId - ID de l'établissement
  * @param userId - ID de l'utilisateur
@@ -188,11 +187,11 @@ export const addMissingLists = async (establishmentId: string, userId: string): 
     }
 
     const currentData = docSnap.data() as EstablishmentReferenceLists;
-    const essentialLists = getEssentialLists();
+    const allDefaultLists = DEFAULT_REFERENCE_LISTS;
     const missingLists: Record<string, any> = {};
 
-    // Vérifier quelles listes essentielles manquent
-    for (const [key, config] of Object.entries(essentialLists)) {
+    // Vérifier quelles listes prédéfinies manquent
+    for (const [key, config] of Object.entries(allDefaultLists)) {
       if (!currentData.lists[key]) {
         // Nettoyer la config pour Firestore
         missingLists[key] = cleanForFirestore(config);
