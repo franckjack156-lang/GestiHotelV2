@@ -6,7 +6,7 @@
  * Dialog pour générer automatiquement les étages d'un établissement
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -25,8 +25,8 @@ import { Card, CardContent } from '@/shared/components/ui/card';
 import { Loader2, Building, AlertTriangle, CheckCircle2, Sparkles } from 'lucide-react';
 import type { FloorGenerationOptions } from '@/shared/services/floorsGenerator';
 import { generateFloors } from '@/shared/services/floorsGenerator';
-import { addItem, deleteItem } from '@/shared/services/referenceListsService';
-import { useReferenceList } from '@/shared/hooks/useReferenceLists';
+import { addItem, deleteItem, getList } from '@/shared/services/referenceListsService';
+import type { ReferenceItem } from '@/shared/types/reference-lists.types';
 
 interface GenerateFloorsDialogProps {
   open: boolean;
@@ -45,11 +45,30 @@ export const GenerateFloorsDialog = ({
   defaultTotalFloors = 0,
   onSuccess,
 }: GenerateFloorsDialogProps) => {
-  const { items: existingFloors } = useReferenceList('floors');
-
+  const [existingFloors, setExistingFloors] = useState<ReferenceItem[]>([]);
+  const [isLoadingFloors, setIsLoadingFloors] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Charger les étages existants pour CET établissement spécifiquement
+  useEffect(() => {
+    if (open && establishmentId) {
+      const loadFloors = async () => {
+        setIsLoadingFloors(true);
+        try {
+          const lists = await getList(establishmentId, 'floors');
+          setExistingFloors(lists?.items || []);
+        } catch (err) {
+          console.error('Erreur chargement étages:', err);
+          setExistingFloors([]);
+        } finally {
+          setIsLoadingFloors(false);
+        }
+      };
+      loadFloors();
+    }
+  }, [open, establishmentId]);
 
   // Configuration
   const [totalFloors, setTotalFloors] = useState(defaultTotalFloors);
@@ -149,8 +168,14 @@ export const GenerateFloorsDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Nombre d'étages */}
+        {isLoadingFloors ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-500 mb-3" />
+            <p className="text-sm text-muted-foreground">Chargement des étages existants...</p>
+          </div>
+        ) : (
+          <div className="space-y-6 py-4">
+            {/* Nombre d'étages */}
           <div className="space-y-2">
             <Label htmlFor="totalFloors">
               Nombre d'étages <span className="text-red-500">*</span>
@@ -315,7 +340,8 @@ export const GenerateFloorsDialog = ({
               </AlertDescription>
             </Alert>
           )}
-        </div>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose} disabled={isGenerating}>
