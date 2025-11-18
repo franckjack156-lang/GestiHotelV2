@@ -2040,6 +2040,19 @@ const EstablishmentsManagementSection = () => {
               </div>
             </div>
 
+            {/* Header avec bouton Créer */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Mes établissements</h3>
+              <Button
+                onClick={() => navigate('/app/settings/establishment')}
+                size="sm"
+                className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
+              >
+                <Plus size={16} className="mr-2" />
+                Créer un établissement
+              </Button>
+            </div>
+
             {/* Liste d'établissements */}
             <div className="space-y-3">
               {establishments.map((establishment: any) => (
