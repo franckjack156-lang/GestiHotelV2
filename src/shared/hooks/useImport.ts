@@ -39,6 +39,7 @@ export const useImportInterventions = (
 ) => {
   const [isImporting, setIsImporting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [userMappings, setUserMappings] = useState<Map<string, string>>(new Map()); // Mappings excelName -> userId
   const { data: referenceLists, reload } = useAllReferenceLists({
     realtime: false,
     autoLoad: true,
@@ -106,23 +107,72 @@ export const useImportInterventions = (
             ) || []),
             ...new Set(rooms.map(r => r.building || '').filter(b => b)),
           ],
-          users: users.map(u => ({ displayName: u.displayName })),
+          // NOUVELLE LOGIQUE: Combiner users ET listes de référence creators/technicians
+          // Si une liste existe, on l'utilise; sinon tableau vide
+          // Envoyer les utilisateurs complets pour permettre la correspondance partielle
+          users: users.map(u => ({
+            id: u.id,
+            displayName: u.displayName,
+            firstName: u.firstName,
+            lastName: u.lastName,
+            isTechnician: u.isTechnician,
+          })),
+          creators:
+            referenceLists.lists['creators']?.items?.map(
+              (item: { label: string }) => item.label
+            ) || [],
+          technicians:
+            referenceLists.lists['technicians']?.items?.map(
+              (item: { label: string }) => item.label
+            ) || [],
         }
       : undefined;
 
-    return await importInterventions(file, {}, existingLists);
+    const result = await importInterventions(file, {}, existingLists);
+
+    // Afficher les suggestions de correspondance dans la console
+    if (result.matchSuggestions) {
+      console.log('\n🔍 SUGGESTIONS DE CORRESPONDANCE DÉTECTÉES:\n');
+
+      if (result.matchSuggestions.technicians.size > 0) {
+        console.log('👷 TECHNICIENS:');
+        result.matchSuggestions.technicians.forEach((suggestions, excelName) => {
+          console.log(`\n  "${excelName}" pourrait correspondre à:`);
+          suggestions.forEach((sug, idx) => {
+            const score = Math.round(sug.matchScore * 100);
+            const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
+            console.log(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
+          });
+        });
+      }
+
+      if (result.matchSuggestions.creators.size > 0) {
+        console.log('\n\n👤 CRÉATEURS:');
+        result.matchSuggestions.creators.forEach((suggestions, excelName) => {
+          console.log(`\n  "${excelName}" pourrait correspondre à:`);
+          suggestions.forEach((sug, idx) => {
+            const score = Math.round(sug.matchScore * 100);
+            const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
+            console.log(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
+          });
+        });
+      }
+    }
+
+    return result;
   };
 
   const handleConfirm = async (data: InterventionImportRow[]) => {
     setIsImporting(true);
     try {
-      // Convertir avec la liste des utilisateurs pour le matching
+      // Convertir avec la liste des utilisateurs pour le matching + mappings utilisateur
       const interventions = convertToInterventions(
         data,
         establishmentId,
         userId,
         userName || 'Utilisateur',
-        users
+        users,
+        userMappings
       );
 
       // Créer les interventions en batch (par groupes de 10)
@@ -140,9 +190,15 @@ export const useImportInterventions = (
     }
   };
 
-  const handleCreateMissingValues = async (missingValues: MissingListValues) => {
+  const handleCreateMissingValues = async (missingValues: MissingListValues, mappings?: Map<string, string>) => {
     if (!currentEstablishment?.id || !user?.id) {
       throw new Error('Établissement ou utilisateur non trouvé');
+    }
+
+    // Stocker les mappings pour la conversion
+    if (mappings) {
+      setUserMappings(mappings);
+      console.log('\n📌 Mappings utilisateur enregistrés:', Object.fromEntries(mappings));
     }
 
     /**
@@ -166,7 +222,34 @@ export const useImportInterventions = (
       categories: 0,
       priorities: 0,
       locations: 0,
+      creators: 0,
+      technicians: 0,
     };
+
+    // Vérifier et créer les listes "creators" et "technicians" si elles n'existent pas
+    const allLists = await referenceListsService.getAllLists(currentEstablishment.id);
+
+    if (allLists && !allLists.lists['creators'] && missingValues.creators.size > 0) {
+      await referenceListsService.createList(currentEstablishment.id, user.id, 'creators', {
+        name: 'Créateurs',
+        description: 'Liste des créateurs d\'interventions (historique)',
+        allowCustom: true,
+        isRequired: false,
+        isSystem: false,
+      });
+      console.log('✅ Liste "creators" créée');
+    }
+
+    if (allLists && !allLists.lists['technicians'] && missingValues.technicians.size > 0) {
+      await referenceListsService.createList(currentEstablishment.id, user.id, 'technicians', {
+        name: 'Techniciens',
+        description: 'Liste des techniciens (historique)',
+        allowCustom: true,
+        isRequired: false,
+        isSystem: false,
+      });
+      console.log('✅ Liste "technicians" créée');
+    }
 
     // Créer les types manquants
     for (const label of missingValues.types) {
@@ -221,6 +304,26 @@ export const useImportInterventions = (
         }
       );
       createdCount.locations++;
+    }
+
+    // Créer les créateurs manquants
+    for (const label of missingValues.creators) {
+      await referenceListsService.addItem(currentEstablishment.id, user.id, 'creators', {
+        value: normalizeToValue(label),
+        label: label,
+        color: 'blue', // Couleur bleue pour les créateurs
+      });
+      createdCount.creators++;
+    }
+
+    // Créer les techniciens manquants
+    for (const label of missingValues.technicians) {
+      await referenceListsService.addItem(currentEstablishment.id, user.id, 'technicians', {
+        value: normalizeToValue(label),
+        label: label,
+        color: 'indigo', // Couleur indigo pour les techniciens
+      });
+      createdCount.technicians++;
     }
 
     // Recharger les listes

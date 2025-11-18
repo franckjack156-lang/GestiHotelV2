@@ -56,7 +56,7 @@ import { ReferenceListsManager } from './ReferenceListsManager';
 import { DuplicateListsDialog } from './DuplicateListsDialog';
 
 // Hooks
-import { useAllReferenceLists, useImportExport } from '@/shared/hooks/useReferenceLists';
+import { useAllReferenceLists, useImportExport, useReferenceListsDebug } from '@/shared/hooks/useReferenceLists';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
@@ -89,6 +89,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
     autoLoad: true,
   });
   const { exportToExcel } = useImportExport();
+  const { logSummary, logCompact } = useReferenceListsDebug();
 
   // États
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
@@ -326,6 +327,27 @@ export const ReferenceListsOrchestrator: React.FC = () => {
                 >
                   <Copy className="mr-2 h-4 w-4" />
                   Dupliquer vers...
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    logCompact();
+                    toast.success('Log compact affiché dans la console');
+                  }}
+                  disabled={isLoading}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Log compact (console)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    logSummary();
+                    toast.success('Log détaillé affiché dans la console');
+                  }}
+                  disabled={isLoading}
+                >
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Log détaillé (console)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

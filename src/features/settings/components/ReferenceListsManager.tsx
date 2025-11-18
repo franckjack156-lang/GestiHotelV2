@@ -71,7 +71,7 @@ import type {
   CreateItemInput,
   PredefinedListKey,
 } from '@/shared/types/reference-lists.types';
-import { PREDEFINED_LIST_KEYS, LIST_LABELS } from '@/shared/types/reference-lists.types';
+import { LIST_LABELS } from '@/shared/types/reference-lists.types';
 import { cn } from '@/shared/utils/cn';
 import { TemplateDialog } from './TemplateDialog';
 import { GenerateFloorsDialog } from './GenerateFloorsDialog';
@@ -85,6 +85,31 @@ interface ItemFormData {
   icon: string;
   description: string;
 }
+
+// Helper pour gérer les couleurs (Tailwind prédéfinies vs couleurs personnalisées)
+const getColorStyles = (color: string) => {
+  const isCustomColor = color.startsWith('#') || color.startsWith('rgb') || color.startsWith('hsl');
+
+  if (isCustomColor) {
+    // Couleur personnalisée : utiliser style inline
+    return {
+      useInlineStyle: true,
+      bgStyle: { backgroundColor: `${color}20` }, // Hex + opacité
+      iconStyle: { color: color },
+      bgClass: '',
+      iconClass: '',
+    };
+  } else {
+    // Couleur Tailwind prédéfinie : utiliser les classes
+    return {
+      useInlineStyle: false,
+      bgStyle: {},
+      iconStyle: {},
+      bgClass: `bg-${color}-100`,
+      iconClass: `text-${color}-600`,
+    };
+  }
+};
 
 const SortableItem: React.FC<{
   item: ReferenceItem;
@@ -102,6 +127,7 @@ const SortableItem: React.FC<{
   };
 
   const Icon = item.icon && (LucideIcons as any)[item.icon];
+  const colorStyles = item.color ? getColorStyles(item.color) : null;
 
   return (
     <div
@@ -124,12 +150,14 @@ const SortableItem: React.FC<{
       <div
         className={cn(
           'flex h-10 w-10 items-center justify-center rounded-lg',
-          item.color ? `bg-${item.color}-100` : 'bg-gray-100'
+          colorStyles?.bgClass || 'bg-gray-100'
         )}
+        style={colorStyles?.useInlineStyle ? colorStyles.bgStyle : {}}
       >
         {Icon ? (
           <Icon
-            className={cn('h-5 w-5', item.color ? `text-${item.color}-600` : 'text-gray-600')}
+            className={cn('h-5 w-5', colorStyles?.iconClass || 'text-gray-600')}
+            style={colorStyles?.useInlineStyle ? colorStyles.iconStyle : {}}
           />
         ) : (
           <div className="h-5 w-5 rounded bg-gray-300" />
@@ -203,6 +231,20 @@ const ItemFormDialog: React.FC<{
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  // ✅ CORRECTION: Mettre à jour formData quand initialData change
+  React.useEffect(() => {
+    if (open) {
+      setFormData({
+        value: initialData?.value || '',
+        label: initialData?.label || '',
+        color: initialData?.color || 'blue',
+        icon: initialData?.icon || '',
+        description: initialData?.description || '',
+      });
+      setErrors([]);
+    }
+  }, [open, initialData]);
+
   const handleSubmit = async () => {
     setErrors([]);
 
@@ -230,6 +272,7 @@ const ItemFormDialog: React.FC<{
   };
 
   const Icon = formData.icon && (LucideIcons as any)[formData.icon];
+  const colorStyles = getColorStyles(formData.color);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -299,36 +342,89 @@ const ItemFormDialog: React.FC<{
             <p className="text-xs text-gray-500">Minuscules, chiffres et underscores uniquement</p>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label htmlFor="color">Couleur</Label>
-            <Select
-              value={formData.color}
-              onValueChange={value => setFormData({ ...formData, color: value })}
-            >
-              <SelectTrigger id="color">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[
-                  { value: 'gray', label: 'Gris' },
-                  { value: 'red', label: 'Rouge' },
-                  { value: 'orange', label: 'Orange' },
-                  { value: 'yellow', label: 'Jaune' },
-                  { value: 'green', label: 'Vert' },
-                  { value: 'blue', label: 'Bleu' },
-                  { value: 'indigo', label: 'Indigo' },
-                  { value: 'purple', label: 'Violet' },
-                  { value: 'pink', label: 'Rose' },
-                ].map(color => (
-                  <SelectItem key={color.value} value={color.value}>
-                    <div className="flex items-center gap-2">
-                      <div className={cn('h-4 w-4 rounded', `bg-${color.value}-500`)} />
-                      {color.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+            {/* Palette de couleurs prédéfinies */}
+            <div className="grid grid-cols-6 gap-2 p-3 border rounded-lg bg-gray-50">
+              {[
+                { value: 'slate', label: 'Ardoise', hex: '#64748b' },
+                { value: 'gray', label: 'Gris', hex: '#6b7280' },
+                { value: 'zinc', label: 'Zinc', hex: '#71717a' },
+                { value: 'red', label: 'Rouge', hex: '#ef4444' },
+                { value: 'orange', label: 'Orange', hex: '#f97316' },
+                { value: 'amber', label: 'Ambre', hex: '#f59e0b' },
+                { value: 'yellow', label: 'Jaune', hex: '#eab308' },
+                { value: 'lime', label: 'Citron', hex: '#84cc16' },
+                { value: 'green', label: 'Vert', hex: '#22c55e' },
+                { value: 'emerald', label: 'Émeraude', hex: '#10b981' },
+                { value: 'teal', label: 'Sarcelle', hex: '#14b8a6' },
+                { value: 'cyan', label: 'Cyan', hex: '#06b6d4' },
+                { value: 'sky', label: 'Ciel', hex: '#0ea5e9' },
+                { value: 'blue', label: 'Bleu', hex: '#3b82f6' },
+                { value: 'indigo', label: 'Indigo', hex: '#6366f1' },
+                { value: 'violet', label: 'Violet', hex: '#8b5cf6' },
+                { value: 'purple', label: 'Pourpre', hex: '#a855f7' },
+                { value: 'fuchsia', label: 'Fuchsia', hex: '#d946ef' },
+                { value: 'pink', label: 'Rose', hex: '#ec4899' },
+                { value: 'rose', label: 'Rose pâle', hex: '#f43f5e' },
+              ].map(color => (
+                <button
+                  key={color.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, color: color.value })}
+                  className={cn(
+                    'group relative h-10 w-10 rounded-lg transition-all hover:scale-110 hover:shadow-lg',
+                    formData.color === color.value && 'ring-2 ring-offset-2 ring-gray-900 scale-110'
+                  )}
+                  style={{ backgroundColor: color.hex }}
+                  title={color.label}
+                >
+                  {formData.color === color.value && (
+                    <CheckCircle2 className="absolute inset-0 m-auto h-5 w-5 text-white drop-shadow-lg" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Sélecteur de couleur personnalisé */}
+            <div className="flex items-center gap-3 p-3 border rounded-lg bg-white">
+              <div className="flex items-center gap-2 flex-1">
+                <label
+                  htmlFor="custom-color"
+                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <div className="relative">
+                    <input
+                      id="custom-color"
+                      type="color"
+                      value={formData.color.startsWith('#') ? formData.color : '#3b82f6'}
+                      onChange={e => setFormData({ ...formData, color: e.target.value })}
+                      className="h-10 w-10 rounded-lg cursor-pointer border-2 border-gray-200"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-700">Couleur personnalisée</span>
+                    <span className="text-xs text-gray-500">
+                      {formData.color.startsWith('#') ? formData.color.toUpperCase() : 'Cliquez pour choisir'}
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Champ texte pour entrer manuellement un code couleur */}
+              <Input
+                placeholder="#3b82f6"
+                value={formData.color}
+                onChange={e => setFormData({ ...formData, color: e.target.value })}
+                className="w-32 font-mono text-sm"
+                maxLength={20}
+              />
+            </div>
+
+            <p className="text-xs text-gray-500">
+              Utilisez les couleurs prédéfinies, le sélecteur de couleur, ou entrez un code couleur (ex: #3b82f6, blue, rgb(59, 130, 246))
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -360,11 +456,15 @@ const ItemFormDialog: React.FC<{
                 <div
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-lg',
-                    `bg-${formData.color}-100`
+                    colorStyles.bgClass
                   )}
+                  style={colorStyles.useInlineStyle ? colorStyles.bgStyle : {}}
                 >
                   {Icon ? (
-                    <Icon className={cn('h-5 w-5', `text-${formData.color}-600`)} />
+                    <Icon
+                      className={cn('h-5 w-5', colorStyles.iconClass)}
+                      style={colorStyles.useInlineStyle ? colorStyles.iconStyle : {}}
+                    />
                   ) : (
                     <div className="h-5 w-5 rounded bg-gray-300" />
                   )}
@@ -445,14 +545,17 @@ export const ReferenceListsManager: React.FC = () => {
   const filteredListKeys = useMemo(() => {
     if (!data?.lists) return [];
 
-    let keys = PREDEFINED_LIST_KEYS.filter(key => data.lists[key]);
+    // ✅ CORRECTION: Afficher TOUTES les listes (prédéfinies + dynamiques)
+    let keys = Object.keys(data.lists) as ListKey[];
 
     // Filtrer par recherche
     if (listSearchTerm) {
       const lower = listSearchTerm.toLowerCase();
-      keys = keys.filter(key =>
-        LIST_LABELS[key as PredefinedListKey]?.toLowerCase().includes(lower)
-      );
+      keys = keys.filter(key => {
+        // Utiliser le label prédéfini si disponible, sinon le nom de la liste
+        const label = LIST_LABELS[key as PredefinedListKey] || data.lists[key]?.name || key;
+        return label.toLowerCase().includes(lower);
+      });
     }
 
     // Trier alphabétiquement par label
@@ -641,7 +744,7 @@ export const ReferenceListsManager: React.FC = () => {
                   return (
                     <SelectItem key={key} value={key}>
                       <div className="flex items-center justify-between w-full">
-                        <span>{LIST_LABELS[key as PredefinedListKey]}</span>
+                        <span>{LIST_LABELS[key as PredefinedListKey] || list?.name || key}</span>
                         <Badge variant="secondary" className="ml-2">
                           {activeCount} / {totalCount}
                         </Badge>

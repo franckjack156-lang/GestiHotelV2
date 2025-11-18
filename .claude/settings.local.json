@@ -1,6 +1,13 @@
 {
   "permissions": {
-    "allow": ["Bash(git commit:*)"],
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(npx tsc)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 30 npx tsc:*)",
+      "Bash(timeout 35 npx tsc:*)",
+      "Bash(git add:*)"
+    ],
     "deny": [],
     "ask": []
   }

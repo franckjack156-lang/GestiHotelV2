@@ -19,18 +19,24 @@ const createItem = (
     icon?: string;
     description?: string;
   }
-): ReferenceItem => ({
-  id: `${value}_${Date.now()}_${order}`,
-  value,
-  label,
-  order,
-  isActive: true,
-  color: options?.color,
-  icon: options?.icon,
-  description: options?.description,
-  usageCount: 0,
-  createdAt: new Date(),
-});
+): ReferenceItem => {
+  const item: ReferenceItem = {
+    id: `${value}_${Date.now()}_${order}`,
+    value,
+    label,
+    order,
+    isActive: true,
+    usageCount: 0,
+    createdAt: new Date(),
+  };
+
+  // N'ajouter les champs optionnels que s'ils sont définis (évite les undefined pour Firestore)
+  if (options?.color) item.color = options.color;
+  if (options?.icon) item.icon = options.icon;
+  if (options?.description) item.description = options.description;
+
+  return item;
+};
 
 /**
  * Listes par défaut pour les types d'intervention
@@ -268,28 +274,152 @@ const paymentMethodsDefault: ListConfig = {
 };
 
 /**
+ * Listes manquantes - Équipements
+ */
+const equipmentTypesDefault: ListConfig = {
+  name: "Types d'équipement",
+  description: 'Catégories d\'équipements',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+const equipmentBrandsDefault: ListConfig = {
+  name: 'Marques d\'équipement',
+  description: 'Marques des équipements',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+const equipmentLocationsDefault: ListConfig = {
+  name: 'Emplacements d\'équipement',
+  description: 'Localisations des équipements',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
+ * Listes manquantes - Fournisseurs
+ */
+const supplierCategoriesDefault: ListConfig = {
+  name: 'Catégories de fournisseurs',
+  description: 'Types de fournisseurs',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+const supplierTypesDefault: ListConfig = {
+  name: 'Types de fournisseurs',
+  description: 'Classification des fournisseurs',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
+ * Listes manquantes - Maintenance
+ */
+const maintenanceFrequenciesDefault: ListConfig = {
+  name: 'Fréquences de maintenance',
+  description: 'Intervalles de maintenance',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+const maintenanceTypesDefault: ListConfig = {
+  name: 'Types de maintenance',
+  description: 'Catégories de maintenance',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
+ * Listes manquantes - Documents
+ */
+const documentCategoriesDefault: ListConfig = {
+  name: 'Catégories de documents',
+  description: 'Classification des documents',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+const documentTypesDefault: ListConfig = {
+  name: 'Types de documents',
+  description: 'Types de documents',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
  * Collection complète des listes par défaut
  */
 export const DEFAULT_REFERENCE_LISTS: Record<string, ListConfig> = {
-  // Interventions (essentielles)
-  interventionTypes: interventionTypesDefault,
-  interventionPriorities: interventionPrioritiesDefault,
-  interventionCategories: interventionCategoriesDefault,
-  interventionStatuses: interventionStatusesDefault,
-  interventionLocations: interventionLocationsDefault,
+  // Interventions (essentielles) - Listes système avec valeurs par défaut
+  interventionTypes: {
+    ...interventionTypesDefault,
+    items: [], // ✅ Liste vide car personnalisable (allowCustom: true)
+  },
+  interventionPriorities: interventionPrioritiesDefault, // ✅ Garde les valeurs (isSystem: true)
+  interventionCategories: interventionCategoriesDefault, // ✅ Garde les valeurs (isSystem: true)
+  interventionStatuses: interventionStatusesDefault, // ✅ Garde les valeurs (isSystem: true)
+  interventionLocations: {
+    ...interventionLocationsDefault,
+    items: [], // ✅ Liste vide car personnalisable
+  },
 
-  // Localisation
-  floors: floorsDefault,
-  buildings: buildingsDefault,
+  // Localisation - Listes vides car personnalisables
+  floors: {
+    ...floorsDefault,
+    items: [], // ✅ Liste vide car personnalisable
+  },
+  buildings: {
+    ...buildingsDefault,
+    items: [], // ✅ Liste vide car personnalisable
+  },
 
-  // Chambres (si feature activée)
-  roomTypes: roomTypesDefault,
-  roomStatuses: roomStatusesDefault,
-  bedTypes: bedTypesDefault,
+  // Équipements - Listes vides
+  equipmentTypes: equipmentTypesDefault,
+  equipmentBrands: equipmentBrandsDefault,
+  equipmentLocations: equipmentLocationsDefault,
 
-  // Finances (optionnel)
-  expenseCategories: expenseCategoriesDefault,
-  paymentMethods: paymentMethodsDefault,
+  // Chambres - Listes vides sauf roomStatuses (peut être système)
+  roomTypes: {
+    ...roomTypesDefault,
+    items: [], // ✅ Liste vide car personnalisable
+  },
+  roomStatuses: roomStatusesDefault, // On garde les statuts standards
+  bedTypes: {
+    ...bedTypesDefault,
+    items: [], // ✅ Liste vide car personnalisable
+  },
+
+  // Fournisseurs - Listes vides
+  supplierCategories: supplierCategoriesDefault,
+  supplierTypes: supplierTypesDefault,
+
+  // Maintenance - Listes vides
+  maintenanceFrequencies: maintenanceFrequenciesDefault,
+  maintenanceTypes: maintenanceTypesDefault,
+
+  // Documents - Listes vides
+  documentCategories: documentCategoriesDefault,
+  documentTypes: documentTypesDefault,
 };
 
 /**

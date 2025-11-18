@@ -110,6 +110,13 @@ export interface CreateInterventionData {
   isBlocking?: boolean;
   photos?: File[];
   dueDate?: Date; // Date limite personnalisée
+
+  // Champs optionnels pour import historique
+  createdBy?: string; // Permet de spécifier le créateur pour les données historiques
+  createdByName?: string; // Nom du créateur pour les données historiques
+  createdAt?: Date | Timestamp; // Date de création pour les données historiques
+  assignedToName?: string; // Nom du technicien assigné pour les données historiques
+  assignedAt?: Date | Timestamp; // Date d'assignation pour les données historiques
 }
 
 /**

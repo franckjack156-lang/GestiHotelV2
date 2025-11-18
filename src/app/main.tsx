@@ -15,6 +15,11 @@ initSentry();
 initGA4();
 initPerformanceMonitoring();
 
+// Initialiser les outils de debug en mode développement
+if (import.meta.env.DEV) {
+  import('@/shared/services/testReferenceListsLogging');
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ThemeProvider>

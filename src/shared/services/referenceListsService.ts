@@ -1197,6 +1197,149 @@ const checkItemUsage = async (
 };
 
 // ============================================================================
+// LOGGING & DEBUG
+// ============================================================================
+
+/**
+ * Logger un résumé détaillé de toutes les listes d'un établissement
+ */
+export const logListsSummary = async (establishmentId: string): Promise<void> => {
+  try {
+    console.log('\n🔍 ========================================');
+    console.log(`📊 RÉSUMÉ DES LISTES - Établissement: ${establishmentId}`);
+    console.log('==========================================\n');
+
+    const allLists = await getAllLists(establishmentId);
+
+    if (!allLists) {
+      console.log('❌ Aucune liste trouvée pour cet établissement');
+      console.log('==========================================\n');
+      return;
+    }
+
+    const listKeys = Object.keys(allLists.lists);
+    const totalLists = listKeys.length;
+
+    console.log(`📋 Nombre total de listes: ${totalLists}`);
+    console.log(`📅 Dernière modification: ${allLists.lastModified}`);
+    console.log(`👤 Modifié par: ${allLists.modifiedBy}`);
+    console.log(`🔢 Version: ${allLists.version || 'N/A'}\n`);
+
+    // Statistiques globales
+    let totalItems = 0;
+    let totalActiveItems = 0;
+    let totalInactiveItems = 0;
+    const systemLists: string[] = [];
+    const customLists: string[] = [];
+    const emptyLists: string[] = [];
+
+    // Analyser chaque liste
+    listKeys.forEach(listKey => {
+      const list = allLists.lists[listKey];
+      const itemCount = list.items.length;
+      const activeCount = list.items.filter(i => i.isActive).length;
+      const inactiveCount = itemCount - activeCount;
+
+      totalItems += itemCount;
+      totalActiveItems += activeCount;
+      totalInactiveItems += inactiveCount;
+
+      if (list.isSystem) systemLists.push(listKey);
+      if (list.allowCustom) customLists.push(listKey);
+      if (itemCount === 0) emptyLists.push(listKey);
+    });
+
+    console.log('📈 STATISTIQUES GLOBALES:');
+    console.log(`   • Items totaux: ${totalItems}`);
+    console.log(`   • Items actifs: ${totalActiveItems}`);
+    console.log(`   • Items inactifs: ${totalInactiveItems}`);
+    console.log(`   • Listes système: ${systemLists.length}`);
+    console.log(`   • Listes personnalisables: ${customLists.length}`);
+    console.log(`   • Listes vides: ${emptyLists.length}\n`);
+
+    console.log('📝 DÉTAIL PAR LISTE:\n');
+
+    // Afficher chaque liste
+    listKeys.sort().forEach((listKey, index) => {
+      const list = allLists.lists[listKey];
+      const itemCount = list.items.length;
+      const activeCount = list.items.filter(i => i.isActive).length;
+      const inactiveCount = itemCount - activeCount;
+
+      const badges: string[] = [];
+      if (list.isSystem) badges.push('🔒 SYSTÈME');
+      if (list.allowCustom) badges.push('✏️ PERSONNALISABLE');
+      if (list.isRequired) badges.push('⚠️ REQUIS');
+      if (itemCount === 0) badges.push('📭 VIDE');
+
+      console.log(`${index + 1}. ${list.name} (${listKey})`);
+      console.log(`   ${badges.join(' ')}`);
+      console.log(`   📊 Items: ${itemCount} total | ${activeCount} actifs | ${inactiveCount} inactifs`);
+
+      if (list.description) {
+        console.log(`   📄 Description: ${list.description}`);
+      }
+
+      // Afficher les items si la liste n'est pas vide
+      if (itemCount > 0 && itemCount <= 10) {
+        console.log(`   📌 Items:`);
+        list.items.forEach(item => {
+          const status = item.isActive ? '✅' : '❌';
+          const color = item.color ? `[${item.color}]` : '';
+          const icon = item.icon ? `{${item.icon}}` : '';
+          const usage = item.usageCount ? `(utilisé ${item.usageCount} fois)` : '';
+          console.log(`      ${status} ${item.label} ${color} ${icon} ${usage}`);
+        });
+      } else if (itemCount > 10) {
+        console.log(`   📌 Premiers items:`);
+        list.items.slice(0, 5).forEach(item => {
+          const status = item.isActive ? '✅' : '❌';
+          const color = item.color ? `[${item.color}]` : '';
+          const usage = item.usageCount ? `(utilisé ${item.usageCount} fois)` : '';
+          console.log(`      ${status} ${item.label} ${color} ${usage}`);
+        });
+        console.log(`      ... et ${itemCount - 5} autres`);
+      }
+
+      console.log('');
+    });
+
+    console.log('==========================================');
+    console.log('✅ Résumé terminé\n');
+  } catch (error) {
+    console.error('❌ Erreur lors du logging du résumé:', error);
+  }
+};
+
+/**
+ * Logger uniquement les noms des listes (vue compacte)
+ */
+export const logListsCompact = async (establishmentId: string): Promise<void> => {
+  try {
+    const allLists = await getAllLists(establishmentId);
+
+    if (!allLists) {
+      console.log(`❌ [${establishmentId}] Aucune liste trouvée`);
+      return;
+    }
+
+    const listKeys = Object.keys(allLists.lists);
+    console.log(`\n📋 [${establishmentId}] ${listKeys.length} listes:`);
+    listKeys.sort().forEach((key, index) => {
+      const list = allLists.lists[key];
+      const badges = [];
+      if (list.isSystem) badges.push('🔒');
+      if (list.allowCustom) badges.push('✏️');
+      if (list.items.length === 0) badges.push('📭');
+      console.log(`   ${index + 1}. ${key.padEnd(30)} (${list.items.length} items) ${badges.join(' ')}`);
+    });
+    console.log('');
+  } catch (error) {
+    console.error('❌ Erreur lors du logging compact:', error);
+  }
+};
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -1233,4 +1376,8 @@ export default {
   // Validation
   validateItem,
   getSuggestions,
+
+  // Logging & Debug
+  logListsSummary,
+  logListsCompact,
 };

@@ -75,16 +75,21 @@ export const createIntervention = async (
     const collectionRef = getInterventionsCollection(establishmentId);
     const reference = await generateReference(establishmentId);
 
-    // Récupérer le nom du créateur
-    let createdByName = 'Inconnu';
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        createdByName = userData.displayName || userData.email || 'Inconnu';
+    // Récupérer le nom du créateur (seulement si non fourni dans data - pour import historique)
+    let createdByName = data.createdByName || 'Inconnu';
+    let createdBy = data.createdBy || userId;
+
+    // Si createdByName n'est pas fourni et qu'on utilise userId, récupérer le nom
+    if (!data.createdByName && !data.createdBy) {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          createdByName = userData.displayName || userData.email || 'Inconnu';
+        }
+      } catch (error) {
+        console.warn('⚠️ Impossible de récupérer le nom du créateur:', error);
       }
-    } catch (error) {
-      console.warn('⚠️ Impossible de récupérer le nom du créateur:', error);
     }
 
     // Base data - only required fields
@@ -93,8 +98,8 @@ export const createIntervention = async (
       title: data.title,
       status: 'pending' as InterventionStatus,
       location: data.location,
-      createdBy: userId,
-      createdByName, // Ajouter le nom du créateur
+      createdBy, // Utiliser createdBy fourni ou userId par défaut
+      createdByName, // Utiliser createdByName fourni ou récupéré
       photos: [],
       photosCount: 0,
       reference,
@@ -103,7 +108,10 @@ export const createIntervention = async (
       isBlocking: data.isBlocking || false,
       requiresValidation: false,
       viewsCount: 0,
-      createdAt: serverTimestamp(),
+      // Utiliser createdAt fourni (import historique) ou serverTimestamp() pour nouvelle intervention
+      createdAt: data.createdAt
+        ? (data.createdAt instanceof Timestamp ? data.createdAt : Timestamp.fromDate(data.createdAt))
+        : serverTimestamp(),
       updatedAt: serverTimestamp(),
       isDeleted: false,
     };
@@ -137,29 +145,47 @@ export const createIntervention = async (
       // Pour l'instant, on stocke seulement le premier technicien dans assignedTo
       // TODO: Créer un champ assignedToIds pour stocker tous les IDs
       interventionData.assignedTo = assignedToIds[0];
-      interventionData.assignedAt = serverTimestamp();
 
-      // Récupérer les noms de tous les techniciens assignés
-      try {
-        const techNames: string[] = [];
+      // Utiliser assignedAt fourni (import historique) ou serverTimestamp() pour nouvelle assignation
+      interventionData.assignedAt = data.assignedAt
+        ? (data.assignedAt instanceof Timestamp ? data.assignedAt : Timestamp.fromDate(data.assignedAt))
+        : serverTimestamp();
 
-        for (const techId of assignedToIds) {
-          const techDoc = await getDoc(doc(db, 'users', techId));
+      // Utiliser assignedToName fourni (import historique) ou récupérer depuis la base
+      if (data.assignedToName) {
+        interventionData.assignedToName = data.assignedToName;
+      } else {
+        // Récupérer les noms de tous les techniciens assignés
+        try {
+          const techNames: string[] = [];
 
-          if (techDoc.exists()) {
-            const techData = techDoc.data();
-            const techName = techData.displayName || techData.email || 'Inconnu';
-            techNames.push(techName);
-          } else {
-            techNames.push('Inconnu');
+          for (const techId of assignedToIds) {
+            const techDoc = await getDoc(doc(db, 'users', techId));
+
+            if (techDoc.exists()) {
+              const techData = techDoc.data();
+              const techName = techData.displayName || techData.email || 'Inconnu';
+              techNames.push(techName);
+            } else {
+              techNames.push('Inconnu');
+            }
           }
-        }
 
-        // Joindre les noms avec une virgule
-        interventionData.assignedToName = techNames.join(', ');
-      } catch (error) {
-        console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
-        interventionData.assignedToName = 'Inconnu';
+          // Joindre les noms avec une virgule
+          interventionData.assignedToName = techNames.join(', ');
+        } catch (error) {
+          console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+          interventionData.assignedToName = 'Inconnu';
+        }
+      }
+    } else if (data.assignedToName) {
+      // Cas spécial pour import historique: nom de technicien fourni sans ID utilisateur
+      // (technicien dans liste de référence, pas dans users)
+      interventionData.assignedToName = data.assignedToName;
+      if (data.assignedAt) {
+        interventionData.assignedAt = data.assignedAt instanceof Timestamp
+          ? data.assignedAt
+          : Timestamp.fromDate(data.assignedAt);
       }
     }
     if (data.scheduledAt) {

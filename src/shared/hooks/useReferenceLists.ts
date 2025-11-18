@@ -551,6 +551,39 @@ export const useMultipleReferenceLists = (listKeys: ListKey[]) => {
 };
 
 // ============================================================================
+// HOOK POUR DEBUG/LOGGING
+// ============================================================================
+
+/**
+ * Hook pour logger les listes de référence (utile pour debug)
+ */
+export const useReferenceListsDebug = () => {
+  const { currentEstablishment } = useCurrentEstablishment();
+
+  const logSummary = useCallback(async () => {
+    if (!currentEstablishment?.id) {
+      console.warn('⚠️ Aucun établissement sélectionné');
+      return;
+    }
+    await referenceListsService.logListsSummary(currentEstablishment.id);
+  }, [currentEstablishment?.id]);
+
+  const logCompact = useCallback(async () => {
+    if (!currentEstablishment?.id) {
+      console.warn('⚠️ Aucun établissement sélectionné');
+      return;
+    }
+    await referenceListsService.logListsCompact(currentEstablishment.id);
+  }, [currentEstablishment?.id]);
+
+  return {
+    logSummary,
+    logCompact,
+    establishmentId: currentEstablishment?.id,
+  };
+};
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -560,4 +593,5 @@ export default {
   useImportExport,
   useTrackItemUsage,
   useMultipleReferenceLists,
+  useReferenceListsDebug,
 };

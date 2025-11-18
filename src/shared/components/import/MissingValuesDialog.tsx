@@ -19,8 +19,8 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Badge } from '@/shared/components/ui/badge';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
-import { CheckCircle2, X, AlertCircle, Sparkles } from 'lucide-react';
-import type { MissingListValues } from '@/shared/services/importService';
+import { CheckCircle2, X, AlertCircle, Sparkles, UserCheck, Lightbulb } from 'lucide-react';
+import type { MissingListValues, ImportMatchSuggestions } from '@/shared/services/importService';
 
 // ============================================================================
 // TYPES
@@ -30,7 +30,8 @@ export interface MissingValuesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   missingValues: MissingListValues;
-  onConfirm: (selectedValues: MissingListValues) => Promise<void>;
+  matchSuggestions?: ImportMatchSuggestions; // Suggestions de correspondance
+  onConfirm: (selectedValues: MissingListValues, userMappings?: Map<string, string>) => Promise<void>;
   isCreating?: boolean;
 }
 
@@ -49,6 +50,7 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
   open,
   onOpenChange,
   missingValues,
+  matchSuggestions,
   onConfirm,
   isCreating = false,
 }) => {
@@ -65,6 +67,10 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
     technicians: new Set(missingValues.technicians),
     creators: new Set(missingValues.creators),
   });
+
+  // État pour tracker les mappings utilisateur (excelName -> userId)
+  // Quand un mapping existe, on n'ajoute PAS la valeur à la liste de référence
+  const [userMappings, setUserMappings] = useState<Map<string, string>>(new Map());
 
   // Configuration des catégories
   const categories: CategoryConfig[] = [
@@ -85,10 +91,12 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
     return categories.filter(cat => missingValues[cat.key].size > 0);
   }, [missingValues]);
 
-  // Calculer le nombre total de valeurs sélectionnées
+  // Calculer le nombre total de valeurs sélectionnées (références à créer + mappings utilisateurs)
   const totalSelected = useMemo(() => {
-    return Object.values(selectedValues).reduce((sum, set) => sum + set.size, 0);
-  }, [selectedValues]);
+    const referencesToCreate = Object.values(selectedValues).reduce((sum, set) => sum + set.size, 0);
+    const userMappingsCount = userMappings.size;
+    return referencesToCreate + userMappingsCount;
+  }, [selectedValues, userMappings]);
 
   // Calculer le nombre total de valeurs manquantes
   const totalMissing = useMemo(() => {
@@ -151,9 +159,39 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
     });
   };
 
+  // Sélectionner une suggestion (mapper vers un utilisateur existant)
+  const selectSuggestion = (excelName: string, userId: string, category: 'technicians' | 'creators') => {
+    // Ajouter le mapping
+    setUserMappings(prev => new Map(prev).set(excelName, userId));
+
+    // Retirer de la sélection (on ne crée plus cette valeur)
+    setSelectedValues(prev => {
+      const newSet = new Set(prev[category]);
+      newSet.delete(excelName);
+      return { ...prev, [category]: newSet };
+    });
+  };
+
+  // Annuler une suggestion (revenir à créer une référence)
+  const unselectSuggestion = (excelName: string, category: 'technicians' | 'creators') => {
+    // Retirer le mapping
+    setUserMappings(prev => {
+      const newMap = new Map(prev);
+      newMap.delete(excelName);
+      return newMap;
+    });
+
+    // Ré-ajouter à la sélection pour créer la valeur
+    setSelectedValues(prev => {
+      const newSet = new Set(prev[category]);
+      newSet.add(excelName);
+      return { ...prev, [category]: newSet };
+    });
+  };
+
   // Confirmer la création
   const handleConfirm = async () => {
-    await onConfirm(selectedValues);
+    await onConfirm(selectedValues, userMappings);
   };
 
   // Vérifier si une catégorie est entièrement sélectionnée
@@ -201,7 +239,7 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
         </div>
 
         {/* Liste des catégories et valeurs */}
-        <ScrollArea className="flex-1 pr-4">
+        <ScrollArea className="flex-1 pr-4 max-h-[60vh] overflow-y-auto">
           <div className="space-y-6 py-4">
             {categoriesWithValues.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -237,27 +275,97 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
 
                   {/* Liste des valeurs */}
                   <div className="ml-6 space-y-2">
-                    {Array.from(missingValues[category.key]).map(value => (
-                      <div key={value} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`${category.key}-${value}`}
-                          checked={selectedValues[category.key].has(value)}
-                          onCheckedChange={() => toggleValue(category.key, value)}
-                          disabled={isCreating}
-                        />
-                        <label
-                          htmlFor={`${category.key}-${value}`}
-                          className="flex-1 cursor-pointer text-sm"
-                        >
-                          <Badge
-                            variant="secondary"
-                            className={`bg-${category.color}-100 text-${category.color}-700 dark:bg-${category.color}-900/30 dark:text-${category.color}-300 border-${category.color}-300`}
-                          >
-                            {value}
-                          </Badge>
-                        </label>
-                      </div>
-                    ))}
+                    {Array.from(missingValues[category.key]).map(value => {
+                      const hasSuggestions = (category.key === 'technicians' || category.key === 'creators') &&
+                        matchSuggestions &&
+                        matchSuggestions[category.key].has(value);
+                      const suggestions = hasSuggestions ? matchSuggestions![category.key as 'technicians' | 'creators'].get(value) || [] : [];
+                      const selectedMapping = userMappings.get(value);
+
+                      return (
+                        <div key={value} className="space-y-2">
+                          {/* Ligne principale avec checkbox */}
+                          <div className="flex items-start gap-2">
+                            <Checkbox
+                              id={`${category.key}-${value}`}
+                              checked={selectedValues[category.key].has(value)}
+                              onCheckedChange={() => toggleValue(category.key, value)}
+                              disabled={isCreating || !!selectedMapping}
+                              className="mt-1"
+                            />
+                            <div className="flex-1 space-y-2">
+                              <label
+                                htmlFor={`${category.key}-${value}`}
+                                className="flex items-center gap-2 cursor-pointer text-sm"
+                              >
+                                <Badge
+                                  variant="secondary"
+                                  className={`bg-${category.color}-100 text-${category.color}-700 dark:bg-${category.color}-900/30 dark:text-${category.color}-300 border-${category.color}-300`}
+                                >
+                                  {value}
+                                </Badge>
+                                {hasSuggestions && !selectedMapping && (
+                                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50">
+                                    <Lightbulb className="h-3 w-3 mr-1" />
+                                    {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''}
+                                  </Badge>
+                                )}
+                              </label>
+
+                              {/* Afficher la suggestion sélectionnée */}
+                              {selectedMapping && (
+                                <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                                  <UserCheck className="h-4 w-4 text-green-600" />
+                                  <span className="text-sm text-green-700 dark:text-green-300 flex-1">
+                                    Sera lié à : <strong>{suggestions.find(s => s.userId === selectedMapping)?.userName}</strong>
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => unselectSuggestion(value, category.key as 'technicians' | 'creators')}
+                                    disabled={isCreating}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* Afficher les suggestions disponibles */}
+                              {hasSuggestions && !selectedMapping && suggestions.length > 0 && (
+                                <div className="space-y-1 pl-4 border-l-2 border-blue-200">
+                                  <p className="text-xs text-muted-foreground mb-1">Utilisateurs correspondants :</p>
+                                  {suggestions.slice(0, 3).map((suggestion) => {
+                                    const score = Math.round(suggestion.matchScore * 100);
+                                    const isHighScore = score >= 75;
+                                    return (
+                                      <button
+                                        key={suggestion.userId}
+                                        onClick={() => selectSuggestion(value, suggestion.userId, category.key as 'technicians' | 'creators')}
+                                        disabled={isCreating}
+                                        className="flex items-center gap-2 p-2 w-full text-left rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <div className={`flex items-center justify-center w-12 h-12 rounded-full ${isHighScore ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                                          <span className="text-xs font-bold">{score}%</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium truncate">{suggestion.userName}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {suggestion.matchType === 'exact' && '✅ Correspondance exacte'}
+                                            {suggestion.matchType === 'partial' && '⚡ Correspondance partielle'}
+                                            {suggestion.matchType === 'fuzzy' && '💡 Correspondance approximative'}
+                                          </p>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))
@@ -283,7 +391,15 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                Créer {totalSelected} valeur{totalSelected > 1 ? 's' : ''}
+                {userMappings.size > 0 ? (
+                  <>
+                    Valider ({Object.values(selectedValues).reduce((sum, set) => sum + set.size, 0)} à créer, {userMappings.size} mappé{userMappings.size > 1 ? 's' : ''})
+                  </>
+                ) : (
+                  <>
+                    Créer {totalSelected} valeur{totalSelected > 1 ? 's' : ''}
+                  </>
+                )}
               </>
             )}
           </Button>

@@ -54,7 +54,7 @@ export interface ImportDialogProps<T> {
   onImport: (file: File) => Promise<ImportResult<T>>;
   onConfirm: (data: T[]) => Promise<void>;
   renderPreview?: (data: T[]) => React.ReactNode;
-  onCreateMissingValues?: (missingValues: ImportResult<T>['missingValues']) => Promise<void>; // Nouvelle fonction pour créer les valeurs manquantes
+  onCreateMissingValues?: (missingValues: ImportResult<T>['missingValues'], userMappings?: Map<string, string>) => Promise<void>; // Nouvelle fonction pour créer les valeurs manquantes
 }
 
 type Step = 'upload' | 'preview' | 'importing' | 'success';
@@ -148,26 +148,24 @@ export function ImportDialog<T>({
     }
   };
 
-  const handleCreateMissingValues = async (selectedValues: ImportResult<T>['missingValues']) => {
-    if (!onCreateMissingValues) return;
+  const handleCreateMissingValues = async (selectedValues: ImportResult<T>['missingValues'], userMappings?: Map<string, string>) => {
+    if (!onCreateMissingValues || !file) return;
 
     setIsCreatingValues(true);
     toast.loading('Création des valeurs manquantes...');
 
     try {
-      await onCreateMissingValues(selectedValues);
+      await onCreateMissingValues(selectedValues, userMappings);
       toast.dismiss();
       toast.success('Valeurs créées avec succès !', {
-        description: 'Vous pouvez maintenant réimporter votre fichier',
+        description: 'Réimport automatique du fichier...',
       });
 
       // Fermer le dialog de sélection
       setShowMissingValuesDialog(false);
 
-      // Réinitialiser pour permettre un nouvel import
-      setStep('upload');
-      setFile(null);
-      setImportResult(null);
+      // Réimporter automatiquement le fichier avec les nouvelles valeurs/mappings
+      await handleProcessFile();
     } catch (error) {
       toast.dismiss();
       toast.error('Erreur lors de la création des valeurs');
@@ -531,6 +529,7 @@ export function ImportDialog<T>({
           open={showMissingValuesDialog}
           onOpenChange={setShowMissingValuesDialog}
           missingValues={importResult.missingValues}
+          matchSuggestions={importResult.matchSuggestions}
           onConfirm={handleCreateMissingValues}
           isCreating={isCreatingValues}
         />

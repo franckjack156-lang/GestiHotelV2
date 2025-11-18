@@ -51,7 +51,7 @@ export const useInterventions = () => {
       establishmentId,
       filters,
       sortOptions,
-      listConfig.itemsPerPage * 3, // Charger 3 pages à la fois pour la pagination côté client
+      undefined, // Pas de limite - charger TOUTES les interventions pour pagination côté client
       interventions => {
         setInterventions(interventions);
         setLoading(false);
@@ -69,7 +69,6 @@ export const useInterventions = () => {
     establishmentId,
     filters,
     sortOptions,
-    listConfig.itemsPerPage,
     setInterventions,
     setLoading,
     setError,
@@ -89,7 +88,7 @@ export const useInterventions = () => {
         establishmentId,
         filters,
         sortOptions,
-        listConfig.itemsPerPage * 3
+        undefined // Pas de limite - charger TOUTES les interventions
       );
 
       setInterventions(interventions);
@@ -102,7 +101,6 @@ export const useInterventions = () => {
     establishmentId,
     filters,
     sortOptions,
-    listConfig.itemsPerPage,
     setInterventions,
     setLoading,
     setError,

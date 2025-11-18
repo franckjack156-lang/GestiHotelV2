@@ -90,7 +90,7 @@ const InterventionsPageComponent = () => {
   const { canCreateInterventions } = usePermissions();
   const { user } = useAuth();
 
-  const { interventions, isLoading, error, filters, stats } = useInterventions();
+  const { allInterventions: interventions, isLoading, error, filters, stats } = useInterventions();
   const { displayPreferences } = useUserPreferences();
 
   const [searchQuery, setSearchQuery] = useState('');
