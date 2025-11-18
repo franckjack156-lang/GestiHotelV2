@@ -127,7 +127,7 @@ export const NotificationCenterPage = () => {
     try {
       await notificationService.markAsRead(notificationId);
       toast.success('Marquée comme lue');
-    } catch (error) {
+    } catch {
       toast.error('Erreur');
     }
   };
@@ -139,7 +139,7 @@ export const NotificationCenterPage = () => {
     try {
       await notificationService.markAllAsRead(user.id);
       toast.success('Toutes marquées comme lues');
-    } catch (error) {
+    } catch {
       toast.error('Erreur');
     }
   };
