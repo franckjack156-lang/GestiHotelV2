@@ -11,7 +11,18 @@
       "Bash(firebase firestore:rules:*)",
       "Bash(firebase projects:list:*)",
       "Bash(firebase deploy:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx eslint:*)",
+      "Bash(cat:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm test:*)",
+      "Bash(npx vitest:*)",
+      "Bash(node -e:*)",
+      "Bash(for file in src/shared/utils/__tests__/*.test.ts src/pages/settings/sections/__tests__/*.test.tsx src/features/auth/hooks/__tests__/useAuth.test.tsx src/features/users/types/__tests__/user.types.test.ts)",
+      "Bash(do sed -i '1i /* eslint-disable @typescript-eslint/no-explicit-any, no-constant-binary-expression, @typescript-eslint/no-unused-vars */' \"$file\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
