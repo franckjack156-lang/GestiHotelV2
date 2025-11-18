@@ -22,7 +22,9 @@
       "Bash(node -e:*)",
       "Bash(for file in src/shared/utils/__tests__/*.test.ts src/pages/settings/sections/__tests__/*.test.tsx src/features/auth/hooks/__tests__/useAuth.test.tsx src/features/users/types/__tests__/user.types.test.ts)",
       "Bash(do sed -i '1i /* eslint-disable @typescript-eslint/no-explicit-any, no-constant-binary-expression, @typescript-eslint/no-unused-vars */' \"$file\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(CORRECTIONS_EFFECTUEES.md)",
+      "Bash(npm view:*)"
     ],
     "deny": [],
     "ask": []
