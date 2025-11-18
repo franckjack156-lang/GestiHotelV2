@@ -154,6 +154,18 @@ service cloud.firestore {
         allow write: if isAdmin();
       }
 
+      // Settings subcollection
+      match /settings/{settingDoc} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
+      // Stats subcollection
+      match /stats/{statDoc} {
+        allow read: if isAuthenticated();
+        allow write: if isAdmin();
+      }
+
       // Audit subcollection (logs for reference lists changes)
       match /audit/{auditId} {
         allow read: if isAdmin();

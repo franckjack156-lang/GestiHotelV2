@@ -110,9 +110,7 @@ export const checkEstablishmentDeletion = async (
     stats.usersCount = usersSnapshot.size;
 
     if (stats.usersCount > 0) {
-      warnings.push(
-        `${stats.usersCount} utilisateur(s) perdront l'accès à cet établissement`
-      );
+      warnings.push(`${stats.usersCount} utilisateur(s) perdront l'accès à cet établissement`);
     }
 
     // 4. Vérifier les sous-collections (config, reference-lists, etc.)
@@ -285,12 +283,19 @@ export const deleteEstablishmentPermanently = async (
     batch.delete(doc(db, 'establishments', establishmentId));
 
     // 8. Commit toutes les suppressions
+    console.log('🔄 Committing batch deletion...');
     await batch.commit();
+    console.log('✅ Batch committed successfully');
 
     result.success = true;
     console.log('✅ Établissement supprimé avec succès:', establishmentId);
   } catch (error) {
     console.error('❌ Erreur lors de la suppression:', error);
+    console.error('❌ Error details:', {
+      message: (error as Error).message,
+      code: (error as { code?: string }).code,
+      details: error,
+    });
     result.errors.push((error as Error).message);
   }
 
