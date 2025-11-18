@@ -22,6 +22,8 @@ import {
   Info,
   AlertTriangle,
   ShoppingCart,
+  Zap,
+  ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -43,8 +45,10 @@ import {
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Separator } from '@/shared/components/ui/separator';
 import type { EstablishmentSettings } from '@/shared/types/establishment.types';
+import { useNavigate } from 'react-router-dom';
 
 export const EstablishmentSettingsPage = () => {
+  const navigate = useNavigate();
   const { hasRole } = useAuth();
   const { currentEstablishment, updateEstablishment } = useEstablishments();
   const [settings, setSettings] = useState<EstablishmentSettings | null>(
@@ -168,15 +172,32 @@ export const EstablishmentSettingsPage = () => {
         </div>
 
         {/* Actions */}
-        {hasChanges && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} disabled={saving}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/app/settings')}
+            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Retour
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/app/settings/features')}
+            className="hover:bg-purple-50 dark:hover:bg-purple-950/20"
+          >
+            <Zap size={16} className="mr-2" />
+            Fonctionnalités
+          </Button>
+          {hasChanges && (
+            <>
+              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+                Annuler
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Enregistrement...
                 </>
               ) : (
@@ -186,8 +207,9 @@ export const EstablishmentSettingsPage = () => {
                 </>
               )}
             </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Info Alert */}

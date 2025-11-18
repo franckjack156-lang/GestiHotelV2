@@ -10,7 +10,8 @@ import { useEstablishmentStore } from '@/features/establishments/stores/establis
 import { updateEstablishment } from '@/features/establishments/services/establishmentService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
-import { Building2, Check, X, AlertCircle, Loader2, Save, AlertTriangle } from 'lucide-react';
+import { Building2, Check, X, AlertCircle, Loader2, Save, AlertTriangle, ArrowLeft, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -33,6 +34,7 @@ import {
 } from '@/shared/types/establishment.types';
 
 export const EstablishmentFeaturesPage = () => {
+  const navigate = useNavigate();
   const { hasRole } = useAuth();
   const { currentEstablishment, updateEstablishmentInList } = useEstablishmentStore();
   const [features, setFeatures] = useState<EstablishmentFeatures>(
@@ -312,26 +314,44 @@ export const EstablishmentFeaturesPage = () => {
         </div>
 
         {/* Actions */}
-        {hasChanges && (
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} disabled={saving}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Enregistrer
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/app/settings')}
+            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Retour
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/app/settings/establishment')}
+            className="hover:bg-blue-50 dark:hover:bg-blue-950/20"
+          >
+            <Settings size={16} className="mr-2" />
+            Paramètres
+          </Button>
+          {hasChanges && (
+            <>
+              <Button variant="outline" onClick={handleCancel} disabled={saving}>
+                Annuler
+              </Button>
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Enregistrer
                 </>
               )}
             </Button>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Info Alert */}

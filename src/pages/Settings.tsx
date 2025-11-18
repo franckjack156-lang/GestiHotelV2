@@ -1981,24 +1981,6 @@ const EstablishmentsManagementSection = () => {
               Gérez vos propriétés et leurs configurations
             </CardDescription>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/app/settings/features')}
-              className="hover:bg-purple-50 dark:hover:bg-purple-950/20"
-            >
-              <Zap size={16} className="mr-2" />
-              Fonctionnalités
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/app/settings/establishment')}
-              className="hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
-            >
-              <SettingsIcon size={16} className="mr-2" />
-              Paramètres
-            </Button>
-          </div>
         </div>
       </CardHeader>
       <CardContent>
