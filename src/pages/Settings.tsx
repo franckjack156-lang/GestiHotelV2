@@ -2017,7 +2017,7 @@ const EstablishmentsManagementSection = () => {
               Créez votre premier établissement pour commencer à gérer vos propriétés
             </p>
             <Button
-              onClick={() => navigate('/app/establishments/create')}
+              onClick={() => navigate('/app/settings/establishment')}
               size="lg"
               className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
             >
@@ -2063,8 +2063,7 @@ const EstablishmentsManagementSection = () => {
               {establishments.map((establishment: any) => (
                 <div
                   key={establishment.id}
-                  className="group p-4 border-2 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 cursor-pointer transition-all duration-200"
-                  onClick={() => navigate(`/app/establishments/${establishment.id}`)}
+                  className="group p-4 border-2 rounded-xl hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all duration-200"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -2093,10 +2092,7 @@ const EstablishmentsManagementSection = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={e => {
-                          e.stopPropagation();
-                          navigate(`/app/establishments/${establishment.id}/edit`);
-                        }}
+                        onClick={() => navigate('/app/settings/establishment')}
                         className="hover:bg-emerald-100 dark:hover:bg-emerald-950/30"
                       >
                         <Edit size={16} className="mr-1" />
