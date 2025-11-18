@@ -7,7 +7,7 @@
  * Utile pour imprimer tous les QR codes d'un établissement
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Download, Printer, QrCode, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
@@ -46,6 +46,16 @@ export const QRCodeBatchGenerator = ({
   const [generatedQRCodes, setGeneratedQRCodes] = useState<
     Array<{ roomId: string; roomNumber: string; dataUrl: string }>
   >([]);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Générer tous les QR codes
@@ -64,23 +74,32 @@ export const QRCodeBatchGenerator = ({
       }));
 
       // Simuler progression
-      const interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setProgress(prev => Math.min(prev + 10, 90));
       }, 100);
 
       const qrCodes = await generateBatchQRCodes(roomsData, { size: 300 });
 
-      clearInterval(interval);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       setProgress(100);
       setGeneratedQRCodes(qrCodes);
 
       toast.success('QR codes générés', {
         description: `${qrCodes.length} QR codes créés avec succès`,
       });
-    } catch (error: any) {
+    } catch (error) {
+      // Cleanup interval on error
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       console.error('Error generating batch QR codes:', error);
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue';
       toast.error('Erreur de génération', {
-        description: error.message,
+        description: message,
       });
     } finally {
       setIsGenerating(false);

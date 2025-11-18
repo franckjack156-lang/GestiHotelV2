@@ -68,6 +68,7 @@ const initAuthListener = () => {
             });
           } catch (updateError) {
             // Ne pas bloquer la connexion si la mise à jour échoue
+            console.error('Failed to update lastLoginAt:', updateError);
           }
         } else {
           setUser(null);
@@ -82,7 +83,7 @@ const initAuthListener = () => {
         clearSentryUser();
         resetUser();
       }
-    } catch (error) {
+    } catch {
       setUser(null);
       setError('Erreur lors du chargement du profil');
     } finally {
