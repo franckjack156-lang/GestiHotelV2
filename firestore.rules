@@ -330,6 +330,22 @@ service cloud.firestore {
     }
 
     // ============================================================================
+    // AUDIT LOGS COLLECTION (Logs globaux pour actions importantes)
+    // ============================================================================
+
+    match /audit-logs/{logId} {
+      // Lecture : Uniquement les admins peuvent lire les logs d'audit
+      allow read: if isAdmin();
+
+      // Création : Tous les utilisateurs authentifiés peuvent créer des logs
+      // (pour tracking des suppressions, modifications importantes, etc.)
+      allow create: if isAuthenticated();
+
+      // Mise à jour et suppression : Seuls les super admins
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // ============================================================================
     // DEFAULT : Tout le reste est interdit
     // ============================================================================
 
