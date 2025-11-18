@@ -6,7 +6,11 @@
       "Bash(npx tsc:*)",
       "Bash(timeout 30 npx tsc:*)",
       "Bash(timeout 35 npx tsc:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git reset:*)",
+      "Bash(firebase firestore:rules:*)",
+      "Bash(firebase projects:list:*)",
+      "Bash(firebase deploy:*)"
     ],
     "deny": [],
     "ask": []

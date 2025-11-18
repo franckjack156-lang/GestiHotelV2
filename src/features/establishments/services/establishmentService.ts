@@ -32,6 +32,8 @@ import {
   DEFAULT_ESTABLISHMENT_SETTINGS,
 } from '@/shared/types/establishment.types';
 
+import { initializeNewEstablishment } from './establishmentInitializationService';
+
 const ESTABLISHMENTS_COLLECTION = 'establishments';
 
 /**
@@ -172,13 +174,14 @@ export const getUserEstablishments = async (
  */
 export const createEstablishment = async (
   data: CreateEstablishmentData,
-  ownerId: string
+  ownerId: string,
+  ownerEmail?: string
 ): Promise<string> => {
   try {
     const now = Timestamp.now();
 
     // Build establishment data, excluding undefined optional fields
-    const establishmentData: any = {
+    const establishmentData: Record<string, unknown> = {
       // Informations de base
       name: data.name,
       displayName: data.name,
@@ -227,8 +230,42 @@ export const createEstablishment = async (
     }
 
     const docRef = await addDoc(collection(db, ESTABLISHMENTS_COLLECTION), establishmentData);
+    const establishmentId = docRef.id;
 
-    return docRef.id;
+    // 🆕 INITIALISATION AUTOMATIQUE
+    console.log("🚀 Initialisation automatique de l'établissement...");
+
+    try {
+      const initResult = await initializeNewEstablishment({
+        establishmentId,
+        userId: ownerId,
+        userEmail: ownerEmail,
+        totalFloors: data.totalFloors,
+        address: {
+          country: data.address.country,
+          city: data.address.city,
+        },
+        contact: {
+          email: data.contact.email,
+          phone: data.contact.phone,
+        },
+      });
+
+      if (initResult.success) {
+        console.log('✅ Établissement initialisé avec succès:', {
+          listsCreated: initResult.listsCreated.length,
+          settingsApplied: initResult.settingsApplied.length,
+        });
+      } else {
+        console.warn('⚠️ Initialisation partielle:', initResult.errors);
+      }
+    } catch (initError) {
+      // Ne pas bloquer la création si l'initialisation échoue
+      console.error("❌ Erreur lors de l'initialisation:", initError);
+      console.warn("⚠️ L'établissement a été créé mais l'initialisation a échoué");
+    }
+
+    return establishmentId;
   } catch (error) {
     console.error("Erreur lors de la création de l'établissement:", error);
     throw new Error("Impossible de créer l'établissement");
@@ -243,7 +280,7 @@ export const updateEstablishment = async (
   data: UpdateEstablishmentData
 ): Promise<void> => {
   try {
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       ...data,
       updatedAt: serverTimestamp(),
     };

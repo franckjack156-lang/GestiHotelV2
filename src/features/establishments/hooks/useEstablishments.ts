@@ -66,8 +66,8 @@ export const useEstablishments = () => {
       if (!currentEstablishment && fetchedEstablishments.length > 0) {
         setCurrentEstablishment(fetchedEstablishments[0]);
       }
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du chargement des établissements');
+    } catch (err) {
+      setError((err as Error).message || 'Erreur lors du chargement des établissements');
     } finally {
       setLoading(false);
     }
@@ -95,14 +95,18 @@ export const useEstablishments = () => {
         setLoading(true);
         setError(null);
 
-        const establishmentId = await establishmentService.createEstablishment(data, user.id);
+        const establishmentId = await establishmentService.createEstablishment(
+          data,
+          user.id,
+          user.email
+        );
 
         // Recharger les établissements
         await loadEstablishments();
 
         return establishmentId;
-      } catch (err: any) {
-        setError(err.message || "Erreur lors de la création de l'établissement");
+      } catch (err) {
+        setError((err as Error).message || "Erreur lors de la création de l'établissement");
         return null;
       } finally {
         setLoading(false);
@@ -126,8 +130,8 @@ export const useEstablishments = () => {
         updateEstablishmentInList(establishmentId, data as Partial<Establishment>);
 
         return true;
-      } catch (err: any) {
-        setError(err.message || "Erreur lors de la mise à jour de l'établissement");
+      } catch (err) {
+        setError((err as Error).message || "Erreur lors de la mise à jour de l'établissement");
         return false;
       } finally {
         setLoading(false);
@@ -159,8 +163,8 @@ export const useEstablishments = () => {
         }
 
         return true;
-      } catch (err: any) {
-        setError(err.message || "Erreur lors de la suppression de l'établissement");
+      } catch (err) {
+        setError((err as Error).message || "Erreur lors de la suppression de l'établissement");
         return false;
       } finally {
         setLoading(false);
@@ -209,8 +213,8 @@ export const useEstablishments = () => {
         // TODO: Implémenter la mise à jour du profil utilisateur
 
         return true;
-      } catch (err: any) {
-        setError(err.message || "Erreur lors du changement d'établissement");
+      } catch (err) {
+        setError((err as Error).message || "Erreur lors du changement d'établissement");
         return false;
       } finally {
         setLoading(false);
