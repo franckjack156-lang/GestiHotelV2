@@ -43,13 +43,13 @@ import {
 import {
   DataTable,
   EmptyState,
-  ConfirmDialog,
   LoadingSkeleton,
 } from '@/shared/components/ui-extended';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
+import { DeleteEstablishmentDialog } from '@/features/establishments/components/DeleteEstablishmentDialog';
 import { toast } from 'sonner';
-import type { Establishment, CreateEstablishmentData } from '@/shared/types/establishment.types';
+import type { Establishment, CreateEstablishmentData, EstablishmentSummary } from '@/shared/types/establishment.types';
 import { EstablishmentType } from '@/shared/types/establishment.types';
 import { initializeEstablishmentLists } from '@/features/establishments/services/establishmentInitService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -86,25 +86,16 @@ type EstablishmentFormData = z.infer<typeof establishmentSchema>;
 
 export const EstablishmentsListPage = () => {
   const navigate = useNavigate();
-  const { establishments, isLoading, deleteEstablishment } = useEstablishments();
+  const { establishments, isLoading, loadEstablishments } = useEstablishments();
   const { establishmentId, setEstablishmentId } = useCurrentEstablishment();
+  const { firebaseUser } = useAuth();
 
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteEstablishment, setDeleteEstablishment] = useState<EstablishmentSummary | null>(null);
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-
-    setIsDeleting(true);
-    try {
-      await deleteEstablishment(deleteId);
-      toast.success('Établissement supprimé');
-      setDeleteId(null);
-    } catch (error) {
-      toast.error('Erreur lors de la suppression');
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDeleteSuccess = () => {
+    toast.success('Établissement supprimé définitivement');
+    setDeleteEstablishment(null);
+    loadEstablishments();
   };
 
   const columns = [
@@ -178,7 +169,16 @@ export const EstablishmentsListPage = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setDeleteId(item.id)}
+            onClick={() => setDeleteEstablishment({
+              id: item.id,
+              name: item.name,
+              type: item.type,
+              category: item.category,
+              logoUrl: item.logoUrl,
+              isActive: item.isActive,
+              totalRooms: item.totalRooms,
+              city: item.address.city || '',
+            })}
             className="text-red-600 hover:text-red-700"
           >
             <Trash2 size={16} />
@@ -225,15 +225,15 @@ export const EstablishmentsListPage = () => {
         />
       )}
 
-      <ConfirmDialog
-        isOpen={!!deleteId}
-        onClose={() => setDeleteId(null)}
-        onConfirm={handleDelete}
-        title="Supprimer l'établissement"
-        description="Êtes-vous sûr ? Toutes les données associées seront perdues."
-        variant="danger"
-        isLoading={isDeleting}
-      />
+      {deleteEstablishment && firebaseUser && (
+        <DeleteEstablishmentDialog
+          open={!!deleteEstablishment}
+          onOpenChange={(open) => !open && setDeleteEstablishment(null)}
+          establishment={deleteEstablishment}
+          userId={firebaseUser.uid}
+          onSuccess={handleDeleteSuccess}
+        />
+      )}
     </div>
   );
 };
