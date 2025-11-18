@@ -367,6 +367,54 @@ const documentTypesDefault: ListConfig = {
 };
 
 /**
+ * Départements du personnel
+ */
+const staffDepartmentsDefault: ListConfig = {
+  name: 'Départements du personnel',
+  description: 'Services et départements de l\'établissement',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
+ * Rôles du personnel
+ */
+const staffRolesDefault: ListConfig = {
+  name: 'Rôles du personnel',
+  description: 'Postes et fonctions du personnel',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
+ * Compétences du personnel
+ */
+const staffSkillsDefault: ListConfig = {
+  name: 'Compétences du personnel',
+  description: 'Compétences et qualifications',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
+ * Spécialités techniques
+ */
+const technicalSpecialtiesDefault: ListConfig = {
+  name: 'Spécialités techniques',
+  description: 'Domaines de spécialisation technique',
+  allowCustom: true,
+  isRequired: false,
+  isSystem: false,
+  items: [], // Liste vide - personnalisable par l'utilisateur
+};
+
+/**
  * Collection complète des listes par défaut
  */
 export const DEFAULT_REFERENCE_LISTS: Record<string, ListConfig> = {
@@ -420,6 +468,16 @@ export const DEFAULT_REFERENCE_LISTS: Record<string, ListConfig> = {
   // Documents - Listes vides
   documentCategories: documentCategoriesDefault,
   documentTypes: documentTypesDefault,
+
+  // Finances - Listes vides
+  expenseCategories: expenseCategoriesDefault,
+  paymentMethods: paymentMethodsDefault,
+
+  // Personnel - Listes vides
+  staffDepartments: staffDepartmentsDefault,
+  staffRoles: staffRolesDefault,
+  staffSkills: staffSkillsDefault,
+  technicalSpecialties: technicalSpecialtiesDefault,
 };
 
 /**
