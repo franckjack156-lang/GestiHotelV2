@@ -33,14 +33,6 @@ import { UserDetailsPage } from '@/pages/users/UserDetailsPage';
 import { UserProfilePage } from '@/pages/users/UserProfilePage';
 import { EditUserPage } from '@/pages/users/EditUserPage';
 
-// 🆕 Establishments (nouvelles pages)
-import {
-  EstablishmentsListPage,
-  CreateEstablishmentPage,
-  EditEstablishmentPage,
-  EstablishmentDetailPage,
-} from '@/pages/establishments/EstablishmentsPages';
-
 // 🆕 Rooms (nouvelles pages)
 import { RoomsListPage, CreateRoomPage } from '@/pages/rooms/RoomsPages';
 import { RoomDetailPage } from '@/pages/rooms/RoomDetailPage';
@@ -200,31 +192,6 @@ export const router = createBrowserRouter([
           {
             path: ':id/edit',
             element: <EditUserPage />,
-          },
-        ],
-      },
-
-      // ----------------------------------------------------------------------------
-      // 🆕 ESTABLISHMENTS (Établissements)
-      // ----------------------------------------------------------------------------
-      {
-        path: 'establishments',
-        children: [
-          {
-            index: true,
-            element: <EstablishmentsListPage />,
-          },
-          {
-            path: 'create',
-            element: <CreateEstablishmentPage />,
-          },
-          {
-            path: ':id',
-            element: <EstablishmentDetailPage />,
-          },
-          {
-            path: ':id/edit',
-            element: <EditEstablishmentPage />,
           },
         ],
       },

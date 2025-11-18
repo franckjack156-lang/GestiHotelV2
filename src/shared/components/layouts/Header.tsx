@@ -24,8 +24,7 @@ import {
 } from '@/shared/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar';
 
-// 🆕 Import corrigé de EstablishmentSwitcher depuis le bon fichier
-import { EstablishmentSwitcher } from '@/pages/establishments/EstablishmentsPages';
+import { EstablishmentSwitcher } from '@/features/establishments/components/EstablishmentSwitcher';
 import { NetworkIndicator } from '@/shared/components/indicators/NetworkIndicator';
 import { useUnreadNotifications } from '@/shared/hooks/useUnreadNotifications';
 import { ThemeToggle } from '@/shared/components/theme';

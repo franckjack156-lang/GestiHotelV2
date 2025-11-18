@@ -87,23 +87,6 @@ const EditUserPage = lazy(() =>
   import('@/pages/users/EditUserPage').then(module => ({ default: module.EditUserPage }))
 );
 
-// Establishments
-const EstablishmentsListPage = lazy(() =>
-  import('@/pages/establishments/EstablishmentsPages').then(module => ({
-    default: module.EstablishmentsListPage,
-  }))
-);
-const CreateEstablishmentPage = lazy(() =>
-  import('@/pages/establishments/EstablishmentsPages').then(module => ({
-    default: module.CreateEstablishmentPage,
-  }))
-);
-const EditEstablishmentPage = lazy(() =>
-  import('@/pages/establishments/EstablishmentsPages').then(module => ({
-    default: module.EditEstablishmentPage,
-  }))
-);
-
 // Rooms
 const RoomsListPage = lazy(() =>
   import('@/pages/rooms/RoomsPages').then(module => ({ default: module.RoomsListPage }))
@@ -116,13 +99,6 @@ const RoomDetailPage = lazy(() =>
 );
 const EditRoomPage = lazy(() =>
   import('@/pages/rooms/EditRoomPage').then(module => ({ default: module.EditRoomPage }))
-);
-
-// Establishments Detail
-const EstablishmentDetailPage = lazy(() =>
-  import('@/pages/establishments/EstablishmentsPages').then(module => ({
-    default: module.EstablishmentDetailPage,
-  }))
 );
 
 // Messaging
@@ -316,29 +292,6 @@ export const router = createBrowserRouter([
           {
             path: ':id/edit',
             element: withSuspense(EditUserPage),
-          },
-        ],
-      },
-
-      // Establishments
-      {
-        path: 'establishments',
-        children: [
-          {
-            index: true,
-            element: withSuspense(EstablishmentsListPage),
-          },
-          {
-            path: 'create',
-            element: withSuspense(CreateEstablishmentPage),
-          },
-          {
-            path: ':id',
-            element: withSuspense(EstablishmentDetailPage),
-          },
-          {
-            path: ':id/edit',
-            element: withSuspense(EditEstablishmentPage),
           },
         ],
       },

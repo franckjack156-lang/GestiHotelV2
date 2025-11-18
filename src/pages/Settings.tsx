@@ -62,8 +62,10 @@ import {
   CheckCircle,
   Target,
   Smartphone,
+  Trash2,
 } from 'lucide-react';
 import { ReferenceListsOrchestrator } from '@/features/settings/components/ReferenceListsOrchestrator';
+import { DeleteEstablishmentDialog } from '@/features/establishments/components/DeleteEstablishmentDialog';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
@@ -89,6 +91,7 @@ import { useUsers } from '@/features/users/hooks/useUsers';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 import { cn } from '@/shared/lib/utils';
+import type { EstablishmentSummary } from '@/shared/types/establishment.types';
 
 // ============================================================================
 // TYPES
@@ -1953,7 +1956,15 @@ const UsersManagementSection = () => {
 
 const EstablishmentsManagementSection = () => {
   const navigate = useNavigate();
-  const { establishments, isLoading } = useEstablishments();
+  const { establishments, isLoading, loadEstablishments } = useEstablishments();
+  const { firebaseUser } = useAuth();
+  const [deleteEstablishment, setDeleteEstablishment] = useState<EstablishmentSummary | null>(null);
+
+  const handleDeleteSuccess = () => {
+    toast.success('Établissement supprimé définitivement');
+    setDeleteEstablishment(null);
+    loadEstablishments();
+  };
 
   return (
     <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -1986,14 +1997,6 @@ const EstablishmentsManagementSection = () => {
             >
               <SettingsIcon size={16} className="mr-2" />
               Paramètres
-            </Button>
-            <Button
-              onClick={() => navigate('/app/establishments')}
-              className="bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700"
-            >
-              <Building2 size={16} className="mr-2" />
-              Voir tous
-              <ChevronRight size={16} className="ml-1" />
             </Button>
           </div>
         </div>
@@ -2099,24 +2102,43 @@ const EstablishmentsManagementSection = () => {
                         <Edit size={16} className="mr-1" />
                         Modifier
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setDeleteEstablishment({
+                            id: establishment.id,
+                            name: establishment.name,
+                            type: establishment.type,
+                            category: establishment.category,
+                            logoUrl: establishment.logoUrl,
+                            isActive: establishment.isActive,
+                            totalRooms: establishment.totalRooms,
+                            city: establishment.address?.city || establishment.city || '',
+                          });
+                        }}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
                       <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            {establishments.length > 5 && (
-              <Button
-                variant="outline"
-                onClick={() => navigate('/app/establishments')}
-                className="w-full hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:border-emerald-300 dark:hover:border-emerald-700"
-              >
-                Voir tous les établissements
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            )}
           </div>
+        )}
+
+        {deleteEstablishment && firebaseUser && (
+          <DeleteEstablishmentDialog
+            open={!!deleteEstablishment}
+            onOpenChange={(open) => !open && setDeleteEstablishment(null)}
+            establishment={deleteEstablishment}
+            userId={firebaseUser.uid}
+            onSuccess={handleDeleteSuccess}
+          />
         )}
       </CardContent>
     </Card>
