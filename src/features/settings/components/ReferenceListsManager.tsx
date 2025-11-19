@@ -650,16 +650,26 @@ export const ReferenceListsManager: React.FC = () => {
       // Vérifier si la valeur a changé
       const hasValueChanged = editingItem.value !== formData.value;
 
+      console.log('🔍 Form submission:', {
+        hasValueChanged,
+        oldValue: editingItem.value,
+        newValue: formData.value,
+        listKey: selectedListKey,
+      });
+
       if (hasValueChanged) {
         // Afficher le dialog d'impact pour confirmer la mise à jour
+        console.log('✅ Showing impact dialog');
         setPendingUpdate({
           itemId: editingItem.id,
           formData,
           oldValue: editingItem.value,
         });
         setShowImpactDialog(true);
+        // Ne pas fermer le dialog principal immédiatement
       } else {
         // Pas de changement de valeur, mise à jour directe
+        console.log('➡️ Direct update (no value change)');
         await updateItem(editingItem.id, formData);
         setIsDialogOpen(false);
       }
