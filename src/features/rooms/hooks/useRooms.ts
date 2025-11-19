@@ -355,18 +355,16 @@ export const useRooms = (establishmentId: string) => {
             ? Math.round(blockage.roomPricePerNight * (duration.days + duration.hours / 24))
             : 0;
 
-          await updateDoc(
-            doc(db, `establishments/${establishmentId}/room_blockages/${blockageDoc.id}`),
-            {
-              actualUnblockDate: now,
-              durationDays: duration.days,
-              durationHours: duration.hours,
-              durationMinutes: duration.minutes,
-              estimatedRevenueLoss: revenueLoss,
-              isActive: false,
-              updatedAt: serverTimestamp(),
-            }
-          );
+          // Utiliser la référence du document directement
+          await updateDoc(blockageDoc.ref, {
+            actualUnblockDate: now,
+            durationDays: duration.days,
+            durationHours: duration.hours,
+            durationMinutes: duration.minutes,
+            estimatedRevenueLoss: revenueLoss,
+            isActive: false,
+            updatedAt: serverTimestamp(),
+          });
         }
 
         // Préparer les données en nettoyant les undefined
