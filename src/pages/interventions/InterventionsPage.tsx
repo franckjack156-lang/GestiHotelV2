@@ -131,15 +131,15 @@ const InterventionsPageComponent = () => {
   };
 
   // Gérer les filtres
-  const handleStatusFilter = (_value: string) => {
+  const handleStatusFilter = () => {
     // TODO: Implémenter setFilters dans le hook useInterventions
   };
 
-  const handlePriorityFilter = (_value: string) => {
+  const handlePriorityFilter = () => {
     // TODO: Implémenter setFilters dans le hook useInterventions
   };
 
-  const handleTypeFilter = (_value: string) => {
+  const handleTypeFilter = () => {
     // TODO: Implémenter setFilters dans le hook useInterventions
   };
 
@@ -162,7 +162,7 @@ const InterventionsPageComponent = () => {
       await deleteIntervention(interventionToDelete);
       toast.success('Intervention supprimée');
       setInterventionToDelete(null);
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -183,19 +183,20 @@ const InterventionsPageComponent = () => {
       toast.success(`${interventions.length} intervention(s) supprimée(s)`, { id: toastId });
       setShowDeleteAllDialog(false);
       handleRefresh();
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression massive');
     }
   };
 
   const handleRefresh = () => window.location.reload();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleImportConfirm = async (data: any[]) => {
     try {
       await importHook.handleConfirm(data);
       toast.success('Import réussi', { description: `${data.length} intervention(s) importée(s)` });
       setImportDialogOpen(false);
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de l'import");
     }
   };
@@ -218,7 +219,7 @@ const InterventionsPageComponent = () => {
     try {
       await updateIntervention(interventionId, { status: newStatus });
       toast.success('Statut mis à jour');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -537,12 +538,17 @@ const InterventionsPageComponent = () => {
                 </tr>
               </thead>
               <tbody>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {data.slice(0, 5).map((row: any, idx) => (
                   <tr key={idx} className="border-t border-gray-200 dark:border-gray-700">
                     <td className="px-3 py-2">{row.titre}</td>
                     <td className="px-3 py-2">{row.type}</td>
                     <td className="px-3 py-2">{row.priorite}</td>
-                    <td className="px-3 py-2">{row.localisation || '-'}</td>
+                    <td className="px-3 py-2">
+                      {row.numero_chambre
+                        ? `Chambre ${row.numero_chambre}`
+                        : row.localisation || row.batiment || '-'}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -646,7 +652,7 @@ interface DroppableColumnProps {
   id: string;
   config: {
     label: string;
-    icon: any;
+    icon: any; // eslint-disable-line @typescript-eslint/no-explicit-any
     color: string;
   };
   items: Intervention[];
@@ -985,7 +991,11 @@ const TableViewComponent = ({
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                       <MapPin className="h-3 w-3" />
-                      <span className="truncate max-w-[120px]">{intervention.location}</span>
+                      <span className="truncate max-w-[120px]">
+                        {intervention.roomNumber
+                          ? `Chambre ${intervention.roomNumber}`
+                          : intervention.location || intervention.building || '-'}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
