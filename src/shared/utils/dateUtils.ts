@@ -25,3 +25,26 @@ export const isTimestamp = (value: any): value is Timestamp => {
     value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function'
   );
 };
+
+/**
+ * Formate une date au format local (ex: "15/01/2024")
+ */
+export const formatDate = (date: Date | Timestamp | undefined | null): string => {
+  const d = toDate(date);
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(d);
+};
+
+/**
+ * Formate une heure au format local (ex: "10:30")
+ */
+export const formatTime = (date: Date | Timestamp | undefined | null): string => {
+  const d = toDate(date);
+  return new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(d);
+};
