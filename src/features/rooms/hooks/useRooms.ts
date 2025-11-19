@@ -15,7 +15,10 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
+  getDocs,
   serverTimestamp,
+  Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -25,7 +28,22 @@ import type { Room, CreateRoomData, UpdateRoomData, BlockRoomData } from '../typ
 const COLLECTION_NAME = 'rooms';
 
 /**
- * Hook pour g�rer les chambres d'un �tablissement
+ * Calculate blockage duration
+ */
+const calculateBlockageDuration = (start: Timestamp, end: Timestamp) => {
+  const endDate = end.toDate();
+  const startDate = start.toDate();
+  const diffMs = endDate.getTime() - startDate.getTime();
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  return { days, hours, minutes };
+};
+
+/**
+ * Hook pour gérer les chambres d'un établissement
  */
 export const useRooms = (establishmentId: string) => {
   const { user } = useAuth();
@@ -88,6 +106,7 @@ export const useRooms = (establishmentId: string) => {
       setIsCreating(true);
       try {
         // Préparer les données
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const roomData: any = {
           ...data,
           establishmentId,
@@ -109,6 +128,7 @@ export const useRooms = (establishmentId: string) => {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), roomData);
         toast.success('Chambre cr��e avec succ�s');
         return docRef.id;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('Error creating room:', error);
         toast.error('Erreur lors de la cr�ation', {
@@ -137,6 +157,7 @@ export const useRooms = (establishmentId: string) => {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
 
         // Préparer les données en nettoyant les undefined
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updateData: any = {
           ...data,
           updatedAt: serverTimestamp(),
@@ -154,6 +175,7 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre mise � jour');
         return true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('Error updating room:', error);
         toast.error('Erreur lors de la mise � jour', {
@@ -184,6 +206,7 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre supprim�e');
         return true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('Error deleting room:', error);
         toast.error('Erreur lors de la suppression', {
@@ -202,15 +225,25 @@ export const useRooms = (establishmentId: string) => {
    */
   const blockRoom = useCallback(
     async (roomId: string, blockData: BlockRoomData): Promise<boolean> => {
-      if (!user) {
-        toast.error('Vous devez �tre connect�');
+      if (!user || !establishmentId) {
+        toast.error('Vous devez être connecté');
         return false;
       }
 
       try {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
 
+        // Récupérer la chambre pour avoir toutes ses infos
+        const roomDoc = await getDoc(roomRef);
+        if (!roomDoc.exists()) {
+          toast.error('Chambre introuvable');
+          return false;
+        }
+
+        const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
+
         // Préparer les données en nettoyant les undefined
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const blockUpdateData: any = {
           isBlocked: true,
           blockReason: blockData.reason,
@@ -230,8 +263,57 @@ export const useRooms = (establishmentId: string) => {
 
         await updateDoc(roomRef, blockUpdateData);
 
-        toast.success('Chambre bloqu�e');
+        // Créer une entrée dans room_blockages pour le tracking
+        const blockagesRef = collection(db, `establishments/${establishmentId}/room_blockages`);
+        const now = Timestamp.now();
+
+        await addDoc(blockagesRef, {
+          establishmentId,
+          roomId: room.id,
+
+          // Pas d'intervention liée pour un blocage manuel
+          interventionId: null,
+          interventionTitle: 'Blocage Manuel',
+          interventionType: 'other',
+          interventionPriority: 'normal',
+
+          // Dates
+          blockedAt: now,
+          estimatedUnblockDate: undefined,
+          actualUnblockDate: undefined,
+
+          // Durée (initial = 0)
+          durationDays: 0,
+          durationHours: 0,
+          durationMinutes: 0,
+
+          // Financial impact
+          roomPricePerNight: room.price || 0,
+          estimatedRevenueLoss: 0,
+
+          // Reason and details
+          reason: blockData.reason,
+          urgency: 'medium',
+          notes: 'Blocage manuel depuis la page chambre',
+
+          // Responsible
+          blockedBy: blockData.userId,
+          blockedByName: user.displayName || user.email || 'Unknown',
+          assignedTo: undefined,
+          assignedToName: undefined,
+
+          // Status
+          isActive: true,
+          isOverdue: false,
+
+          // Metadata
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        toast.success('Chambre bloquée');
         return true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('Error blocking room:', error);
         toast.error('Erreur lors du blocage', {
@@ -240,7 +322,7 @@ export const useRooms = (establishmentId: string) => {
         return false;
       }
     },
-    [user]
+    [user, establishmentId]
   );
 
   /**
@@ -248,15 +330,49 @@ export const useRooms = (establishmentId: string) => {
    */
   const unblockRoom = useCallback(
     async (roomId: string): Promise<boolean> => {
-      if (!user) {
-        toast.error('Vous devez �tre connect�');
+      if (!user || !establishmentId) {
+        toast.error('Vous devez être connecté');
         return false;
       }
 
       try {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
 
+        // Résoudre les blocages actifs dans room_blockages
+        const blockagesRef = collection(db, `establishments/${establishmentId}/room_blockages`);
+        const activeBlockagesQuery = query(
+          blockagesRef,
+          where('roomId', '==', roomId),
+          where('isActive', '==', true)
+        );
+
+        const activeBlockagesSnapshot = await getDocs(activeBlockagesQuery);
+        const now = Timestamp.now();
+
+        // Résoudre chaque blocage actif
+        for (const blockageDoc of activeBlockagesSnapshot.docs) {
+          const blockage = blockageDoc.data();
+          const duration = calculateBlockageDuration(blockage.blockedAt, now);
+          const revenueLoss = blockage.roomPricePerNight
+            ? Math.round(blockage.roomPricePerNight * (duration.days + duration.hours / 24))
+            : 0;
+
+          await updateDoc(
+            doc(db, `establishments/${establishmentId}/room_blockages/${blockageDoc.id}`),
+            {
+              actualUnblockDate: now,
+              durationDays: duration.days,
+              durationHours: duration.hours,
+              durationMinutes: duration.minutes,
+              estimatedRevenueLoss: revenueLoss,
+              isActive: false,
+              updatedAt: serverTimestamp(),
+            }
+          );
+        }
+
         // Préparer les données en nettoyant les undefined
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const unblockUpdateData: any = {
           isBlocked: false,
           blockReason: null,
@@ -278,6 +394,7 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre d�bloqu�e');
         return true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         console.error('Error unblocking room:', error);
         toast.error('Erreur lors du d�blocage', {
@@ -286,7 +403,7 @@ export const useRooms = (establishmentId: string) => {
         return false;
       }
     },
-    [user]
+    [user, establishmentId]
   );
 
   /**

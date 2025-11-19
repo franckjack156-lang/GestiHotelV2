@@ -25,7 +25,10 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
 import { useBlockageHistory } from '@/features/rooms/hooks/useBlockages';
+import { useRoomInterventions } from '@/features/interventions/hooks/useRoomInterventions';
 import { BlockageCard } from '@/features/rooms/components';
+import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
+import { PriorityBadge } from '@/features/interventions/components/badges/PriorityBadge';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUser } from '@/features/users/hooks/useUsers';
@@ -69,6 +72,10 @@ export const RoomDetailPage = () => {
 
   // Charger l'historique des blocages
   const { history: blockageHistory, isLoading: isLoadingHistory } = useBlockageHistory(roomId!);
+
+  // Charger les interventions liées à cette chambre
+  const { interventions: roomInterventions, isLoading: isLoadingInterventions } =
+    useRoomInterventions(establishmentId, room?.number);
 
   // Récupérer les informations de l'utilisateur qui a bloqué la chambre
   const { user: blockedByUser } = useUser(room?.blockedBy);
@@ -375,7 +382,7 @@ export const RoomDetailPage = () => {
               </TabsTrigger>
               <TabsTrigger value="interventions" className="flex items-center gap-2">
                 <Wrench className="h-4 w-4" />
-                Interventions liées
+                Interventions ({roomInterventions.length})
               </TabsTrigger>
             </TabsList>
 
@@ -407,16 +414,63 @@ export const RoomDetailPage = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="interventions" className="mt-4">
-              <div className="text-center py-8">
-                <Wrench className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-700 mb-3" />
-                <p className="text-gray-500 dark:text-gray-400">
-                  Liste des interventions pour cette chambre
-                </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-                  Fonctionnalité à venir
-                </p>
-              </div>
+            <TabsContent value="interventions" className="space-y-4 mt-4">
+              {isLoadingInterventions ? (
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSkeleton type="card" />
+                </div>
+              ) : roomInterventions.length === 0 ? (
+                <div className="text-center py-8">
+                  <Wrench className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-700 mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Aucune intervention pour cette chambre
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {roomInterventions.map(intervention => (
+                    <Card
+                      key={intervention.id}
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/app/interventions/${intervention.id}`)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <StatusBadge status={intervention.status} />
+                              <PriorityBadge priority={intervention.priority} />
+                              {intervention.isBlocking && (
+                                <Badge variant="destructive" className="text-xs">
+                                  <Lock className="h-3 w-3 mr-1" />
+                                  Bloquante
+                                </Badge>
+                              )}
+                            </div>
+                            <h3 className="font-semibold truncate">{intervention.title}</h3>
+                            {intervention.description && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {intervention.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              <span>
+                                {intervention.createdAt &&
+                                  format(intervention.createdAt.toDate(), 'dd MMM yyyy', {
+                                    locale: fr,
+                                  })}
+                              </span>
+                              {intervention.assignedToName && (
+                                <span>Assigné à {intervention.assignedToName}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

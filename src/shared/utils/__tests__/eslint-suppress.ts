@@ -1,0 +1,1 @@
+/* Script pour ajouter des suppressions ESLint temporaires */
