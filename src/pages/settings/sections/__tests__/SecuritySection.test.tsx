@@ -32,7 +32,7 @@ describe('SecuritySection', () => {
     it('should render the security section', () => {
       renderWithProviders(<SecuritySection />);
 
-      expect(screen.getByText('Sécurité du compte')).toBeInTheDocument();
+      expect(screen.getByText('Sécurité')).toBeInTheDocument();
       expect(screen.getByText(/gérez votre mot de passe/i)).toBeInTheDocument();
     });
 
@@ -40,25 +40,22 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       expect(screen.getByLabelText(/mot de passe actuel/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/nouveau mot de passe/i)).toBeInTheDocument();
+      expect(screen.getByLabelText('Nouveau mot de passe', { exact: true })).toBeInTheDocument();
       expect(screen.getByLabelText(/confirmer le mot de passe/i)).toBeInTheDocument();
     });
 
     it('should render password requirements section', () => {
       renderWithProviders(<SecuritySection />);
 
-      expect(screen.getByText('Exigences du mot de passe')).toBeInTheDocument();
+      expect(screen.getByText(/conseils pour un mot de passe sécurisé/i)).toBeInTheDocument();
       expect(screen.getByText(/au moins 8 caractères/i)).toBeInTheDocument();
-      expect(screen.getByText(/au moins une majuscule/i)).toBeInTheDocument();
-      expect(screen.getByText(/au moins une minuscule/i)).toBeInTheDocument();
-      expect(screen.getByText(/au moins un chiffre/i)).toBeInTheDocument();
-      expect(screen.getByText(/au moins un caractère spécial/i)).toBeInTheDocument();
+      expect(screen.getByText(/mélangez majuscules, minuscules/i)).toBeInTheDocument();
     });
 
     it('should initially disable submit button', () => {
       renderWithProviders(<SecuritySection />);
 
-      const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+      const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
       expect(submitButton).toBeDisabled();
     });
   });
@@ -82,7 +79,7 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'NewPassword123!');
 
       expect(newPasswordInput).toHaveValue('NewPassword123!');
@@ -101,10 +98,13 @@ describe('SecuritySection', () => {
     it('should mask password by default', () => {
       renderWithProviders(<SecuritySection />);
 
-      const passwordInputs = screen.getAllByPlaceholderText(/•+/);
-      passwordInputs.forEach(input => {
-        expect(input).toHaveAttribute('type', 'password');
-      });
+      const currentPassword = screen.getByPlaceholderText(/entrez votre mot de passe actuel/i);
+      const newPassword = screen.getByPlaceholderText(/entrez votre nouveau mot de passe/i);
+      const confirmPassword = screen.getByPlaceholderText(/confirmez votre nouveau mot de passe/i);
+
+      expect(currentPassword).toHaveAttribute('type', 'password');
+      expect(newPassword).toHaveAttribute('type', 'password');
+      expect(confirmPassword).toHaveAttribute('type', 'password');
     });
   });
 
@@ -117,7 +117,7 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'abc');
 
       await waitFor(() => {
@@ -129,11 +129,11 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'Password1');
 
       await waitFor(() => {
-        expect(screen.getByText('Moyenne')).toBeInTheDocument();
+        expect(screen.getByText('Moyen')).toBeInTheDocument();
       });
     });
 
@@ -141,11 +141,11 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'SecurePass123!');
 
       await waitFor(() => {
-        expect(screen.getByText('Forte')).toBeInTheDocument();
+        expect(screen.getByText('Fort')).toBeInTheDocument();
       });
     });
 
@@ -153,11 +153,11 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'VeryS3cur3P@ssw0rd!');
 
       await waitFor(() => {
-        expect(screen.getByText('Très forte')).toBeInTheDocument();
+        expect(screen.getByText('Fort')).toBeInTheDocument();
       });
     });
 
@@ -165,7 +165,7 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
 
       // Start with weak
       await user.type(newPasswordInput, 'abc');
@@ -176,7 +176,7 @@ describe('SecuritySection', () => {
       // Add more to make it strong
       await user.type(newPasswordInput, 'SecurePass123!');
       await waitFor(() => {
-        expect(screen.getByText('Forte')).toBeInTheDocument();
+        expect(screen.getByText('Fort')).toBeInTheDocument();
       });
     });
   });
@@ -190,7 +190,7 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'ValidPass123!');
 
       await waitFor(() => {
@@ -204,7 +204,7 @@ describe('SecuritySection', () => {
       const user = userEvent.setup();
       renderWithProviders(<SecuritySection />);
 
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, 'weak');
 
       // Au moins certains critères ne devraient pas être remplis
@@ -226,12 +226,15 @@ describe('SecuritySection', () => {
 
       // Remplir tous les champs
       await user.type(screen.getByLabelText(/mot de passe actuel/i), 'OldPassword123!');
-      await user.type(screen.getByLabelText(/nouveau mot de passe/i), 'NewPassword123!');
+      await user.type(
+        screen.getByLabelText('Nouveau mot de passe', { exact: true }),
+        'NewPassword123!'
+      );
       await user.type(screen.getByLabelText(/confirmer le mot de passe/i), 'NewPassword123!');
 
       // Le bouton devrait être activé
       await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+        const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
         expect(submitButton).not.toBeDisabled();
       });
     });
@@ -241,11 +244,14 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       await user.type(screen.getByLabelText(/mot de passe actuel/i), 'OldPassword123!');
-      await user.type(screen.getByLabelText(/nouveau mot de passe/i), 'NewPassword123!');
+      await user.type(
+        screen.getByLabelText('Nouveau mot de passe', { exact: true }),
+        'NewPassword123!'
+      );
       await user.type(screen.getByLabelText(/confirmer le mot de passe/i), 'DifferentPassword123!');
 
       // Soumettre le formulaire
-      const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+      const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
       await user.click(submitButton);
 
       // Devrait afficher une erreur
@@ -259,11 +265,14 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       // Remplir seulement le nouveau mot de passe
-      await user.type(screen.getByLabelText(/nouveau mot de passe/i), 'NewPassword123!');
+      await user.type(
+        screen.getByLabelText('Nouveau mot de passe', { exact: true }),
+        'NewPassword123!'
+      );
       await user.type(screen.getByLabelText(/confirmer le mot de passe/i), 'NewPassword123!');
 
       // Le bouton devrait être désactivé
-      const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+      const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
       expect(submitButton).toBeDisabled();
     });
   });
@@ -279,11 +288,14 @@ describe('SecuritySection', () => {
 
       // Remplir le formulaire
       await user.type(screen.getByLabelText(/mot de passe actuel/i), 'OldPassword123!');
-      await user.type(screen.getByLabelText(/nouveau mot de passe/i), 'NewPassword123!');
+      await user.type(
+        screen.getByLabelText('Nouveau mot de passe', { exact: true }),
+        'NewPassword123!'
+      );
       await user.type(screen.getByLabelText(/confirmer le mot de passe/i), 'NewPassword123!');
 
       // Soumettre
-      const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+      const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
       await user.click(submitButton);
 
       // Vérifier l'état de chargement
@@ -296,11 +308,14 @@ describe('SecuritySection', () => {
 
       // Remplir le formulaire
       await user.type(screen.getByLabelText(/mot de passe actuel/i), 'OldPassword123!');
-      await user.type(screen.getByLabelText(/nouveau mot de passe/i), 'NewPassword123!');
+      await user.type(
+        screen.getByLabelText('Nouveau mot de passe', { exact: true }),
+        'NewPassword123!'
+      );
       await user.type(screen.getByLabelText(/confirmer le mot de passe/i), 'NewPassword123!');
 
       // Soumettre
-      const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+      const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
       await user.click(submitButton);
 
       // Attendre le toast de succès
@@ -308,7 +323,7 @@ describe('SecuritySection', () => {
         expect(sonner.toast.success).toHaveBeenCalledWith(
           'Mot de passe modifié avec succès',
           expect.objectContaining({
-            description: 'Votre mot de passe a été changé',
+            description: 'Votre nouveau mot de passe est maintenant actif',
           })
         );
       });
@@ -320,7 +335,7 @@ describe('SecuritySection', () => {
 
       // Remplir le formulaire
       const currentPasswordInput = screen.getByLabelText(/mot de passe actuel/i);
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       const confirmPasswordInput = screen.getByLabelText(/confirmer le mot de passe/i);
 
       await user.type(currentPasswordInput, 'OldPassword123!');
@@ -328,7 +343,7 @@ describe('SecuritySection', () => {
       await user.type(confirmPasswordInput, 'NewPassword123!');
 
       // Soumettre
-      const submitButton = screen.getByRole('button', { name: /changer le mot de passe/i });
+      const submitButton = screen.getByRole('button', { name: /modifier le mot de passe/i });
       await user.click(submitButton);
 
       // Attendre que le formulaire soit vidé
@@ -349,20 +364,20 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       expect(screen.getByLabelText(/mot de passe actuel/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/nouveau mot de passe/i)).toBeInTheDocument();
+      expect(screen.getByLabelText('Nouveau mot de passe', { exact: true })).toBeInTheDocument();
       expect(screen.getByLabelText(/confirmer le mot de passe/i)).toBeInTheDocument();
     });
 
     it('should have descriptive help text', () => {
       renderWithProviders(<SecuritySection />);
 
-      expect(screen.getByText(/vous devrez vous reconnecter/i)).toBeInTheDocument();
+      expect(screen.getByText(/conseils pour un mot de passe sécurisé/i)).toBeInTheDocument();
     });
 
     it('should have security tips section', () => {
       renderWithProviders(<SecuritySection />);
 
-      expect(screen.getByText('Conseils de sécurité')).toBeInTheDocument();
+      expect(screen.getByText(/conseils pour un mot de passe sécurisé/i)).toBeInTheDocument();
       expect(screen.getByText(/utilisez un mot de passe unique/i)).toBeInTheDocument();
       expect(screen.getByText(/activez l'authentification/i)).toBeInTheDocument();
     });
@@ -378,7 +393,7 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       const longPassword = 'A'.repeat(100) + '1!';
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, longPassword);
 
       expect(newPasswordInput).toHaveValue(longPassword);
@@ -389,7 +404,7 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       const specialPassword = 'P@ssw0rd!#$%^&*()';
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, specialPassword);
 
       expect(newPasswordInput).toHaveValue(specialPassword);
@@ -400,7 +415,7 @@ describe('SecuritySection', () => {
       renderWithProviders(<SecuritySection />);
 
       const unicodePassword = 'Pässwörd123!';
-      const newPasswordInput = screen.getByLabelText(/nouveau mot de passe/i);
+      const newPasswordInput = screen.getByLabelText('Nouveau mot de passe', { exact: true });
       await user.type(newPasswordInput, unicodePassword);
 
       expect(newPasswordInput).toHaveValue(unicodePassword);

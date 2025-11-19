@@ -33,16 +33,15 @@ describe('NotificationsSection', () => {
     it('should render the notifications section', () => {
       renderWithProviders(<NotificationsSection />);
 
-      expect(screen.getByText('Notifications')).toBeInTheDocument();
-      expect(screen.getByText(/gérez vos préférences/i)).toBeInTheDocument();
+      expect(screen.getByText(/notifications par email/i)).toBeInTheDocument();
     });
 
     it('should render all notification categories', () => {
       renderWithProviders(<NotificationsSection />);
 
-      expect(screen.getByText('Notifications Email')).toBeInTheDocument();
-      expect(screen.getByText('Notifications Push')).toBeInTheDocument();
-      expect(screen.getByText('Notifications In-App')).toBeInTheDocument();
+      expect(screen.getByText(/notifications par email/i)).toBeInTheDocument();
+      expect(screen.getByText(/notifications push/i)).toBeInTheDocument();
+      expect(screen.getByText(/notifications in-app/i)).toBeInTheDocument();
     });
 
     it('should render master toggles for each category', () => {

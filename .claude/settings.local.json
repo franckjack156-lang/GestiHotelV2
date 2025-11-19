@@ -24,7 +24,8 @@
       "Bash(do sed -i '1i /* eslint-disable @typescript-eslint/no-explicit-any, no-constant-binary-expression, @typescript-eslint/no-unused-vars */' \"$file\")",
       "Bash(done)",
       "Bash(CORRECTIONS_EFFECTUEES.md)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []

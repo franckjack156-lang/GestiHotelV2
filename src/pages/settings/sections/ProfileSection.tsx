@@ -138,6 +138,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   Nom d'affichage
                 </Label>
                 <Input
+                  id="displayName"
                   {...register('displayName')}
                   placeholder="Comment souhaitez-vous être appelé ?"
                   className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
@@ -162,6 +163,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   Prénom
                 </Label>
                 <Input
+                  id="firstName"
                   {...register('firstName')}
                   placeholder="Votre prénom"
                   className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
@@ -173,6 +175,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   Nom
                 </Label>
                 <Input
+                  id="lastName"
                   {...register('lastName')}
                   placeholder="Votre nom"
                   className="transition-all duration-200 focus:ring-2 focus:ring-2 focus:ring-blue-500/20"
@@ -199,6 +202,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   Téléphone
                 </Label>
                 <Input
+                  id="phoneNumber"
                   {...register('phoneNumber')}
                   placeholder="+33 6 12 34 56 78"
                   className="transition-all duration-200 focus:ring-2 focus:ring-green-500/20"
@@ -211,6 +215,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   Poste
                 </Label>
                 <Input
+                  id="jobTitle"
                   {...register('jobTitle')}
                   placeholder="Votre fonction"
                   className="transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
@@ -223,6 +228,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   Département
                 </Label>
                 <Input
+                  id="department"
                   {...register('department')}
                   placeholder="Votre département ou service"
                   className="transition-all duration-200 focus:ring-2 focus:ring-orange-500/20"

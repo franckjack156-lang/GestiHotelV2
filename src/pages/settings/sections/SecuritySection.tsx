@@ -25,11 +25,7 @@ import { Label } from '@/shared/components/ui/label';
 import { cn } from '@/shared/lib/utils';
 import { Shield, Eye, EyeOff, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-} from 'firebase/auth';
+import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/core/config/firebase';
 
 // ============================================================================
@@ -114,25 +110,26 @@ export const SecuritySection = () => {
         description: 'Votre nouveau mot de passe est maintenant actif',
       });
       reset();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erreur lors de la modification du mot de passe:', error);
 
       // Gestion des erreurs Firebase
-      if (error.code === 'auth/wrong-password') {
+      const firebaseError = error as { code?: string; message?: string };
+      if (firebaseError.code === 'auth/wrong-password') {
         toast.error('Mot de passe actuel incorrect', {
           description: 'Veuillez vérifier votre mot de passe actuel',
         });
-      } else if (error.code === 'auth/requires-recent-login') {
+      } else if (firebaseError.code === 'auth/requires-recent-login') {
         toast.error('Session expirée', {
           description: 'Veuillez vous reconnecter et réessayer',
         });
-      } else if (error.code === 'auth/weak-password') {
+      } else if (firebaseError.code === 'auth/weak-password') {
         toast.error('Mot de passe trop faible', {
           description: 'Utilisez un mot de passe plus robuste',
         });
       } else {
         toast.error('Erreur lors de la modification', {
-          description: error.message || 'Veuillez réessayer',
+          description: firebaseError.message || 'Veuillez réessayer',
         });
       }
     } finally {
@@ -202,6 +199,7 @@ export const SecuritySection = () => {
                 </Label>
                 <div className="relative">
                   <Input
+                    id="currentPassword"
                     {...register('currentPassword', { required: true })}
                     type={showPasswords ? 'text' : 'password'}
                     placeholder="Entrez votre mot de passe actuel"
@@ -235,6 +233,7 @@ export const SecuritySection = () => {
                 </Label>
                 <div className="relative">
                   <Input
+                    id="newPassword"
                     {...register('newPassword', { required: true, minLength: 8 })}
                     type={showPasswords ? 'text' : 'password'}
                     placeholder="Entrez votre nouveau mot de passe"
@@ -289,6 +288,7 @@ export const SecuritySection = () => {
                 </Label>
                 <div className="relative">
                   <Input
+                    id="confirmPassword"
                     {...register('confirmPassword', { required: true })}
                     type={showPasswords ? 'text' : 'password'}
                     placeholder="Confirmez votre nouveau mot de passe"
