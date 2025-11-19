@@ -6,6 +6,7 @@
  * Displays a room blockage card with intervention details
  */
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
 import { Button } from '@/shared/components/ui/button';
@@ -17,6 +18,8 @@ import {
   User,
   CheckCircle2,
   Calendar,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { formatDate, formatTime } from '@/shared/utils/dateUtils';
 import { cn } from '@/shared/lib/utils';
@@ -33,6 +36,7 @@ interface BlockageCardProps {
   onViewIntervention?: (interventionId: string) => void;
   showActions?: boolean;
   compact?: boolean;
+  collapsible?: boolean;
 }
 
 // ============================================================================
@@ -105,18 +109,22 @@ export const BlockageCard: React.FC<BlockageCardProps> = ({
   onViewIntervention,
   showActions = true,
   compact = false,
+  collapsible = false,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const urgencyConfig = URGENCY_CONFIG[blockage.urgency];
   const typeConfig = TYPE_CONFIG[blockage.interventionType] || TYPE_CONFIG.other;
   const UrgencyIcon = urgencyConfig.icon;
 
-  if (compact) {
+  // Mode compact avec option collapsible
+  if (compact || collapsible) {
     return (
       <Card className="border-l-4" style={{ borderLeftColor: typeConfig.color.replace('bg-', '') }}>
-        <CardContent className="p-4">
+        <CardContent className="p-3">
+          {/* En-tête compact */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Badge variant="outline" className={cn('text-xs', urgencyConfig.color)}>
                   <UrgencyIcon className="h-3 w-3 mr-1" />
                   {urgencyConfig.label}
@@ -124,27 +132,99 @@ export const BlockageCard: React.FC<BlockageCardProps> = ({
                 <Badge variant="secondary" className="text-xs">
                   {typeConfig.label}
                 </Badge>
-              </div>
-              <p className="font-medium text-sm truncate">{blockage.interventionTitle}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {formatDuration(
-                  blockage.durationDays,
-                  blockage.durationHours,
-                  blockage.durationMinutes
+                {!blockage.isActive && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-green-50 text-green-700 dark:bg-green-900/20"
+                  >
+                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                    Résolu
+                  </Badge>
                 )}
-              </p>
+              </div>
+              <p className="font-medium text-sm">{blockage.interventionTitle}</p>
+              <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatDuration(
+                    blockage.durationDays,
+                    blockage.durationHours,
+                    blockage.durationMinutes
+                  )}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {formatDate(blockage.blockedAt)}
+                </span>
+              </div>
             </div>
-            {showActions && blockage.isActive && onResolve && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => onResolve(blockage.id)}
-                className="shrink-0"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-              </Button>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {showActions && blockage.isActive && onResolve && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onResolve(blockage.id)}
+                  className="h-8 w-8 p-0"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+              )}
+              {collapsible && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="h-8 w-8 p-0"
+                >
+                  {isExpanded ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
           </div>
+
+          {/* Détails étendus (si collapsible et expanded) */}
+          {collapsible && isExpanded && (
+            <div className="mt-3 pt-3 border-t space-y-3">
+              {/* Raison */}
+              {blockage.reason && (
+                <div className="p-2 rounded-lg bg-muted/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Raison</p>
+                  <p className="text-sm">{blockage.reason}</p>
+                </div>
+              )}
+
+              {/* Stats financières */}
+              {blockage.estimatedRevenueLoss > 0 && (
+                <div className="flex items-center gap-2 text-sm">
+                  <DollarSign className="h-4 w-4 text-red-500" />
+                  <span className="font-semibold text-red-600">
+                    {blockage.estimatedRevenueLoss.toLocaleString('fr-FR')} €
+                  </span>
+                  <span className="text-xs text-muted-foreground">de perte estimée</span>
+                </div>
+              )}
+
+              {/* Responsable */}
+              {blockage.blockedByName && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <User className="h-3 w-3" />
+                  <span>Bloqué par {blockage.blockedByName}</span>
+                </div>
+              )}
+
+              {/* Notes */}
+              {blockage.notes && (
+                <div className="text-xs text-muted-foreground">
+                  <p className="font-medium mb-1">Notes</p>
+                  <p>{blockage.notes}</p>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     );

@@ -402,7 +402,7 @@ export const RoomDetailPage = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {blockageHistory.map(blockage => (
                     <BlockageCard
                       key={blockage.id}
@@ -411,6 +411,7 @@ export const RoomDetailPage = () => {
                         navigate(`/app/interventions/${interventionId}`)
                       }
                       showActions={false}
+                      collapsible
                     />
                   ))}
                 </div>
