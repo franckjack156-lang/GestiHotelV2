@@ -42,14 +42,6 @@ import {
 } from '@/shared/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog';
-import {
   DataTable,
   SearchBar,
   EmptyState,
@@ -65,6 +57,7 @@ import type { Room } from '@/features/rooms/types/room.types';
 import { ImportDialog } from '@/shared/components/import/ImportDialog';
 import { useImportRooms } from '@/shared/hooks/useImport';
 import { downloadRoomsTemplate } from '@/shared/services/exportService';
+import { BlockRoomDialog } from '@/features/rooms/components';
 
 // ============================================================================
 // VALIDATION SCHEMA
@@ -107,7 +100,6 @@ const RoomsListPageComponent = () => {
   const [filterFloor, setFilterFloor] = useState<string>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [blockDialogRoom, setBlockDialogRoom] = useState<Room | null>(null);
-  const [blockReason, setBlockReason] = useState('');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // Hook d'import
@@ -154,20 +146,19 @@ const RoomsListPageComponent = () => {
       await deleteRoom(deleteId);
       toast.success('Chambre supprimée');
       setDeleteId(null);
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };
 
-  const handleBlock = async () => {
+  const handleBlock = async (reason: string) => {
     if (!blockDialogRoom || !user) return;
 
     try {
-      await blockRoom(blockDialogRoom.id, { reason: blockReason, userId: user.id });
+      await blockRoom(blockDialogRoom.id, { reason, userId: user.id });
       toast.success('Chambre bloquée');
       setBlockDialogRoom(null);
-      setBlockReason('');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du blocage');
     }
   };
@@ -176,12 +167,13 @@ const RoomsListPageComponent = () => {
     try {
       await unblockRoom(roomId);
       toast.success('Chambre débloquée');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du déblocage');
     }
   };
 
   // Gestion de l'import
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleImportConfirm = async (data: any[]) => {
     try {
       await importHook.handleConfirm(data, createRoom);
@@ -189,10 +181,8 @@ const RoomsListPageComponent = () => {
         description: `${data.length} chambre(s) importée(s)`,
       });
       setImportDialogOpen(false);
-    } catch (error) {
-      toast.error("Erreur lors de l'import", {
-        description: error instanceof Error ? error.message : 'Une erreur est survenue',
-      });
+    } catch {
+      toast.error("Erreur lors de l'import");
     }
   };
 
@@ -395,6 +385,7 @@ const RoomsListPageComponent = () => {
               placeholder="Rechercher une chambre..."
             />
 
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
               <SelectTrigger>
                 <SelectValue />
@@ -443,34 +434,15 @@ const RoomsListPageComponent = () => {
       )}
 
       {/* Dialog blocage */}
-      <Dialog open={!!blockDialogRoom} onOpenChange={() => setBlockDialogRoom(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Bloquer la chambre {blockDialogRoom?.number}</DialogTitle>
-            <DialogDescription>Indiquez la raison du blocage de cette chambre</DialogDescription>
-          </DialogHeader>
-
-          <div>
-            <Label htmlFor="reason">Raison du blocage</Label>
-            <Textarea
-              id="reason"
-              value={blockReason}
-              onChange={e => setBlockReason(e.target.value)}
-              placeholder="Ex: Travaux en cours, problème de plomberie..."
-              rows={3}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBlockDialogRoom(null)}>
-              Annuler
-            </Button>
-            <Button onClick={handleBlock} disabled={!blockReason.trim()}>
-              Bloquer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {blockDialogRoom && (
+        <BlockRoomDialog
+          isOpen={!!blockDialogRoom}
+          onClose={() => setBlockDialogRoom(null)}
+          onConfirm={handleBlock}
+          roomNumber={blockDialogRoom.number}
+          establishmentId={establishmentId}
+        />
+      )}
 
       {/* Dialog suppression */}
       <ConfirmDialog
@@ -504,6 +476,7 @@ const RoomsListPageComponent = () => {
                 </tr>
               </thead>
               <tbody>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {data.slice(0, 5).map((row: any, idx) => (
                   <tr key={idx} className="border-t border-gray-200 dark:border-gray-700">
                     <td className="px-3 py-2">{row.numero}</td>
@@ -544,6 +517,7 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   const navigate = useNavigate();
 
   const form = useForm<RoomFormData>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(roomSchema) as any,
     defaultValues: room || {
       type: 'double',
@@ -559,6 +533,7 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   } = form;
 
   return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div>
@@ -580,6 +555,7 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
 
         <div>
           <Label htmlFor="type">Type *</Label>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <Select onValueChange={value => setValue('type', value as any)}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner" />
@@ -640,7 +616,7 @@ const CreateRoomPageComponent = () => {
         toast.success('Chambre créée');
         navigate('/app/rooms');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la création');
     }
   };
