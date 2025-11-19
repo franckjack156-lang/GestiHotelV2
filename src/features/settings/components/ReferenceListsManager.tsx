@@ -540,6 +540,7 @@ export const ReferenceListsManager: React.FC = () => {
     itemId: string;
     formData: CreateItemInput;
     oldValue: string;
+    newValue: string;
   } | null>(null);
 
   const {
@@ -647,29 +648,41 @@ export const ReferenceListsManager: React.FC = () => {
 
   const handleSubmitForm = async (formData: CreateItemInput) => {
     if (editingItem) {
-      // Vérifier si la valeur a changé
+      // Vérifier si la valeur OU le label ont changé
       const hasValueChanged = editingItem.value !== formData.value;
+      const hasLabelChanged = editingItem.label !== formData.label;
 
       console.log('🔍 Form submission:', {
         hasValueChanged,
+        hasLabelChanged,
         oldValue: editingItem.value,
         newValue: formData.value,
+        oldLabel: editingItem.label,
+        newLabel: formData.label,
         listKey: selectedListKey,
       });
 
-      if (hasValueChanged) {
+      // Pour certaines listes, les interventions stockent le LABEL directement
+      // (ex: building, location, etc.) donc on doit détecter les changements de label aussi
+      const needsImpactDialog = hasValueChanged || hasLabelChanged;
+
+      if (needsImpactDialog) {
         // Afficher le dialog d'impact pour confirmer la mise à jour
         console.log('✅ Showing impact dialog');
+        const oldVal = hasValueChanged ? editingItem.value : editingItem.label;
+        const newVal = hasValueChanged ? formData.value : formData.label;
+
         setPendingUpdate({
           itemId: editingItem.id,
           formData,
-          oldValue: editingItem.value,
+          oldValue: oldVal,
+          newValue: newVal,
         });
         setShowImpactDialog(true);
         // Ne pas fermer le dialog principal immédiatement
       } else {
-        // Pas de changement de valeur, mise à jour directe
-        console.log('➡️ Direct update (no value change)');
+        // Aucun changement, mise à jour directe
+        console.log('➡️ Direct update (no changes affecting interventions)');
         await updateItem(editingItem.id, formData);
         setIsDialogOpen(false);
       }
@@ -686,7 +699,7 @@ export const ReferenceListsManager: React.FC = () => {
   const handleConfirmImpactUpdate = async (updateInterventions: boolean) => {
     if (!pendingUpdate) return;
 
-    const { itemId, formData, oldValue } = pendingUpdate;
+    const { itemId, formData, oldValue, newValue } = pendingUpdate;
 
     try {
       // 1. Mettre à jour l'élément de la liste
@@ -694,11 +707,17 @@ export const ReferenceListsManager: React.FC = () => {
 
       // 2. Si demandé, mettre à jour les interventions en cascade
       if (updateInterventions && user && currentEstablishment) {
+        console.log('🔄 Updating interventions:', {
+          oldValue,
+          newValue,
+          listKey: selectedListKey,
+        });
+
         await updateInterventionsByReferenceValue({
           establishmentId: currentEstablishment.id,
           listKey: selectedListKey,
           oldValue,
-          newValue: formData.value,
+          newValue,
           userId: user.id,
         });
       }
@@ -991,7 +1010,7 @@ export const ReferenceListsManager: React.FC = () => {
           establishmentId={currentEstablishment?.id || ''}
           listKey={selectedListKey}
           oldValue={pendingUpdate.oldValue}
-          newValue={pendingUpdate.formData.value}
+          newValue={pendingUpdate.newValue}
           itemLabel={pendingUpdate.formData.label}
         />
       )}
