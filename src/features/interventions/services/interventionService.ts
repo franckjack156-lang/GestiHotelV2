@@ -31,6 +31,10 @@ import {
   notifyStatusChanged,
 } from '@/shared/services/notificationService';
 import { calculateDueDate, SLA_TARGETS } from './slaService';
+import {
+  createBlockageFromIntervention,
+  resolveBlockageForIntervention,
+} from '@/features/rooms/services/blockageService';
 import type {
   Intervention,
   CreateInterventionData,
@@ -41,6 +45,7 @@ import type {
   AssignmentData,
 } from '../types/intervention.types';
 import type { InterventionStatus } from '@/shared/types/status.types';
+import type { Room } from '@/features/rooms/types/room.types';
 
 /**
  * Obtenir la référence de la collection interventions
@@ -78,7 +83,7 @@ export const createIntervention = async (
 
     // Récupérer le nom du créateur (seulement si non fourni dans data - pour import historique)
     let createdByName = data.createdByName || 'Inconnu';
-    let createdBy = data.createdBy || userId;
+    const createdBy = data.createdBy || userId;
 
     // Si createdByName n'est pas fourni et qu'on utilise userId, récupérer le nom
     if (!data.createdByName && !data.createdBy) {
@@ -111,7 +116,9 @@ export const createIntervention = async (
       viewsCount: 0,
       // Utiliser createdAt fourni (import historique) ou serverTimestamp() pour nouvelle intervention
       createdAt: data.createdAt
-        ? (data.createdAt instanceof Timestamp ? data.createdAt : Timestamp.fromDate(data.createdAt))
+        ? data.createdAt instanceof Timestamp
+          ? data.createdAt
+          : Timestamp.fromDate(data.createdAt)
         : serverTimestamp(),
       updatedAt: serverTimestamp(),
       isDeleted: false,
@@ -149,7 +156,9 @@ export const createIntervention = async (
 
       // Utiliser assignedAt fourni (import historique) ou serverTimestamp() pour nouvelle assignation
       interventionData.assignedAt = data.assignedAt
-        ? (data.assignedAt instanceof Timestamp ? data.assignedAt : Timestamp.fromDate(data.assignedAt))
+        ? data.assignedAt instanceof Timestamp
+          ? data.assignedAt
+          : Timestamp.fromDate(data.assignedAt)
         : serverTimestamp();
 
       // Utiliser assignedToName fourni (import historique) ou récupérer depuis la base
@@ -184,9 +193,10 @@ export const createIntervention = async (
       // (technicien dans liste de référence, pas dans users)
       interventionData.assignedToName = data.assignedToName;
       if (data.assignedAt) {
-        interventionData.assignedAt = data.assignedAt instanceof Timestamp
-          ? data.assignedAt
-          : Timestamp.fromDate(data.assignedAt);
+        interventionData.assignedAt =
+          data.assignedAt instanceof Timestamp
+            ? data.assignedAt
+            : Timestamp.fromDate(data.assignedAt);
       }
     }
     if (data.scheduledAt) {
@@ -217,6 +227,42 @@ export const createIntervention = async (
 
     const docRef = await addDoc(collectionRef, interventionData);
     console.log('✅ Intervention créée:', docRef.id);
+
+    // ========================================================================
+    // BLOCAGE AUTOMATIQUE - Si isBlocking = true et roomNumber renseigné
+    // ========================================================================
+    if (data.isBlocking && data.roomNumber) {
+      try {
+        // Récupérer la chambre correspondante
+        const roomsRef = collection(db, 'establishments', establishmentId, 'rooms');
+        const roomQuery = query(roomsRef, where('number', '==', data.roomNumber));
+        const roomSnapshot = await getDocs(roomQuery);
+
+        if (!roomSnapshot.empty) {
+          const roomDoc = roomSnapshot.docs[0];
+          const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
+
+          // Créer le blocage lié à l'intervention
+          const intervention: Intervention = {
+            id: docRef.id,
+            ...interventionData,
+          } as Intervention;
+
+          const blockageId = await createBlockageFromIntervention(
+            intervention,
+            room,
+            establishmentId
+          );
+
+          console.log(`✅ Blocage créé automatiquement: ${blockageId} pour chambre ${room.number}`);
+        } else {
+          console.warn(`⚠️ Chambre ${data.roomNumber} non trouvée pour bloquer`);
+        }
+      } catch (error) {
+        console.warn('⚠️ Erreur création blocage automatique:', error);
+        // Ne pas bloquer la création de l'intervention si le blocage échoue
+      }
+    }
 
     // Envoyer une notification si urgente
     if (interventionData.isUrgent) {
@@ -279,7 +325,7 @@ export const updateIntervention = async (
 ): Promise<void> => {
   try {
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
-    const updateData: Record<string, any> = { updatedAt: serverTimestamp() };
+    const updateData: Record<string, unknown> = { updatedAt: serverTimestamp() };
 
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
@@ -351,7 +397,7 @@ export const changeStatus = async (
     const oldStatus = interventionData.status;
     const interventionTitle = interventionData.title || 'Intervention';
 
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       status: statusData.newStatus,
       updatedAt: serverTimestamp(),
     };
@@ -374,7 +420,9 @@ export const changeStatus = async (
       // Calculer le temps de résolution
       const createdAt = interventionData.createdAt?.toDate();
       if (createdAt) {
-        const resolutionTime = Math.floor((completedAt.getTime() - createdAt.getTime()) / (1000 * 60));
+        const resolutionTime = Math.floor(
+          (completedAt.getTime() - createdAt.getTime()) / (1000 * 60)
+        );
         updateData.resolutionTime = resolutionTime;
 
         // Vérifier si le SLA a été respecté
@@ -389,6 +437,19 @@ export const changeStatus = async (
 
       if (statusData.resolutionNotes) {
         updateData.resolutionNotes = statusData.resolutionNotes;
+      }
+
+      // ========================================================================
+      // DÉBLOCAGE AUTOMATIQUE - Résoudre le blocage de la chambre
+      // ========================================================================
+      if (interventionData.isBlocking) {
+        try {
+          await resolveBlockageForIntervention(interventionId, establishmentId);
+          console.log(`✅ Blocage résolu automatiquement pour intervention ${interventionId}`);
+        } catch (error) {
+          console.warn('⚠️ Erreur résolution blocage automatique:', error);
+          // Ne pas bloquer la complétion de l'intervention si la résolution échoue
+        }
       }
     }
 
@@ -507,7 +568,7 @@ export const assignIntervention = async (
     }
 
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
-    const updateData: Record<string, any> = {
+    const updateData: Record<string, unknown> = {
       assignedTo: assignmentData.technicianId,
       assignedToName,
       assignedAt: serverTimestamp(),
@@ -622,7 +683,7 @@ export const incrementViewCount = async (
       lastViewedBy: userId,
     });
   } catch (error) {
-    console.error('❌ Erreur lors de l\'incrémentation du compteur de vues:', error);
+    console.error("❌ Erreur lors de l'incrémentation du compteur de vues:", error);
     // Ne pas bloquer l'affichage de l'intervention si l'incrémentation échoue
     // L'erreur est loggée mais pas relancée
   }

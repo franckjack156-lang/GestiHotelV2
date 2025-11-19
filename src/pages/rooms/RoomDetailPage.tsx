@@ -7,11 +7,25 @@
  */
 
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, Lock, Unlock, Trash2, Building2, Users, DoorClosed } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit,
+  Lock,
+  Unlock,
+  Trash2,
+  Building2,
+  Users,
+  DoorClosed,
+  History,
+  Wrench,
+} from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
+import { useBlockageHistory } from '@/features/rooms/hooks/useBlockages';
+import { BlockageCard } from '@/features/rooms/components';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUser } from '@/features/users/hooks/useUsers';
@@ -53,6 +67,9 @@ export const RoomDetailPage = () => {
 
   const room = getRoomById(roomId!);
 
+  // Charger l'historique des blocages
+  const { history: blockageHistory, isLoading: isLoadingHistory } = useBlockageHistory(roomId!);
+
   // Récupérer les informations de l'utilisateur qui a bloqué la chambre
   const { user: blockedByUser } = useUser(room?.blockedBy);
 
@@ -63,7 +80,7 @@ export const RoomDetailPage = () => {
       await deleteRoom(room.id);
       toast.success('Chambre supprimée');
       navigate('/app/rooms');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -76,7 +93,7 @@ export const RoomDetailPage = () => {
       toast.success('Chambre bloquée');
       setBlockDialogOpen(false);
       setBlockReason('');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du blocage');
     }
   };
@@ -87,7 +104,7 @@ export const RoomDetailPage = () => {
     try {
       await unblockRoom(room.id);
       toast.success('Chambre débloquée');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du déblocage');
     }
   };
@@ -338,6 +355,70 @@ export const RoomDetailPage = () => {
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Historique des blocages et interventions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Historique & Interventions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="blockages" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="blockages" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Blocages ({blockageHistory.length})
+              </TabsTrigger>
+              <TabsTrigger value="interventions" className="flex items-center gap-2">
+                <Wrench className="h-4 w-4" />
+                Interventions liées
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="blockages" className="space-y-4 mt-4">
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center py-8">
+                  <LoadingSkeleton type="card" />
+                </div>
+              ) : blockageHistory.length === 0 ? (
+                <div className="text-center py-8">
+                  <Lock className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-700 mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Aucun historique de blocage pour cette chambre
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {blockageHistory.map(blockage => (
+                    <BlockageCard
+                      key={blockage.id}
+                      blockage={blockage}
+                      onViewIntervention={interventionId =>
+                        navigate(`/app/interventions/${interventionId}`)
+                      }
+                      showActions={false}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="interventions" className="mt-4">
+              <div className="text-center py-8">
+                <Wrench className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-700 mb-3" />
+                <p className="text-gray-500 dark:text-gray-400">
+                  Liste des interventions pour cette chambre
+                </p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                  Fonctionnalité à venir
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
