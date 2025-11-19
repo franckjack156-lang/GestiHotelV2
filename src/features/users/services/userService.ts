@@ -21,7 +21,6 @@ import {
   getDocs,
   setDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -55,6 +54,9 @@ import type {
 } from '../types/user.types';
 import { UserStatus } from '../types/user.types';
 import type { UserRole } from '../types/role.types';
+import { sendUserInvitationEmail } from '@/shared/services/emailService';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/core/config/firebase';
 
 // =============================================================================
 // HELPER FUNCTIONS
@@ -298,7 +300,27 @@ class UserService {
       const cleanedInvitation = removeUndefinedFields(invitation);
       await setDoc(doc(db, 'invitations', invitationId), cleanedInvitation);
 
-      // TODO: Envoyer email avec lien d'invitation
+      // ✅ Envoyer email d'invitation
+      try {
+        const invitedByUser = await this.getUserProfile(invitedBy);
+        const establishmentName = 'GestiHotel'; // TODO: Récupérer depuis establishmentIds[0]
+
+        await sendUserInvitationEmail({
+          to: data.email,
+          invitedUserName: data.firstName && data.lastName
+            ? `${data.firstName} ${data.lastName}`
+            : data.email,
+          invitedByName: invitedByUser?.displayName || 'L\'équipe GestiHotel',
+          establishmentName,
+          role: data.role,
+          invitationMessage: data.message,
+          appUrl: window.location.origin,
+        });
+      } catch (emailError: any) {
+        console.error('Erreur lors de l\'envoi de l\'email d\'invitation:', emailError);
+        // Ne pas bloquer la création de l'invitation si l'email échoue
+        // L'utilisateur peut toujours être invité manuellement
+      }
 
       return invitationId;
     } catch (error: any) {
@@ -691,11 +713,19 @@ class UserService {
    */
   async permanentlyDeleteUser(userId: string): Promise<void> {
     try {
-      // 1. Supprimer le document Firestore
-      await deleteDoc(doc(db, this.COLLECTION, userId));
+      // ✅ Appeler la Cloud Function pour supprimer l'utilisateur de Firebase Auth ET Firestore
+      const deleteAuthUserFn = httpsCallable<{ userId: string }, { success: boolean; message: string }>(
+        functions,
+        'deleteAuthUser'
+      );
 
-      // 2. TODO: Supprimer l'utilisateur Firebase Auth
-      // Note: Nécessite des privilèges admin ou Firebase Functions
+      const result = await deleteAuthUserFn({ userId });
+
+      if (!result.data.success) {
+        throw new Error(result.data.message || 'Échec de la suppression');
+      }
+
+      console.log('✅ Utilisateur supprimé définitivement:', userId);
     } catch (error: any) {
       console.error('Error permanently deleting user:', error);
       throw new Error(`Erreur lors de la suppression définitive: ${error.message}`);

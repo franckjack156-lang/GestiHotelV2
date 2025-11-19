@@ -233,14 +233,14 @@ export const useInterventionActions = () => {
         if (intervention) {
           setSelectedIntervention(intervention);
 
-          // TODO: Incrémenter le compteur de vues
-          // if (userId) {
-          //   interventionService.incrementViewCount(
-          //     establishmentId,
-          //     interventionId,
-          //     userId
-          //   );
-          // }
+          // ✅ Incrémenter le compteur de vues
+          if (userId) {
+            interventionService.incrementViewCount(
+              establishmentId,
+              interventionId,
+              userId
+            );
+          }
         }
 
         return intervention;

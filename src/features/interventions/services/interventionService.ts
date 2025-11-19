@@ -20,6 +20,7 @@ import {
   Timestamp,
   QueryConstraint,
   serverTimestamp,
+  increment,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import { enrichInterventions } from '../utils/enrichInterventions';
@@ -606,6 +607,28 @@ export const permanentlyDeleteIntervention = async (
 };
 
 /**
+ * ✅ Incrémenter le compteur de vues d'une intervention
+ */
+export const incrementViewCount = async (
+  establishmentId: string,
+  interventionId: string,
+  userId: string
+): Promise<void> => {
+  try {
+    const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
+    await updateDoc(docRef, {
+      viewCount: increment(1),
+      lastViewedAt: serverTimestamp(),
+      lastViewedBy: userId,
+    });
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'incrémentation du compteur de vues:', error);
+    // Ne pas bloquer l'affichage de l'intervention si l'incrémentation échoue
+    // L'erreur est loggée mais pas relancée
+  }
+};
+
+/**
  * ✅ CORRIGÉ: S'abonner aux interventions en temps réel
  * AVEC TOUS LES PARAMÈTRES QUE LE HOOK ENVOIE
  */
@@ -751,6 +774,7 @@ export default {
   assignIntervention,
   deleteIntervention,
   permanentlyDeleteIntervention,
+  incrementViewCount, // ✅ AJOUTÉ
   subscribeToInterventions, // ✅ CORRIGÉ
   getInterventions, // ✅ CORRIGÉ
 };

@@ -25,6 +25,12 @@ import { Label } from '@/shared/components/ui/label';
 import { cn } from '@/shared/lib/utils';
 import { Shield, Eye, EyeOff, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+} from 'firebase/auth';
+import { auth } from '@/core/config/firebase';
 
 // ============================================================================
 // TYPES
@@ -90,16 +96,45 @@ export const SecuritySection = () => {
 
     setIsUpdating(true);
     try {
-      // TODO: Implement password update
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // ✅ Mise à jour du mot de passe avec Firebase Auth
+      const user = auth.currentUser;
+
+      if (!user || !user.email) {
+        throw new Error('Utilisateur non connecté');
+      }
+
+      // 1. Ré-authentifier l'utilisateur (obligatoire pour changer le mot de passe)
+      const credential = EmailAuthProvider.credential(user.email, data.currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // 2. Mettre à jour le mot de passe
+      await updatePassword(user, data.newPassword);
+
       toast.success('Mot de passe modifié avec succès', {
         description: 'Votre nouveau mot de passe est maintenant actif',
       });
       reset();
-    } catch {
-      toast.error('Erreur lors de la modification', {
-        description: 'Veuillez réessayer',
-      });
+    } catch (error: any) {
+      console.error('Erreur lors de la modification du mot de passe:', error);
+
+      // Gestion des erreurs Firebase
+      if (error.code === 'auth/wrong-password') {
+        toast.error('Mot de passe actuel incorrect', {
+          description: 'Veuillez vérifier votre mot de passe actuel',
+        });
+      } else if (error.code === 'auth/requires-recent-login') {
+        toast.error('Session expirée', {
+          description: 'Veuillez vous reconnecter et réessayer',
+        });
+      } else if (error.code === 'auth/weak-password') {
+        toast.error('Mot de passe trop faible', {
+          description: 'Utilisez un mot de passe plus robuste',
+        });
+      } else {
+        toast.error('Erreur lors de la modification', {
+          description: error.message || 'Veuillez réessayer',
+        });
+      }
     } finally {
       setIsUpdating(false);
     }
