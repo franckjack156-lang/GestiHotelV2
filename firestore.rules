@@ -203,6 +203,14 @@ service cloud.firestore {
         allow create: if isAuthenticated();
         allow update, delete: if isAdmin();
       }
+
+      // Room Blockages subcollection
+      match /room_blockages/{blockageId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated();
+        allow delete: if isAdmin();
+      }
     }
 
     // ============================================================================
