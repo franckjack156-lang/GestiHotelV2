@@ -229,10 +229,10 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
 // BLOCKAGE HISTORY HOOK
 // ============================================================================
 
-export const useBlockageHistory = (roomId: string): UseBlockageHistoryReturn => {
-  const { currentEstablishment } = useAuth();
-  const establishmentId = currentEstablishment?.id;
-
+export const useBlockageHistory = (
+  roomId: string,
+  establishmentId?: string
+): UseBlockageHistoryReturn => {
   const [history, setHistory] = useState<RoomBlockage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

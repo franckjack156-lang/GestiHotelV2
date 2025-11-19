@@ -71,7 +71,10 @@ export const RoomDetailPage = () => {
   const room = getRoomById(roomId!);
 
   // Charger l'historique des blocages
-  const { history: blockageHistory, isLoading: isLoadingHistory } = useBlockageHistory(roomId!);
+  const { history: blockageHistory, isLoading: isLoadingHistory } = useBlockageHistory(
+    roomId!,
+    establishmentId
+  );
 
   // Charger les interventions liées à cette chambre
   const { interventions: roomInterventions, isLoading: isLoadingInterventions } =
