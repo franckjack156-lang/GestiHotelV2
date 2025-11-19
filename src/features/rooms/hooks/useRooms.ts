@@ -279,8 +279,7 @@ export const useRooms = (establishmentId: string) => {
 
           // Dates
           blockedAt: now,
-          estimatedUnblockDate: undefined,
-          actualUnblockDate: undefined,
+          // Ne pas inclure estimatedUnblockDate et actualUnblockDate (undefined non supporté par Firebase)
 
           // Durée (initial = 0)
           durationDays: 0,
@@ -299,8 +298,7 @@ export const useRooms = (establishmentId: string) => {
           // Responsible
           blockedBy: blockData.userId,
           blockedByName: user.displayName || user.email || 'Unknown',
-          assignedTo: undefined,
-          assignedToName: undefined,
+          // Ne pas inclure assignedTo et assignedToName (undefined non supporté par Firebase)
 
           // Status
           isActive: true,
