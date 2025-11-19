@@ -75,6 +75,8 @@ import { LIST_LABELS } from '@/shared/types/reference-lists.types';
 import { cn } from '@/shared/utils/cn';
 import { TemplateDialog } from './TemplateDialog';
 import { GenerateFloorsDialog } from './GenerateFloorsDialog';
+import { UpdateReferenceImpactDialog } from './UpdateReferenceImpactDialog';
+import { updateInterventionsByReferenceValue } from '@/features/interventions/services/updateInterventionsByReference';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
@@ -126,6 +128,7 @@ const SortableItem: React.FC<{
     transition,
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Icon = item.icon && (LucideIcons as any)[item.icon];
   const colorStyles = item.color ? getColorStyles(item.color) : null;
 
@@ -264,6 +267,7 @@ const ItemFormDialog: React.FC<{
     try {
       await onSubmit(formData);
       onClose();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setErrors([error.message || 'Une erreur est survenue']);
     } finally {
@@ -271,6 +275,7 @@ const ItemFormDialog: React.FC<{
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const Icon = formData.icon && (LucideIcons as any)[formData.icon];
   const colorStyles = getColorStyles(formData.color);
 
@@ -406,7 +411,9 @@ const ItemFormDialog: React.FC<{
                   <div className="flex flex-col">
                     <span className="text-sm font-medium text-gray-700">Couleur personnalisée</span>
                     <span className="text-xs text-gray-500">
-                      {formData.color.startsWith('#') ? formData.color.toUpperCase() : 'Cliquez pour choisir'}
+                      {formData.color.startsWith('#')
+                        ? formData.color.toUpperCase()
+                        : 'Cliquez pour choisir'}
                     </span>
                   </div>
                 </label>
@@ -423,7 +430,8 @@ const ItemFormDialog: React.FC<{
             </div>
 
             <p className="text-xs text-gray-500">
-              Utilisez les couleurs prédéfinies, le sélecteur de couleur, ou entrez un code couleur (ex: #3b82f6, blue, rgb(59, 130, 246))
+              Utilisez les couleurs prédéfinies, le sélecteur de couleur, ou entrez un code couleur
+              (ex: #3b82f6, blue, rgb(59, 130, 246))
             </p>
           </div>
 
@@ -527,6 +535,12 @@ export const ReferenceListsManager: React.FC = () => {
   const [editingItem, setEditingItem] = useState<ReferenceItem | null>(null);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);
   const [showGenerateFloorsDialog, setShowGenerateFloorsDialog] = useState(false);
+  const [showImpactDialog, setShowImpactDialog] = useState(false);
+  const [pendingUpdate, setPendingUpdate] = useState<{
+    itemId: string;
+    formData: CreateItemInput;
+    oldValue: string;
+  } | null>(null);
 
   const {
     listConfig,
@@ -589,6 +603,7 @@ export const ReferenceListsManager: React.FC = () => {
     })
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -613,6 +628,7 @@ export const ReferenceListsManager: React.FC = () => {
   const handleToggleActive = async (item: ReferenceItem) => {
     try {
       await updateItem(item.id, { isActive: !item.isActive });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       alert(`Erreur : ${error.message}`);
     }
@@ -623,6 +639,7 @@ export const ReferenceListsManager: React.FC = () => {
 
     try {
       await deleteItem(item.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       alert(`Erreur : ${error.message}`);
     }
@@ -630,14 +647,60 @@ export const ReferenceListsManager: React.FC = () => {
 
   const handleSubmitForm = async (formData: CreateItemInput) => {
     if (editingItem) {
-      await updateItem(editingItem.id, formData);
+      // Vérifier si la valeur a changé
+      const hasValueChanged = editingItem.value !== formData.value;
+
+      if (hasValueChanged) {
+        // Afficher le dialog d'impact pour confirmer la mise à jour
+        setPendingUpdate({
+          itemId: editingItem.id,
+          formData,
+          oldValue: editingItem.value,
+        });
+        setShowImpactDialog(true);
+      } else {
+        // Pas de changement de valeur, mise à jour directe
+        await updateItem(editingItem.id, formData);
+        setIsDialogOpen(false);
+      }
     } else {
       await addItem(formData);
+      setIsDialogOpen(false);
     }
   };
 
   const handleTemplateSuccess = () => {
     window.location.reload();
+  };
+
+  const handleConfirmImpactUpdate = async (updateInterventions: boolean) => {
+    if (!pendingUpdate) return;
+
+    const { itemId, formData, oldValue } = pendingUpdate;
+
+    try {
+      // 1. Mettre à jour l'élément de la liste
+      await updateItem(itemId, formData);
+
+      // 2. Si demandé, mettre à jour les interventions en cascade
+      if (updateInterventions && user && currentEstablishment) {
+        await updateInterventionsByReferenceValue({
+          establishmentId: currentEstablishment.id,
+          listKey: selectedListKey,
+          oldValue,
+          newValue: formData.value,
+          userId: user.id,
+        });
+      }
+
+      // Fermer les dialogs
+      setShowImpactDialog(false);
+      setIsDialogOpen(false);
+      setPendingUpdate(null);
+    } catch (error) {
+      console.error('Error updating reference with cascade:', error);
+      throw error;
+    }
   };
 
   if (globalLoading) {
@@ -732,9 +795,7 @@ export const ReferenceListsManager: React.FC = () => {
             </SelectTrigger>
             <SelectContent>
               {filteredListKeys.length === 0 ? (
-                <div className="p-4 text-center text-sm text-gray-500">
-                  Aucune liste trouvée
-                </div>
+                <div className="p-4 text-center text-sm text-gray-500">Aucune liste trouvée</div>
               ) : (
                 filteredListKeys.map(key => {
                   const list = data.lists[key];
@@ -908,6 +969,22 @@ export const ReferenceListsManager: React.FC = () => {
         defaultTotalFloors={currentEstablishment?.totalFloors || 0}
         onSuccess={handleTemplateSuccess}
       />
+
+      {pendingUpdate && (
+        <UpdateReferenceImpactDialog
+          isOpen={showImpactDialog}
+          onClose={() => {
+            setShowImpactDialog(false);
+            setPendingUpdate(null);
+          }}
+          onConfirm={handleConfirmImpactUpdate}
+          establishmentId={currentEstablishment?.id || ''}
+          listKey={selectedListKey}
+          oldValue={pendingUpdate.oldValue}
+          newValue={pendingUpdate.formData.value}
+          itemLabel={pendingUpdate.formData.label}
+        />
+      )}
     </div>
   );
 };
