@@ -482,21 +482,67 @@ export const RoomDetailPage = () => {
 
       {/* Dialog blocage */}
       <Dialog open={blockDialogOpen} onOpenChange={setBlockDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Bloquer la chambre {room.number}</DialogTitle>
             <DialogDescription>Indiquez la raison du blocage de cette chambre</DialogDescription>
           </DialogHeader>
 
-          <div>
-            <Label htmlFor="reason">Raison du blocage</Label>
-            <Textarea
-              id="reason"
-              value={blockReason}
-              onChange={e => setBlockReason(e.target.value)}
-              placeholder="Ex: Travaux en cours, problème de plomberie..."
-              rows={3}
-            />
+          <div className="space-y-4">
+            {/* Interventions en cours */}
+            {roomInterventions.filter(i => i.status !== 'completed' && i.status !== 'cancelled')
+              .length > 0 && (
+              <div className="p-3 rounded-lg border bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-900/30">
+                <div className="flex items-start gap-2 mb-2">
+                  <Wrench className="h-4 w-4 text-orange-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-orange-900 dark:text-orange-200">
+                      Interventions en cours (
+                      {
+                        roomInterventions.filter(
+                          i => i.status !== 'completed' && i.status !== 'cancelled'
+                        ).length
+                      }
+                      )
+                    </p>
+                    <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                      Ces interventions sont actuellement actives sur cette chambre
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2 mt-3">
+                  {roomInterventions
+                    .filter(i => i.status !== 'completed' && i.status !== 'cancelled')
+                    .map(intervention => (
+                      <div
+                        key={intervention.id}
+                        className="flex items-start gap-2 p-2 rounded bg-white dark:bg-gray-800 border"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{intervention.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge status={intervention.status} />
+                            <PriorityBadge priority={intervention.priority} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Raison du blocage */}
+            <div>
+              <Label htmlFor="reason">Raison du blocage</Label>
+              <Textarea
+                id="reason"
+                value={blockReason}
+                onChange={e => setBlockReason(e.target.value)}
+                placeholder="Ex: Travaux en cours, problème de plomberie..."
+                rows={3}
+                className="mt-2"
+              />
+            </div>
           </div>
 
           <DialogFooter>

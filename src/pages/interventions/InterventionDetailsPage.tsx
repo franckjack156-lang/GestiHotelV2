@@ -50,7 +50,7 @@ import { useInterventionActions } from '@/features/interventions/hooks/useInterv
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
 import { useFeature } from '@/features/establishments/hooks/useFeature';
-import { BlockRoomDialog } from '@/features/rooms/components';
+import { BlockRoomDialog, RoomStatusBadge } from '@/features/rooms/components';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -112,6 +112,7 @@ export const InterventionDetailsPage = () => {
   // ============================================================================
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const success = await changeStatus(id, { newStatus: newStatus as any });
     return success || false;
   };
@@ -133,7 +134,7 @@ export const InterventionDetailsPage = () => {
       await blockRoom(currentRoom.id, { reason, userId: user.id });
       toast.success('Chambre bloquée avec succès');
       setShowBlockRoomDialog(false);
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du blocage de la chambre');
     } finally {
       setIsBlockingRoom(false);
@@ -146,7 +147,7 @@ export const InterventionDetailsPage = () => {
     try {
       await unblockRoom(currentRoom.id);
       toast.success('Chambre débloquée avec succès');
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors du déblocage de la chambre');
     } finally {
       setIsBlockingRoom(false);
@@ -314,6 +315,7 @@ export const InterventionDetailsPage = () => {
         {/* Informations rapides (badges et infos clés) */}
         <div className="px-6 pb-4">
           <div className="flex items-center gap-3 flex-wrap">
+            {/* eslint-disable @typescript-eslint/no-explicit-any */}
             <StatusBadgeDropdown
               currentStatus={intervention.status as any}
               interventionId={intervention.id}
@@ -321,6 +323,7 @@ export const InterventionDetailsPage = () => {
               onStatusChange={handleStatusChange as any}
               disabled={isUpdating}
             />
+            {/* eslint-enable @typescript-eslint/no-explicit-any */}
             <PriorityBadge priority={intervention.priority} />
             <TypeBadge type={intervention.type} />
 
@@ -338,9 +341,14 @@ export const InterventionDetailsPage = () => {
             <span className="text-sm text-gray-500">•</span>
 
             {intervention.roomNumber && (
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Chambre {intervention.roomNumber}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Chambre {intervention.roomNumber}
+                </span>
+                {currentRoom && (
+                  <RoomStatusBadge isBlocked={currentRoom.isBlocked} status={currentRoom.status} />
+                )}
+              </div>
             )}
 
             {intervention.assignedToName && (
