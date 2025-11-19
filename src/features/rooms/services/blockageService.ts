@@ -272,12 +272,6 @@ export const getBlockageHistory = async (
   establishmentId: string
 ): Promise<RoomBlockage[]> => {
   try {
-    console.log(
-      '🔍 Getting blockage history for roomId:',
-      roomId,
-      'in establishment:',
-      establishmentId
-    );
     const blockagesRef = getBlockagesCollection(establishmentId);
     const q = query(
       blockagesRef,
@@ -287,17 +281,10 @@ export const getBlockageHistory = async (
     );
 
     const snapshot = await getDocs(q);
-    const results = snapshot.docs.map(doc => ({
+    return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     })) as RoomBlockage[];
-
-    console.log(`✅ Found ${results.length} blockage(s) in history`);
-    if (results.length > 0) {
-      console.log('First blockage:', results[0]);
-    }
-
-    return results;
   } catch (error) {
     console.error('Error getting blockage history:', error);
     throw error;
