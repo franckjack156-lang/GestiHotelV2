@@ -475,6 +475,7 @@ export const InterventionDetailsPage = () => {
           onClose={() => setShowBlockRoomDialog(false)}
           onConfirm={handleBlockRoom}
           roomNumber={currentRoom.number}
+          establishmentId={user?.establishmentIds?.[0]}
           isLoading={isBlockingRoom}
         />
       )}

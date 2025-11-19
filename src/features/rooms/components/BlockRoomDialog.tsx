@@ -18,13 +18,17 @@ import {
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Label } from '@/shared/components/ui/label';
-import { Lock, AlertCircle } from 'lucide-react';
+import { Lock, AlertCircle, Wrench } from 'lucide-react';
+import { useRoomInterventions } from '@/features/interventions/hooks/useRoomInterventions';
+import { StatusBadge } from '@/features/interventions/components/badges/StatusBadge';
+import { PriorityBadge } from '@/features/interventions/components/badges/PriorityBadge';
 
 interface BlockRoomDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (reason: string) => void;
   roomNumber: string;
+  establishmentId?: string;
   isLoading?: boolean;
 }
 
@@ -33,9 +37,13 @@ export const BlockRoomDialog: React.FC<BlockRoomDialogProps> = ({
   onClose,
   onConfirm,
   roomNumber,
+  establishmentId,
   isLoading = false,
 }) => {
   const [reason, setReason] = useState('');
+
+  // Charger les interventions liées à cette chambre
+  const { interventions: roomInterventions } = useRoomInterventions(establishmentId, roomNumber);
 
   const handleConfirm = () => {
     if (!reason.trim()) {
@@ -65,6 +73,48 @@ export const BlockRoomDialog: React.FC<BlockRoomDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Interventions en cours */}
+          {roomInterventions.filter(i => i.status !== 'completed' && i.status !== 'cancelled')
+            .length > 0 && (
+            <div className="p-3 rounded-lg border bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-900/30">
+              <div className="flex items-start gap-2 mb-2">
+                <Wrench className="h-4 w-4 text-orange-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-orange-900 dark:text-orange-200">
+                    Interventions en cours (
+                    {
+                      roomInterventions.filter(
+                        i => i.status !== 'completed' && i.status !== 'cancelled'
+                      ).length
+                    }
+                    )
+                  </p>
+                  <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                    Ces interventions sont actuellement actives sur cette chambre
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2 mt-3">
+                {roomInterventions
+                  .filter(i => i.status !== 'completed' && i.status !== 'cancelled')
+                  .map(intervention => (
+                    <div
+                      key={intervention.id}
+                      className="flex items-start gap-2 p-2 rounded bg-white dark:bg-gray-800 border"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{intervention.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <StatusBadge status={intervention.status} />
+                          <PriorityBadge priority={intervention.priority} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="blockReason">
               Raison du blocage <span className="text-red-500">*</span>
