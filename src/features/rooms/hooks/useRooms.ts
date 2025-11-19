@@ -267,7 +267,19 @@ export const useRooms = (establishmentId: string) => {
         const blockagesRef = collection(db, `establishments/${establishmentId}/room_blockages`);
         const now = Timestamp.now();
 
-        await addDoc(blockagesRef, {
+        console.log(
+          '🔵 Creating blockage entry for room:',
+          room.id,
+          'in establishment:',
+          establishmentId
+        );
+        console.log(
+          '🔵 Blockage path will be:',
+          `establishments/${establishmentId}/room_blockages`
+        );
+        console.log('🔵 Room data:', { id: room.id, number: room.number, floor: room.floor });
+
+        const blockageDoc = await addDoc(blockagesRef, {
           establishmentId,
           roomId: room.id,
 
@@ -309,6 +321,7 @@ export const useRooms = (establishmentId: string) => {
           updatedAt: now,
         });
 
+        console.log('✅ Blockage created successfully with ID:', blockageDoc.id);
         toast.success('Chambre bloquée');
         return true;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

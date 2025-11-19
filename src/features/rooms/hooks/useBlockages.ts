@@ -239,15 +239,26 @@ export const useBlockageHistory = (roomId: string): UseBlockageHistoryReturn => 
 
   const loadHistory = useCallback(async () => {
     if (!establishmentId || !roomId) {
+      console.log('⏭️ Skipping history load - missing establishmentId or roomId:', {
+        establishmentId,
+        roomId,
+      });
       setIsLoading(false);
       return;
     }
 
+    console.log(
+      '📚 Loading blockage history for roomId:',
+      roomId,
+      'in establishment:',
+      establishmentId
+    );
     setIsLoading(true);
     setError(null);
 
     try {
       const blockageHistory = await getBlockageHistory(roomId, establishmentId);
+      console.log('📚 History loaded:', blockageHistory.length, 'blockage(s)');
       setHistory(blockageHistory);
     } catch (err) {
       console.error('Error loading blockage history:', err);
