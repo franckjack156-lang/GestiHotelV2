@@ -648,13 +648,11 @@ export const ReferenceListsManager: React.FC = () => {
 
   const handleSubmitForm = async (formData: CreateItemInput) => {
     if (editingItem) {
-      // Vérifier si la valeur OU le label ont changé
+      // Vérifier si la valeur technique a changé
       const hasValueChanged = editingItem.value !== formData.value;
-      const hasLabelChanged = editingItem.label !== formData.label;
 
       console.log('🔍 Form submission:', {
         hasValueChanged,
-        hasLabelChanged,
         oldValue: editingItem.value,
         newValue: formData.value,
         oldLabel: editingItem.label,
@@ -662,27 +660,22 @@ export const ReferenceListsManager: React.FC = () => {
         listKey: selectedListKey,
       });
 
-      // Pour certaines listes, les interventions stockent le LABEL directement
-      // (ex: building, location, etc.) donc on doit détecter les changements de label aussi
-      const needsImpactDialog = hasValueChanged || hasLabelChanged;
-
-      if (needsImpactDialog) {
-        // Afficher le dialog d'impact pour confirmer la mise à jour
-        console.log('✅ Showing impact dialog');
-        const oldVal = hasValueChanged ? editingItem.value : editingItem.label;
-        const newVal = hasValueChanged ? formData.value : formData.label;
+      if (hasValueChanged) {
+        // La VALUE a changé : afficher le dialog d'impact
+        console.log('✅ Showing impact dialog (value changed)');
 
         setPendingUpdate({
           itemId: editingItem.id,
           formData,
-          oldValue: oldVal,
-          newValue: newVal,
+          oldValue: editingItem.value,
+          newValue: formData.value,
         });
         setShowImpactDialog(true);
         // Ne pas fermer le dialog principal immédiatement
       } else {
-        // Aucun changement, mise à jour directe
-        console.log('➡️ Direct update (no changes affecting interventions)');
+        // Seulement le label a changé (ou rien) : mise à jour directe
+        // Les interventions utilisent la value, donc le nouveau label s'affichera automatiquement
+        console.log('➡️ Direct update (no value change, label will update automatically)');
         await updateItem(editingItem.id, formData);
         setIsDialogOpen(false);
       }
