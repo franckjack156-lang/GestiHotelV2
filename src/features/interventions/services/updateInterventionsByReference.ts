@@ -193,14 +193,24 @@ export const countInterventionsByReferenceValue = async (
 ): Promise<number> => {
   const fields = FIELD_MAPPING[listKey];
   if (!fields || fields.length === 0) {
+    console.warn(`⚠️ No field mapping for listKey: ${listKey}`);
     return 0;
   }
+
+  console.log('🔍 Counting interventions:', {
+    establishmentId,
+    listKey,
+    fields,
+    value,
+  });
 
   try {
     const interventionsRef = collection(db, 'interventions');
     const interventionIds = new Set<string>();
 
     for (const field of fields) {
+      console.log(`  🔎 Querying field "${field}" with value "${value}"`);
+
       const q = query(
         interventionsRef,
         where('establishmentId', '==', establishmentId),
@@ -208,12 +218,19 @@ export const countInterventionsByReferenceValue = async (
       );
 
       const snapshot = await getDocs(q);
-      snapshot.docs.forEach(doc => interventionIds.add(doc.id));
+      console.log(`  ✅ Found ${snapshot.size} documents for field "${field}"`);
+
+      snapshot.docs.forEach(doc => {
+        const data = doc.data();
+        console.log(`    📄 Doc ${doc.id}: ${field} = "${data[field]}"`);
+        interventionIds.add(doc.id);
+      });
     }
 
+    console.log(`📊 Total unique interventions found: ${interventionIds.size}`);
     return interventionIds.size;
   } catch (error) {
-    console.error('Error counting interventions by reference value:', error);
+    console.error('❌ Error counting interventions by reference value:', error);
     return 0;
   }
 };
