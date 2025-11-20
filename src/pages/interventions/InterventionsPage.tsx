@@ -31,6 +31,7 @@ import {
   MapPin,
   User,
 } from 'lucide-react';
+import { ReferenceDisplay } from '@/shared/components/ReferenceDisplay';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import {
@@ -992,9 +993,18 @@ const TableViewComponent = ({
                     <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                       <MapPin className="h-3 w-3" />
                       <span className="truncate max-w-[120px]">
-                        {intervention.roomNumber
-                          ? `Chambre ${intervention.roomNumber}`
-                          : intervention.location || intervention.building || '-'}
+                        {intervention.roomNumber ? (
+                          `Chambre ${intervention.roomNumber}`
+                        ) : intervention.location ? (
+                          <ReferenceDisplay
+                            listKey="interventionLocations"
+                            value={intervention.location}
+                          />
+                        ) : intervention.building ? (
+                          <ReferenceDisplay listKey="buildings" value={intervention.building} />
+                        ) : (
+                          '-'
+                        )}
                       </span>
                     </div>
                   </td>

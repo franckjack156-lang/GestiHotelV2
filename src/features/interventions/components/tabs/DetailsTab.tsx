@@ -8,6 +8,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { MapPin, User, Calendar, FileText, Tag as TagIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { ReferenceDisplay } from '@/shared/components/ReferenceDisplay';
 import { useInterventionActions } from '../../hooks/useInterventionActions';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { QuickNotesEditor, TechnicianActions } from '../quick-edit';
@@ -22,7 +23,8 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
   const { updateIntervention, changeStatus, isUpdating } = useInterventionActions();
 
   // Permissions
-  const canEdit = user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
+  const canEdit =
+    user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
   const isTechnician = user?.id === intervention.assignedTo || user?.role === 'technician';
   const canStartWork = intervention.status === 'pending' || intervention.status === 'assigned';
   const canPause = intervention.status === 'in_progress';
@@ -38,6 +40,7 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
   };
 
   const handleStatusChange = async (newStatus: string): Promise<boolean> => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await changeStatus(intervention.id, { newStatus: newStatus as any });
   };
 
@@ -88,7 +91,9 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
             {intervention.building && (
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Bâtiment</p>
-                <p className="font-medium">{intervention.building}</p>
+                <p className="font-medium">
+                  <ReferenceDisplay listKey="buildings" value={intervention.building} />
+                </p>
               </div>
             )}
           </CardContent>
