@@ -565,6 +565,42 @@ const existsInList = (value: string, list: string[]): boolean => {
 };
 
 /**
+ * Trouve la VALUE technique depuis un LABEL (insensible à la casse)
+ * Utilisé pour convertir les labels du CSV en values techniques pour stockage
+ *
+ * TODO: Implémenter l'utilisation dans l'import pour stocker les values au lieu des labels
+ *
+ * @param label - Label à chercher (ex: "Sud", "Tour Sud")
+ * @param referenceList - Liste de référence complète avec items
+ * @returns La value technique si trouvée, sinon le label en minuscules avec underscores
+ *
+ * @example
+ * findValueFromLabel("Sud", buildingsList) // retourne "sud"
+ * findValueFromLabel("Tour Sud", buildingsList) // retourne "tour_sud" ou "sud" selon la config
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const findValueFromLabel = (
+  label: string | undefined,
+  referenceList: { items: Array<{ value: string; label: string; isActive: boolean }> } | undefined
+): string | undefined => {
+  if (!label || !label.trim()) return undefined;
+  if (!referenceList?.items) {
+    // Pas de liste de référence : convertir le label en value (minuscules + underscores)
+    return label.trim().toLowerCase().replace(/\s+/g, '_');
+  }
+
+  const normalizedLabel = label.trim().toLowerCase();
+
+  // Chercher l'item avec ce label (insensible à la casse)
+  const item = referenceList.items.find(
+    item => item.isActive && item.label.toLowerCase() === normalizedLabel
+  );
+
+  // Si trouvé, retourner la value, sinon convertir le label
+  return item ? item.value : label.trim().toLowerCase().replace(/\s+/g, '_');
+};
+
+/**
  * Trouve les correspondances partielles pour un nom dans la liste d'utilisateurs
  * @param excelName Nom depuis Excel (ex: "Michel")
  * @param users Liste des utilisateurs
@@ -573,16 +609,20 @@ const existsInList = (value: string, list: string[]): boolean => {
  */
 const findUserMatches = (
   excelName: string,
-  users: Array<{ id: string; displayName: string; firstName: string; lastName: string; isTechnician?: boolean }>,
+  users: Array<{
+    id: string;
+    displayName: string;
+    firstName: string;
+    lastName: string;
+    isTechnician?: boolean;
+  }>,
   filterTechnician: boolean = false
 ): UserMatchSuggestion[] => {
   const searchName = excelName.trim().toLowerCase();
   const suggestions: UserMatchSuggestion[] = [];
 
   // Filtrer les utilisateurs si nécessaire
-  const filteredUsers = filterTechnician
-    ? users.filter(u => u.isTechnician === true)
-    : users;
+  const filteredUsers = filterTechnician ? users.filter(u => u.isTechnician === true) : users;
 
   for (const user of filteredUsers) {
     const fullName = user.displayName.toLowerCase();
@@ -629,7 +669,9 @@ const findUserMatches = (
 
       let matchingWords = 0;
       for (const searchWord of searchWords) {
-        if (nameWords.some(nameWord => nameWord.includes(searchWord) || searchWord.includes(nameWord))) {
+        if (
+          nameWords.some(nameWord => nameWord.includes(searchWord) || searchWord.includes(nameWord))
+        ) {
           matchingWords++;
         }
       }
@@ -762,9 +804,9 @@ const detectMissingValues = (
       const technicianName = row.technicien.trim().toLowerCase();
 
       // Chercher dans les utilisateurs
-      const foundInUsers = existingLists.users?.some(
-        user => user.displayName.toLowerCase() === technicianName
-      ) || false;
+      const foundInUsers =
+        existingLists.users?.some(user => user.displayName.toLowerCase() === technicianName) ||
+        false;
 
       // Chercher dans la liste de référence technicians
       const foundInList = existingLists.technicians
@@ -782,9 +824,8 @@ const detectMissingValues = (
       const creatorName = row.createur.trim().toLowerCase();
 
       // Chercher dans les utilisateurs
-      const foundInUsers = existingLists.users?.some(
-        user => user.displayName.toLowerCase() === creatorName
-      ) || false;
+      const foundInUsers =
+        existingLists.users?.some(user => user.displayName.toLowerCase() === creatorName) || false;
 
       // Chercher dans la liste de référence creators
       const foundInList = existingLists.creators
@@ -807,7 +848,7 @@ const detectMissingValues = (
   console.log('\n🔍 DEBUG SUGGESTIONS:');
   console.log('  Nombre de techniciens manquants:', missing.technicians.size);
   console.log('  Nombre de créateurs manquants:', missing.creators.size);
-  console.log('  Nombre d\'utilisateurs disponibles:', existingLists.users?.length || 0);
+  console.log("  Nombre d'utilisateurs disponibles:", existingLists.users?.length || 0);
 
   // NOUVELLE LOGIQUE: Générer des suggestions pour TOUS les techniciens/créateurs dans l'Excel
   // (pas seulement les manquants), pour permettre la correspondance partielle
@@ -837,7 +878,10 @@ const detectMissingValues = (
       const hasExactMatch = matches.some(m => m.matchScore === 1.0);
       if (matches.length > 0 && !hasExactMatch) {
         suggestions.technicians.set(techName, matches);
-        console.log(`    → Suggestions ajoutées (pas de match exact):`, matches.map(m => `${m.userName} (${Math.round(m.matchScore * 100)}%)`));
+        console.log(
+          `    → Suggestions ajoutées (pas de match exact):`,
+          matches.map(m => `${m.userName} (${Math.round(m.matchScore * 100)}%)`)
+        );
         // Ajouter aussi aux valeurs manquantes pour permettre la création
         missing.technicians.add(techName);
       } else if (hasExactMatch) {
@@ -855,7 +899,10 @@ const detectMissingValues = (
       const hasExactMatch = matches.some(m => m.matchScore === 1.0);
       if (matches.length > 0 && !hasExactMatch) {
         suggestions.creators.set(creatorName, matches);
-        console.log(`    → Suggestions ajoutées (pas de match exact):`, matches.map(m => `${m.userName} (${Math.round(m.matchScore * 100)}%)`));
+        console.log(
+          `    → Suggestions ajoutées (pas de match exact):`,
+          matches.map(m => `${m.userName} (${Math.round(m.matchScore * 100)}%)`)
+        );
         // Ajouter aussi aux valeurs manquantes pour permettre la création
         missing.creators.add(creatorName);
       } else if (hasExactMatch) {
@@ -935,11 +982,23 @@ export const importInterventions = async (
         if (index < 3) {
           console.log(`\n🔍 DEBUG LIGNE ${index + 1}:`);
           console.log('  Clés brutes Excel:', Object.keys(row));
-          console.log('  Clés normalisées:', Object.keys(row).map(k => `${k} → ${normalizeKey(k)}`));
+          console.log(
+            '  Clés normalisées:',
+            Object.keys(row).map(k => `${k} → ${normalizeKey(k)}`)
+          );
           console.log('  Valeurs importantes:');
-          console.log('    - createur (brut):', row['createur'] || row['CREATEUR'] || row['CREATEUR (Prenom Nom)']);
-          console.log('    - date_creation (brut):', row['date_creation'] || row['DATE CREATION'] || row['DATE CREATION (JJ/MM/AAAA)']);
-          console.log('    - technicien (brut):', row['technicien'] || row['TECHNICIEN'] || row['TECHNICIEN (Prenom Nom)']);
+          console.log(
+            '    - createur (brut):',
+            row['createur'] || row['CREATEUR'] || row['CREATEUR (Prenom Nom)']
+          );
+          console.log(
+            '    - date_creation (brut):',
+            row['date_creation'] || row['DATE CREATION'] || row['DATE CREATION (JJ/MM/AAAA)']
+          );
+          console.log(
+            '    - technicien (brut):',
+            row['technicien'] || row['TECHNICIEN'] || row['TECHNICIEN (Prenom Nom)']
+          );
           console.log('  Row normalisée après mapping:');
           console.log('    - createur:', normalizedRow['createur']);
           console.log('    - datecreation:', normalizedRow['datecreation']);
@@ -1317,7 +1376,10 @@ export const convertToInterventions = (
       console.log('  row.createur:', row.createur);
       console.log('  row.datecreation:', row.datecreation);
       console.log('  row.technicien:', row.technicien);
-      console.log('  establishmentUsers:', establishmentUsers.map(u => u.displayName));
+      console.log(
+        '  establishmentUsers:',
+        establishmentUsers.map(u => u.displayName)
+      );
     }
     // ========== MATCHING UTILISATEURS ==========
     // Matcher le créateur par nom complet (case-insensitive)
@@ -1339,7 +1401,9 @@ export const convertToInterventions = (
           createdBy = mappedUser.id;
           createdByName = mappedUser.displayName;
           if (index === 0) {
-            console.log(`  🎯 Créateur mappé: "${excelCreatorName}" → ${mappedUser.displayName} (${mappedUser.id})`);
+            console.log(
+              `  🎯 Créateur mappé: "${excelCreatorName}" → ${mappedUser.displayName} (${mappedUser.id})`
+            );
           }
         }
       } else {
@@ -1353,20 +1417,26 @@ export const convertToInterventions = (
           createdBy = matchedCreator.id;
           createdByName = matchedCreator.displayName;
           if (index === 0) {
-            console.log(`  ✅ Créateur trouvé dans users: "${excelCreatorName}" → ${matchedCreator.displayName} (${matchedCreator.id})`);
+            console.log(
+              `  ✅ Créateur trouvé dans users: "${excelCreatorName}" → ${matchedCreator.displayName} (${matchedCreator.id})`
+            );
           }
         } else {
           // NOUVELLE LOGIQUE: Garder le nom depuis Excel (sera dans la liste de référence)
           createdBy = currentUserId; // Utiliser l'utilisateur actuel pour createdBy (requis)
           createdByName = excelCreatorName; // Garder le nom depuis Excel pour l'affichage
           if (index === 0) {
-            console.log(`  ⚠️ Créateur NON trouvé dans users: "${excelCreatorName}" → utilisera la liste de référence "creators"`);
+            console.log(
+              `  ⚠️ Créateur NON trouvé dans users: "${excelCreatorName}" → utilisera la liste de référence "creators"`
+            );
           }
         }
       }
     } else {
       if (index === 0) {
-        console.log(`  ℹ️ Pas de créateur dans Excel (utilisateur actuel par défaut: ${currentUserName})`);
+        console.log(
+          `  ℹ️ Pas de créateur dans Excel (utilisateur actuel par défaut: ${currentUserName})`
+        );
       }
     }
 
@@ -1393,7 +1463,9 @@ export const convertToInterventions = (
           const parsedDate = row.datecreation ? parseDate(row.datecreation) : null;
           assignedAt = parsedDate || new Date();
           if (index === 0) {
-            console.log(`  🎯 Technicien mappé: "${excelTechnicianName}" → ${mappedUser.displayName} (${mappedUser.id})`);
+            console.log(
+              `  🎯 Technicien mappé: "${excelTechnicianName}" → ${mappedUser.displayName} (${mappedUser.id})`
+            );
           }
         }
       } else {
@@ -1410,7 +1482,9 @@ export const convertToInterventions = (
           const parsedDate = row.datecreation ? parseDate(row.datecreation) : null;
           assignedAt = parsedDate || new Date();
           if (index === 0) {
-            console.log(`  ✅ Technicien trouvé dans users: "${excelTechnicianName}" → ${matchedTechnician.displayName} (${matchedTechnician.id})`);
+            console.log(
+              `  ✅ Technicien trouvé dans users: "${excelTechnicianName}" → ${matchedTechnician.displayName} (${matchedTechnician.id})`
+            );
           }
         } else {
           // NOUVELLE LOGIQUE: Garder le nom depuis Excel (sera dans la liste de référence)
@@ -1420,7 +1494,9 @@ export const convertToInterventions = (
           const parsedDate = row.datecreation ? parseDate(row.datecreation) : null;
           assignedAt = parsedDate || new Date();
           if (index === 0) {
-            console.log(`  ⚠️ Technicien NON trouvé dans users: "${excelTechnicianName}" → utilisera la liste de référence "technicians"`);
+            console.log(
+              `  ⚠️ Technicien NON trouvé dans users: "${excelTechnicianName}" → utilisera la liste de référence "technicians"`
+            );
           }
         }
       }
