@@ -1,14 +1,30 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PieChart Component
  *
  * Graphique en camembert avec Recharts
  */
 
-import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  PieChart as RechartsPieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+const COLORS = [
+  '#3b82f6',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#ec4899',
+  '#06b6d4',
+  '#84cc16',
+];
 
 interface PieChartProps {
   title: string;
@@ -50,10 +66,12 @@ export const PieChart = ({
               innerRadius={innerRadius}
               outerRadius={innerRadius > 0 ? innerRadius + 60 : 80}
               fill="#8884d8"
-              label={(entry) => `${entry[nameKey]}: ${entry[dataKey]}`}
+              label={(entry: Record<string, unknown>) =>
+                `${String(entry[nameKey])}: ${String(entry[dataKey])}`
+              }
               labelLine={false}
             >
-              {data.map((entry, index) => (
+              {data.map((_entry, index) => (
                 <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
               ))}
             </Pie>
