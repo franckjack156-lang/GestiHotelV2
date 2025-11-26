@@ -1,16 +1,21 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * WidgetRenderer Component
  *
  * Rendu dynamique des widgets du dashboard selon leur configuration
  */
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/shared/components/ui/card';
 import { StatsCard } from '@/features/dashboard/components/charts/StatsCard';
 import { LineChart } from '@/features/dashboard/components/charts/LineChart';
 import { BarChart } from '@/features/dashboard/components/charts/BarChart';
 import { PieChart } from '@/features/dashboard/components/charts/PieChart';
-import { AreaChart } from '@/features/dashboard/components/charts/AreaChart';
 import { StatCard } from '@/shared/components/ui-extended';
 import { ClockWidget } from './widgets/ClockWidget';
 import { QuickLinksWidget } from './widgets/QuickLinksWidget';
@@ -18,23 +23,12 @@ import { ButtonGridWidget } from './widgets/ButtonGridWidget';
 import { NoteWidget } from './widgets/NoteWidget';
 import { CustomListWidget } from './widgets/CustomListWidget';
 import { IframeWidget } from './widgets/IframeWidget';
-import type { WidgetConfig, InterventionStats, TimelineData, RoomStats, TechnicianPerformance } from '../types/dashboard.types';
-import {
-  ClipboardList,
-  CheckCircle2,
-  AlertCircle,
-  Clock,
-  TrendingUp,
-  Users,
-  Home
-} from 'lucide-react';
+import type { WidgetConfig, InterventionStats } from '../types/dashboard.types';
+import { ClipboardList, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 
 interface WidgetRendererProps {
   widget: WidgetConfig;
   interventionStats?: InterventionStats | null;
-  timelineData?: TimelineData[];
-  roomStats?: RoomStats | null;
-  technicianPerformance?: TechnicianPerformance[];
   calculatedStats?: {
     total: number;
     pending: number;
@@ -55,9 +49,6 @@ interface WidgetRendererProps {
 export const WidgetRenderer = ({
   widget,
   interventionStats,
-  timelineData,
-  roomStats,
-  technicianPerformance,
   calculatedStats,
   chartData,
   onNavigate,
@@ -207,7 +198,11 @@ export const WidgetRenderer = ({
       case 'interventions_by_technician':
         if (widget.type === 'bar_chart') {
           // Vérifier si nous avons des données
-          if (interventionStats && interventionStats.byTechnician && Object.keys(interventionStats.byTechnician).length > 0) {
+          if (
+            interventionStats &&
+            interventionStats.byTechnician &&
+            Object.keys(interventionStats.byTechnician).length > 0
+          ) {
             return (
               <BarChart
                 title={widget.title}
@@ -240,7 +235,11 @@ export const WidgetRenderer = ({
         break;
 
       case 'rooms_by_status':
-        if (widget.type === 'bar_chart' && interventionStats && Object.keys(interventionStats.byRoom).length > 0) {
+        if (
+          widget.type === 'bar_chart' &&
+          interventionStats &&
+          Object.keys(interventionStats.byRoom).length > 0
+        ) {
           return (
             <BarChart
               title={widget.title}
@@ -370,12 +369,8 @@ export const WidgetRenderer = ({
             return (
               <Card className="border-dashed border-2">
                 <CardContent className="p-6 text-center">
-                  <p className="text-sm text-gray-500">
-                    Widget personnalisé "{widget.title}"
-                  </p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Type: {widget.type}
-                  </p>
+                  <p className="text-sm text-gray-500">Widget personnalisé "{widget.title}"</p>
+                  <p className="text-xs text-gray-400 mt-1">Type: {widget.type}</p>
                 </CardContent>
               </Card>
             );
@@ -390,9 +385,7 @@ export const WidgetRenderer = ({
               <p className="text-sm text-gray-500">
                 Widget "{widget.title}" ({widget.dataSource})
               </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Type: {widget.type}
-              </p>
+              <p className="text-xs text-gray-400 mt-1">Type: {widget.type}</p>
             </CardContent>
           </Card>
         );

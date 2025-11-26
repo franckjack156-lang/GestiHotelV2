@@ -5,24 +5,12 @@
  */
 
 import { db } from '@/core/config/firebase';
-import {
-  collection,
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  Timestamp,
-} from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import type { DashboardTheme, UserThemePreferences, ThemeExportData } from '../types/theme.types';
 import { presetThemes, defaultTheme } from '../config/presetThemes';
 import { logger } from '@/core/utils/logger';
 
 class ThemeService {
-  private themesCollection = 'dashboardThemes';
   private preferencesCollection = 'themePreferences';
 
   /**
@@ -74,6 +62,7 @@ class ThemeService {
   ): Promise<void> {
     try {
       const docRef = doc(db, this.preferencesCollection, userId);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await updateDoc(docRef, updates as any);
     } catch (error) {
       logger.error('Erreur updateThemePreferences:', error);
@@ -140,7 +129,10 @@ class ThemeService {
   /**
    * Créer un thème personnalisé
    */
-  async createCustomTheme(userId: string, theme: Omit<DashboardTheme, 'id' | 'createdAt' | 'updatedAt'>): Promise<DashboardTheme> {
+  async createCustomTheme(
+    userId: string,
+    theme: Omit<DashboardTheme, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<DashboardTheme> {
     try {
       const preferences = await this.getUserThemePreferences(userId);
       if (!preferences) {
@@ -172,7 +164,11 @@ class ThemeService {
   /**
    * Mettre à jour un thème personnalisé
    */
-  async updateCustomTheme(userId: string, themeId: string, updates: Partial<DashboardTheme>): Promise<void> {
+  async updateCustomTheme(
+    userId: string,
+    themeId: string,
+    updates: Partial<DashboardTheme>
+  ): Promise<void> {
     try {
       const preferences = await this.getUserThemePreferences(userId);
       if (!preferences) return;

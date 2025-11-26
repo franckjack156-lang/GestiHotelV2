@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * Tests pour slaService
  *
@@ -14,8 +13,6 @@ import {
   getSLABadgeColor,
   getSLAStatusLabel,
 } from '../slaService';
-import type { InterventionPriority } from '@/shared/types/status.types';
-import type { SLAStatus } from '../../types/intervention.types';
 
 describe('slaService', () => {
   let dateNowSpy: ReturnType<typeof vi.spyOn>;

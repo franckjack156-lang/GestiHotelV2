@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 /**
  * CustomListWidget Component
  *
@@ -6,7 +5,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import { List, CheckSquare, Square, Circle } from 'lucide-react';
+import { List, Circle } from 'lucide-react';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 
 interface ListItem {
@@ -62,7 +61,7 @@ export const CustomListWidget = ({
           </div>
         ) : (
           <ul className="space-y-2">
-            {items.map((item) => (
+            {items.map(item => (
               <li
                 key={item.id}
                 className="flex items-start gap-3 group hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded transition-colors"
@@ -92,7 +91,9 @@ export const CustomListWidget = ({
                 </span>
 
                 {item.priority && !showCheckboxes && (
-                  <span className={`text-xs font-medium ${getPriorityColor(item.priority)} uppercase`}>
+                  <span
+                    className={`text-xs font-medium ${getPriorityColor(item.priority)} uppercase`}
+                  >
                     {item.priority}
                   </span>
                 )}

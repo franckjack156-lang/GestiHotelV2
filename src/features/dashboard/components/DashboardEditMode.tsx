@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * DashboardEditMode Component
  *
@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Card, CardContent } from '@/shared/components/ui/card';
 import { Eye, EyeOff, GripVertical, Save, X, Plus, Layout as LayoutIcon } from 'lucide-react';
 import type { DashboardPreferences, WidgetConfig } from '../types/dashboard.types';
 import { WidgetConfigDialog } from './WidgetConfigDialog';
@@ -69,18 +69,14 @@ export const DashboardEditMode = ({
     const newVisible = !widget.visible;
 
     // Mise à jour locale optimiste
-    setWidgets(prev =>
-      prev.map(w => (w.id === widgetId ? { ...w, visible: newVisible } : w))
-    );
+    setWidgets(prev => prev.map(w => (w.id === widgetId ? { ...w, visible: newVisible } : w)));
 
     try {
       await onUpdateWidget(widgetId, { visible: newVisible });
       toast.success(newVisible ? 'Widget affiché' : 'Widget masqué');
     } catch (error) {
       // Rollback en cas d'erreur
-      setWidgets(prev =>
-        prev.map(w => (w.id === widgetId ? { ...w, visible: !newVisible } : w))
-      );
+      setWidgets(prev => prev.map(w => (w.id === widgetId ? { ...w, visible: !newVisible } : w)));
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -170,7 +166,7 @@ export const DashboardEditMode = ({
       toast.success('Widget ajouté avec succès');
       setIsAddWidgetDialogOpen(false);
     } catch (error) {
-      toast.error('Erreur lors de l\'ajout du widget');
+      toast.error("Erreur lors de l'ajout du widget");
       setWidgets(widgets); // Rollback
       logger.error(error);
     }
@@ -217,9 +213,7 @@ export const DashboardEditMode = ({
                 <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
                   Widgets masqués
                 </p>
-                <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">
-                  {hiddenCount}
-                </p>
+                <p className="text-2xl font-bold text-gray-700 dark:text-gray-300">{hiddenCount}</p>
               </div>
             </div>
 
@@ -258,9 +252,7 @@ export const DashboardEditMode = ({
         <div className="p-6">
           {widgets.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400">
-                Aucun widget configuré
-              </p>
+              <p className="text-gray-500 dark:text-gray-400">Aucun widget configuré</p>
             </div>
           ) : viewMode === 'list' ? (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto">
@@ -272,13 +264,9 @@ export const DashboardEditMode = ({
                   onDragOver={e => handleDragOver(e, widget.id)}
                   onDragEnd={handleDragEnd}
                   className={`cursor-move transition-all ${
-                    draggedWidget === widget.id
-                      ? 'opacity-50 scale-95'
-                      : 'hover:shadow-md'
+                    draggedWidget === widget.id ? 'opacity-50 scale-95' : 'hover:shadow-md'
                   } ${
-                    !widget.visible
-                      ? 'bg-gray-50 dark:bg-gray-800 border-dashed'
-                      : 'border-solid'
+                    !widget.visible ? 'bg-gray-50 dark:bg-gray-800 border-dashed' : 'border-solid'
                   }`}
                 >
                   <CardContent className="p-4">
@@ -352,7 +340,8 @@ export const DashboardEditMode = ({
               />
               <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  💡 <strong>Mode Grille :</strong> Faites glisser les widgets pour les réorganiser et redimensionnez-les en tirant sur le coin inférieur droit.
+                  💡 <strong>Mode Grille :</strong> Faites glisser les widgets pour les réorganiser
+                  et redimensionnez-les en tirant sur le coin inférieur droit.
                 </p>
               </div>
             </div>
