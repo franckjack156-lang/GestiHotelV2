@@ -80,7 +80,8 @@
       "Bash(src/features/dashboard/components/CustomizeDashboardDialog.tsx.bak )",
       "Bash(src/shared/services/importService.ts.backup)",
       "Bash(scripts/fix-intervention-statuses.ts )",
-      "Bash(scripts/reschedule-incomplete-interventions.ts)"
+      "Bash(scripts/reschedule-incomplete-interventions.ts)",
+      "Bash(npm outdated:*)"
     ],
     "deny": [],
     "ask": []
