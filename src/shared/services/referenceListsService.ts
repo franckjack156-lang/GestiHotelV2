@@ -29,6 +29,7 @@ import { db } from '@/core/config/firebase';
 import * as XLSX from 'xlsx';
 import * as LucideIcons from 'lucide-react';
 import { removeUndefinedFields } from '@/shared/utils/firestore';
+import { logger } from '@/core/utils/logger';
 import type {
   EstablishmentReferenceLists,
   ListKey,
@@ -212,7 +213,7 @@ export const getAllLists = async (
       }, {} as Record<string, ListConfig>),
     } as EstablishmentReferenceLists;
   } catch (error) {
-    console.error('❌ Erreur chargement listes:', error);
+    logger.error('❌ Erreur chargement listes:', error);
     throw new Error('Impossible de charger les listes');
   }
 };
@@ -266,9 +267,9 @@ export const initializeEmptyLists = async (
 
     await logAudit(establishmentId, userId, 'CREATE_LIST', 'system', 'system', null, data);
 
-    console.log('✅ Listes vides initialisées');
+    logger.debug('✅ Listes vides initialisées');
   } catch (error) {
-    console.error('❌ Erreur initialisation:', error);
+    logger.error('❌ Erreur initialisation:', error);
     throw error;
   }
 };
@@ -305,9 +306,9 @@ export const createList = async (
 
     await logAudit(establishmentId, userId, 'CREATE_LIST', listKey, config.name, null, newList);
 
-    console.log(`✅ Liste créée: ${listKey}`);
+    logger.debug(`✅ Liste créée: ${listKey}`);
   } catch (error) {
-    console.error('❌ Erreur création liste:', error);
+    logger.error('❌ Erreur création liste:', error);
     throw error;
   }
 };
@@ -342,9 +343,9 @@ export const deleteList = async (
 
     await logAudit(establishmentId, userId, 'DELETE_LIST', listKey, list.name, list, null);
 
-    console.log(`✅ Liste supprimée: ${listKey}`);
+    logger.debug(`✅ Liste supprimée: ${listKey}`);
   } catch (error) {
-    console.error('❌ Erreur suppression liste:', error);
+    logger.error('❌ Erreur suppression liste:', error);
     throw error;
   }
 };
@@ -400,7 +401,7 @@ export const addItem = async (
       'ADD_ITEM'
     );
   } catch (error) {
-    console.error('❌ Erreur ajout item:', error);
+    logger.error('❌ Erreur ajout item:', error);
     throw error;
   }
 };
@@ -452,7 +453,7 @@ export const updateItem = async (
       { itemId: input.itemId }
     );
   } catch (error) {
-    console.error('❌ Erreur mise à jour item:', error);
+    logger.error('❌ Erreur mise à jour item:', error);
     throw error;
   }
 };
@@ -504,7 +505,7 @@ export const deleteItem = async (
       { itemId }
     );
   } catch (error) {
-    console.error('❌ Erreur suppression item:', error);
+    logger.error('❌ Erreur suppression item:', error);
     throw error;
   }
 };
@@ -534,7 +535,7 @@ export const reorderItems = async (
       'REORDER_ITEMS'
     );
   } catch (error) {
-    console.error('❌ Erreur réorganisation:', error);
+    logger.error('❌ Erreur réorganisation:', error);
     throw error;
   }
 };
@@ -594,7 +595,7 @@ export const exportToExcel = async (
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
   } catch (error) {
-    console.error('❌ Erreur export Excel:', error);
+    logger.error('❌ Erreur export Excel:', error);
     throw error;
   }
 };
@@ -718,7 +719,7 @@ export const importFromFile = async (
       warnings: [],
     };
   } catch (error) {
-    console.error('❌ Erreur import:', error);
+    logger.error('❌ Erreur import:', error);
     throw error;
   }
 };
@@ -785,7 +786,7 @@ export const getListAnalytics = async (
       lastAnalyzed: new Date(),
     };
   } catch (error) {
-    console.error('❌ Erreur analytics:', error);
+    logger.error('❌ Erreur analytics:', error);
     return null;
   }
 };
@@ -830,7 +831,7 @@ export const trackItemUsage = async (
       [`lists.${listKey}.items`]: updatedItems,
     });
   } catch (error) {
-    console.error('❌ Erreur track usage:', error);
+    logger.error('❌ Erreur track usage:', error);
   }
 };
 
@@ -873,7 +874,7 @@ const logAudit = async (
     const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
     await setDoc(auditRef, auditEntry);
   } catch (error) {
-    console.error('❌ Erreur log audit:', error);
+    logger.error('❌ Erreur log audit:', error);
   }
 };
 
@@ -908,7 +909,7 @@ export const getAuditHistory = async (
 
     return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   } catch (error) {
-    console.error('❌ Erreur récupération audit:', error);
+    logger.error('❌ Erreur récupération audit:', error);
     return [];
   }
 };
@@ -961,9 +962,9 @@ export const duplicateLists = async (userId: string, input: DuplicateListsInput)
       cleanedLists
     );
 
-    console.log('✅ Listes dupliquées');
+    logger.debug('✅ Listes dupliquées');
   } catch (error) {
-    console.error('❌ Erreur duplication:', error);
+    logger.error('❌ Erreur duplication:', error);
     throw error;
   }
 };
@@ -1210,25 +1211,25 @@ const checkItemUsage = async (
  */
 export const logListsSummary = async (establishmentId: string): Promise<void> => {
   try {
-    console.log('\n🔍 ========================================');
-    console.log(`📊 RÉSUMÉ DES LISTES - Établissement: ${establishmentId}`);
-    console.log('==========================================\n');
+    logger.debug('\n🔍 ========================================');
+    logger.debug(`📊 RÉSUMÉ DES LISTES - Établissement: ${establishmentId}`);
+    logger.debug('==========================================\n');
 
     const allLists = await getAllLists(establishmentId);
 
     if (!allLists) {
-      console.log('❌ Aucune liste trouvée pour cet établissement');
-      console.log('==========================================\n');
+      logger.debug('❌ Aucune liste trouvée pour cet établissement');
+      logger.debug('==========================================\n');
       return;
     }
 
     const listKeys = Object.keys(allLists.lists);
     const totalLists = listKeys.length;
 
-    console.log(`📋 Nombre total de listes: ${totalLists}`);
-    console.log(`📅 Dernière modification: ${allLists.lastModified}`);
-    console.log(`👤 Modifié par: ${allLists.modifiedBy}`);
-    console.log(`🔢 Version: ${allLists.version || 'N/A'}\n`);
+    logger.debug(`📋 Nombre total de listes: ${totalLists}`);
+    logger.debug(`📅 Dernière modification: ${allLists.lastModified}`);
+    logger.debug(`👤 Modifié par: ${allLists.modifiedBy}`);
+    logger.debug(`🔢 Version: ${allLists.version || 'N/A'}\n`);
 
     // Statistiques globales
     let totalItems = 0;
@@ -1254,15 +1255,15 @@ export const logListsSummary = async (establishmentId: string): Promise<void> =>
       if (itemCount === 0) emptyLists.push(listKey);
     });
 
-    console.log('📈 STATISTIQUES GLOBALES:');
-    console.log(`   • Items totaux: ${totalItems}`);
-    console.log(`   • Items actifs: ${totalActiveItems}`);
-    console.log(`   • Items inactifs: ${totalInactiveItems}`);
-    console.log(`   • Listes système: ${systemLists.length}`);
-    console.log(`   • Listes personnalisables: ${customLists.length}`);
-    console.log(`   • Listes vides: ${emptyLists.length}\n`);
+    logger.debug('📈 STATISTIQUES GLOBALES:');
+    logger.debug(`   • Items totaux: ${totalItems}`);
+    logger.debug(`   • Items actifs: ${totalActiveItems}`);
+    logger.debug(`   • Items inactifs: ${totalInactiveItems}`);
+    logger.debug(`   • Listes système: ${systemLists.length}`);
+    logger.debug(`   • Listes personnalisables: ${customLists.length}`);
+    logger.debug(`   • Listes vides: ${emptyLists.length}\n`);
 
-    console.log('📝 DÉTAIL PAR LISTE:\n');
+    logger.debug('📝 DÉTAIL PAR LISTE:\n');
 
     // Afficher chaque liste
     listKeys.sort().forEach((listKey, index) => {
@@ -1277,42 +1278,42 @@ export const logListsSummary = async (establishmentId: string): Promise<void> =>
       if (list.isRequired) badges.push('⚠️ REQUIS');
       if (itemCount === 0) badges.push('📭 VIDE');
 
-      console.log(`${index + 1}. ${list.name} (${listKey})`);
-      console.log(`   ${badges.join(' ')}`);
-      console.log(`   📊 Items: ${itemCount} total | ${activeCount} actifs | ${inactiveCount} inactifs`);
+      logger.debug(`${index + 1}. ${list.name} (${listKey})`);
+      logger.debug(`   ${badges.join(' ')}`);
+      logger.debug(`   📊 Items: ${itemCount} total | ${activeCount} actifs | ${inactiveCount} inactifs`);
 
       if (list.description) {
-        console.log(`   📄 Description: ${list.description}`);
+        logger.debug(`   📄 Description: ${list.description}`);
       }
 
       // Afficher les items si la liste n'est pas vide
       if (itemCount > 0 && itemCount <= 10) {
-        console.log(`   📌 Items:`);
+        logger.debug(`   📌 Items:`);
         list.items.forEach(item => {
           const status = item.isActive ? '✅' : '❌';
           const color = item.color ? `[${item.color}]` : '';
           const icon = item.icon ? `{${item.icon}}` : '';
           const usage = item.usageCount ? `(utilisé ${item.usageCount} fois)` : '';
-          console.log(`      ${status} ${item.label} ${color} ${icon} ${usage}`);
+          logger.debug(`      ${status} ${item.label} ${color} ${icon} ${usage}`);
         });
       } else if (itemCount > 10) {
-        console.log(`   📌 Premiers items:`);
+        logger.debug(`   📌 Premiers items:`);
         list.items.slice(0, 5).forEach(item => {
           const status = item.isActive ? '✅' : '❌';
           const color = item.color ? `[${item.color}]` : '';
           const usage = item.usageCount ? `(utilisé ${item.usageCount} fois)` : '';
-          console.log(`      ${status} ${item.label} ${color} ${usage}`);
+          logger.debug(`      ${status} ${item.label} ${color} ${usage}`);
         });
-        console.log(`      ... et ${itemCount - 5} autres`);
+        logger.debug(`      ... et ${itemCount - 5} autres`);
       }
 
-      console.log('');
+      logger.debug('');
     });
 
-    console.log('==========================================');
-    console.log('✅ Résumé terminé\n');
+    logger.debug('==========================================');
+    logger.debug('✅ Résumé terminé\n');
   } catch (error) {
-    console.error('❌ Erreur lors du logging du résumé:', error);
+    logger.error('❌ Erreur lors du logging du résumé:', error);
   }
 };
 
@@ -1324,23 +1325,23 @@ export const logListsCompact = async (establishmentId: string): Promise<void> =>
     const allLists = await getAllLists(establishmentId);
 
     if (!allLists) {
-      console.log(`❌ [${establishmentId}] Aucune liste trouvée`);
+      logger.debug(`❌ [${establishmentId}] Aucune liste trouvée`);
       return;
     }
 
     const listKeys = Object.keys(allLists.lists);
-    console.log(`\n📋 [${establishmentId}] ${listKeys.length} listes:`);
+    logger.debug(`\n📋 [${establishmentId}] ${listKeys.length} listes:`);
     listKeys.sort().forEach((key, index) => {
       const list = allLists.lists[key];
       const badges = [];
       if (list.isSystem) badges.push('🔒');
       if (list.allowCustom) badges.push('✏️');
       if (list.items.length === 0) badges.push('📭');
-      console.log(`   ${index + 1}. ${key.padEnd(30)} (${list.items.length} items) ${badges.join(' ')}`);
+      logger.debug(`   ${index + 1}. ${key.padEnd(30)} (${list.items.length} items) ${badges.join(' ')}`);
     });
-    console.log('');
+    logger.debug('');
   } catch (error) {
-    console.error('❌ Erreur lors du logging compact:', error);
+    logger.error('❌ Erreur lors du logging compact:', error);
   }
 };
 

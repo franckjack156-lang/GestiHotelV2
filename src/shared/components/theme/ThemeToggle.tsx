@@ -13,6 +13,7 @@ import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useTheme } from '@/shared/contexts/ThemeContext';
 import {
+import { logger } from '@/core/utils/logger';
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -23,7 +24,7 @@ export const ThemeToggle = () => {
   const { theme, actualTheme, setTheme } = useTheme();
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
-    console.log('🎨 Changement de thème:', { from: theme, to: newTheme });
+    logger.debug('🎨 Changement de thème:', { from: theme, to: newTheme });
     setTheme(newTheme);
   };
 

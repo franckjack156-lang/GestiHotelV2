@@ -38,6 +38,7 @@ import {
   type InterventionPriority,
 } from '@/shared/types/status.types';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
+import { logger } from '@/core/utils/logger';
 
 // Schéma de validation
 const interventionSchema = z.object({
@@ -111,7 +112,7 @@ export const EditInterventionPage = () => {
           resolutionNotes: data.resolutionNotes || '',
         });
       } catch (err: any) {
-        console.error('Erreur chargement:', err);
+        logger.error('Erreur chargement:', err);
       } finally {
         setIsLoading(false);
       }
@@ -156,7 +157,7 @@ export const EditInterventionPage = () => {
         navigate(`/app/interventions/${id}`);
       }
     } catch (error) {
-      console.error('Erreur mise à jour:', error);
+      logger.error('Erreur mise à jour:', error);
     }
   };
 

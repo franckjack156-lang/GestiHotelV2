@@ -16,6 +16,7 @@ import type {
   SupplierSortOptions,
 } from '../types/supplier.types';
 import {
+import { logger } from '@/core/utils/logger';
   getSuppliers as getSuppliersService,
   createSupplier as createSupplierService,
   updateSupplier as updateSupplierService,
@@ -51,7 +52,7 @@ export const useSuppliers = (
       const data = await getSuppliersService(establishmentId, filters, sortOptions);
       setSuppliers(data);
     } catch (err) {
-      console.error('Error loading suppliers:', err);
+      logger.error('Error loading suppliers:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des fournisseurs');
       toast.error('Impossible de charger les fournisseurs');
     } finally {
@@ -74,7 +75,7 @@ export const useSuppliers = (
       await loadSuppliers();
       return id;
     } catch (err) {
-      console.error('Error creating supplier:', err);
+      logger.error('Error creating supplier:', err);
       toast.error('Erreur lors de la création du fournisseur');
       return null;
     }
@@ -96,7 +97,7 @@ export const useSuppliers = (
       await loadSuppliers();
       return true;
     } catch (err) {
-      console.error('Error updating supplier:', err);
+      logger.error('Error updating supplier:', err);
       toast.error('Erreur lors de la mise à jour du fournisseur');
       return false;
     }
@@ -114,7 +115,7 @@ export const useSuppliers = (
       await loadSuppliers();
       return true;
     } catch (err) {
-      console.error('Error deleting supplier:', err);
+      logger.error('Error deleting supplier:', err);
       toast.error('Erreur lors de la suppression du fournisseur');
       return false;
     }
@@ -132,7 +133,7 @@ export const useSuppliers = (
       await loadSuppliers();
       return true;
     } catch (err) {
-      console.error('Error archiving supplier:', err);
+      logger.error('Error archiving supplier:', err);
       toast.error("Erreur lors de l'archivage du fournisseur");
       return false;
     }
@@ -150,7 +151,7 @@ export const useSuppliers = (
       await loadSuppliers();
       return true;
     } catch (err) {
-      console.error('Error restoring supplier:', err);
+      logger.error('Error restoring supplier:', err);
       toast.error('Erreur lors de la restauration du fournisseur');
       return false;
     }
@@ -206,7 +207,7 @@ export const useSupplier = (
         const data = await getSupplierById(establishmentId, supplierId);
         setSupplier(data);
       } catch (err) {
-        console.error('Error loading supplier:', err);
+        logger.error('Error loading supplier:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors du chargement du fournisseur');
       } finally {
         setIsLoading(false);

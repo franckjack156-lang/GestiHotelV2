@@ -33,6 +33,7 @@ import { useTheme } from '../hooks/useTheme';
 import { ThemeColorEditor } from './ThemeColorEditor';
 import type { ColorPalette, DashboardTheme } from '../types/theme.types';
 import { defaultTheme } from '../config/presetThemes';
+import { logger } from '@/core/utils/logger';
 
 interface CustomizeDashboardDialogProps {
   open: boolean;
@@ -138,7 +139,7 @@ export const CustomizeDashboardDialog = ({
       toast.success('Préférences mises à jour');
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsSaving(false);
     }
@@ -150,7 +151,7 @@ export const CustomizeDashboardDialog = ({
       toast.success(visible ? 'Widget activé' : 'Widget masqué');
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -162,7 +163,7 @@ export const CustomizeDashboardDialog = ({
       toast.success('Widget supprimé');
     } catch (error) {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -192,7 +193,7 @@ export const CustomizeDashboardDialog = ({
       setNewWidget({ title: '', type: 'stats_card', dataSource: 'interventions_by_status' });
     } catch (error) {
       toast.error("Erreur lors de l'ajout du widget");
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -232,7 +233,7 @@ export const CustomizeDashboardDialog = ({
       toast.success('Configuration importée');
     } catch (error) {
       toast.error("Erreur lors de l'import");
-      console.error(error);
+      logger.error(error);
     }
 
     event.target.value = '';
@@ -292,7 +293,7 @@ export const CustomizeDashboardDialog = ({
       }
     } catch (error) {
       toast.error('Erreur lors de la duplication');
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -328,7 +329,7 @@ export const CustomizeDashboardDialog = ({
       setEditingTheme(null);
     } catch (error) {
       toast.error('Erreur lors de la sauvegarde');
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsSaving(false);
     }
@@ -355,7 +356,7 @@ export const CustomizeDashboardDialog = ({
       }
     } catch (error) {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
+      logger.error(error);
     }
   };
 

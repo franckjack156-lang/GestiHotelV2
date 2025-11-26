@@ -14,6 +14,7 @@ import { Send, Paperclip, Smile, X, File, Loader2 } from 'lucide-react';
 import type { SendMessageData } from '../types/message.types';
 import { toast } from 'sonner';
 import { EmojiPicker } from './EmojiPicker';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // PROPS
@@ -259,7 +260,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
         onTypingStop?.();
       }
     } catch (error) {
-      console.error("Erreur lors de l'envoi du message:", error);
+      logger.error("Erreur lors de l'envoi du message:", error);
       toast.error("Erreur lors de l'envoi du message");
     } finally {
       setIsSending(false);

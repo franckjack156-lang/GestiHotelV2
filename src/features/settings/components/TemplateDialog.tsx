@@ -35,6 +35,7 @@ import {
 // import * as LucideIcons from 'lucide-react';
 import { getAvailableTemplates, applyTemplate } from '@/shared/services/listTemplatesService';
 import { cn } from '@/shared/utils/cn';
+import { logger } from '@/core/utils/logger';
 
 interface TemplateDialogProps {
   open: boolean;
@@ -60,20 +61,20 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
 
   const handleApply = async () => {
     alert('🔥 TEST - La fonction est appelée !'); // ← AJOUTEZ CECI
-    console.log('🔥 HANDLEAPPLY APPELÉ !');
-    console.log('🔥 selectedTemplateId:', selectedTemplateId);
+    logger.debug('🔥 HANDLEAPPLY APPELÉ !');
+    logger.debug('🔥 selectedTemplateId:', selectedTemplateId);
 
     if (!selectedTemplateId) return;
 
-    console.log('🎯 [TemplateDialog] Début application');
-    console.log('  - Template ID:', selectedTemplateId);
-    console.log('  - Establishment ID:', establishmentId);
-    console.log('  - User ID:', userId);
+    logger.debug('🎯 [TemplateDialog] Début application');
+    logger.debug('  - Template ID:', selectedTemplateId);
+    logger.debug('  - Establishment ID:', establishmentId);
+    logger.debug('  - User ID:', userId);
 
     // Vérifications
     if (!establishmentId || establishmentId === '') {
       const errorMsg = 'Establishment ID manquant ou vide';
-      console.error('❌ [TemplateDialog]', errorMsg);
+      logger.error('❌ [TemplateDialog]', errorMsg);
       setError(errorMsg);
       alert(
         `ERREUR: ${errorMsg}\n\nVérifiez que vous avez bien passé l'establishmentId au dialog.`
@@ -83,7 +84,7 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
 
     if (!userId || userId === '') {
       const errorMsg = 'User ID manquant ou vide';
-      console.error('❌ [TemplateDialog]', errorMsg);
+      logger.error('❌ [TemplateDialog]', errorMsg);
       setError(errorMsg);
       alert(`ERREUR: ${errorMsg}\n\nVérifiez que vous avez bien passé le userId au dialog.`);
       return;
@@ -94,12 +95,12 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
     setError(null);
 
     try {
-      console.log('⏳ [TemplateDialog] Application en cours...');
+      logger.debug('⏳ [TemplateDialog] Application en cours...');
       const res = await applyTemplate(establishmentId, userId, selectedTemplateId);
 
-      console.log('✅ [TemplateDialog] Succès !');
-      console.log('  - Items ajoutés:', res.added);
-      console.log('  - Items ignorés:', res.skipped);
+      logger.debug('✅ [TemplateDialog] Succès !');
+      logger.debug('  - Items ajoutés:', res.added);
+      logger.debug('  - Items ignorés:', res.skipped);
 
       setResult(res);
 
@@ -109,7 +110,7 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error('❌ [TemplateDialog] Erreur:', error);
+      logger.error('❌ [TemplateDialog] Erreur:', error);
       setError(error.message);
       alert(
         `Erreur lors de l'application du template:\n\n${error.message}\n\nConsultez la console (F12) pour plus de détails.`

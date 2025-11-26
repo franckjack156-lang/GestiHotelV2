@@ -25,6 +25,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/config/firebase';
+import { logger } from '@/core/utils/logger';
 import type {
   Notification,
   CreateNotificationData,
@@ -183,7 +184,7 @@ class NotificationService {
         onUpdate(notifications);
       },
       error => {
-        console.error('Erreur notification subscription:', error);
+        logger.error('Erreur notification subscription:', error);
         if (onError) {
           onError(error);
         }

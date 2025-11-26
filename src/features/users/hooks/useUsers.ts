@@ -21,6 +21,7 @@ import type {
   InviteUserData,
 } from '../types/user.types';
 import { UserStatus } from '../types/user.types';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Hook useUsers
@@ -96,7 +97,7 @@ export const useUsers = () => {
     userService
       .getUserStats(establishmentId)
       .then(setStats)
-      .catch(err => console.error('Error loading user stats:', err));
+      .catch(err => logger.error('Error loading user stats:', err));
   }, [establishmentId, setStats]);
 
   /**

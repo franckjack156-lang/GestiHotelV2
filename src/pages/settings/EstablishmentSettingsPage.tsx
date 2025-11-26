@@ -46,6 +46,7 @@ import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Separator } from '@/shared/components/ui/separator';
 import type { EstablishmentSettings } from '@/shared/types/establishment.types';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/core/utils/logger';
 
 export const EstablishmentSettingsPage = () => {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ export const EstablishmentSettingsPage = () => {
       toast.success('Paramètres enregistrés avec succès');
       setHasChanges(false);
     } catch (error: unknown) {
-      console.error('Error updating settings:', error);
+      logger.error('Error updating settings:', error);
       const message = error instanceof Error ? error.message : 'Erreur inconnue';
       toast.error('Erreur lors de la sauvegarde', {
         description: message,

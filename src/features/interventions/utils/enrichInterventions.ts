@@ -8,6 +8,7 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import type { Intervention } from '../types/intervention.types';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Enrichir une intervention avec les noms des utilisateurs
@@ -26,7 +27,7 @@ export const enrichIntervention = async (intervention: Intervention): Promise<In
         enriched.createdByName = 'Inconnu';
       }
     } catch (error) {
-      console.warn('⚠️ Erreur récupération nom créateur:', error);
+      logger.warn('⚠️ Erreur récupération nom créateur:', error);
       enriched.createdByName = 'Inconnu';
     }
   }
@@ -42,7 +43,7 @@ export const enrichIntervention = async (intervention: Intervention): Promise<In
         enriched.assignedToName = 'Inconnu';
       }
     } catch (error) {
-      console.warn('⚠️ Erreur récupération nom technicien:', error);
+      logger.warn('⚠️ Erreur récupération nom technicien:', error);
       enriched.assignedToName = 'Inconnu';
     }
   }
@@ -86,7 +87,7 @@ export const enrichInterventions = async (
               userCache.set(createdById, 'Inconnu');
             }
           } catch (error) {
-            console.warn('⚠️ Erreur récupération nom créateur:', error);
+            logger.warn('⚠️ Erreur récupération nom créateur:', error);
             enrichedIntervention.createdByName = 'Inconnu';
           }
         }
@@ -115,7 +116,7 @@ export const enrichInterventions = async (
               userCache.set(assignedToId, 'Inconnu');
             }
           } catch (error) {
-            console.warn('⚠️ Erreur récupération nom technicien:', error);
+            logger.warn('⚠️ Erreur récupération nom technicien:', error);
             enrichedIntervention.assignedToName = 'Inconnu';
           }
         }

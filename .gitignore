@@ -50,3 +50,4 @@ firestore-debug.log
 scripts/serviceAccountKey.json
 **/serviceAccountKey.json
 **/*.json.keynul
+backups/

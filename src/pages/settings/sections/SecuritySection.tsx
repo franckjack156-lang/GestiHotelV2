@@ -27,6 +27,7 @@ import { Shield, Eye, EyeOff, Loader2, AlertCircle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/core/config/firebase';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -111,7 +112,7 @@ export const SecuritySection = () => {
       });
       reset();
     } catch (error) {
-      console.error('Erreur lors de la modification du mot de passe:', error);
+      logger.error('Erreur lors de la modification du mot de passe:', error);
 
       // Gestion des erreurs Firebase
       const firebaseError = error as { code?: string; message?: string };

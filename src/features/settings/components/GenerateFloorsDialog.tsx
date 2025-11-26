@@ -27,6 +27,7 @@ import type { FloorGenerationOptions } from '@/shared/services/floorsGenerator';
 import { generateFloors } from '@/shared/services/floorsGenerator';
 import { addItem, deleteItem, getList } from '@/shared/services/referenceListsService';
 import type { ReferenceItem } from '@/shared/types/reference-lists.types';
+import { logger } from '@/core/utils/logger';
 
 interface GenerateFloorsDialogProps {
   open: boolean;
@@ -60,7 +61,7 @@ export const GenerateFloorsDialog = ({
           const lists = await getList(establishmentId, 'floors');
           setExistingFloors(lists?.items || []);
         } catch (err) {
-          console.error('Erreur chargement étages:', err);
+          logger.error('Erreur chargement étages:', err);
           setExistingFloors([]);
         } finally {
           setIsLoadingFloors(false);
@@ -139,7 +140,7 @@ export const GenerateFloorsDialog = ({
         onClose();
       }, 1500);
     } catch (err: unknown) {
-      console.error('Erreur génération étages:', err);
+      logger.error('Erreur génération étages:', err);
       const message = err instanceof Error ? err.message : 'Une erreur est survenue';
       setError(message);
     } finally {

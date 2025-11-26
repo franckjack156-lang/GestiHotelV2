@@ -9,6 +9,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { cn } from '@/shared/utils/cn';
 import { UserStatus } from '../types/user.types';
 import { CheckCircle2, XCircle, Clock, Pause, Ban, HelpCircle } from 'lucide-react';
+import { logger } from '@/core/utils/logger';
 
 interface StatusBadgeProps {
   /** Statut à afficher */
@@ -70,7 +71,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   // Si le statut n'est pas reconnu, utiliser un fallback
   if (!config) {
-    console.warn(`Statut utilisateur non reconnu: "${status}". Utilisation du statut INACTIVE.`);
+    logger.warn(`Statut utilisateur non reconnu: "${status}". Utilisation du statut INACTIVE.`);
 
     const FallbackIcon = HelpCircle;
     const sizeClasses = {

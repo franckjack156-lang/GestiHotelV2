@@ -14,6 +14,7 @@ import { useAuthStore } from '../stores/authStore';
 import userService from '@/features/users/services/userService';
 import { setSentryUser, clearSentryUser } from '@/core/config/sentry';
 import { setUserProperties, resetUser, trackUserLogin } from '@/core/config/analytics';
+import { logger } from '@/core/utils/logger';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -68,7 +69,7 @@ const initAuthListener = () => {
             });
           } catch (updateError) {
             // Ne pas bloquer la connexion si la mise à jour échoue
-            console.error('Failed to update lastLoginAt:', updateError);
+            logger.error('Failed to update lastLoginAt:', updateError);
           }
         } else {
           setUser(null);

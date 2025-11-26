@@ -10,6 +10,7 @@
  */
 
 import * as Sentry from '@sentry/react';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Initialise Sentry pour le monitoring d'erreurs
@@ -17,14 +18,14 @@ import * as Sentry from '@sentry/react';
 export const initSentry = () => {
   // Ne pas initialiser Sentry en développement local
   if (import.meta.env.DEV) {
-    console.log('🔧 Sentry disabled in development mode');
+    logger.debug('🔧 Sentry disabled in development mode');
     return;
   }
 
   const dsn = import.meta.env.VITE_SENTRY_DSN;
 
   if (!dsn) {
-    console.warn('⚠️ VITE_SENTRY_DSN not configured - Sentry tracking disabled');
+    logger.warn('⚠️ VITE_SENTRY_DSN not configured - Sentry tracking disabled');
     return;
   }
 
@@ -76,7 +77,7 @@ export const initSentry = () => {
     beforeSend(event, hint) {
       // En développement, log l'erreur et ne l'envoie pas
       if (import.meta.env.DEV) {
-        console.error('Sentry Event (not sent):', event, hint);
+        logger.error('Sentry Event (not sent):', event, hint);
         return null;
       }
 
@@ -95,7 +96,7 @@ export const initSentry = () => {
     },
   });
 
-  console.log('✅ Sentry initialized:', {
+  logger.debug('✅ Sentry initialized:', {
     environment: Sentry.getCurrentScope().getClient()?.getOptions().environment,
     release: Sentry.getCurrentScope().getClient()?.getOptions().release,
   });

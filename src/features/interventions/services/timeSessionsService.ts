@@ -20,6 +20,7 @@ import {
 import { db } from '@/core/config/firebase';
 import type { TimeSession, CreateTimeSessionData } from '../types/subcollections.types';
 import { logTimeAdded } from './historyService';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Obtenir la référence de la collection timeSessions
@@ -74,12 +75,12 @@ export const createTimeSession = async (
         data.duration
       );
     } catch (error) {
-      console.warn('⚠️ Erreur logging historique temps:', error);
+      logger.warn('⚠️ Erreur logging historique temps:', error);
     }
 
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur création session temps:', error);
+    logger.error('❌ Erreur création session temps:', error);
     throw new Error('Impossible de créer la session de temps');
   }
 };
@@ -105,7 +106,7 @@ export const deleteTimeSession = async (
 
     await deleteDoc(docRef);
   } catch (error) {
-    console.error('❌ Erreur suppression session:', error);
+    logger.error('❌ Erreur suppression session:', error);
     throw new Error('Impossible de supprimer la session');
   }
 };
@@ -135,14 +136,14 @@ export const subscribeToTimeSessions = (
         onSuccess(sessions);
       },
       error => {
-        console.error('❌ Erreur subscription sessions:', error);
+        logger.error('❌ Erreur subscription sessions:', error);
         onError(error as Error);
       }
     );
 
     return unsubscribe;
   } catch (error) {
-    console.error('❌ Erreur création subscription:', error);
+    logger.error('❌ Erreur création subscription:', error);
     onError(error as Error);
     return () => {};
   }

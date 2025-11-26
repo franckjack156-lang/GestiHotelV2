@@ -7,6 +7,7 @@
 import { useEstablishmentStore } from '../stores/establishmentStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import establishmentService from '../services/establishmentService';
+import { logger } from '@/core/utils/logger';
 
 export const useCurrentEstablishment = () => {
   const { user } = useAuthStore();
@@ -78,9 +79,9 @@ export const useCurrentEstablishment = () => {
       // Mettre à jour l'établissement actuel
       setCurrentEstablishment(establishment);
 
-      console.log('Switched to establishment:', establishment.name);
+      logger.debug('Switched to establishment:', establishment.name);
     } catch (error) {
-      console.error('Error switching establishment:', error);
+      logger.error('Error switching establishment:', error);
       throw error;
     }
   };

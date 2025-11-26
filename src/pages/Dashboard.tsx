@@ -25,6 +25,7 @@ import { CustomizeDashboardDialog } from '@/features/dashboard/components/Custom
 import { DashboardEditMode } from '@/features/dashboard/components/DashboardEditMode';
 import { DashboardGrid } from '@/features/dashboard/components/DashboardGrid';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 
 // ============================================================================
@@ -90,7 +91,7 @@ const DashboardPageComponent = () => {
       await updatePreferences({ widgets: updatedWidgets });
       toast.success('Disposition mise à jour');
     } catch (error) {
-      console.error('Erreur lors de la mise à jour de la disposition:', error);
+      logger.error('Erreur lors de la mise à jour de la disposition:', error);
       toast.error('Erreur lors de la sauvegarde');
     }
   };

@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from '@/shared/components/ui/card';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 export const PWAUpdatePrompt = () => {
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
@@ -28,13 +29,13 @@ export const PWAUpdatePrompt = () => {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r: ServiceWorkerRegistration | undefined) {
-      console.log('SW registered:', r);
+      logger.debug('SW registered:', r);
     },
     onRegisterError(error: Error) {
-      console.error('SW registration error:', error);
+      logger.error('SW registration error:', error);
     },
     onOfflineReady() {
-      console.log('PWA application ready to work offline');
+      logger.debug('PWA application ready to work offline');
       toast.success('Application prête à fonctionner hors ligne', {
         description: "Vous pouvez maintenant utiliser l'app sans connexion",
         duration: 5000,

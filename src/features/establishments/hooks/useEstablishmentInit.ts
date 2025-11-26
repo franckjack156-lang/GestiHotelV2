@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
 import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
+import { logger } from '@/core/utils/logger';
 
 export const useEstablishmentInit = () => {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export const useEstablishmentInit = () => {
         toast.success('Établissement initialisé avec succès');
         return true;
       } catch (error: any) {
-        console.error('Error initializing establishment:', error);
+        logger.error('Error initializing establishment:', error);
         toast.error("Erreur lors de l'initialisation", {
           description: error.message,
         });
@@ -55,7 +56,7 @@ export const useEstablishmentInit = () => {
       const initialized = await isEstablishmentInitialized(establishmentId);
       return initialized;
     } catch (error) {
-      console.error('Error checking initialization:', error);
+      logger.error('Error checking initialization:', error);
       return false;
     } finally {
       setChecking(false);

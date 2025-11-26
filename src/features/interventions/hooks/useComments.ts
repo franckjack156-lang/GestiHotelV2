@@ -16,6 +16,7 @@ import {
   // getCommentsCount, // TODO: Imported but unused
 } from '../services/commentService';
 import type { Comment, CreateCommentData, SystemActionData } from '../types/comment.types';
+import { logger } from '@/core/utils/logger';
 
 export const useComments = (interventionId: string, establishmentId: string) => {
   const { user } = useAuth();
@@ -74,7 +75,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
 
         return true;
       } catch (error: any) {
-        console.error('Error adding comment:', error);
+        logger.error('Error adding comment:', error);
         toast.error("Erreur lors de l'ajout du commentaire", {
           description: error.message,
         });
@@ -104,7 +105,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
 
         return true;
       } catch (error: any) {
-        console.error('Error adding system comment:', error);
+        logger.error('Error adding system comment:', error);
         return false;
       }
     },
@@ -125,7 +126,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       toast.success('Commentaire modifié');
       return true;
     } catch (error: any) {
-      console.error('Error editing comment:', error);
+      logger.error('Error editing comment:', error);
       toast.error('Erreur lors de la modification', {
         description: error.message,
       });
@@ -148,7 +149,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
         toast.success('Commentaire supprimé');
         return true;
       } catch (error: any) {
-        console.error('Error deleting comment:', error);
+        logger.error('Error deleting comment:', error);
         toast.error('Erreur lors de la suppression', {
           description: error.message,
         });

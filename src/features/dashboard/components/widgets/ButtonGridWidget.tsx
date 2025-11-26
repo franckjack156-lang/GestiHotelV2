@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Grid3x3, Plus, Settings, ExternalLink } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/core/utils/logger';
 
 interface ButtonAction {
   id: string;
@@ -55,7 +56,7 @@ export const ButtonGridWidget = ({
 
       case 'custom':
         // Pour les actions personnalisées, on pourrait émettre un événement
-        console.log('Custom action:', button.id);
+        logger.debug('Custom action:', button.id);
         break;
     }
   };

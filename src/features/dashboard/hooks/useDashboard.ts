@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import dashboardService from '../services/dashboardService';
+import { logger } from '@/core/utils/logger';
 import type {
   DashboardPreferences,
   WidgetConfig,
@@ -50,7 +51,7 @@ export const useDashboard = () => {
 
       setPreferences(prefs);
     } catch (err) {
-      console.error('Erreur loadPreferences:', err);
+      logger.error('Erreur loadPreferences:', err);
       setError(err instanceof Error ? err.message : 'Erreur de chargement des préférences');
     }
   }, [userId, establishmentId]);
@@ -78,7 +79,7 @@ export const useDashboard = () => {
         );
         setInterventionStats(stats);
       } catch (err) {
-        console.error('Erreur loadInterventionStats:', err);
+        logger.error('Erreur loadInterventionStats:', err);
         setError(err instanceof Error ? err.message : 'Erreur de chargement des statistiques');
       } finally {
         setIsLoading(false);
@@ -98,7 +99,7 @@ export const useDashboard = () => {
         const data = await dashboardService.getTimelineData(establishmentId, dateRange);
         setTimelineData(data);
       } catch (err) {
-        console.error('Erreur loadTimelineData:', err);
+        logger.error('Erreur loadTimelineData:', err);
       }
     },
     [establishmentId]
@@ -114,7 +115,7 @@ export const useDashboard = () => {
       const stats = await dashboardService.getRoomStats(establishmentId);
       setRoomStats(stats);
     } catch (err) {
-      console.error('Erreur loadRoomStats:', err);
+      logger.error('Erreur loadRoomStats:', err);
     }
   }, [establishmentId]);
 
@@ -132,7 +133,7 @@ export const useDashboard = () => {
         );
         setTechnicianPerformance(performance);
       } catch (err) {
-        console.error('Erreur loadTechnicianPerformance:', err);
+        logger.error('Erreur loadTechnicianPerformance:', err);
       }
     },
     [establishmentId]
@@ -157,7 +158,7 @@ export const useDashboard = () => {
         // Mise à jour dans Firestore en arrière-plan
         await dashboardService.updatePreferences(userId, establishmentId, updates);
       } catch (err) {
-        console.error('Erreur updatePreferences:', err);
+        logger.error('Erreur updatePreferences:', err);
         // En cas d'erreur, recharger les préférences depuis Firestore
         await loadPreferences();
         throw err;
@@ -190,7 +191,7 @@ export const useDashboard = () => {
         // Mise à jour dans Firestore en arrière-plan avec les widgets déjà mis à jour
         await dashboardService.updateWidget(userId, establishmentId, widgetId, updates, updatedWidgets);
       } catch (err) {
-        console.error('Erreur updateWidget:', err);
+        logger.error('Erreur updateWidget:', err);
         // En cas d'erreur, recharger les préférences depuis Firestore
         await loadPreferences();
         throw err;
@@ -210,7 +211,7 @@ export const useDashboard = () => {
         await dashboardService.addWidget(userId, establishmentId, widget);
         await loadPreferences();
       } catch (err) {
-        console.error('Erreur addWidget:', err);
+        logger.error('Erreur addWidget:', err);
         throw err;
       }
     },
@@ -237,7 +238,7 @@ export const useDashboard = () => {
         // Suppression dans Firestore en arrière-plan
         await dashboardService.removeWidget(userId, establishmentId, widgetId);
       } catch (err) {
-        console.error('Erreur removeWidget:', err);
+        logger.error('Erreur removeWidget:', err);
         // En cas d'erreur, recharger les préférences depuis Firestore
         await loadPreferences();
         throw err;
@@ -257,7 +258,7 @@ export const useDashboard = () => {
         await dashboardService.reorderWidgets(userId, establishmentId, widgets);
         await loadPreferences();
       } catch (err) {
-        console.error('Erreur reorderWidgets:', err);
+        logger.error('Erreur reorderWidgets:', err);
         throw err;
       }
     },

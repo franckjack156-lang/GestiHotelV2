@@ -10,6 +10,7 @@
 
 import referenceListsService from './referenceListsService';
 import type { ListKey } from '@/shared/types/reference-lists.types';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -340,18 +341,18 @@ export const applyTemplate = async (
 ): Promise<{ added: number; skipped: number }> => {
   // Vérifications
   if (!establishmentId) {
-    console.error('❌ ERREUR: establishmentId est vide !');
+    logger.error('❌ ERREUR: establishmentId est vide !');
     throw new Error('Establishment ID manquant');
   }
 
   if (!userId) {
-    console.error('❌ ERREUR: userId est vide !');
+    logger.error('❌ ERREUR: userId est vide !');
     throw new Error('User ID manquant');
   }
 
   const template = getTemplate(templateId);
   if (!template) {
-    console.error(`❌ ERREUR: Template "${templateId}" non trouvé !`);
+    logger.error(`❌ ERREUR: Template "${templateId}" non trouvé !`);
     throw new Error(`Template "${templateId}" non trouvé`);
   }
 
@@ -369,7 +370,7 @@ export const applyTemplate = async (
         if (config) {
           await referenceListsService.createList(establishmentId, userId, listKey, config);
         } else {
-          console.warn(`⚠️ Config non trouvée pour ${listKey}`);
+          logger.warn(`⚠️ Config non trouvée pour ${listKey}`);
         }
       }
 
@@ -396,12 +397,12 @@ export const applyTemplate = async (
             totalSkipped++;
           }
         } catch (error: any) {
-          console.error(`  ❌ Erreur pour ${item.label}:`, error.message);
+          logger.error(`  ❌ Erreur pour ${item.label}:`, error.message);
           totalSkipped++;
         }
       }
     } catch (error: any) {
-      console.error(`❌ Erreur traitement liste ${listKey}:`, error.message);
+      logger.error(`❌ Erreur traitement liste ${listKey}:`, error.message);
     }
   }
 

@@ -9,6 +9,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import notificationService from '../services/notificationService';
+import { logger } from '@/core/utils/logger';
 import type {
   Notification,
   NotificationFilters,
@@ -68,7 +69,7 @@ export const useNotifications = (
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur lors du chargement des notifications';
       setError(errorMessage);
-      console.error('Erreur loadNotifications:', err);
+      logger.error('Erreur loadNotifications:', err);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +85,7 @@ export const useNotifications = (
       const count = await notificationService.getUnreadCount(userId, establishmentId);
       setUnreadCount(count);
     } catch (err) {
-      console.error('Erreur loadUnreadCount:', err);
+      logger.error('Erreur loadUnreadCount:', err);
     }
   }, [userId, establishmentId]);
 
@@ -98,7 +99,7 @@ export const useNotifications = (
       const data = await notificationService.getStats(userId, establishmentId);
       setStats(data);
     } catch (err) {
-      console.error('Erreur loadStats:', err);
+      logger.error('Erreur loadStats:', err);
     }
   }, [userId, establishmentId]);
 
@@ -118,7 +119,7 @@ export const useNotifications = (
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
-      console.error('Erreur markAsRead:', err);
+      logger.error('Erreur markAsRead:', err);
     }
   }, []);
 
@@ -134,7 +135,7 @@ export const useNotifications = (
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (err) {
-      console.error('Erreur markAllAsRead:', err);
+      logger.error('Erreur markAllAsRead:', err);
     }
   }, [userId, establishmentId]);
 
@@ -153,7 +154,7 @@ export const useNotifications = (
         )
       );
     } catch (err) {
-      console.error('Erreur markAsClicked:', err);
+      logger.error('Erreur markAsClicked:', err);
     }
   }, []);
 
@@ -166,7 +167,7 @@ export const useNotifications = (
       // Mise à jour locale
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
     } catch (err) {
-      console.error('Erreur deleteNotification:', err);
+      logger.error('Erreur deleteNotification:', err);
     }
   }, []);
 
@@ -181,7 +182,7 @@ export const useNotifications = (
       // Mise à jour locale
       setNotifications(prev => prev.filter(n => !n.read));
     } catch (err) {
-      console.error('Erreur deleteAllRead:', err);
+      logger.error('Erreur deleteAllRead:', err);
     }
   }, [userId, establishmentId]);
 

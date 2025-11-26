@@ -17,6 +17,7 @@ import {
 import { db } from '@/core/config/firebase';
 import type { HistoryEvent, CreateHistoryEventData } from '../types/subcollections.types';
 import { STATUS_CONFIG } from '../constants/statusConfig';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Obtenir la référence de la collection history
@@ -63,7 +64,7 @@ export const createHistoryEvent = async (
     const docRef = await addDoc(collectionRef, eventData);
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur création événement historique:', error);
+    logger.error('❌ Erreur création événement historique:', error);
     throw new Error("Impossible de créer l'événement");
   }
 };
@@ -93,14 +94,14 @@ export const subscribeToHistory = (
         onSuccess(events);
       },
       error => {
-        console.error('❌ Erreur subscription historique:', error);
+        logger.error('❌ Erreur subscription historique:', error);
         onError(error as Error);
       }
     );
 
     return unsubscribe;
   } catch (error) {
-    console.error('❌ Erreur création subscription:', error);
+    logger.error('❌ Erreur création subscription:', error);
     onError(error as Error);
     return () => {};
   }

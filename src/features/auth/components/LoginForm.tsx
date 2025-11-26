@@ -15,6 +15,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Schema de validation Zod
@@ -48,7 +49,7 @@ export const LoginForm = () => {
       navigate('/dashboard');
     } catch (error) {
       // L'erreur est déjà gérée par le hook useAuth
-      console.error('Erreur de connexion:', error);
+      logger.error('Erreur de connexion:', error);
     }
   };
 
@@ -60,7 +61,7 @@ export const LoginForm = () => {
       await loginWithGoogle();
       navigate('/dashboard');
     } catch (error) {
-      console.error('Erreur de connexion Google:', error);
+      logger.error('Erreur de connexion Google:', error);
     }
   };
 

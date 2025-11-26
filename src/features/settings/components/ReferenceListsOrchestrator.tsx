@@ -153,7 +153,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
       toast.dismiss();
       toast.success('Export réussi !');
     } catch (error) {
-      console.error('Erreur export:', error);
+      logger.error('Erreur export:', error);
       toast.dismiss();
       toast.error("Erreur lors de l'export");
     } finally {
@@ -175,7 +175,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
         toast.success('Template appliqué avec succès !');
         setIsTemplateDialogOpen(false);
       } catch (error) {
-        console.error('Erreur application template:', error);
+        logger.error('Erreur application template:', error);
         toast.dismiss();
         toast.error("Erreur lors de l'application du template");
       }
@@ -184,41 +184,41 @@ export const ReferenceListsOrchestrator: React.FC = () => {
   );
 
   const handleSyncMissingLists = useCallback(async () => {
-    console.log('🔵 handleSyncMissingLists appelé');
-    console.log('🔵 currentEstablishment:', currentEstablishment);
+    logger.debug('🔵 handleSyncMissingLists appelé');
+    logger.debug('🔵 currentEstablishment:', currentEstablishment);
 
     if (!currentEstablishment?.id || !currentEstablishment?.ownerId) {
-      console.warn('⚠️ Establishment ID ou ownerId manquant');
-      console.log('⚠️ ID:', currentEstablishment?.id);
-      console.log('⚠️ ownerId:', currentEstablishment?.ownerId);
+      logger.warn('⚠️ Establishment ID ou ownerId manquant');
+      logger.debug('⚠️ ID:', currentEstablishment?.id);
+      logger.debug('⚠️ ownerId:', currentEstablishment?.ownerId);
       return;
     }
 
     try {
-      console.log('🟢 Démarrage de la synchronisation');
+      logger.debug('🟢 Démarrage de la synchronisation');
       setIsSyncing(true);
       toast.loading('Synchronisation des listes...');
 
-      console.log('🟢 Appel addMissingLists avec:', {
+      logger.debug('🟢 Appel addMissingLists avec:', {
         establishmentId: currentEstablishment.id,
         userId: currentEstablishment.ownerId,
       });
 
       await addMissingLists(currentEstablishment.id, currentEstablishment.ownerId);
 
-      console.log('🟢 addMissingLists terminé, rechargement...');
+      logger.debug('🟢 addMissingLists terminé, rechargement...');
       await reload();
 
       toast.dismiss();
       toast.success('Listes synchronisées avec succès !');
-      console.log('✅ Synchronisation réussie');
+      logger.debug('✅ Synchronisation réussie');
     } catch (error) {
-      console.error('❌ Erreur synchronisation:', error);
+      logger.error('❌ Erreur synchronisation:', error);
       toast.dismiss();
       toast.error('Erreur lors de la synchronisation');
     } finally {
       setIsSyncing(false);
-      console.log('🔵 handleSyncMissingLists terminé');
+      logger.debug('🔵 handleSyncMissingLists terminé');
     }
   }, [currentEstablishment, reload]);
 
@@ -282,7 +282,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem
                   onClick={e => {
-                    console.log('🟡 DropdownMenuItem onClick déclenché', e);
+                    logger.debug('🟡 DropdownMenuItem onClick déclenché', e);
                     handleSyncMissingLists();
                   }}
                   disabled={isSyncing || isLoading}
@@ -517,7 +517,7 @@ const TemplateSelectionDialog: React.FC<TemplateSelectionDialogProps> = ({
       await onApply(selectedTemplateId);
       onOpenChange(false);
     } catch (error) {
-      console.error('Erreur application template:', error);
+      logger.error('Erreur application template:', error);
     } finally {
       setIsApplying(false);
     }
@@ -619,5 +619,6 @@ import {
   DialogTitle,
 } from '@/shared/components/ui/dialog';
 import { cn } from '@/shared/utils/cn';
+import { logger } from '@/core/utils/logger';
 
 export default ReferenceListsOrchestrator;

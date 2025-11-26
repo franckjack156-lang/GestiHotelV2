@@ -38,6 +38,7 @@ import { useInterventionActions } from '../../hooks/useInterventionActions';
 import { useInterventions } from '../../hooks/useInterventions';
 import { useSchedulingSuggestions } from '../../hooks/useSchedulingSuggestions';
 import type { CreateInterventionData } from '../../types/intervention.types';
+import { logger } from '@/core/utils/logger';
 
 interface InterventionFormProps {
   initialData?: Partial<CreateInterventionData>;
@@ -138,7 +139,7 @@ const InterventionFormComponent = ({
           }
         }
       } catch (error) {
-        console.error('Erreur lors de la soumission:', error);
+        logger.error('Erreur lors de la soumission:', error);
       }
     },
     [mode, interventionId, createIntervention, updateIntervention, onSuccess, navigate]

@@ -10,6 +10,7 @@
  */
 
 import ReactGA from 'react-ga4';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Initialise Google Analytics 4
@@ -17,14 +18,14 @@ import ReactGA from 'react-ga4';
 export const initGA4 = () => {
   // Ne pas tracker en développement
   if (import.meta.env.DEV) {
-    console.log('🔧 Google Analytics disabled in development mode');
+    logger.debug('🔧 Google Analytics disabled in development mode');
     return;
   }
 
   const measurementId = import.meta.env.VITE_GA4_MEASUREMENT_ID;
 
   if (!measurementId) {
-    console.warn('⚠️ VITE_GA4_MEASUREMENT_ID not configured - Analytics tracking disabled');
+    logger.warn('⚠️ VITE_GA4_MEASUREMENT_ID not configured - Analytics tracking disabled');
     return;
   }
 
@@ -43,7 +44,7 @@ export const initGA4 = () => {
     },
   });
 
-  console.log('✅ Google Analytics 4 initialized:', measurementId);
+  logger.debug('✅ Google Analytics 4 initialized:', measurementId);
 };
 
 /**
@@ -64,7 +65,7 @@ export const trackPageView = (path: string, title?: string) => {
  */
 export const trackEvent = (category: string, action: string, label?: string, value?: number) => {
   if (import.meta.env.DEV) {
-    console.log('📊 GA4 Event:', { category, action, label, value });
+    logger.debug('📊 GA4 Event:', { category, action, label, value });
     return;
   }
 

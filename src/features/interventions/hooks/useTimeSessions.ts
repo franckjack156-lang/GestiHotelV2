@@ -12,6 +12,7 @@ import {
 } from '../services/timeSessionsService';
 import type { TimeSession, CreateTimeSessionData } from '../types/subcollections.types';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 export const useTimeSessions = (interventionId: string) => {
   const { establishmentId } = useCurrentEstablishment();
@@ -77,7 +78,7 @@ export const useTimeSessions = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error("Erreur lors de l'ajout de la session");
-      console.error(error);
+      logger.error(error);
       return false;
     } finally {
       setIsSubmitting(false);
@@ -99,7 +100,7 @@ export const useTimeSessions = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
+      logger.error(error);
       return false;
     }
   };

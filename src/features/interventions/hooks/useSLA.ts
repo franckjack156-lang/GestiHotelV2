@@ -5,6 +5,7 @@
 import { useMemo } from 'react';
 import type { Intervention, SLAInfo } from '../types/intervention.types';
 import { calculateSLA } from '../services/slaService';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Hook pour calculer les informations SLA d'une intervention
@@ -21,7 +22,7 @@ export const useSLA = (intervention: Intervention | null): SLAInfo | null => {
     try {
       return calculateSLA(intervention);
     } catch (error) {
-      console.error('Error calculating SLA:', error);
+      logger.error('Error calculating SLA:', error);
       return null;
     }
   }, [intervention]);
@@ -44,7 +45,7 @@ export const useSLAList = (interventions: Intervention[]): Map<string, SLAInfo> 
         const slaInfo = calculateSLA(intervention);
         slaMap.set(intervention.id, slaInfo);
       } catch (error) {
-        console.error(`Error calculating SLA for intervention ${intervention.id}:`, error);
+        logger.error(`Error calculating SLA for intervention ${intervention.id}:`, error);
       }
     });
 
@@ -88,7 +89,7 @@ export const useSLAStats = (interventions: Intervention[]) => {
             break;
         }
       } catch (error) {
-        console.error(`Error calculating SLA for intervention ${intervention.id}:`, error);
+        logger.error(`Error calculating SLA for intervention ${intervention.id}:`, error);
       }
     });
 

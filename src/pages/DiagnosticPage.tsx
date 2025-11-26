@@ -10,6 +10,7 @@ import { useEstablishmentStore } from '@/features/establishments/stores/establis
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { logger } from '@/core/utils/logger';
 
 export const DiagnosticPage = () => {
   const { user } = useAuth();
@@ -92,7 +93,7 @@ export const DiagnosticPage = () => {
         };
       }
     } catch (error: any) {
-      console.error('Diagnostic error:', error);
+      logger.error('Diagnostic error:', error);
     }
 
     setResults(newResults);

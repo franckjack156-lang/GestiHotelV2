@@ -19,6 +19,7 @@ import {
   addDoc,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -156,7 +157,7 @@ export const checkEstablishmentDeletion = async (
       stats,
     };
   } catch (error) {
-    console.error('Erreur lors de la vérification de suppression:', error);
+    logger.error('Erreur lors de la vérification de suppression:', error);
     blockers.push('Erreur lors de la vérification: ' + (error as Error).message);
     return { canDelete: false, warnings, blockers, stats };
   }
@@ -283,15 +284,15 @@ export const deleteEstablishmentPermanently = async (
     batch.delete(doc(db, 'establishments', establishmentId));
 
     // 8. Commit toutes les suppressions
-    console.log('🔄 Committing batch deletion...');
+    logger.debug('🔄 Committing batch deletion...');
     await batch.commit();
-    console.log('✅ Batch committed successfully');
+    logger.debug('✅ Batch committed successfully');
 
     result.success = true;
-    console.log('✅ Établissement supprimé avec succès:', establishmentId);
+    logger.debug('✅ Établissement supprimé avec succès:', establishmentId);
   } catch (error) {
-    console.error('❌ Erreur lors de la suppression:', error);
-    console.error('❌ Error details:', {
+    logger.error('❌ Erreur lors de la suppression:', error);
+    logger.error('❌ Error details:', {
       message: (error as Error).message,
       code: (error as { code?: string }).code,
       details: error,
@@ -331,9 +332,9 @@ const logDeletionAction = async (
     // Logger dans une collection d'audit dédiée
     await addDoc(collection(db, 'audit-logs'), logData);
 
-    console.log('📝 Suppression loggée:', logData);
+    logger.debug('📝 Suppression loggée:', logData);
   } catch (error) {
-    console.error('Erreur lors du logging de suppression:', error);
+    logger.error('Erreur lors du logging de suppression:', error);
     // Ne pas bloquer la suppression si le logging échoue
   }
 };

@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { X, Download, Share } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import {
+import { logger } from '@/core/utils/logger';
   Card,
   CardContent,
   CardDescription,
@@ -77,7 +78,7 @@ export const PWAInstallPrompt = () => {
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
-      console.log('PWA installed');
+      logger.debug('PWA installed');
     }
 
     // Nettoyer

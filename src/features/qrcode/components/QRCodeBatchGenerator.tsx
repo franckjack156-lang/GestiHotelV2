@@ -22,6 +22,7 @@ import { Card, CardContent } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
 import { generateBatchQRCodes, downloadQRCode } from '../services/qrcodeService';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 interface Room {
   id: string;
@@ -96,7 +97,7 @@ export const QRCodeBatchGenerator = ({
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      console.error('Error generating batch QR codes:', error);
+      logger.error('Error generating batch QR codes:', error);
       const message = error instanceof Error ? error.message : 'Une erreur est survenue';
       toast.error('Erreur de génération', {
         description: message,

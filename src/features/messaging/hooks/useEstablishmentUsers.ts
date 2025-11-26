@@ -8,6 +8,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import type { User } from '@/features/users/types/user.types';
 import { subscribeToEstablishmentPresence, type UserPresence } from '../services/presenceService';
+import { logger } from '@/core/utils/logger';
 
 export interface EstablishmentUser {
   id: string; // Utilisé comme clé React et pour identifier l'utilisateur
@@ -67,7 +68,7 @@ export const useEstablishmentUsers = (establishmentId: string | undefined) => {
         setIsLoading(false);
       },
       err => {
-        console.error('Error fetching establishment users:', err);
+        logger.error('Error fetching establishment users:', err);
         setError(err as Error);
         setIsLoading(false);
       }

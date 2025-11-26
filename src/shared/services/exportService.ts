@@ -15,6 +15,7 @@ import type { User } from '@/features/users/types/user.types';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toDate } from '@/shared/utils/dateUtils';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -314,7 +315,7 @@ export const preparePrintContent = (intervention: Intervention): string => {
  * Cette fonction est conservée pour compatibilité mais ne devrait plus être utilisée
  */
 export const downloadInterventionsTemplate = (): void => {
-  console.warn(
+  logger.warn(
     'downloadInterventionsTemplate depuis exportService est déprécié. ' +
     'Utilisez downloadInterventionsTemplate depuis templateGeneratorService à la place.'
   );

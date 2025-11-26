@@ -11,32 +11,33 @@
  */
 
 import referenceListsService from './referenceListsService';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Tester les fonctions de logging avec un establishment ID
  */
 export const testLogging = async (establishmentId: string) => {
-  console.log('🧪 ========================================');
-  console.log('🧪 TEST DES FONCTIONS DE LOGGING');
-  console.log('🧪 ========================================\n');
+  logger.debug('🧪 ========================================');
+  logger.debug('🧪 TEST DES FONCTIONS DE LOGGING');
+  logger.debug('🧪 ========================================\n');
 
-  console.log(`📋 Testing avec l'établissement: ${establishmentId}\n`);
+  logger.debug(`📋 Testing avec l'établissement: ${establishmentId}\n`);
 
   // Test 1: Log compact
-  console.log('📝 TEST 1: Log Compact');
-  console.log('------------------------------------------');
+  logger.debug('📝 TEST 1: Log Compact');
+  logger.debug('------------------------------------------');
   await referenceListsService.logListsCompact(establishmentId);
-  console.log('\n');
+  logger.debug('\n');
 
   // Test 2: Log détaillé
-  console.log('📝 TEST 2: Log Détaillé');
-  console.log('------------------------------------------');
+  logger.debug('📝 TEST 2: Log Détaillé');
+  logger.debug('------------------------------------------');
   await referenceListsService.logListsSummary(establishmentId);
-  console.log('\n');
+  logger.debug('\n');
 
-  console.log('🧪 ========================================');
-  console.log('✅ Tests terminés !');
-  console.log('🧪 ========================================\n');
+  logger.debug('🧪 ========================================');
+  logger.debug('✅ Tests terminés !');
+  logger.debug('🧪 ========================================\n');
 };
 
 /**
@@ -49,10 +50,10 @@ if (typeof window !== 'undefined' && import.meta.env.DEV) {
     test: testLogging,
   };
 
-  console.log('🔧 Debug tools available in window.debugReferenceLists:');
-  console.log('   • window.debugReferenceLists.logSummary(establishmentId)');
-  console.log('   • window.debugReferenceLists.logCompact(establishmentId)');
-  console.log('   • window.debugReferenceLists.test(establishmentId)');
+  logger.debug('🔧 Debug tools available in window.debugReferenceLists:');
+  logger.debug('   • window.debugReferenceLists.logSummary(establishmentId)');
+  logger.debug('   • window.debugReferenceLists.logCompact(establishmentId)');
+  logger.debug('   • window.debugReferenceLists.test(establishmentId)');
 }
 
 export default {

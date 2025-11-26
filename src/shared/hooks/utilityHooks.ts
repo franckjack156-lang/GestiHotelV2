@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { logger } from '@/core/utils/logger';
 
 /**
  * useLocalStorage Hook
@@ -21,7 +22,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
+      logger.error(`Error reading localStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -35,7 +36,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         setStoredValue(valueToStore);
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       } catch (error) {
-        console.error(`Error setting localStorage key "${key}":`, error);
+        logger.error(`Error setting localStorage key "${key}":`, error);
       }
     },
     [key]
@@ -56,7 +57,7 @@ export function useSessionStorage<T>(key: string, initialValue: T) {
       const item = window.sessionStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error(`Error reading sessionStorage key "${key}":`, error);
+      logger.error(`Error reading sessionStorage key "${key}":`, error);
       return initialValue;
     }
   });
@@ -68,7 +69,7 @@ export function useSessionStorage<T>(key: string, initialValue: T) {
         setStoredValue(valueToStore);
         window.sessionStorage.setItem(key, JSON.stringify(valueToStore));
       } catch (error) {
-        console.error(`Error setting sessionStorage key "${key}":`, error);
+        logger.error(`Error setting sessionStorage key "${key}":`, error);
       }
     },
     [key, storedValue]
@@ -214,7 +215,7 @@ export function useCopyToClipboard(): [string | null, (text: string) => Promise<
 
   const copy = useCallback(async (text: string) => {
     if (!navigator?.clipboard) {
-      console.warn('Clipboard not supported');
+      logger.warn('Clipboard not supported');
       return false;
     }
 
@@ -223,7 +224,7 @@ export function useCopyToClipboard(): [string | null, (text: string) => Promise<
       setCopiedText(text);
       return true;
     } catch (error) {
-      console.warn('Copy failed', error);
+      logger.warn('Copy failed', error);
       setCopiedText(null);
       return false;
     }
@@ -239,7 +240,7 @@ export function useCopyToClipboard(): [string | null, (text: string) => Promise<
  *
  * @example
  * useInterval(() => {
- *   console.log('This runs every second');
+ *   logger.debug('This runs every second');
  * }, 1000);
  */
 export function useInterval(callback: () => void, delay: number | null) {

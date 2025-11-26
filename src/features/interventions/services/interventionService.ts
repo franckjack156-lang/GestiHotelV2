@@ -46,6 +46,7 @@ import type {
 } from '../types/intervention.types';
 import type { InterventionStatus } from '@/shared/types/status.types';
 import type { Room } from '@/features/rooms/types/room.types';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Obtenir la référence de la collection interventions
@@ -179,7 +180,7 @@ export const createIntervention = async (
           interventionData.assignedToName = techNames.join(', '); // Legacy
           interventionData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
         } catch (error) {
-          console.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
+          logger.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
           interventionData.assignedToNames = data.assignedToIds.map(() => 'Inconnu');
           interventionData.assignedToName = 'Inconnu';
           interventionData.assignedTo = data.assignedToIds[0];
@@ -220,7 +221,7 @@ export const createIntervention = async (
           interventionData.assignedToNames = techNames;
           interventionData.assignedToName = techNames.join(', ');
         } catch (error) {
-          console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+          logger.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
           interventionData.assignedToNames = ['Inconnu'];
           interventionData.assignedToName = 'Inconnu';
         }
@@ -251,13 +252,13 @@ export const createIntervention = async (
     const createdDate = new Date();
     const customDueDate = data.dueDate;
 
-    console.log('🔍 DEBUG - Priority:', priority, 'SLA_TARGET:', SLA_TARGETS[priority]);
+    logger.debug('🔍 DEBUG - Priority:', priority, 'SLA_TARGET:', SLA_TARGETS[priority]);
 
     const dueDate = calculateDueDate(createdDate, priority, customDueDate);
 
     // S'assurer que slaTarget a une valeur (défaut: 8h pour normal)
     const slaTarget = SLA_TARGETS[priority] || SLA_TARGETS.normal || 480;
-    console.log('🔍 DEBUG - Final slaTarget:', slaTarget);
+    logger.debug('🔍 DEBUG - Final slaTarget:', slaTarget);
 
     interventionData.slaTarget = slaTarget;
     interventionData.dueDate = Timestamp.fromDate(dueDate);
@@ -270,14 +271,14 @@ export const createIntervention = async (
     }
 
     // DEBUG: Vérifier qu'il n'y a pas de valeurs undefined
-    console.log('🔍 DEBUG - interventionData avant addDoc:', JSON.stringify(
+    logger.debug('🔍 DEBUG - interventionData avant addDoc:', JSON.stringify(
       Object.entries(interventionData).filter(([_, value]) => value === undefined),
       null,
       2
     ));
 
     const docRef = await addDoc(collectionRef, interventionData);
-    console.log('✅ Intervention créée:', docRef.id);
+    logger.debug('✅ Intervention créée:', docRef.id);
 
     // ========================================================================
     // BLOCAGE AUTOMATIQUE - Si isBlocking = true et roomNumber renseigné
@@ -305,12 +306,12 @@ export const createIntervention = async (
             establishmentId
           );
 
-          console.log(`✅ Blocage créé automatiquement: ${blockageId} pour chambre ${room.number}`);
+          logger.debug(`✅ Blocage créé automatiquement: ${blockageId} pour chambre ${room.number}`);
         } else {
-          console.warn(`⚠️ Chambre ${data.roomNumber} non trouvée pour bloquer`);
+          logger.warn(`⚠️ Chambre ${data.roomNumber} non trouvée pour bloquer`);
         }
       } catch (error) {
-        console.warn('⚠️ Erreur création blocage automatique:', error);
+        logger.warn('⚠️ Erreur création blocage automatique:', error);
         // Ne pas bloquer la création de l'intervention si le blocage échoue
       }
     }
@@ -334,16 +335,16 @@ export const createIntervention = async (
             docRef.id,
             interventionData.title as string
           );
-          console.log('✅ Notifications urgentes envoyées');
+          logger.debug('✅ Notifications urgentes envoyées');
         }
       } catch (error) {
-        console.warn("⚠️ Impossible d'envoyer les notifications urgentes:", error);
+        logger.warn("⚠️ Impossible d'envoyer les notifications urgentes:", error);
       }
     }
 
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur création intervention:', error);
+    logger.error('❌ Erreur création intervention:', error);
     throw new Error("Impossible de créer l'intervention");
   }
 };
@@ -361,7 +362,7 @@ export const getIntervention = async (
     if (!docSnap.exists()) return null;
     return { id: docSnap.id, ...docSnap.data() } as Intervention;
   } catch (error) {
-    console.error('❌ Erreur récupération intervention:', error);
+    logger.error('❌ Erreur récupération intervention:', error);
     throw new Error("Impossible de récupérer l'intervention");
   }
 };
@@ -410,7 +411,7 @@ export const updateIntervention = async (
         updateData.assignedToNames = techNames;
         updateData.assignedToName = techNames.join(', '); // Legacy
       } catch (error) {
-        console.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
+        logger.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
         updateData.assignedToNames = data.assignedToIds.map(() => 'Inconnu');
         updateData.assignedToName = 'Inconnu';
       }
@@ -432,7 +433,7 @@ export const updateIntervention = async (
           updateData.assignedToNames = ['Inconnu'];
         }
       } catch (error) {
-        console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+        logger.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
         updateData.assignedToName = 'Inconnu';
         updateData.assignedToNames = ['Inconnu'];
       }
@@ -471,7 +472,7 @@ export const updateIntervention = async (
 
     await updateDoc(docRef, updateData);
   } catch (error) {
-    console.error('❌ Erreur mise à jour:', error);
+    logger.error('❌ Erreur mise à jour:', error);
     throw new Error("Impossible de mettre à jour l'intervention");
   }
 };
@@ -546,9 +547,9 @@ export const changeStatus = async (
       if (interventionData.isBlocking) {
         try {
           await resolveBlockageForIntervention(interventionId, establishmentId);
-          console.log(`✅ Blocage résolu automatiquement pour intervention ${interventionId}`);
+          logger.debug(`✅ Blocage résolu automatiquement pour intervention ${interventionId}`);
         } catch (error) {
-          console.warn('⚠️ Erreur résolution blocage automatique:', error);
+          logger.warn('⚠️ Erreur résolution blocage automatique:', error);
           // Ne pas bloquer la complétion de l'intervention si la résolution échoue
         }
       }
@@ -595,10 +596,10 @@ export const changeStatus = async (
       }
 
       if (usersToNotify.length > 0) {
-        console.log(`✅ ${usersToNotify.length} notifications de changement de statut envoyées`);
+        logger.debug(`✅ ${usersToNotify.length} notifications de changement de statut envoyées`);
       }
     } catch (error) {
-      console.warn("⚠️ Impossible d'envoyer les notifications de changement de statut:", error);
+      logger.warn("⚠️ Impossible d'envoyer les notifications de changement de statut:", error);
     }
 
     // Logger le changement de statut dans l'historique
@@ -620,10 +621,10 @@ export const changeStatus = async (
         statusData.newStatus
       );
     } catch (error) {
-      console.warn('⚠️ Erreur logging historique statut:', error);
+      logger.warn('⚠️ Erreur logging historique statut:', error);
     }
   } catch (error) {
-    console.error('❌ Erreur changement statut:', error);
+    logger.error('❌ Erreur changement statut:', error);
     throw new Error('Impossible de changer le statut');
   }
 };
@@ -665,7 +666,7 @@ export const assignIntervention = async (
         }
       }
     } catch (error) {
-      console.warn('⚠️ Impossible de récupérer les noms des utilisateurs:', error);
+      logger.warn('⚠️ Impossible de récupérer les noms des utilisateurs:', error);
     }
 
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
@@ -699,9 +700,9 @@ export const assignIntervention = async (
         interventionTitle,
         assignedByName
       );
-      console.log("✅ Notification d'assignation envoyée");
+      logger.debug("✅ Notification d'assignation envoyée");
     } catch (error) {
-      console.warn("⚠️ Impossible d'envoyer la notification d'assignation:", error);
+      logger.warn("⚠️ Impossible d'envoyer la notification d'assignation:", error);
     }
 
     // Logger l'assignation dans l'historique
@@ -722,10 +723,10 @@ export const assignIntervention = async (
         assignedToName
       );
     } catch (error) {
-      console.warn('⚠️ Erreur logging historique assignation:', error);
+      logger.warn('⚠️ Erreur logging historique assignation:', error);
     }
   } catch (error) {
-    console.error('❌ Erreur assignation:', error);
+    logger.error('❌ Erreur assignation:', error);
     throw new Error("Impossible d'assigner l'intervention");
   }
 };
@@ -747,7 +748,7 @@ export const deleteIntervention = async (
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('❌ Erreur suppression:', error);
+    logger.error('❌ Erreur suppression:', error);
     throw new Error("Impossible de supprimer l'intervention");
   }
 };
@@ -763,7 +764,7 @@ export const permanentlyDeleteIntervention = async (
     const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
     await deleteDoc(docRef);
   } catch (error) {
-    console.error('❌ Erreur suppression permanente:', error);
+    logger.error('❌ Erreur suppression permanente:', error);
     throw new Error('Impossible de supprimer définitivement');
   }
 };
@@ -784,7 +785,7 @@ export const incrementViewCount = async (
       lastViewedBy: userId,
     });
   } catch (error) {
-    console.error("❌ Erreur lors de l'incrémentation du compteur de vues:", error);
+    logger.error("❌ Erreur lors de l'incrémentation du compteur de vues:", error);
     // Ne pas bloquer l'affichage de l'intervention si l'incrémentation échoue
     // L'erreur est loggée mais pas relancée
   }
@@ -892,21 +893,21 @@ export const subscribeToInterventions = (
           ...doc.data(),
         })) as Intervention[];
 
-        console.log(`📡 ${interventions.length} interventions reçues`);
+        logger.debug(`📡 ${interventions.length} interventions reçues`);
 
         // Enrichir les interventions avec les noms manquants
         const enriched = await enrichInterventions(interventions);
         onSuccess(enriched);
       },
       error => {
-        console.error('❌ Erreur subscription:', error);
+        logger.error('❌ Erreur subscription:', error);
         onError(error as Error);
       }
     );
 
     return unsubscribe;
   } catch (error) {
-    console.error('❌ Erreur création subscription:', error);
+    logger.error('❌ Erreur création subscription:', error);
     onError(error as Error);
     return () => {};
   }
@@ -1006,13 +1007,13 @@ export const getInterventions = async (
       ...doc.data(),
     })) as Intervention[];
 
-    console.log(`✅ ${interventions.length} interventions récupérées`);
+    logger.debug(`✅ ${interventions.length} interventions récupérées`);
 
     // Enrichir les interventions avec les noms manquants
     const enriched = await enrichInterventions(interventions);
     return enriched;
   } catch (error) {
-    console.error('❌ Erreur récupération:', error);
+    logger.error('❌ Erreur récupération:', error);
     throw new Error('Impossible de récupérer les interventions');
   }
 };

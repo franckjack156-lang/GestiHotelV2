@@ -10,6 +10,7 @@
  */
 
 import QRCode from 'qrcode';
+import { logger } from '@/core/utils/logger';
 
 export interface RoomQRCodeData {
   roomId: string;
@@ -48,7 +49,7 @@ export const generateRoomQRCode = async (
     const dataUrl = await QRCode.toDataURL(qrData, qrOptions);
     return dataUrl;
   } catch (error) {
-    console.error('Error generating QR code:', error);
+    logger.error('Error generating QR code:', error);
     throw new Error('Impossible de générer le QR code');
   }
 };
@@ -89,7 +90,7 @@ export const parseRoomQRCode = (qrData: string): RoomQRCodeData | null => {
 
     return parsed as RoomQRCodeData;
   } catch (error) {
-    console.error('Error parsing QR code:', error);
+    logger.error('Error parsing QR code:', error);
     return null;
   }
 };

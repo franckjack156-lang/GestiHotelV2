@@ -10,6 +10,7 @@
  */
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { logger } from '@/core/utils/logger';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -32,7 +33,7 @@ const getSystemTheme = (): 'light' | 'dark' => {
 
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const result = prefersDark ? 'dark' : 'light';
-  console.log('🖥️ getSystemTheme:', { prefersDark, result });
+  logger.debug('🖥️ getSystemTheme:', { prefersDark, result });
   return result;
 };
 
@@ -43,7 +44,7 @@ const getStoredTheme = (): Theme => {
   if (typeof window === 'undefined') return 'system';
 
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  console.log('💾 localStorage theme:', stored);
+  logger.debug('💾 localStorage theme:', stored);
   if (stored === 'light' || stored === 'dark' || stored === 'system') {
     return stored;
   }
@@ -57,12 +58,12 @@ const getStoredTheme = (): Theme => {
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     const stored = getStoredTheme();
-    console.log('🎯 Initial theme:', stored);
+    logger.debug('🎯 Initial theme:', stored);
     return stored;
   });
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>(() => {
     const system = getSystemTheme();
-    console.log('🎯 Initial systemTheme:', system);
+    logger.debug('🎯 Initial systemTheme:', system);
     return system;
   });
 
@@ -80,11 +81,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Calculer le thème actuel basé sur le choix de l'utilisateur
   const actualTheme: 'light' | 'dark' = theme === 'system' ? systemTheme : theme;
-  console.log('🔄 actualTheme calculation:', { theme, systemTheme, actualTheme });
+  logger.debug('🔄 actualTheme calculation:', { theme, systemTheme, actualTheme });
 
   // Appliquer le thème au document
   useEffect(() => {
-    console.log('🎨 Application du thème au DOM:', { actualTheme, theme, systemTheme });
+    logger.debug('🎨 Application du thème au DOM:', { actualTheme, theme, systemTheme });
     const root = document.documentElement;
 
     // Retirer les anciennes classes
@@ -92,7 +93,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Ajouter la nouvelle classe
     root.classList.add(actualTheme);
-    console.log('✅ Classes DOM:', root.classList.toString());
+    logger.debug('✅ Classes DOM:', root.classList.toString());
 
     // Mettre à jour la meta theme-color pour PWA
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
@@ -105,10 +106,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
    * Change le thème et persiste dans localStorage
    */
   const setTheme = (newTheme: Theme) => {
-    console.log('📝 ThemeContext.setTheme appelé:', { current: theme, new: newTheme, actualTheme });
+    logger.debug('📝 ThemeContext.setTheme appelé:', { current: theme, new: newTheme, actualTheme });
     setThemeState(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-    console.log('✅ Thème changé et sauvegardé dans localStorage');
+    logger.debug('✅ Thème changé et sauvegardé dans localStorage');
   };
 
   /**

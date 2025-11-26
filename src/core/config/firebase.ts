@@ -16,6 +16,7 @@ import { getStorage, type FirebaseStorage } from 'firebase/storage';
 import { getFunctions, type Functions } from 'firebase/functions';
 import { getAnalytics, type Analytics, isSupported } from 'firebase/analytics';
 import { getPerformance, type FirebasePerformance } from 'firebase/performance';
+import { logger } from '@/core/utils/logger';
 
 // Configuration Firebase depuis les variables d'environnement
 const firebaseConfig = {
@@ -73,19 +74,19 @@ if (import.meta.env.PROD) {
     .then(supported => {
       if (supported) {
         analyticsInstance = getAnalytics(app);
-        console.log('✅ Firebase Analytics initialized');
+        logger.debug('✅ Firebase Analytics initialized');
       }
     })
     .catch(error => {
-      console.warn('⚠️ Firebase Analytics not supported:', error);
+      logger.warn('⚠️ Firebase Analytics not supported:', error);
     });
 
   // Initialiser Performance Monitoring
   try {
     performanceInstance = getPerformance(app);
-    console.log('✅ Firebase Performance Monitoring initialized');
+    logger.debug('✅ Firebase Performance Monitoring initialized');
   } catch (error) {
-    console.warn('⚠️ Firebase Performance Monitoring not supported:', error);
+    logger.warn('⚠️ Firebase Performance Monitoring not supported:', error);
   }
 }
 
@@ -110,7 +111,7 @@ export const appName = import.meta.env.VITE_APP_NAME || 'GestiHôtel';
 
 // Log de configuration (seulement en dev)
 // if (isDevelopment) {
-//   console.log('🔥 Firebase initialized:', {
+//   logger.debug('🔥 Firebase initialized:', {
 //     projectId: firebaseConfig.projectId,
 //     environment: import.meta.env.VITE_APP_ENV || 'development',
 //     version: appVersion,

@@ -13,6 +13,7 @@ import {
 } from '../services/photosService';
 import type { Photo, PhotoCategory, UploadPhotoData } from '../types/subcollections.types';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 export const usePhotos = (interventionId: string) => {
   const { establishmentId } = useCurrentEstablishment();
@@ -78,7 +79,7 @@ export const usePhotos = (interventionId: string) => {
       return true;
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de l'upload");
-      console.error(error);
+      logger.error(error);
       return false;
     } finally {
       setIsUploading(false);
@@ -129,7 +130,7 @@ export const usePhotos = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
+      logger.error(error);
       return false;
     }
   };
@@ -149,7 +150,7 @@ export const usePhotos = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error('Erreur lors de la mise à jour');
-      console.error(error);
+      logger.error(error);
       return false;
     }
   };

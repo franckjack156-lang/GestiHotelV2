@@ -81,7 +81,12 @@
       "Bash(src/shared/services/importService.ts.backup)",
       "Bash(scripts/fix-intervention-statuses.ts )",
       "Bash(scripts/reschedule-incomplete-interventions.ts)",
-      "Bash(npm outdated:*)"
+      "Bash(npm outdated:*)",
+      "Bash(bash scripts/replace-console-logs.sh:*)",
+      "Bash(python scripts/fix-logger-imports.py:*)",
+      "Bash(node scripts/fix-logger-imports.js:*)",
+      "Bash(node scripts/fix-logger-imports.cjs:*)",
+      "Bash(.gitignore)"
     ],
     "deny": [],
     "ask": []

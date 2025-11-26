@@ -19,6 +19,7 @@ import type {
   PartStatus,
 } from '../types/subcollections.types';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 export const useParts = (interventionId: string) => {
   const { establishmentId } = useCurrentEstablishment();
@@ -72,7 +73,7 @@ export const useParts = (interventionId: string) => {
    * Ajouter une pièce
    */
   const add = async (data: CreatePartData): Promise<boolean> => {
-    console.log('🔧 useParts.add called with data:', data);
+    logger.debug('🔧 useParts.add called with data:', data);
 
     if (!establishmentId || !user) {
       toast.error("Impossible d'ajouter la pièce");
@@ -93,7 +94,7 @@ export const useParts = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error("Erreur lors de l'ajout");
-      console.error(error);
+      logger.error(error);
       return false;
     } finally {
       setIsSubmitting(false);
@@ -115,7 +116,7 @@ export const useParts = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error('Erreur lors de la modification');
-      console.error(error);
+      logger.error(error);
       return false;
     }
   };
@@ -135,7 +136,7 @@ export const useParts = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error('Erreur lors de la suppression');
-      console.error(error);
+      logger.error(error);
       return false;
     }
   };
@@ -155,7 +156,7 @@ export const useParts = (interventionId: string) => {
       return true;
     } catch (error) {
       toast.error('Erreur lors du changement de statut');
-      console.error(error);
+      logger.error(error);
       return false;
     }
   };

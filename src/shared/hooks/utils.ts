@@ -10,6 +10,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 // TODO: useMemo and useNavigate imported but may be unused - keeping them
 // import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // useDebounce - Débouncer une valeur
@@ -109,7 +110,7 @@ export function useLocalStorage<T>(
       const item = window.localStorage.getItem(key);
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
-      console.error('Error loading from localStorage:', error);
+      logger.error('Error loading from localStorage:', error);
       return initialValue;
     }
   });
@@ -121,7 +122,7 @@ export function useLocalStorage<T>(
         setStoredValue(valueToStore);
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       } catch (error) {
-        console.error('Error saving to localStorage:', error);
+        logger.error('Error saving to localStorage:', error);
       }
     },
     [key, storedValue]
@@ -218,7 +219,7 @@ export function useClipboard(timeout: number = 2000): UseClipboardReturn {
       await navigator.clipboard.writeText(text);
       setCopied(true);
     } catch (error) {
-      console.error('Failed to copy:', error);
+      logger.error('Failed to copy:', error);
       setCopied(false);
     }
   }, []);

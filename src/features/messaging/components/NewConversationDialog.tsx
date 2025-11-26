@@ -28,6 +28,7 @@ import { Search, User, Users, X, Loader2, Check } from 'lucide-react';
 import type { CreateConversationData, ConversationType } from '../types/message.types';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // PROPS
@@ -209,7 +210,7 @@ export const NewConversationDialog: React.FC<NewConversationDialogProps> = ({
       resetForm();
       onOpenChange(false);
     } catch (error) {
-      console.error('Erreur lors de la création de la conversation:', error);
+      logger.error('Erreur lors de la création de la conversation:', error);
       toast.error('Erreur lors de la création de la conversation');
     } finally {
       setIsCreating(false);

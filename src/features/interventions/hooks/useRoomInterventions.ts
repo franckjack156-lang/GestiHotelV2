@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import type { Intervention } from '../types/intervention.types';
+import { logger } from '@/core/utils/logger';
 
 export const useRoomInterventions = (
   establishmentId: string | undefined,
@@ -43,7 +44,7 @@ export const useRoomInterventions = (
 
         setInterventions(data);
       } catch (err) {
-        console.error('Error loading room interventions:', err);
+        logger.error('Error loading room interventions:', err);
         setError(err as Error);
       } finally {
         setIsLoading(false);

@@ -27,6 +27,7 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Separator } from '@/shared/components/ui/separator';
 import {
+import { logger } from '@/core/utils/logger';
   FEATURES_CATALOG,
   DEFAULT_ESTABLISHMENT_FEATURES,
   type FeatureMetadata,
@@ -228,7 +229,7 @@ export const EstablishmentFeaturesPage = () => {
       toast.success('Fonctionnalités mises à jour avec succès');
       setHasChanges(false);
     } catch (error: unknown) {
-      console.error('Error updating features:', error);
+      logger.error('Error updating features:', error);
       const message = error instanceof Error ? error.message : 'Erreur inconnue';
       toast.error('Erreur lors de la mise à jour', {
         description: message,

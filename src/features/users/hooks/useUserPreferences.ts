@@ -9,6 +9,7 @@ import { useAuthStore } from '@/features/auth/stores/authStore';
 import userService from '../services/userService';
 import type { DisplayPreferences, NotificationPreferences } from '../types/user.types';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 export const useUserPreferences = () => {
   const { user, setUser } = useAuthStore();
@@ -102,7 +103,7 @@ export const useUserPreferences = () => {
 
         toast.success('Préférences enregistrées');
       } catch (error: any) {
-        console.error('Error updating display preferences:', error);
+        logger.error('Error updating display preferences:', error);
         toast.error('Erreur lors de la sauvegarde');
       } finally {
         setIsSaving(false);
@@ -148,7 +149,7 @@ export const useUserPreferences = () => {
 
         toast.success('Préférences enregistrées');
       } catch (error: any) {
-        console.error('Error updating notification preferences:', error);
+        logger.error('Error updating notification preferences:', error);
         toast.error('Erreur lors de la sauvegarde');
       } finally {
         setIsSaving(false);
@@ -179,7 +180,7 @@ export const useUserPreferences = () => {
 
       toast.success('Préférences réinitialisées');
     } catch (error: any) {
-      console.error('Error resetting preferences:', error);
+      logger.error('Error resetting preferences:', error);
       toast.error('Erreur lors de la réinitialisation');
     } finally {
       setIsSaving(false);

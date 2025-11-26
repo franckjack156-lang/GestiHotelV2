@@ -27,6 +27,7 @@ import userService from '@/features/users/services/userService';
 import type { User } from '@/features/users/types/user.types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // HOOK PRINCIPAL
@@ -63,7 +64,7 @@ export const useImportInterventions = (
         const establishmentUsers = await userService.getUsersByEstablishment(establishmentId);
         setUsers(establishmentUsers);
       } catch (error) {
-        console.error('Error loading users for import:', error);
+        logger.error('Error loading users for import:', error);
       }
     };
 
@@ -147,28 +148,28 @@ export const useImportInterventions = (
 
     // Afficher les suggestions de correspondance dans la console
     if (result.matchSuggestions) {
-      console.log('\n🔍 SUGGESTIONS DE CORRESPONDANCE DÉTECTÉES:\n');
+      logger.debug('\n🔍 SUGGESTIONS DE CORRESPONDANCE DÉTECTÉES:\n');
 
       if (result.matchSuggestions.technicians.size > 0) {
-        console.log('👷 TECHNICIENS:');
+        logger.debug('👷 TECHNICIENS:');
         result.matchSuggestions.technicians.forEach((suggestions, excelName) => {
-          console.log(`\n  "${excelName}" pourrait correspondre à:`);
+          logger.debug(`\n  "${excelName}" pourrait correspondre à:`);
           suggestions.forEach((sug, idx) => {
             const score = Math.round(sug.matchScore * 100);
             const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
-            console.log(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
+            logger.debug(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
           });
         });
       }
 
       if (result.matchSuggestions.creators.size > 0) {
-        console.log('\n\n👤 CRÉATEURS:');
+        logger.debug('\n\n👤 CRÉATEURS:');
         result.matchSuggestions.creators.forEach((suggestions, excelName) => {
-          console.log(`\n  "${excelName}" pourrait correspondre à:`);
+          logger.debug(`\n  "${excelName}" pourrait correspondre à:`);
           suggestions.forEach((sug, idx) => {
             const score = Math.round(sug.matchScore * 100);
             const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
-            console.log(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
+            logger.debug(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
           });
         });
       }
@@ -185,13 +186,13 @@ export const useImportInterventions = (
 
       referenceCategories.forEach(({ label, map }) => {
         if (map.size > 0) {
-          console.log(`\n\n${label}:`);
+          logger.debug(`\n\n${label}:`);
           map.forEach((suggestions, excelValue) => {
-            console.log(`\n  "${excelValue}" pourrait correspondre à:`);
+            logger.debug(`\n  "${excelValue}" pourrait correspondre à:`);
             suggestions.forEach((sug, idx) => {
               const score = Math.round(sug.matchScore * 100);
               const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
-              console.log(
+              logger.debug(
                 `    ${emoji} ${idx + 1}. ${sug.referenceLabel} [${sug.referenceValue}] (${score}% - ${sug.matchType})`
               );
             });
@@ -251,16 +252,16 @@ export const useImportInterventions = (
     // Stocker les mappings utilisateur pour la conversion
     if (userMappings) {
       setUserMappings(userMappings);
-      console.log('\n📌 Mappings utilisateur enregistrés:', Object.fromEntries(userMappings));
+      logger.debug('\n📌 Mappings utilisateur enregistrés:', Object.fromEntries(userMappings));
     }
 
     // Stocker les mappings de référence pour la conversion
     if (referenceMappings) {
       setReferenceMappings(referenceMappings);
-      console.log('\n📌 Mappings de référence enregistrés:');
+      logger.debug('\n📌 Mappings de référence enregistrés:');
       Object.entries(referenceMappings).forEach(([key, map]) => {
         if (map && map.size > 0) {
-          console.log(`  ${key}:`, Object.fromEntries(map));
+          logger.debug(`  ${key}:`, Object.fromEntries(map));
         }
       });
     }
@@ -301,7 +302,7 @@ export const useImportInterventions = (
         isRequired: false,
         isSystem: false,
       });
-      console.log('✅ Liste "creators" créée');
+      logger.debug('✅ Liste "creators" créée');
     }
 
     if (allLists && !allLists.lists['technicians'] && missingValues.technicians.size > 0) {
@@ -312,7 +313,7 @@ export const useImportInterventions = (
         isRequired: false,
         isSystem: false,
       });
-      console.log('✅ Liste "technicians" créée');
+      logger.debug('✅ Liste "technicians" créée');
     }
 
     // Créer les types manquants
@@ -393,7 +394,7 @@ export const useImportInterventions = (
     // Recharger les listes
     await reload();
 
-    console.log('Valeurs créées:', createdCount);
+    logger.debug('Valeurs créées:', createdCount);
   };
 
   return {

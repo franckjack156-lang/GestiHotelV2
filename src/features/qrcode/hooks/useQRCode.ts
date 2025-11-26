@@ -9,6 +9,7 @@
 import { useState, useCallback } from 'react';
 import { generateRoomQRCode, downloadQRCode, type RoomQRCodeData } from '../services/qrcodeService';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 interface UseQRCodeOptions {
   size?: number;
@@ -30,7 +31,7 @@ export const useQRCode = (options?: UseQRCodeOptions) => {
         setQrCodeUrl(dataUrl);
         return dataUrl;
       } catch (error: any) {
-        console.error('Error generating QR code:', error);
+        logger.error('Error generating QR code:', error);
         toast.error('Erreur de génération', {
           description: error.message || 'Impossible de générer le QR code',
         });
@@ -56,7 +57,7 @@ export const useQRCode = (options?: UseQRCodeOptions) => {
         downloadQRCode(qrCodeUrl, fileName || 'qr-code');
         toast.success('QR code téléchargé avec succès');
       } catch (error: any) {
-        console.error('Error downloading QR code:', error);
+        logger.error('Error downloading QR code:', error);
         toast.error('Erreur de téléchargement', {
           description: error.message,
         });

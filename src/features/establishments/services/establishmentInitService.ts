@@ -53,9 +53,9 @@ export const initializeEstablishmentLists = async (
       lastModified: serverTimestamp(),
     });
 
-    console.log(`✅ Listes de référence initialisées pour l'établissement ${establishmentId}`);
+    logger.debug(`✅ Listes de référence initialisées pour l'établissement ${establishmentId}`);
   } catch (error) {
-    console.error("❌ Erreur lors de l'initialisation des listes:", error);
+    logger.error("❌ Erreur lors de l'initialisation des listes:", error);
     throw new Error("Impossible d'initialiser les listes de référence");
   }
 };
@@ -82,9 +82,9 @@ export const initializeEstablishment = async (
     // - Créer des catégories par défaut
     // etc.
 
-    console.log(`✅ Établissement ${establishmentId} initialisé avec succès`);
+    logger.debug(`✅ Établissement ${establishmentId} initialisé avec succès`);
   } catch (error) {
-    console.error("❌ Erreur lors de l'initialisation de l'établissement:", error);
+    logger.error("❌ Erreur lors de l'initialisation de l'établissement:", error);
     throw error;
   }
 };
@@ -101,7 +101,7 @@ export const isEstablishmentInitialized = async (establishmentId: string): Promi
     const docSnap = await getDoc(docRef);
     return docSnap.exists();
   } catch (error) {
-    console.error("Erreur lors de la vérification de l'initialisation:", error);
+    logger.error("Erreur lors de la vérification de l'initialisation:", error);
     return false;
   }
 };
@@ -122,21 +122,22 @@ export const resetEstablishmentLists = async (
   try {
     if (keepCustomItems) {
       // TODO: Implémenter la logique pour conserver les items custom
-      console.warn('Conservation des items custom non implémentée');
+      logger.warn('Conservation des items custom non implémentée');
     }
 
     // Réinitialiser avec les listes par défaut
     await initializeEstablishmentLists(establishmentId, userId);
 
-    console.log(`✅ Listes réinitialisées pour l'établissement ${establishmentId}`);
+    logger.debug(`✅ Listes réinitialisées pour l'établissement ${establishmentId}`);
   } catch (error) {
-    console.error('❌ Erreur lors de la réinitialisation des listes:', error);
+    logger.error('❌ Erreur lors de la réinitialisation des listes:', error);
     throw error;
   }
 };
 
 // Importer getDoc qui manquait
 import { getDoc, updateDoc } from 'firebase/firestore';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Ajouter les listes manquantes à un établissement existant
@@ -195,7 +196,7 @@ export const addMissingLists = async (establishmentId: string, userId: string): 
       if (!currentData.lists[key]) {
         // Nettoyer la config pour Firestore
         missingLists[key] = cleanForFirestore(config);
-        console.log(`➕ Ajout de la liste manquante: ${key}`);
+        logger.debug(`➕ Ajout de la liste manquante: ${key}`);
       }
     }
 
@@ -211,14 +212,14 @@ export const addMissingLists = async (establishmentId: string, userId: string): 
         version: (currentData.version || 1) + 1,
       });
 
-      console.log(
+      logger.debug(
         `✅ ${Object.keys(missingLists).length} liste(s) ajoutée(s) pour l'établissement ${establishmentId}`
       );
     } else {
-      console.log(`✅ Aucune liste manquante pour l'établissement ${establishmentId}`);
+      logger.debug(`✅ Aucune liste manquante pour l'établissement ${establishmentId}`);
     }
   } catch (error) {
-    console.error("❌ Erreur lors de l'ajout des listes manquantes:", error);
+    logger.error("❌ Erreur lors de l'ajout des listes manquantes:", error);
     throw error;
   }
 };

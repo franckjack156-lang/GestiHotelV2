@@ -20,6 +20,7 @@ import { PriorityPlanningStep } from './steps/PriorityPlanningStep';
 import { AssignmentStep } from './steps/AssignmentStep';
 import { PhotosStep } from './steps/PhotosStep';
 import { SummaryStep } from './steps/SummaryStep';
+import { logger } from '@/core/utils/logger';
 
 interface InterventionWizardProps {
   onCancel?: () => void;
@@ -89,7 +90,7 @@ export const InterventionWizard = ({ onCancel, onSuccess }: InterventionWizardPr
         navigate(`/interventions/${interventionId}`);
       }
     } catch (error) {
-      console.error('Erreur lors de la création:', error);
+      logger.error('Erreur lors de la création:', error);
     } finally {
       setIsSubmitting(false);
     }

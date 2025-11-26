@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+import { logger } from '@/core/utils/logger';
   initializePresence,
   subscribeToEstablishmentPresence,
   getUserPresenceStatus,
@@ -34,7 +35,7 @@ export const usePresence = (establishmentId: string | undefined, userId: string 
         cleanup = await initializePresence(userId, establishmentId);
         setIsInitialized(true);
       } catch (error) {
-        console.error('Error initializing presence:', error);
+        logger.error('Error initializing presence:', error);
       }
     };
 

@@ -25,6 +25,7 @@ import type {
   PartStatus,
 } from '../types/subcollections.types';
 import { logPartAdded } from './historyService';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Obtenir la référence de la collection parts
@@ -54,7 +55,7 @@ export const createPart = async (
   try {
     const collectionRef = getPartsCollection(establishmentId, interventionId);
 
-    console.log('📦 createPart - Received data:', data);
+    logger.debug('📦 createPart - Received data:', data);
 
     const partData = {
       interventionId,
@@ -71,7 +72,7 @@ export const createPart = async (
       updatedAt: serverTimestamp(),
     };
 
-    console.log('📦 createPart - Prepared partData:', partData);
+    logger.debug('📦 createPart - Prepared partData:', partData);
 
     const docRef = await addDoc(collectionRef, partData);
 
@@ -79,12 +80,12 @@ export const createPart = async (
     try {
       await logPartAdded(establishmentId, interventionId, userId, userName, userRole, data.name);
     } catch (error) {
-      console.warn('⚠️ Erreur logging historique pièce:', error);
+      logger.warn('⚠️ Erreur logging historique pièce:', error);
     }
 
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur création pièce:', error);
+    logger.error('❌ Erreur création pièce:', error);
     throw new Error('Impossible de créer la pièce');
   }
 };
@@ -136,7 +137,7 @@ export const updatePart = async (
 
     await updateDoc(docRef, updateData);
   } catch (error) {
-    console.error('❌ Erreur mise à jour pièce:', error);
+    logger.error('❌ Erreur mise à jour pièce:', error);
     throw new Error('Impossible de mettre à jour la pièce');
   }
 };
@@ -162,7 +163,7 @@ export const deletePart = async (
 
     await deleteDoc(docRef);
   } catch (error) {
-    console.error('❌ Erreur suppression pièce:', error);
+    logger.error('❌ Erreur suppression pièce:', error);
     throw new Error('Impossible de supprimer la pièce');
   }
 };
@@ -192,14 +193,14 @@ export const subscribeToParts = (
         onSuccess(parts);
       },
       error => {
-        console.error('❌ Erreur subscription pièces:', error);
+        logger.error('❌ Erreur subscription pièces:', error);
         onError(error as Error);
       }
     );
 
     return unsubscribe;
   } catch (error) {
-    console.error('❌ Erreur création subscription:', error);
+    logger.error('❌ Erreur création subscription:', error);
     onError(error as Error);
     return () => {};
   }
@@ -217,7 +218,7 @@ export const changePartStatus = async (
   try {
     await updatePart(establishmentId, interventionId, partId, { status: newStatus });
   } catch (error) {
-    console.error('❌ Erreur changement statut:', error);
+    logger.error('❌ Erreur changement statut:', error);
     throw new Error('Impossible de changer le statut');
   }
 };

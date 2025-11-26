@@ -10,6 +10,7 @@
  */
 
 import { trackPerformanceMetric } from '@/core/config/analytics';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Type pour les Web Vitals
@@ -29,7 +30,7 @@ export interface WebVitalMetric {
  */
 export const initWebVitals = async () => {
   if (import.meta.env.DEV) {
-    console.log('🔧 Web Vitals tracking disabled in development mode');
+    logger.debug('🔧 Web Vitals tracking disabled in development mode');
     return;
   }
 
@@ -44,7 +45,7 @@ export const initWebVitals = async () => {
 
       // Log en développement
       if (import.meta.env.DEV) {
-        console.log(`📊 ${metric.name}:`, {
+        logger.debug(`📊 ${metric.name}:`, {
           value: metric.value,
           rating: metric.rating,
         });
@@ -58,9 +59,9 @@ export const initWebVitals = async () => {
     onTTFB(sendToAnalytics);
     onINP(sendToAnalytics);
 
-    console.log('✅ Web Vitals monitoring initialized');
+    logger.debug('✅ Web Vitals monitoring initialized');
   } catch (error) {
-    console.warn('⚠️ Web Vitals library not available:', error);
+    logger.warn('⚠️ Web Vitals library not available:', error);
   }
 };
 
@@ -94,12 +95,12 @@ export const performanceMeasure = (
 
     // Log en développement
     if (import.meta.env.DEV) {
-      console.log(`⏱️ ${name}: ${measure.duration.toFixed(2)}ms`);
+      logger.debug(`⏱️ ${name}: ${measure.duration.toFixed(2)}ms`);
     }
 
     return measure.duration;
   } catch (error) {
-    console.warn(`Failed to measure ${name}:`, error);
+    logger.warn(`Failed to measure ${name}:`, error);
     return null;
   }
 };
@@ -116,7 +117,7 @@ export const measureComponentRender = (componentName: string) => {
 
     if (import.meta.env.DEV && duration > 16) {
       // Warn si > 16ms (1 frame à 60fps)
-      console.warn(`⚠️ Slow component render: ${componentName} took ${duration.toFixed(2)}ms`);
+      logger.warn(`⚠️ Slow component render: ${componentName} took ${duration.toFixed(2)}ms`);
     }
   };
 };
@@ -163,7 +164,7 @@ export const observeResourceLoading = () => {
         trackPerformanceMetric('slow_resource_load', resourceEntry.duration);
 
         if (import.meta.env.DEV) {
-          console.warn('🐌 Slow resource:', {
+          logger.warn('🐌 Slow resource:', {
             name: resourceEntry.name,
             duration: resourceEntry.duration,
             size: resourceEntry.transferSize,
@@ -192,7 +193,7 @@ export const observeLongTasks = () => {
         trackPerformanceMetric('long_task', longTaskEntry.duration);
 
         if (import.meta.env.DEV) {
-          console.warn('⚠️ Long task detected:', {
+          logger.warn('⚠️ Long task detected:', {
             duration: longTaskEntry.duration,
             startTime: longTaskEntry.startTime,
           });
@@ -203,7 +204,7 @@ export const observeLongTasks = () => {
     observer.observe({ entryTypes: ['longtask'] });
   } catch (error) {
     // PerformanceLongTaskTiming might not be supported
-    console.warn('Long task monitoring not supported');
+    logger.warn('Long task monitoring not supported');
   }
 };
 
@@ -255,7 +256,7 @@ export const initPerformanceMonitoring = () => {
       setTimeout(() => {
         const metrics = getNavigationMetrics();
         if (metrics) {
-          console.log('📊 Navigation Metrics:', metrics);
+          logger.debug('📊 Navigation Metrics:', metrics);
         }
       }, 0);
     });

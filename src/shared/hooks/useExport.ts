@@ -17,6 +17,7 @@ import {
 } from '@/shared/services/exportService';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 import type { User } from '@/features/users/types/user.types';
+import { logger } from '@/core/utils/logger';
 
 export type ExportFormat = 'csv' | 'excel' | 'pdf';
 export type ExportType = 'interventions' | 'users' | 'analytics';
@@ -44,7 +45,7 @@ export const useExport = () => {
 
         toast.success(`${interventions.length} intervention(s) exportée(s)`);
       } catch (error: any) {
-        console.error('Export error:', error);
+        logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
           description: error.message,
         });
@@ -75,7 +76,7 @@ export const useExport = () => {
 
         toast.success(`${users.length} utilisateur(s) exporté(s)`);
       } catch (error: any) {
-        console.error('Export error:', error);
+        logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
           description: error.message,
         });
@@ -96,7 +97,7 @@ export const useExport = () => {
         exportAnalyticsReport(interventions, users, stats);
         toast.success('Rapport exporté avec succès');
       } catch (error: any) {
-        console.error('Export error:', error);
+        logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
           description: error.message,
         });
@@ -119,7 +120,7 @@ export const useExport = () => {
       }
       toast.success('Template téléchargé');
     } catch (error: any) {
-      console.error('Download template error:', error);
+      logger.error('Download template error:', error);
       toast.error('Erreur lors du téléchargement');
     }
   }, []);

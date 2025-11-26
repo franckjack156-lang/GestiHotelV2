@@ -11,6 +11,7 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import type { ColorPalette } from '../types/theme.types';
 import { Palette, Download, Upload, RotateCcw } from 'lucide-react';
+import { logger } from '@/core/utils/logger';
 
 interface ThemeColorEditorProps {
   colors: ColorPalette;
@@ -70,7 +71,7 @@ export const ThemeColorEditor = ({
         const importedColors = JSON.parse(text) as ColorPalette;
         onColorsChange(importedColors);
       } catch (error) {
-        console.error('Erreur import palette:', error);
+        logger.error('Erreur import palette:', error);
       }
     };
     input.click();

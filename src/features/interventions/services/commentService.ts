@@ -28,6 +28,7 @@ import type {
 } from '../types/comment.types';
 import { logCommentAdded } from './historyService';
 import { notifyMention } from '@/shared/services/notificationService';
+import { logger } from '@/core/utils/logger';
 
 const COLLECTION_NAME = 'comments';
 
@@ -62,13 +63,13 @@ export const createComment = async (
     };
 
     const docRef = await addDoc(collection(db, COLLECTION_NAME), commentData);
-    console.log('✅ Commentaire créé:', docRef.id);
+    logger.debug('✅ Commentaire créé:', docRef.id);
 
     // Logger dans l'historique
     try {
       await logCommentAdded(establishmentId, interventionId, userId, userName, userRole);
     } catch (error) {
-      console.warn('⚠️ Erreur logging historique commentaire:', error);
+      logger.warn('⚠️ Erreur logging historique commentaire:', error);
     }
 
     // Envoyer des notifications aux personnes mentionnées
@@ -97,15 +98,15 @@ export const createComment = async (
           }
         }
 
-        console.log(`✅ ${data.mentions.length} notifications de mention envoyées`);
+        logger.debug(`✅ ${data.mentions.length} notifications de mention envoyées`);
       } catch (error) {
-        console.warn("⚠️ Impossible d'envoyer les notifications de mention:", error);
+        logger.warn("⚠️ Impossible d'envoyer les notifications de mention:", error);
       }
     }
 
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur création commentaire:', error);
+    logger.error('❌ Erreur création commentaire:', error);
     throw new Error('Impossible de créer le commentaire');
   }
 };
@@ -186,7 +187,7 @@ export const getComments = async (interventionId: string): Promise<Comment[]> =>
         }) as Comment
     );
   } catch (error) {
-    console.error('❌ Erreur chargement commentaires:', error);
+    logger.error('❌ Erreur chargement commentaires:', error);
     throw new Error('Impossible de charger les commentaires');
   }
 };
@@ -220,7 +221,7 @@ export const subscribeToComments = (
       callback(comments);
     },
     error => {
-      console.error('❌ Erreur snapshot commentaires:', error);
+      logger.error('❌ Erreur snapshot commentaires:', error);
     }
   );
 };
@@ -238,9 +239,9 @@ export const updateComment = async (commentId: string, data: UpdateCommentData):
       updatedAt: serverTimestamp(),
     });
 
-    console.log('✅ Commentaire mis à jour');
+    logger.debug('✅ Commentaire mis à jour');
   } catch (error) {
-    console.error('❌ Erreur mise à jour commentaire:', error);
+    logger.error('❌ Erreur mise à jour commentaire:', error);
     throw new Error('Impossible de mettre à jour le commentaire');
   }
 };
@@ -258,9 +259,9 @@ export const deleteComment = async (commentId: string, userId: string): Promise<
       updatedAt: serverTimestamp(),
     });
 
-    console.log('✅ Commentaire supprimé');
+    logger.debug('✅ Commentaire supprimé');
   } catch (error) {
-    console.error('❌ Erreur suppression commentaire:', error);
+    logger.error('❌ Erreur suppression commentaire:', error);
     throw new Error('Impossible de supprimer le commentaire');
   }
 };
@@ -279,7 +280,7 @@ export const getCommentsCount = async (interventionId: string): Promise<number> 
     const snapshot = await getDocs(q);
     return snapshot.size;
   } catch (error) {
-    console.error('❌ Erreur comptage commentaires:', error);
+    logger.error('❌ Erreur comptage commentaires:', error);
     return 0;
   }
 };

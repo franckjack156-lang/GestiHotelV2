@@ -22,6 +22,7 @@ import {
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { parseRoomQRCode, type RoomQRCodeData } from '../services/qrcodeService';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 interface QRCodeScannerProps {
   onScan: (data: RoomQRCodeData) => void;
@@ -82,7 +83,7 @@ export const QRCodeScanner = ({ onScan, trigger }: QRCodeScannerProps) => {
             }
 
             if (error && !(error instanceof NotFoundException)) {
-              console.error('QR scan error:', error);
+              logger.error('QR scan error:', error);
             }
           }
         );
@@ -93,7 +94,7 @@ export const QRCodeScanner = ({ onScan, trigger }: QRCodeScannerProps) => {
         videoRef.current.srcObject = stream;
       }
     } catch (err: any) {
-      console.error('Camera access error:', err);
+      logger.error('Camera access error:', err);
       setHasPermission(false);
 
       if (err.name === 'NotAllowedError') {

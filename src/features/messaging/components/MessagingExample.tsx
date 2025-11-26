@@ -9,6 +9,7 @@
 
 import React, { useState } from 'react';
 import { ConversationList, ChatWindow, NewConversationDialog } from './index';
+import { logger } from '@/core/utils/logger';
 import type {
   Conversation,
   Message,
@@ -293,7 +294,7 @@ export const MessagingExample: React.FC = () => {
   const handleSendMessage = async (data: SendMessageData) => {
     if (!selectedConversationId) return;
 
-    console.log('Sending message:', data);
+    logger.debug('Sending message:', data);
 
     // Simuler l'envoi
     const newMessage: Message = {
@@ -334,7 +335,7 @@ export const MessagingExample: React.FC = () => {
   };
 
   const handleCreateConversation = async (data: CreateConversationData) => {
-    console.log('Creating conversation:', data);
+    logger.debug('Creating conversation:', data);
 
     const newConversation: Conversation = {
       id: `conv-${Date.now()}`,
@@ -373,12 +374,12 @@ export const MessagingExample: React.FC = () => {
   };
 
   const handleReaction = (messageId: string, emoji: string) => {
-    console.log('Adding reaction:', messageId, emoji);
+    logger.debug('Adding reaction:', messageId, emoji);
     // Implémenter la logique de réaction
   };
 
   const handleLoadMore = () => {
-    console.log('Loading more messages...');
+    logger.debug('Loading more messages...');
     // Implémenter le chargement de plus de messages
   };
 
@@ -412,9 +413,9 @@ export const MessagingExample: React.FC = () => {
             hasMore={false}
             typingUsers={typingIndicators[selectedConversationId]}
             onReaction={handleReaction}
-            onPinConversation={() => console.log('Pin conversation')}
-            onArchiveConversation={() => console.log('Archive conversation')}
-            onShowInfo={() => console.log('Show info')}
+            onPinConversation={() => logger.debug('Pin conversation')}
+            onArchiveConversation={() => logger.debug('Archive conversation')}
+            onShowInfo={() => logger.debug('Show info')}
           />
         ) : (
           <div className="flex items-center justify-center h-full">

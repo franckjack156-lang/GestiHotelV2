@@ -18,6 +18,7 @@ import {
   toggleTemplateActive as toggleTemplateActiveService,
   incrementTemplateUsage as incrementTemplateUsageService,
 } from '../services/templateService';
+import { logger } from '@/core/utils/logger';
 import type {
   InterventionTemplate,
   CreateTemplateData,
@@ -44,7 +45,7 @@ export const useTemplates = (establishmentId: string | null) => {
         const data = await getTemplates(establishmentId, filters);
         setTemplates(data);
       } catch (err: any) {
-        console.error('Error loading templates:', err);
+        logger.error('Error loading templates:', err);
         setError(err.message);
         toast.error('Erreur de chargement', {
           description: 'Impossible de charger les modèles',
@@ -91,7 +92,7 @@ export const useTemplates = (establishmentId: string | null) => {
         await loadTemplates({ isActive: true });
         return id;
       } catch (err: any) {
-        console.error('Error creating template:', err);
+        logger.error('Error creating template:', err);
         toast.error('Erreur de création', { description: err.message });
         return null;
       }
@@ -115,7 +116,7 @@ export const useTemplates = (establishmentId: string | null) => {
         await loadTemplates({ isActive: true });
         return true;
       } catch (err: any) {
-        console.error('Error updating template:', err);
+        logger.error('Error updating template:', err);
         toast.error('Erreur de mise à jour', { description: err.message });
         return false;
       }
@@ -139,7 +140,7 @@ export const useTemplates = (establishmentId: string | null) => {
         await loadTemplates({ isActive: true });
         return true;
       } catch (err: any) {
-        console.error('Error deleting template:', err);
+        logger.error('Error deleting template:', err);
         toast.error('Erreur de suppression', { description: err.message });
         return false;
       }
@@ -163,7 +164,7 @@ export const useTemplates = (establishmentId: string | null) => {
         await loadTemplates({ isActive: true });
         return id;
       } catch (err: any) {
-        console.error('Error duplicating template:', err);
+        logger.error('Error duplicating template:', err);
         toast.error('Erreur de duplication', { description: err.message });
         return null;
       }
@@ -187,7 +188,7 @@ export const useTemplates = (establishmentId: string | null) => {
         await loadTemplates({ isActive: true });
         return true;
       } catch (err: any) {
-        console.error('Error toggling template:', err);
+        logger.error('Error toggling template:', err);
         toast.error('Erreur', { description: err.message });
         return false;
       }
@@ -208,7 +209,7 @@ export const useTemplates = (establishmentId: string | null) => {
         // Juste recharger silencieusement
         await loadTemplates({ isActive: true });
       } catch (err: any) {
-        console.error('Error incrementing template usage:', err);
+        logger.error('Error incrementing template usage:', err);
         // Erreur silencieuse, pas critique
       }
     },

@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui
 import { Plus, X } from 'lucide-react';
 import type { WidgetConfig, WidgetType, WidgetSize } from '../types/dashboard.types';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 interface WidgetConfigDialogProps {
   open: boolean;
@@ -56,7 +57,7 @@ export const WidgetConfigDialog = ({
       onClose();
     } catch (error) {
       toast.error('Erreur lors de la sauvegarde');
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsSaving(false);
     }

@@ -10,6 +10,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { logger } from '@/core/utils/logger';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -45,7 +46,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log l'erreur
-    console.error('Error Boundary caught an error:', error, errorInfo);
+    logger.error('Error Boundary caught an error:', error, errorInfo);
 
     // Mettre à jour l'état avec les infos d'erreur
     this.setState({

@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import type { DashboardTheme, UserThemePreferences, ThemeExportData } from '../types/theme.types';
 import { presetThemes, defaultTheme } from '../config/presetThemes';
+import { logger } from '@/core/utils/logger';
 
 class ThemeService {
   private themesCollection = 'dashboardThemes';
@@ -38,7 +39,7 @@ class ThemeService {
 
       return null;
     } catch (error) {
-      console.error('Erreur getUserThemePreferences:', error);
+      logger.error('Erreur getUserThemePreferences:', error);
       throw error;
     }
   }
@@ -59,7 +60,7 @@ class ThemeService {
       await setDoc(doc(db, this.preferencesCollection, userId), defaultPreferences);
       return defaultPreferences;
     } catch (error) {
-      console.error('Erreur createDefaultPreferences:', error);
+      logger.error('Erreur createDefaultPreferences:', error);
       throw error;
     }
   }
@@ -75,7 +76,7 @@ class ThemeService {
       const docRef = doc(db, this.preferencesCollection, userId);
       await updateDoc(docRef, updates as any);
     } catch (error) {
-      console.error('Erreur updateThemePreferences:', error);
+      logger.error('Erreur updateThemePreferences:', error);
       throw error;
     }
   }
@@ -99,7 +100,7 @@ class ThemeService {
       const customTheme = preferences.customThemes.find(t => t.id === themeId);
       return customTheme || null;
     } catch (error) {
-      console.error('Erreur getTheme:', error);
+      logger.error('Erreur getTheme:', error);
       return null;
     }
   }
@@ -119,7 +120,7 @@ class ThemeService {
       const theme = await this.getTheme(preferences.activeThemeId, userId);
       return theme || defaultTheme;
     } catch (error) {
-      console.error('Erreur getActiveTheme:', error);
+      logger.error('Erreur getActiveTheme:', error);
       return defaultTheme;
     }
   }
@@ -131,7 +132,7 @@ class ThemeService {
     try {
       await this.updateThemePreferences(userId, { activeThemeId: themeId });
     } catch (error) {
-      console.error('Erreur setActiveTheme:', error);
+      logger.error('Erreur setActiveTheme:', error);
       throw error;
     }
   }
@@ -163,7 +164,7 @@ class ThemeService {
 
       return newTheme;
     } catch (error) {
-      console.error('Erreur createCustomTheme:', error);
+      logger.error('Erreur createCustomTheme:', error);
       throw error;
     }
   }
@@ -189,7 +190,7 @@ class ThemeService {
 
       await this.updateThemePreferences(userId, { customThemes });
     } catch (error) {
-      console.error('Erreur updateCustomTheme:', error);
+      logger.error('Erreur updateCustomTheme:', error);
       throw error;
     }
   }
@@ -212,7 +213,7 @@ class ThemeService {
 
       await this.updateThemePreferences(userId, updates);
     } catch (error) {
-      console.error('Erreur deleteCustomTheme:', error);
+      logger.error('Erreur deleteCustomTheme:', error);
       throw error;
     }
   }
@@ -236,7 +237,7 @@ class ThemeService {
 
       return duplicatedTheme;
     } catch (error) {
-      console.error('Erreur duplicateTheme:', error);
+      logger.error('Erreur duplicateTheme:', error);
       throw error;
     }
   }
@@ -274,7 +275,7 @@ class ThemeService {
 
       return importedTheme;
     } catch (error) {
-      console.error('Erreur importTheme:', error);
+      logger.error('Erreur importTheme:', error);
       throw error;
     }
   }
@@ -290,7 +291,7 @@ class ThemeService {
 
       return [...presetThemesList, ...customThemes];
     } catch (error) {
-      console.error('Erreur getAllThemes:', error);
+      logger.error('Erreur getAllThemes:', error);
       return Object.values(presetThemes);
     }
   }

@@ -7,6 +7,7 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUserPreferences } from './useUserPreferences';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Couleurs de thème disponibles
@@ -112,7 +113,7 @@ export const useApplyPreferences = () => {
         } else {
           root.classList.remove('dark');
         }
-        console.log('🔄 System theme changed:', isDark ? 'dark' : 'light');
+        logger.debug('🔄 System theme changed:', isDark ? 'dark' : 'light');
       };
       mediaQuery.addEventListener('change', handleChange);
 

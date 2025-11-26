@@ -13,6 +13,7 @@ import type { DashboardPreferences, WidgetConfig } from '../types/dashboard.type
 import { WidgetConfigDialog } from './WidgetConfigDialog';
 import { DashboardGrid } from './DashboardGrid';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 interface DashboardEditModeProps {
   preferences: DashboardPreferences;
@@ -120,7 +121,7 @@ export const DashboardEditMode = ({
       toast.success('Ordre des widgets sauvegardé');
     } catch (error) {
       toast.error('Erreur lors de la sauvegarde');
-      console.error(error);
+      logger.error(error);
       // Recharger depuis les préférences originales
       setWidgets(preferences.widgets);
     } finally {
@@ -137,7 +138,7 @@ export const DashboardEditMode = ({
       onExit();
     } catch (error) {
       toast.error('Erreur lors de la sauvegarde');
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsSaving(false);
     }
@@ -171,7 +172,7 @@ export const DashboardEditMode = ({
     } catch (error) {
       toast.error('Erreur lors de l\'ajout du widget');
       setWidgets(widgets); // Rollback
-      console.error(error);
+      logger.error(error);
     }
   };
 

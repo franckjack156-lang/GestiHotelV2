@@ -19,6 +19,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/core/config/firebase';
 import type { AuthCredentials, PasswordResetData, ChangePasswordData } from '@/shared/types';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Connexion avec email/mot de passe
@@ -32,7 +33,7 @@ export const loginWithEmail = async (credentials: AuthCredentials): Promise<Fire
     );
     return userCredential.user;
   } catch (error: any) {
-    console.error('Erreur lors de la connexion avec email:', error);
+    logger.error('Erreur lors de la connexion avec email:', error);
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -46,7 +47,7 @@ export const loginWithGoogle = async (): Promise<FirebaseUser> => {
     const userCredential = await signInWithPopup(auth, provider);
     return userCredential.user;
   } catch (error: any) {
-    console.error('Erreur lors de la connexion avec Google:', error);
+    logger.error('Erreur lors de la connexion avec Google:', error);
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -71,7 +72,7 @@ export const registerWithEmail = async (
 
     return user;
   } catch (error: any) {
-    console.error("Erreur lors de l'inscription:", error);
+    logger.error("Erreur lors de l'inscription:", error);
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -83,7 +84,7 @@ export const logout = async (): Promise<void> => {
   try {
     await signOut(auth);
   } catch (error: any) {
-    console.error('Erreur lors de la déconnexion:', error);
+    logger.error('Erreur lors de la déconnexion:', error);
     throw new Error(error.message || 'Erreur lors de la déconnexion');
   }
 };
@@ -95,7 +96,7 @@ export const resetPassword = async (data: PasswordResetData): Promise<void> => {
   try {
     await sendPasswordResetEmail(auth, data.email);
   } catch (error: any) {
-    console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+    logger.error('Erreur lors de la réinitialisation du mot de passe:', error);
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -114,7 +115,7 @@ export const changePassword = async (data: ChangePasswordData): Promise<void> =>
     // Puis changer le mot de passe
     await updatePassword(user, data.newPassword);
   } catch (error: any) {
-    console.error('Erreur lors du changement de mot de passe:', error);
+    logger.error('Erreur lors du changement de mot de passe:', error);
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -130,7 +131,7 @@ export const changeEmail = async (newEmail: string): Promise<void> => {
     await updateEmail(user, newEmail);
     await sendEmailVerification(user);
   } catch (error: any) {
-    console.error("Erreur lors du changement d'email:", error);
+    logger.error("Erreur lors du changement d'email:", error);
     throw new Error(getAuthErrorMessage(error.code));
   }
 };
@@ -145,7 +146,7 @@ export const resendVerificationEmail = async (): Promise<void> => {
 
     await sendEmailVerification(user);
   } catch (error: any) {
-    console.error("Erreur lors de l'envoi de l'email de vérification:", error);
+    logger.error("Erreur lors de l'envoi de l'email de vérification:", error);
     throw new Error(getAuthErrorMessage(error.code) || "Erreur lors de l'envoi de l'email");
   }
 };
@@ -163,7 +164,7 @@ export const updateUserProfile = async (data: {
 
     await updateProfile(user, data);
   } catch (error: any) {
-    console.error('Erreur lors de la mise à jour du profil:', error);
+    logger.error('Erreur lors de la mise à jour du profil:', error);
     throw new Error(error.message || 'Erreur lors de la mise à jour du profil');
   }
 };
@@ -192,7 +193,7 @@ export const getIdToken = async (forceRefresh = false): Promise<string | null> =
   try {
     return await user.getIdToken(forceRefresh);
   } catch (error) {
-    console.error('Erreur lors de la récupération du token:', error);
+    logger.error('Erreur lors de la récupération du token:', error);
     return null;
   }
 };

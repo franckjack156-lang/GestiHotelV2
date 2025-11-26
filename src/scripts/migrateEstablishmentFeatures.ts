@@ -14,6 +14,7 @@
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import {
+import { logger } from '@/core/utils/logger';
   DEFAULT_ESTABLISHMENT_FEATURES,
   FEATURES_CATALOG,
   type EstablishmentFeatures,
@@ -77,7 +78,7 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
     details: [],
   };
 
-  console.log('🚀 Début de la migration des fonctionnalités...\n');
+  logger.debug('🚀 Début de la migration des fonctionnalités...\n');
 
   try {
     // Récupérer tous les établissements
@@ -85,7 +86,7 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
     const snapshot = await getDocs(establishmentsRef);
 
     result.total = snapshot.size;
-    console.log(`📊 ${result.total} établissement(s) trouvé(s)\n`);
+    logger.debug(`📊 ${result.total} établissement(s) trouvé(s)\n`);
 
     // Traiter chaque établissement
     for (const docSnapshot of snapshot.docs) {
@@ -93,14 +94,14 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
       const establishmentId = docSnapshot.id;
       const establishmentName = data.name || 'Sans nom';
 
-      console.log(`\n🏨 Traitement: ${establishmentName} (${establishmentId})`);
+      logger.debug(`\n🏨 Traitement: ${establishmentName} (${establishmentId})`);
 
       try {
         const currentFeatures = data.features as EstablishmentFeatures | undefined;
 
         // Vérifier si une mise à jour est nécessaire
         if (!needsUpdate(currentFeatures)) {
-          console.log('   ✓ Déjà à jour, aucune modification nécessaire');
+          logger.debug('   ✓ Déjà à jour, aucune modification nécessaire');
           result.skipped++;
           result.details.push({
             id: establishmentId,
@@ -121,8 +122,8 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
           updatedAt: new Date(),
         });
 
-        console.log('   ✅ Mise à jour réussie');
-        console.log(`   📝 ${Object.keys(updatedFeatures).length} fonctionnalités configurées`);
+        logger.debug('   ✅ Mise à jour réussie');
+        logger.debug(`   📝 ${Object.keys(updatedFeatures).length} fonctionnalités configurées`);
 
         result.updated++;
         result.details.push({
@@ -132,7 +133,7 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
           message: 'Features mises à jour avec succès',
         });
       } catch (error: any) {
-        console.error(`   ❌ Erreur: ${error.message}`);
+        logger.error(`   ❌ Erreur: ${error.message}`);
         result.errors++;
         result.details.push({
           id: establishmentId,
@@ -144,28 +145,28 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
     }
 
     // Résumé
-    console.log('\n' + '='.repeat(60));
-    console.log('📋 RÉSUMÉ DE LA MIGRATION');
-    console.log('='.repeat(60));
-    console.log(`✅ Total traité:        ${result.total}`);
-    console.log(`✅ Mis à jour:          ${result.updated}`);
-    console.log(`⏭️  Déjà à jour:         ${result.skipped}`);
-    console.log(`❌ Erreurs:             ${result.errors}`);
-    console.log('='.repeat(60) + '\n');
+    logger.debug('\n' + '='.repeat(60));
+    logger.debug('📋 RÉSUMÉ DE LA MIGRATION');
+    logger.debug('='.repeat(60));
+    logger.debug(`✅ Total traité:        ${result.total}`);
+    logger.debug(`✅ Mis à jour:          ${result.updated}`);
+    logger.debug(`⏭️  Déjà à jour:         ${result.skipped}`);
+    logger.debug(`❌ Erreurs:             ${result.errors}`);
+    logger.debug('='.repeat(60) + '\n');
 
     if (result.errors > 0) {
-      console.log('⚠️  Détails des erreurs:');
+      logger.debug('⚠️  Détails des erreurs:');
       result.details
         .filter(d => d.status === 'error')
         .forEach(detail => {
-          console.log(`   • ${detail.name}: ${detail.message}`);
+          logger.debug(`   • ${detail.name}: ${detail.message}`);
         });
-      console.log('');
+      logger.debug('');
     }
 
     return result;
   } catch (error: any) {
-    console.error('❌ Erreur fatale lors de la migration:', error);
+    logger.error('❌ Erreur fatale lors de la migration:', error);
     throw error;
   }
 }
@@ -175,24 +176,24 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
  * Ne modifie pas les données, affiche seulement ce qui serait fait
  */
 export async function previewMigration(): Promise<void> {
-  console.log('🔍 MODE PRÉVISUALISATION - Aucune modification ne sera effectuée\n');
+  logger.debug('🔍 MODE PRÉVISUALISATION - Aucune modification ne sera effectuée\n');
 
   try {
     const establishmentsRef = collection(db, 'establishments');
     const snapshot = await getDocs(establishmentsRef);
 
-    console.log(`📊 ${snapshot.size} établissement(s) trouvé(s)\n`);
+    logger.debug(`📊 ${snapshot.size} établissement(s) trouvé(s)\n`);
 
     for (const docSnapshot of snapshot.docs) {
       const data = docSnapshot.data();
       const establishmentName = data.name || 'Sans nom';
       const currentFeatures = data.features as EstablishmentFeatures | undefined;
 
-      console.log(`\n🏨 ${establishmentName} (${docSnapshot.id})`);
+      logger.debug(`\n🏨 ${establishmentName} (${docSnapshot.id})`);
 
       if (!currentFeatures) {
-        console.log('   ⚠️  Aucune feature configurée');
-        console.log('   → Toutes les features par défaut seraient ajoutées');
+        logger.debug('   ⚠️  Aucune feature configurée');
+        logger.debug('   → Toutes les features par défaut seraient ajoutées');
         continue;
       }
 
@@ -201,13 +202,13 @@ export async function previewMigration(): Promise<void> {
       const missingKeys = allFeatureKeys.filter(key => !existingKeys.includes(key));
 
       if (missingKeys.length === 0) {
-        console.log('   ✓ Toutes les features sont présentes');
+        logger.debug('   ✓ Toutes les features sont présentes');
       } else {
-        console.log(`   ⚠️  ${missingKeys.length} feature(s) manquante(s):`);
+        logger.debug(`   ⚠️  ${missingKeys.length} feature(s) manquante(s):`);
         missingKeys.forEach(key => {
           const feature = FEATURES_CATALOG.find(f => f.key === key);
           const defaultValue = DEFAULT_ESTABLISHMENT_FEATURES[key];
-          console.log(
+          logger.debug(
             `      • ${feature?.label || key}: ${defaultValue?.enabled ? '✅ activée' : '❌ désactivée'} par défaut`
           );
         });
@@ -218,20 +219,20 @@ export async function previewMigration(): Promise<void> {
       const disabledRequired = requiredFeatures.filter(f => !currentFeatures[f.key]?.enabled);
 
       if (disabledRequired.length > 0) {
-        console.log(
+        logger.debug(
           `   🔒 ${disabledRequired.length} feature(s) indispensable(s) seraient forcées à activée:`
         );
         disabledRequired.forEach(f => {
-          console.log(`      • ${f.label}`);
+          logger.debug(`      • ${f.label}`);
         });
       }
     }
 
-    console.log('\n' + '='.repeat(60));
-    console.log('ℹ️  Pour exécuter la migration réelle, utilisez: migrateEstablishmentFeatures()');
-    console.log('='.repeat(60) + '\n');
+    logger.debug('\n' + '='.repeat(60));
+    logger.debug('ℹ️  Pour exécuter la migration réelle, utilisez: migrateEstablishmentFeatures()');
+    logger.debug('='.repeat(60) + '\n');
   } catch (error: any) {
-    console.error('❌ Erreur lors de la prévisualisation:', error);
+    logger.error('❌ Erreur lors de la prévisualisation:', error);
     throw error;
   }
 }
@@ -241,7 +242,7 @@ if (typeof window !== 'undefined') {
   (window as any).migrateEstablishmentFeatures = migrateEstablishmentFeatures;
   (window as any).previewMigration = previewMigration;
 
-  console.log('✅ Scripts de migration chargés:');
-  console.log('   • previewMigration() - Prévisualiser les changements');
-  console.log('   • migrateEstablishmentFeatures() - Exécuter la migration');
+  logger.debug('✅ Scripts de migration chargés:');
+  logger.debug('   • previewMigration() - Prévisualiser les changements');
+  logger.debug('   • migrateEstablishmentFeatures() - Exécuter la migration');
 }

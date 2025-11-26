@@ -45,6 +45,7 @@ import { sendPartOrderEmail } from '@/shared/services/emailService';
 import { logOrderEmailSent } from '../../services/historyService';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '@/core/utils/logger';
 
 interface PartsTabProps {
   interventionId: string;
@@ -103,7 +104,7 @@ export const PartsTab = ({ interventionId, interventionNumber, roomNumber }: Par
   };
 
   const handleAdd = async () => {
-    console.log('handleAdd called with formData:', formData);
+    logger.debug('handleAdd called with formData:', formData);
 
     if (!formData.name || formData.name.trim() === '') {
       toast.error('Veuillez saisir le nom de la pièce');
@@ -171,7 +172,7 @@ export const PartsTab = ({ interventionId, interventionNumber, roomNumber }: Par
       toast.success('Email envoyé avec succès au responsable des achats');
       setShowEmailDialog(false);
     } catch (error: any) {
-      console.error('Erreur envoi email:', error);
+      logger.error('Erreur envoi email:', error);
       toast.error("Erreur lors de l'envoi de l'email", {
         description: error.message,
       });

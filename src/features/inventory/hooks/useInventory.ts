@@ -20,6 +20,7 @@ import {
   getLowStockItems,
   getOutOfStockItems,
 } from '../services/inventoryService';
+import { logger } from '@/core/utils/logger';
 import type {
   InventoryItem,
   StockMovement,
@@ -49,7 +50,7 @@ export const useInventory = (establishmentId: string | null) => {
         const data = await getInventoryItems(establishmentId, filters);
         setItems(data);
       } catch (err: any) {
-        console.error('Error loading inventory items:', err);
+        logger.error('Error loading inventory items:', err);
         setError(err.message);
         toast.error('Erreur de chargement', {
           description: 'Impossible de charger l\'inventaire',
@@ -96,7 +97,7 @@ export const useInventory = (establishmentId: string | null) => {
         await loadItems();
         return id;
       } catch (err: any) {
-        console.error('Error creating inventory item:', err);
+        logger.error('Error creating inventory item:', err);
         toast.error('Erreur de création', { description: err.message });
         return null;
       }
@@ -120,7 +121,7 @@ export const useInventory = (establishmentId: string | null) => {
         await loadItems();
         return true;
       } catch (err: any) {
-        console.error('Error updating inventory item:', err);
+        logger.error('Error updating inventory item:', err);
         toast.error('Erreur de mise à jour', { description: err.message });
         return false;
       }
@@ -144,7 +145,7 @@ export const useInventory = (establishmentId: string | null) => {
         await loadItems();
         return true;
       } catch (err: any) {
-        console.error('Error deleting inventory item:', err);
+        logger.error('Error deleting inventory item:', err);
         toast.error('Erreur de suppression', { description: err.message });
         return false;
       }
@@ -180,7 +181,7 @@ export const useInventory = (establishmentId: string | null) => {
         await loadItems();
         return true;
       } catch (err: any) {
-        console.error('Error creating stock movement:', err);
+        logger.error('Error creating stock movement:', err);
         toast.error('Erreur de mouvement', { description: err.message });
         return false;
       }
@@ -225,7 +226,7 @@ export const useInventoryItem = (establishmentId: string | null, itemId: string 
       setItem(itemData);
       setMovements(movementsData);
     } catch (err: any) {
-      console.error('Error loading inventory item:', err);
+      logger.error('Error loading inventory item:', err);
       setError(err.message);
       toast.error('Erreur de chargement', {
         description: 'Impossible de charger l\'article',
@@ -270,7 +271,7 @@ export const useStockAlerts = (establishmentId: string | null) => {
       setLowStock(low);
       setOutOfStock(out);
     } catch (err: any) {
-      console.error('Error loading stock alerts:', err);
+      logger.error('Error loading stock alerts:', err);
     } finally {
       setIsLoading(false);
     }

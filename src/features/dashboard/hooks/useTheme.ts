@@ -9,6 +9,7 @@ import { useAuthStore } from '@/features/auth/stores/authStore';
 import themeService from '../services/themeService';
 import type { DashboardTheme, UserThemePreferences } from '../types/theme.types';
 import { defaultTheme } from '../config/presetThemes';
+import { logger } from '@/core/utils/logger';
 
 export const useTheme = () => {
   const { user } = useAuthStore();
@@ -34,7 +35,7 @@ export const useTheme = () => {
       setActiveTheme(theme);
       themeService.applyTheme(theme);
     } catch (err) {
-      console.error('Erreur loadActiveTheme:', err);
+      logger.error('Erreur loadActiveTheme:', err);
       setError(err instanceof Error ? err.message : 'Erreur de chargement du thème');
       setActiveTheme(defaultTheme);
       themeService.applyTheme(defaultTheme);
@@ -53,7 +54,7 @@ export const useTheme = () => {
       const themes = await themeService.getAllThemes(userId);
       setAvailableThemes(themes);
     } catch (err) {
-      console.error('Erreur loadAvailableThemes:', err);
+      logger.error('Erreur loadAvailableThemes:', err);
     }
   }, [userId]);
 
@@ -70,7 +71,7 @@ export const useTheme = () => {
       }
       setPreferences(prefs);
     } catch (err) {
-      console.error('Erreur loadPreferences:', err);
+      logger.error('Erreur loadPreferences:', err);
     }
   }, [userId]);
 
@@ -89,7 +90,7 @@ export const useTheme = () => {
           themeService.applyTheme(theme);
         }
       } catch (err) {
-        console.error('Erreur changeTheme:', err);
+        logger.error('Erreur changeTheme:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors du changement de thème');
         throw err;
       }
@@ -110,7 +111,7 @@ export const useTheme = () => {
         await loadPreferences();
         return newTheme;
       } catch (err) {
-        console.error('Erreur createCustomTheme:', err);
+        logger.error('Erreur createCustomTheme:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors de la création du thème');
         throw err;
       }
@@ -134,7 +135,7 @@ export const useTheme = () => {
           await loadActiveTheme();
         }
       } catch (err) {
-        console.error('Erreur updateCustomTheme:', err);
+        logger.error('Erreur updateCustomTheme:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour du thème');
         throw err;
       }
@@ -159,7 +160,7 @@ export const useTheme = () => {
           await loadActiveTheme();
         }
       } catch (err) {
-        console.error('Erreur deleteCustomTheme:', err);
+        logger.error('Erreur deleteCustomTheme:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors de la suppression du thème');
         throw err;
       }
@@ -180,7 +181,7 @@ export const useTheme = () => {
         await loadPreferences();
         return duplicated;
       } catch (err) {
-        console.error('Erreur duplicateTheme:', err);
+        logger.error('Erreur duplicateTheme:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors de la duplication du thème');
         throw err;
       }
@@ -225,7 +226,7 @@ export const useTheme = () => {
         await loadPreferences();
         return imported;
       } catch (err) {
-        console.error('Erreur importTheme:', err);
+        logger.error('Erreur importTheme:', err);
         setError(err instanceof Error ? err.message : "Erreur lors de l'import du thème");
         throw err;
       }
@@ -244,7 +245,7 @@ export const useTheme = () => {
         await themeService.updateThemePreferences(userId, updates);
         await loadPreferences();
       } catch (err) {
-        console.error('Erreur updatePreferences:', err);
+        logger.error('Erreur updatePreferences:', err);
         setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour des préférences');
         throw err;
       }

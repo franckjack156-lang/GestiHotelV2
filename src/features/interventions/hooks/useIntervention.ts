@@ -9,6 +9,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import type { Intervention } from '../types/intervention.types';
+import { logger } from '@/core/utils/logger';
 
 /**
  * Hook pour charger une intervention spécifique
@@ -65,7 +66,7 @@ export const useIntervention = (interventionId: string) => {
         setIsLoading(false);
       },
       err => {
-        console.error('Error fetching intervention:', err);
+        logger.error('Error fetching intervention:', err);
         setError(err as Error);
         setIsLoading(false);
       }

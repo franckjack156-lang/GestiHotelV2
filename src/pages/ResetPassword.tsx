@@ -15,6 +15,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
+import { logger } from '@/core/utils/logger';
 
 const resetSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -39,7 +40,7 @@ export const ResetPasswordPage = () => {
       await resetPassword(data);
       setSuccess(true);
     } catch (error) {
-      console.error('Erreur reset password:', error);
+      logger.error('Erreur reset password:', error);
     }
   };
 

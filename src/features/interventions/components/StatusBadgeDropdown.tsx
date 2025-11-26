@@ -43,6 +43,7 @@ import {
   getTransitionConfirmation,
 } from '../constants/statusConfig';
 import { cn } from '@/shared/lib/utils';
+import { logger } from '@/core/utils/logger';
 
 interface StatusBadgeDropdownProps {
   currentStatus: StatusValue;
@@ -141,7 +142,7 @@ export const StatusBadgeDropdown = ({
       }
     } catch (error) {
       toast.error("Erreur lors de l'assignation");
-      console.error(error);
+      logger.error(error);
     }
   };
 
@@ -169,7 +170,7 @@ export const StatusBadgeDropdown = ({
       }
     } catch (error) {
       toast.error('Erreur lors du changement de statut');
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsChanging(false);
     }

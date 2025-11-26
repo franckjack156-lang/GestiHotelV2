@@ -22,6 +22,7 @@ import {
   deleteIntervention,
 } from '@/features/interventions/services/interventionService';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // SYNC MANAGER
@@ -84,7 +85,7 @@ export class OfflineSyncManager {
           await markSyncComplete(sync.id!);
           successCount++;
         } catch (error) {
-          console.error(`Sync failed for ${sync.collection}:${sync.documentId}`, error);
+          logger.error(`Sync failed for ${sync.collection}:${sync.documentId}`, error);
           await incrementSyncRetries(
             sync.id!,
             error instanceof Error ? error.message : 'Unknown error'
@@ -155,7 +156,7 @@ export class OfflineSyncManager {
    */
   private async syncRoom(sync: PendingSync): Promise<void> {
     // TODO: Implémenter la synchronisation des chambres
-    console.log('Sync room:', sync);
+    logger.debug('Sync room:', sync);
   }
 
   /**
@@ -196,20 +197,20 @@ export const registerBackgroundSync = async (tag: string) => {
       // Vérifier si la propriété sync existe (Background Sync API)
       if ('sync' in registration) {
         await (registration as any).sync.register(tag);
-        console.log(`Background sync registered: ${tag}`);
+        logger.debug(`Background sync registered: ${tag}`);
       } else {
         // Background Sync API not supported, fallback
-        console.warn('Background Sync API not supported');
+        logger.warn('Background Sync API not supported');
         await offlineSyncManager.syncAll();
       }
     } catch (error) {
-      console.error('Background sync registration failed:', error);
+      logger.error('Background sync registration failed:', error);
       // Fallback: synchroniser immédiatement
       await offlineSyncManager.syncAll();
     }
   } else {
     // Service Worker not supported
-    console.warn('Service Worker not supported');
+    logger.warn('Service Worker not supported');
     await offlineSyncManager.syncAll();
   }
 };

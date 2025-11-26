@@ -127,7 +127,7 @@ export const uploadPhoto = async (
       const thumbnailResult = await uploadBytes(thumbnailRef, thumbnail);
       thumbnailUrl = await getDownloadURL(thumbnailResult.ref);
     } catch (error) {
-      console.warn('⚠️ Impossible de créer le thumbnail:', error);
+      logger.warn('⚠️ Impossible de créer le thumbnail:', error);
     }
 
     // Métadonnées
@@ -169,12 +169,12 @@ export const uploadPhoto = async (
     try {
       await logPhotoAdded(establishmentId, interventionId, userId, userName, userRole, category);
     } catch (error) {
-      console.warn('⚠️ Erreur logging historique photo:', error);
+      logger.warn('⚠️ Erreur logging historique photo:', error);
     }
 
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur upload photo:', error);
+    logger.error('❌ Erreur upload photo:', error);
     throw error;
   }
 };
@@ -200,7 +200,7 @@ export const deletePhoto = async (
         await deleteObject(thumbnailRef);
       }
     } catch (error) {
-      console.warn('⚠️ Erreur suppression fichier Storage:', error);
+      logger.warn('⚠️ Erreur suppression fichier Storage:', error);
     }
 
     // Supprimer de Firestore
@@ -228,7 +228,7 @@ export const deletePhoto = async (
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('❌ Erreur suppression photo:', error);
+    logger.error('❌ Erreur suppression photo:', error);
     throw new Error('Impossible de supprimer la photo');
   }
 };
@@ -273,14 +273,14 @@ export const subscribeToPhotos = (
         onSuccess(photos);
       },
       error => {
-        console.error('❌ Erreur subscription photos:', error);
+        logger.error('❌ Erreur subscription photos:', error);
         onError(error as Error);
       }
     );
 
     return unsubscribe;
   } catch (error) {
-    console.error('❌ Erreur création subscription:', error);
+    logger.error('❌ Erreur création subscription:', error);
     onError(error as Error);
     return () => {};
   }
@@ -310,13 +310,14 @@ export const updatePhotoCaption = async (
       caption,
     });
   } catch (error) {
-    console.error('❌ Erreur mise à jour légende:', error);
+    logger.error('❌ Erreur mise à jour légende:', error);
     throw new Error('Impossible de mettre à jour la légende');
   }
 };
 
 // Import manquant
 import { getDoc } from 'firebase/firestore';
+import { logger } from '@/core/utils/logger';
 
 export default {
   uploadPhoto,

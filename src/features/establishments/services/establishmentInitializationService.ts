@@ -19,6 +19,7 @@ import type {
   ReferenceItem,
 } from '@/shared/types/reference-lists.types';
 import type { EstablishmentSettings } from '@/shared/types/establishment.types';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -576,7 +577,7 @@ export const initializeNewEstablishment = async (
   };
 
   try {
-    console.log('🚀 Initialisation établissement:', options.establishmentId);
+    logger.debug('🚀 Initialisation établissement:', options.establishmentId);
 
     // 1. Créer les listes de référence
     await initializeReferenceLists(options, result);
@@ -589,10 +590,10 @@ export const initializeNewEstablishment = async (
 
     result.success = result.errors.length === 0;
 
-    console.log('✅ Initialisation terminée:', result);
+    logger.debug('✅ Initialisation terminée:', result);
     return result;
   } catch (error) {
-    console.error('❌ Erreur initialisation:', error);
+    logger.error('❌ Erreur initialisation:', error);
     result.errors.push((error as Error).message);
     return result;
   }
@@ -630,9 +631,9 @@ const initializeReferenceLists = async (
     });
 
     result.listsCreated = Object.keys(lists);
-    console.log(`✅ ${result.listsCreated.length} listes créées`);
+    logger.debug(`✅ ${result.listsCreated.length} listes créées`);
   } catch (error) {
-    console.error('❌ Erreur création listes:', error);
+    logger.error('❌ Erreur création listes:', error);
     result.errors.push('Échec création listes: ' + (error as Error).message);
   }
 };
@@ -684,9 +685,9 @@ const applyRegionalSettings = async (
       'interventionNumbering',
     ];
 
-    console.log('✅ Paramètres appliqués:', settingsUpdate);
+    logger.debug('✅ Paramètres appliqués:', settingsUpdate);
   } catch (error) {
-    console.error('❌ Erreur paramètres:', error);
+    logger.error('❌ Erreur paramètres:', error);
     result.errors.push('Échec paramètres: ' + (error as Error).message);
   }
 };
@@ -707,9 +708,9 @@ const addOwnerToEstablishment = async (
     });
 
     result.settingsApplied.push('ownerAdded');
-    console.log("✅ Propriétaire ajouté à l'établissement");
+    logger.debug("✅ Propriétaire ajouté à l'établissement");
   } catch (error) {
-    console.error('❌ Erreur ajout propriétaire:', error);
+    logger.error('❌ Erreur ajout propriétaire:', error);
     result.errors.push('Échec ajout propriétaire: ' + (error as Error).message);
   }
 };

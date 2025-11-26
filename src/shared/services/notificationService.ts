@@ -25,6 +25,7 @@ import {
   getDocs,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -115,10 +116,10 @@ export const createNotification = async (data: CreateNotificationData): Promise<
     };
 
     const docRef = await addDoc(getNotificationsCollection(), notificationData);
-    console.log('✅ Notification créée:', docRef.id);
+    logger.debug('✅ Notification créée:', docRef.id);
     return docRef.id;
   } catch (error) {
-    console.error('❌ Erreur création notification:', error);
+    logger.error('❌ Erreur création notification:', error);
     throw new Error('Impossible de créer la notification');
   }
 };
@@ -147,10 +148,10 @@ export const createNotifications = async (
     });
 
     await batch.commit();
-    console.log(`✅ ${ids.length} notifications créées`);
+    logger.debug(`✅ ${ids.length} notifications créées`);
     return ids;
   } catch (error) {
-    console.error('❌ Erreur création notifications:', error);
+    logger.error('❌ Erreur création notifications:', error);
     throw new Error('Impossible de créer les notifications');
   }
 };
@@ -308,7 +309,7 @@ export const getUserNotifications = async (
       ...doc.data(),
     })) as Notification[];
   } catch (error) {
-    console.error('❌ Erreur récupération notifications:', error);
+    logger.error('❌ Erreur récupération notifications:', error);
     throw new Error('Impossible de récupérer les notifications');
   }
 };
@@ -338,7 +339,7 @@ export const subscribeToNotifications = (
       callback(notifications);
     },
     error => {
-      console.error('❌ Erreur subscription notifications:', error);
+      logger.error('❌ Erreur subscription notifications:', error);
     }
   );
 };
@@ -357,7 +358,7 @@ export const getUnreadCount = async (userId: string): Promise<number> => {
     const snapshot = await getDocs(q);
     return snapshot.size;
   } catch (error) {
-    console.error('❌ Erreur comptage non lues:', error);
+    logger.error('❌ Erreur comptage non lues:', error);
     return 0;
   }
 };
@@ -376,9 +377,9 @@ export const markAsRead = async (notificationId: string): Promise<void> => {
       isRead: true,
       readAt: Timestamp.now(),
     });
-    console.log('✅ Notification marquée comme lue');
+    logger.debug('✅ Notification marquée comme lue');
   } catch (error) {
-    console.error('❌ Erreur marquage notification:', error);
+    logger.error('❌ Erreur marquage notification:', error);
     throw new Error('Impossible de marquer la notification comme lue');
   }
 };
@@ -405,9 +406,9 @@ export const markAllAsRead = async (userId: string): Promise<void> => {
     });
 
     await batch.commit();
-    console.log(`✅ ${snapshot.size} notifications marquées comme lues`);
+    logger.debug(`✅ ${snapshot.size} notifications marquées comme lues`);
   } catch (error) {
-    console.error('❌ Erreur marquage toutes notifications:', error);
+    logger.error('❌ Erreur marquage toutes notifications:', error);
     throw new Error('Impossible de marquer toutes les notifications comme lues');
   }
 };

@@ -19,6 +19,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // TYPES
@@ -73,7 +74,7 @@ export const initializePresence = async (
         lastSeen: serverTimestamp(),
       });
     } catch (error) {
-      console.error('Error updating presence heartbeat:', error);
+      logger.error('Error updating presence heartbeat:', error);
       clearInterval(heartbeatInterval);
     }
   }, 30000);
@@ -136,7 +137,7 @@ export const subscribeToUserPresence = (
       }
     },
     error => {
-      console.error('Error subscribing to user presence:', error);
+      logger.error('Error subscribing to user presence:', error);
       callback(null);
     }
   );
@@ -187,7 +188,7 @@ export const subscribeToEstablishmentPresence = (
       callback(presences);
     },
     error => {
-      console.error('Error subscribing to establishment presence:', error);
+      logger.error('Error subscribing to establishment presence:', error);
       callback(new Map());
     }
   );

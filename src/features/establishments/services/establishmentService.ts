@@ -33,6 +33,7 @@ import {
 } from '@/shared/types/establishment.types';
 
 import { initializeNewEstablishment } from './establishmentInitializationService';
+import { logger } from '@/core/utils/logger';
 
 const ESTABLISHMENTS_COLLECTION = 'establishments';
 
@@ -52,7 +53,7 @@ export const getEstablishment = async (establishmentId: string): Promise<Establi
       ...establishmentDoc.data(),
     } as Establishment;
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'établissement:", error);
+    logger.error("Erreur lors de la récupération de l'établissement:", error);
     throw new Error("Impossible de récupérer l'établissement");
   }
 };
@@ -117,7 +118,7 @@ export const getEstablishments = async (
 
     return establishments;
   } catch (error) {
-    console.error('Erreur lors de la récupération des établissements:', error);
+    logger.error('Erreur lors de la récupération des établissements:', error);
     throw new Error('Impossible de récupérer les établissements');
   }
 };
@@ -164,7 +165,7 @@ export const getUserEstablishments = async (
 
     return establishments;
   } catch (error) {
-    console.error("Erreur lors de la récupération des établissements de l'utilisateur:", error);
+    logger.error("Erreur lors de la récupération des établissements de l'utilisateur:", error);
     throw new Error("Impossible de récupérer les établissements de l'utilisateur");
   }
 };
@@ -233,7 +234,7 @@ export const createEstablishment = async (
     const establishmentId = docRef.id;
 
     // 🆕 INITIALISATION AUTOMATIQUE
-    console.log("🚀 Initialisation automatique de l'établissement...");
+    logger.debug("🚀 Initialisation automatique de l'établissement...");
 
     try {
       const initResult = await initializeNewEstablishment({
@@ -252,22 +253,22 @@ export const createEstablishment = async (
       });
 
       if (initResult.success) {
-        console.log('✅ Établissement initialisé avec succès:', {
+        logger.debug('✅ Établissement initialisé avec succès:', {
           listsCreated: initResult.listsCreated.length,
           settingsApplied: initResult.settingsApplied.length,
         });
       } else {
-        console.warn('⚠️ Initialisation partielle:', initResult.errors);
+        logger.warn('⚠️ Initialisation partielle:', initResult.errors);
       }
     } catch (initError) {
       // Ne pas bloquer la création si l'initialisation échoue
-      console.error("❌ Erreur lors de l'initialisation:", initError);
-      console.warn("⚠️ L'établissement a été créé mais l'initialisation a échoué");
+      logger.error("❌ Erreur lors de l'initialisation:", initError);
+      logger.warn("⚠️ L'établissement a été créé mais l'initialisation a échoué");
     }
 
     return establishmentId;
   } catch (error) {
-    console.error("Erreur lors de la création de l'établissement:", error);
+    logger.error("Erreur lors de la création de l'établissement:", error);
     throw new Error("Impossible de créer l'établissement");
   }
 };
@@ -287,7 +288,7 @@ export const updateEstablishment = async (
 
     await updateDoc(doc(db, ESTABLISHMENTS_COLLECTION, establishmentId), updateData);
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'établissement:", error);
+    logger.error("Erreur lors de la mise à jour de l'établissement:", error);
     throw new Error("Impossible de mettre à jour l'établissement");
   }
 };
@@ -302,7 +303,7 @@ export const deleteEstablishment = async (establishmentId: string): Promise<void
       deletedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error("Erreur lors de la suppression de l'établissement:", error);
+    logger.error("Erreur lors de la suppression de l'établissement:", error);
     throw new Error("Impossible de supprimer l'établissement");
   }
 };
@@ -318,7 +319,7 @@ export const reactivateEstablishment = async (establishmentId: string): Promise<
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error("Erreur lors de la réactivation de l'établissement:", error);
+    logger.error("Erreur lors de la réactivation de l'établissement:", error);
     throw new Error("Impossible de réactiver l'établissement");
   }
 };
@@ -345,7 +346,7 @@ export const getEstablishmentsSummary = async (
       city: est.address.city || '',
     }));
   } catch (error) {
-    console.error('Erreur lors de la récupération du résumé des établissements:', error);
+    logger.error('Erreur lors de la récupération du résumé des établissements:', error);
     throw new Error('Impossible de récupérer le résumé des établissements');
   }
 };
@@ -366,7 +367,7 @@ export const updateEstablishmentStats = async (
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('Erreur lors de la mise à jour des statistiques:', error);
+    logger.error('Erreur lors de la mise à jour des statistiques:', error);
     throw new Error('Impossible de mettre à jour les statistiques');
   }
 };
@@ -394,7 +395,7 @@ export const addManagerToEstablishment = async (
       });
     }
   } catch (error) {
-    console.error("Erreur lors de l'ajout du manager:", error);
+    logger.error("Erreur lors de l'ajout du manager:", error);
     throw new Error("Impossible d'ajouter le manager");
   }
 };
@@ -419,7 +420,7 @@ export const removeManagerFromEstablishment = async (
       updatedAt: serverTimestamp(),
     });
   } catch (error) {
-    console.error('Erreur lors du retrait du manager:', error);
+    logger.error('Erreur lors du retrait du manager:', error);
     throw new Error('Impossible de retirer le manager');
   }
 };

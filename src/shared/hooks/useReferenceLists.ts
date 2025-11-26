@@ -30,6 +30,7 @@ import type {
 } from '@/shared/types/reference-lists.types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
+import { logger } from '@/core/utils/logger';
 
 // ============================================================================
 // STORE ZUSTAND
@@ -248,7 +249,7 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
         }
       },
       error => {
-        console.error('❌ [Snapshot] Erreur:', error);
+        logger.error('❌ [Snapshot] Erreur:', error);
         setError(establishmentId, error.message);
       }
     );
@@ -562,7 +563,7 @@ export const useReferenceListsDebug = () => {
 
   const logSummary = useCallback(async () => {
     if (!currentEstablishment?.id) {
-      console.warn('⚠️ Aucun établissement sélectionné');
+      logger.warn('⚠️ Aucun établissement sélectionné');
       return;
     }
     await referenceListsService.logListsSummary(currentEstablishment.id);
@@ -570,7 +571,7 @@ export const useReferenceListsDebug = () => {
 
   const logCompact = useCallback(async () => {
     if (!currentEstablishment?.id) {
-      console.warn('⚠️ Aucun établissement sélectionné');
+      logger.warn('⚠️ Aucun établissement sélectionné');
       return;
     }
     await referenceListsService.logListsCompact(currentEstablishment.id);
