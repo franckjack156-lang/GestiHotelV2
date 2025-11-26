@@ -83,8 +83,7 @@ export const useRooms = (establishmentId: string) => {
         setRooms(roomsData);
         setIsLoading(false);
       },
-      error => {
-        console.error('Error fetching rooms:', error);
+      _error => {
         toast.error('Erreur lors du chargement des chambres');
         setIsLoading(false);
       }
@@ -106,8 +105,7 @@ export const useRooms = (establishmentId: string) => {
       setIsCreating(true);
       try {
         // Préparer les données
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const roomData: any = {
+        const roomData: Record<string, unknown> = {
           ...data,
           establishmentId,
           status: 'available' as const,
@@ -128,11 +126,10 @@ export const useRooms = (establishmentId: string) => {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), roomData);
         toast.success('Chambre cr��e avec succ�s');
         return docRef.id;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.error('Error creating room:', error);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
         toast.error('Erreur lors de la cr�ation', {
-          description: error.message,
+          description: message,
         });
         return null;
       } finally {
@@ -157,8 +154,7 @@ export const useRooms = (establishmentId: string) => {
         const roomRef = doc(db, COLLECTION_NAME, roomId);
 
         // Préparer les données en nettoyant les undefined
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const updateData: any = {
+        const updateData: Record<string, unknown> = {
           ...data,
           updatedAt: serverTimestamp(),
           lastModifiedBy: user.id,
@@ -175,11 +171,10 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre mise � jour');
         return true;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.error('Error updating room:', error);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
         toast.error('Erreur lors de la mise � jour', {
-          description: error.message,
+          description: message,
         });
         return false;
       } finally {
@@ -206,11 +201,10 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre supprim�e');
         return true;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.error('Error deleting room:', error);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
         toast.error('Erreur lors de la suppression', {
-          description: error.message,
+          description: message,
         });
         return false;
       } finally {
@@ -243,8 +237,7 @@ export const useRooms = (establishmentId: string) => {
         const room = { id: roomDoc.id, ...roomDoc.data() } as Room;
 
         // Préparer les données en nettoyant les undefined
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const blockUpdateData: any = {
+        const blockUpdateData: Record<string, unknown> = {
           isBlocked: true,
           blockReason: blockData.reason,
           blockedAt: serverTimestamp(),
@@ -311,11 +304,10 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre bloquée');
         return true;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.error('Error blocking room:', error);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
         toast.error('Erreur lors du blocage', {
-          description: error.message,
+          description: message,
         });
         return false;
       }
@@ -368,8 +360,7 @@ export const useRooms = (establishmentId: string) => {
         }
 
         // Préparer les données en nettoyant les undefined
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const unblockUpdateData: any = {
+        const unblockUpdateData: Record<string, unknown> = {
           isBlocked: false,
           blockReason: null,
           blockedAt: null,
@@ -390,11 +381,10 @@ export const useRooms = (establishmentId: string) => {
 
         toast.success('Chambre d�bloqu�e');
         return true;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.error('Error unblocking room:', error);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
         toast.error('Erreur lors du d�blocage', {
-          description: error.message,
+          description: message,
         });
         return false;
       }

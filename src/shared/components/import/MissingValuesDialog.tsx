@@ -31,7 +31,18 @@ export interface MissingValuesDialogProps {
   onOpenChange: (open: boolean) => void;
   missingValues: MissingListValues;
   matchSuggestions?: ImportMatchSuggestions; // Suggestions de correspondance
-  onConfirm: (selectedValues: MissingListValues, userMappings?: Map<string, string>) => Promise<void>;
+  onConfirm: (
+    selectedValues: MissingListValues,
+    userMappings?: Map<string, string>,
+    referenceMappings?: {
+      buildings?: Map<string, string>;
+      locations?: Map<string, string>;
+      floors?: Map<string, string>;
+      types?: Map<string, string>;
+      categories?: Map<string, string>;
+      priorities?: Map<string, string>;
+    }
+  ) => Promise<void>;
   isCreating?: boolean;
 }
 
@@ -72,6 +83,24 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
   // Quand un mapping existe, on n'ajoute PAS la valeur à la liste de référence
   const [userMappings, setUserMappings] = useState<Map<string, string>>(new Map());
 
+  // État pour tracker les mappings de référence (excelValue -> referenceValue)
+  // Pour chaque liste de référence qui a des suggestions
+  const [referenceMappings, setReferenceMappings] = useState<{
+    buildings: Map<string, string>;
+    locations: Map<string, string>;
+    floors: Map<string, string>;
+    types: Map<string, string>;
+    categories: Map<string, string>;
+    priorities: Map<string, string>;
+  }>({
+    buildings: new Map(),
+    locations: new Map(),
+    floors: new Map(),
+    types: new Map(),
+    categories: new Map(),
+    priorities: new Map(),
+  });
+
   // Configuration des catégories
   const categories: CategoryConfig[] = [
     { key: 'types', label: 'Types', color: 'blue' },
@@ -91,12 +120,22 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
     return categories.filter(cat => missingValues[cat.key].size > 0);
   }, [missingValues]);
 
-  // Calculer le nombre total de valeurs sélectionnées (références à créer + mappings utilisateurs)
-  const totalSelected = useMemo(() => {
+  // Calculer le nombre total de valeurs sélectionnées (références à créer + tous les mappings)
+  const { toCreate, toMap, totalSelected } = useMemo(() => {
     const referencesToCreate = Object.values(selectedValues).reduce((sum, set) => sum + set.size, 0);
     const userMappingsCount = userMappings.size;
-    return referencesToCreate + userMappingsCount;
-  }, [selectedValues, userMappings]);
+    const referenceMappingsCount = Object.values(referenceMappings).reduce(
+      (sum, map) => sum + map.size,
+      0
+    );
+    const totalMappings = userMappingsCount + referenceMappingsCount;
+
+    return {
+      toCreate: referencesToCreate,
+      toMap: totalMappings,
+      totalSelected: referencesToCreate + totalMappings,
+    };
+  }, [selectedValues, userMappings, referenceMappings]);
 
   // Calculer le nombre total de valeurs manquantes
   const totalMissing = useMemo(() => {
@@ -189,9 +228,52 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
     });
   };
 
+  // Sélectionner une suggestion de référence (mapper vers une valeur existante)
+  const selectReferenceSuggestion = (
+    excelValue: string,
+    referenceValue: string,
+    category: 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities'
+  ) => {
+    // Ajouter le mapping
+    setReferenceMappings(prev => ({
+      ...prev,
+      [category]: new Map(prev[category]).set(excelValue, referenceValue),
+    }));
+
+    // Retirer de la sélection (on ne crée plus cette valeur)
+    setSelectedValues(prev => {
+      const newSet = new Set(prev[category]);
+      newSet.delete(excelValue);
+      return { ...prev, [category]: newSet };
+    });
+  };
+
+  // Annuler une suggestion de référence (revenir à créer une nouvelle valeur)
+  const unselectReferenceSuggestion = (
+    excelValue: string,
+    category: 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities'
+  ) => {
+    // Retirer le mapping
+    setReferenceMappings(prev => {
+      const newMap = new Map(prev[category]);
+      newMap.delete(excelValue);
+      return {
+        ...prev,
+        [category]: newMap,
+      };
+    });
+
+    // Ré-ajouter à la sélection pour créer la valeur
+    setSelectedValues(prev => {
+      const newSet = new Set(prev[category]);
+      newSet.add(excelValue);
+      return { ...prev, [category]: newSet };
+    });
+  };
+
   // Confirmer la création
   const handleConfirm = async () => {
-    await onConfirm(selectedValues, userMappings);
+    await onConfirm(selectedValues, userMappings, referenceMappings);
   };
 
   // Vérifier si une catégorie est entièrement sélectionnée
@@ -276,11 +358,29 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                   {/* Liste des valeurs */}
                   <div className="ml-6 space-y-2">
                     {Array.from(missingValues[category.key]).map(value => {
-                      const hasSuggestions = (category.key === 'technicians' || category.key === 'creators') &&
-                        matchSuggestions &&
-                        matchSuggestions[category.key].has(value);
-                      const suggestions = hasSuggestions ? matchSuggestions![category.key as 'technicians' | 'creators'].get(value) || [] : [];
-                      const selectedMapping = userMappings.get(value);
+                      // Vérifier si c'est une catégorie d'utilisateurs (technicians/creators)
+                      const isUserCategory = category.key === 'technicians' || category.key === 'creators';
+                      // Vérifier si c'est une catégorie de référence (buildings, locations, etc.)
+                      const isReferenceCategory = ['buildings', 'locations', 'floors', 'types', 'categories', 'priorities'].includes(category.key);
+
+                      const hasSuggestions = matchSuggestions && (matchSuggestions[category.key as keyof typeof matchSuggestions] as Map<string, unknown> | undefined)?.has(value);
+
+                      // Récupérer les suggestions appropriées selon le type
+                      const userSuggestions = (isUserCategory && hasSuggestions && matchSuggestions)
+                        ? (matchSuggestions[category.key as 'technicians' | 'creators'].get(value) || []) as Array<{ userId: string; userName: string; matchScore: number; matchType: string }>
+                        : [];
+                      const referenceSuggestions = (isReferenceCategory && hasSuggestions && matchSuggestions)
+                        ? (matchSuggestions[category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities'].get(value) || []) as Array<{ referenceValue: string; referenceLabel: string; matchScore: number; matchType: string }>
+                        : [];
+
+                      const suggestions = isUserCategory ? userSuggestions : referenceSuggestions;
+
+                      // Récupérer le mapping sélectionné selon le type
+                      const selectedMapping = isUserCategory
+                        ? userMappings.get(value)
+                        : isReferenceCategory
+                          ? referenceMappings[category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities'].get(value)
+                          : undefined;
 
                       return (
                         <div key={value} className="space-y-2">
@@ -312,12 +412,12 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                                 )}
                               </label>
 
-                              {/* Afficher la suggestion sélectionnée */}
-                              {selectedMapping && (
+                              {/* Afficher la suggestion sélectionnée - UTILISATEURS */}
+                              {selectedMapping && isUserCategory && (
                                 <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
                                   <UserCheck className="h-4 w-4 text-green-600" />
                                   <span className="text-sm text-green-700 dark:text-green-300 flex-1">
-                                    Sera lié à : <strong>{suggestions.find(s => s.userId === selectedMapping)?.userName}</strong>
+                                    Sera lié à : <strong>{userSuggestions.find(s => s.userId === selectedMapping)?.userName}</strong>
                                   </span>
                                   <Button
                                     variant="ghost"
@@ -331,11 +431,30 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                                 </div>
                               )}
 
-                              {/* Afficher les suggestions disponibles */}
-                              {hasSuggestions && !selectedMapping && suggestions.length > 0 && (
+                              {/* Afficher la suggestion sélectionnée - RÉFÉRENCES */}
+                              {selectedMapping && isReferenceCategory && (
+                                <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  <span className="text-sm text-green-700 dark:text-green-300 flex-1">
+                                    Sera lié à : <strong>{referenceSuggestions.find(s => s.referenceValue === selectedMapping)?.referenceLabel}</strong>
+                                  </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => unselectReferenceSuggestion(value, category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities')}
+                                    disabled={isCreating}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+
+                              {/* Afficher les suggestions disponibles - UTILISATEURS */}
+                              {hasSuggestions && !selectedMapping && isUserCategory && userSuggestions.length > 0 && (
                                 <div className="space-y-1 pl-4 border-l-2 border-blue-200">
                                   <p className="text-xs text-muted-foreground mb-1">Utilisateurs correspondants :</p>
-                                  {suggestions.slice(0, 3).map((suggestion) => {
+                                  {userSuggestions.slice(0, 3).map(suggestion => {
                                     const score = Math.round(suggestion.matchScore * 100);
                                     const isHighScore = score >= 75;
                                     return (
@@ -350,6 +469,37 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                                         </div>
                                         <div className="flex-1 min-w-0">
                                           <p className="text-sm font-medium truncate">{suggestion.userName}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {suggestion.matchType === 'exact' && '✅ Correspondance exacte'}
+                                            {suggestion.matchType === 'partial' && '⚡ Correspondance partielle'}
+                                            {suggestion.matchType === 'fuzzy' && '💡 Correspondance approximative'}
+                                          </p>
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Afficher les suggestions disponibles - RÉFÉRENCES */}
+                              {hasSuggestions && !selectedMapping && isReferenceCategory && referenceSuggestions.length > 0 && (
+                                <div className="space-y-1 pl-4 border-l-2 border-purple-200">
+                                  <p className="text-xs text-muted-foreground mb-1">Valeurs correspondantes :</p>
+                                  {referenceSuggestions.slice(0, 3).map(suggestion => {
+                                    const score = Math.round(suggestion.matchScore * 100);
+                                    const isHighScore = score >= 75;
+                                    return (
+                                      <button
+                                        key={suggestion.referenceValue}
+                                        onClick={() => selectReferenceSuggestion(value, suggestion.referenceValue, category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities')}
+                                        disabled={isCreating}
+                                        className="flex items-center gap-2 p-2 w-full text-left rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-transparent hover:border-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        <div className={`flex items-center justify-center w-12 h-12 rounded-full ${isHighScore ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
+                                          <span className="text-xs font-bold">{score}%</span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-sm font-medium truncate">{suggestion.referenceLabel}</p>
                                           <p className="text-xs text-muted-foreground">
                                             {suggestion.matchType === 'exact' && '✅ Correspondance exacte'}
                                             {suggestion.matchType === 'partial' && '⚡ Correspondance partielle'}
@@ -391,13 +541,17 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
-                {userMappings.size > 0 ? (
+                {toMap > 0 ? (
                   <>
-                    Valider ({Object.values(selectedValues).reduce((sum, set) => sum + set.size, 0)} à créer, {userMappings.size} mappé{userMappings.size > 1 ? 's' : ''})
+                    Valider ({toCreate} à créer{toCreate > 1 ? '' : ''}, {toMap} mappé{toMap > 1 ? 's' : ''})
+                  </>
+                ) : toCreate > 0 ? (
+                  <>
+                    Créer {toCreate} valeur{toCreate > 1 ? 's' : ''}
                   </>
                 ) : (
                   <>
-                    Créer {totalSelected} valeur{totalSelected > 1 ? 's' : ''}
+                    Valider
                   </>
                 )}
               </>

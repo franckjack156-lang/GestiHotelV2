@@ -26,23 +26,23 @@ const interventionSchema = z.object({
 
   description: z
     .string()
-    .max(2000, 'La description ne peut pas dépasser 2000 caractères')
-    .optional(),
+    .min(1, 'La description est requise')
+    .max(2000, 'La description ne peut pas dépasser 2000 caractères'),
 
   type: z.nativeEnum(InterventionType, {
     message: "Type d'intervention requis",
-  }).optional(),
+  }),
 
   category: z.nativeEnum(InterventionCategory, {
     message: 'Catégorie requise',
-  }).optional(),
+  }),
 
-  priority: z.nativeEnum(InterventionPriority).optional(),
+  priority: z.nativeEnum(InterventionPriority),
 
   location: z
     .string()
-    .max(200, 'La localisation ne peut pas dépasser 200 caractères')
-    .optional(),
+    .min(1, 'La localisation est requise')
+    .max(200, 'La localisation ne peut pas dépasser 200 caractères'),
 
   roomNumber: z
     .string()

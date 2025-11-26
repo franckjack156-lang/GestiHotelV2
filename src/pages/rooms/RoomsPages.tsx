@@ -173,10 +173,10 @@ const RoomsListPageComponent = () => {
   };
 
   // Gestion de l'import
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleImportConfirm = async (data: any[]) => {
+  const handleImportConfirm = async (data: Record<string, unknown>[]) => {
     try {
-      await importHook.handleConfirm(data, createRoom);
+      // Type assertion needed here as importHook.handleConfirm expects specific type
+      await importHook.handleConfirm(data as never, createRoom);
       toast.success('Import réussi', {
         description: `${data.length} chambre(s) importée(s)`,
       });
@@ -315,79 +315,80 @@ const RoomsListPageComponent = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Chambres</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Gérez les chambres de l'établissement
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Responsive optimisé */}
+      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Chambres</h1>
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1">
+            Gérez les chambres
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
-            <Upload size={16} className="mr-2" />
-            Importer
+        <div className="flex gap-2 w-full xs:w-auto">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)} size="sm" className="flex-1 xs:flex-initial">
+            <Upload size={16} className="sm:mr-2" />
+            <span className="hidden sm:inline">Importer</span>
+            <span className="sm:hidden">Import</span>
           </Button>
-          <Button onClick={() => navigate('/app/rooms/create')}>
-            <Plus size={16} className="mr-2" />
-            Nouvelle chambre
+          <Button onClick={() => navigate('/app/rooms/create')} size="sm" className="flex-1 xs:flex-initial">
+            <Plus size={16} className="sm:mr-2" />
+            <span className="hidden sm:inline">Nouvelle chambre</span>
+            <span className="sm:hidden">Nouvelle</span>
           </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* Stats - Responsive optimisé */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+          <CardContent className="pt-3 sm:pt-5 px-2 sm:px-6 pb-3 sm:pb-6">
+            <div className="flex flex-col gap-1 sm:gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">Total</p>
+                <DoorOpen className="text-gray-400" size={16} />
               </div>
-              <DoorOpen className="text-gray-400" size={32} />
+              <p className="text-lg sm:text-xl md:text-2xl font-bold truncate">{stats.total}</p>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Disponibles</p>
-                <p className="text-2xl font-bold text-green-600">{stats.available}</p>
+          <CardContent className="pt-3 sm:pt-5 px-2 sm:px-6 pb-3 sm:pb-6">
+            <div className="flex flex-col gap-1 sm:gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">Dispo.</p>
+                <CheckCircle2 className="text-green-400" size={16} />
               </div>
-              <CheckCircle2 className="text-green-400" size={32} />
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600 truncate">{stats.available}</p>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Bloquées</p>
-                <p className="text-2xl font-bold text-red-600">{stats.blocked}</p>
+          <CardContent className="pt-3 sm:pt-5 px-2 sm:px-6 pb-3 sm:pb-6">
+            <div className="flex flex-col gap-1 sm:gap-2">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">Bloquées</p>
+                <AlertCircle className="text-red-400" size={16} />
               </div>
-              <AlertCircle className="text-red-400" size={32} />
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-600 truncate">{stats.blocked}</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filtres */}
+      {/* Filtres - Responsive */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid md:grid-cols-3 gap-4">
+        <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
             <SearchBar
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Rechercher une chambre..."
+              placeholder="Rechercher..."
             />
 
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-              <SelectTrigger>
+            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as typeof filterStatus)}>
+              <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -398,7 +399,7 @@ const RoomsListPageComponent = () => {
             </Select>
 
             <Select value={filterFloor} onValueChange={setFilterFloor}>
-              <SelectTrigger>
+              <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -476,13 +477,12 @@ const RoomsListPageComponent = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {data.slice(0, 5).map((row: any, idx) => (
+                {data.slice(0, 5).map((row, idx) => (
                   <tr key={idx} className="border-t border-gray-200 dark:border-gray-700">
-                    <td className="px-3 py-2">{row.numero}</td>
-                    <td className="px-3 py-2">{row.etage}</td>
-                    <td className="px-3 py-2">{row.type}</td>
-                    <td className="px-3 py-2">{row.capacite}</td>
+                    <td className="px-3 py-2">{String(row.numero)}</td>
+                    <td className="px-3 py-2">{String(row.etage)}</td>
+                    <td className="px-3 py-2">{String(row.type)}</td>
+                    <td className="px-3 py-2">{String(row.capacite)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -517,7 +517,6 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   const navigate = useNavigate();
 
   const form = useForm<RoomFormData>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(roomSchema) as any,
     defaultValues: room || {
       type: 'double',
@@ -533,7 +532,6 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   } = form;
 
   return (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div>
@@ -555,8 +553,7 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
 
         <div>
           <Label htmlFor="type">Type *</Label>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          <Select onValueChange={value => setValue('type', value as any)}>
+          <Select onValueChange={value => setValue('type', value as RoomFormData['type'])}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner" />
             </SelectTrigger>

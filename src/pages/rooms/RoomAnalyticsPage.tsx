@@ -80,30 +80,26 @@ export const RoomAnalyticsPage = () => {
         <StatCard
           title="Blocages Actifs"
           value={stats?.totalActive || 0}
-          icon={Lock}
-          trend={stats?.totalActive > 0 ? 'up' : 'neutral'}
-          variant="warning"
+          icon={<Lock className="h-4 w-4" />}
+          color="orange"
         />
         <StatCard
           title="Total Complétés"
           value={stats?.totalCompleted || 0}
-          icon={CheckCircle2}
-          trend="neutral"
-          variant="success"
+          icon={<CheckCircle2 className="h-4 w-4" />}
+          color="green"
         />
         <StatCard
           title="Perte de Revenu Totale"
           value={formatCurrency(stats?.totalRevenueLoss || 0)}
-          icon={DollarSign}
-          trend={stats?.totalRevenueLoss > 0 ? 'down' : 'neutral'}
-          variant="destructive"
+          icon={<DollarSign className="h-4 w-4" />}
+          color="red"
         />
         <StatCard
           title="Durée Moyenne"
           value={`${stats?.averageDurationDays || 0}j`}
-          icon={Clock}
-          trend="neutral"
-          variant="info"
+          icon={<Clock className="h-4 w-4" />}
+          color="blue"
         />
       </div>
 

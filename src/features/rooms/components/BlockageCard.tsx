@@ -70,12 +70,23 @@ const URGENCY_CONFIG = {
 // INTERVENTION TYPE CONFIG
 // ============================================================================
 
-const TYPE_CONFIG = {
-  maintenance: { label: 'Maintenance', color: 'bg-blue-500' },
+const TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  plumbing: { label: 'Plomberie', color: 'bg-blue-500' },
+  electricity: { label: 'Électricité', color: 'bg-yellow-500' },
+  heating: { label: 'Chauffage', color: 'bg-orange-500' },
+  air_conditioning: { label: 'Climatisation', color: 'bg-cyan-500' },
+  carpentry: { label: 'Menuiserie', color: 'bg-amber-500' },
+  painting: { label: 'Peinture', color: 'bg-purple-500' },
   cleaning: { label: 'Nettoyage', color: 'bg-green-500' },
-  repair: { label: 'Réparation', color: 'bg-orange-500' },
-  installation: { label: 'Installation', color: 'bg-purple-500' },
-  inspection: { label: 'Inspection', color: 'bg-teal-500' },
+  locksmith: { label: 'Serrurerie', color: 'bg-gray-500' },
+  glazing: { label: 'Vitrerie', color: 'bg-blue-300' },
+  masonry: { label: 'Maçonnerie', color: 'bg-stone-500' },
+  appliance: { label: 'Électroménager', color: 'bg-indigo-500' },
+  furniture: { label: 'Mobilier', color: 'bg-rose-500' },
+  it: { label: 'Informatique', color: 'bg-violet-500' },
+  security: { label: 'Sécurité', color: 'bg-red-500' },
+  garden: { label: 'Jardinage', color: 'bg-lime-500' },
+  pool: { label: 'Piscine', color: 'bg-sky-500' },
   other: { label: 'Autre', color: 'bg-gray-500' },
 };
 
@@ -198,7 +209,7 @@ export const BlockageCard: React.FC<BlockageCardProps> = ({
               )}
 
               {/* Stats financières */}
-              {blockage.estimatedRevenueLoss > 0 && (
+              {blockage.estimatedRevenueLoss && blockage.estimatedRevenueLoss > 0 && (
                 <div className="flex items-center gap-2 text-sm">
                   <DollarSign className="h-4 w-4 text-red-500" />
                   <span className="font-semibold text-red-600">

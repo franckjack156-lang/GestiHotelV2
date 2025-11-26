@@ -8,17 +8,20 @@
 
 import { Search } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
+import { useSearch } from './SearchContext';
 
-interface SearchButtonProps {
-  onClick?: () => void;
-}
+export const SearchButton = () => {
+  const { openSearch } = useSearch();
 
-export const SearchButton = ({ onClick }: SearchButtonProps) => {
+  const handleClick = () => {
+    openSearch();
+  };
+
   return (
     <Button
       variant="outline"
       className="relative w-full justify-start text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64"
-      onClick={onClick}
+      onClick={handleClick}
     >
       <Search className="mr-2 h-4 w-4" />
       <span className="hidden lg:inline-flex">Rechercher...</span>

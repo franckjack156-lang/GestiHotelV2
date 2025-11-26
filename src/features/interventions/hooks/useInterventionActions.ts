@@ -75,8 +75,9 @@ export const useInterventionActions = () => {
         }
 
         return interventionId;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return null;
       } finally {
         setIsCreating(false);
@@ -101,12 +102,13 @@ export const useInterventionActions = () => {
 
         await interventionService.updateIntervention(establishmentId, interventionId, data);
 
-        // Mettre à jour dans le store - cast car UpdateInterventionData est compatible
-        updateInterventionInList(interventionId, data as any);
+        // Mettre à jour dans le store
+        updateInterventionInList(interventionId, data as Partial<Intervention>);
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return false;
       } finally {
         setIsUpdating(false);
@@ -137,8 +139,9 @@ export const useInterventionActions = () => {
         });
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return false;
       } finally {
         setIsUpdating(false);
@@ -170,12 +173,12 @@ export const useInterventionActions = () => {
         // Mettre à jour dans le store
         updateInterventionInList(interventionId, {
           assignedTo: assignmentData.technicianId,
-          status: 'assigned' as any,
         });
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return false;
       } finally {
         setIsUpdating(false);
@@ -204,8 +207,9 @@ export const useInterventionActions = () => {
         removeIntervention(interventionId);
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return false;
       } finally {
         setIsDeleting(false);
@@ -244,8 +248,9 @@ export const useInterventionActions = () => {
         }
 
         return intervention;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return null;
       }
     },
@@ -275,8 +280,9 @@ export const useInterventionActions = () => {
         }
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return false;
       } finally {
         setIsUpdating(false);
@@ -310,7 +316,7 @@ export const useInterventionActions = () => {
         }
 
         // Trouver la photo pour obtenir son URL
-        const photo = intervention.photos?.find((p: any) => p.id === photoId);
+        const photo = intervention.photos?.find((p) => p.id === photoId);
         if (!photo) {
           throw new Error('Photo non trouvée');
         }
@@ -324,8 +330,9 @@ export const useInterventionActions = () => {
         );
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        setActionError(message);
         return false;
       } finally {
         setIsUpdating(false);

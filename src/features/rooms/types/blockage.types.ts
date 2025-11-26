@@ -8,7 +8,7 @@ import { Timestamp } from 'firebase/firestore';
 import {
   InterventionType,
   InterventionPriority,
-} from '@/features/interventions/types/intervention.types';
+} from '@/shared/types/status.types';
 
 /**
  * Blockage Urgency Level

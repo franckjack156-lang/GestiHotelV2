@@ -53,67 +53,72 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-white px-6 dark:bg-gray-800 dark:border-gray-700">
+    <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b bg-white px-3 sm:px-4 md:px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Bouton menu mobile */}
-      <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden">
+      <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden flex-shrink-0">
         <Menu className="h-5 w-5" />
       </Button>
 
       {/* Logo */}
-      <Link to="/app/dashboard" className="flex items-center gap-2">
-        <Building2 className="h-6 w-6" style={{ color: 'hsl(var(--theme-primary))' }} />
+      <Link to="/app/dashboard" className="flex items-center gap-2 flex-shrink-0">
+        <Building2 className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: 'hsl(var(--theme-primary))' }} />
         <span className="hidden font-bold text-gray-900 dark:text-white sm:inline-block">
           GestiHôtel
         </span>
       </Link>
 
-      {/* 🆕 ESTABLISHMENT SWITCHER */}
-      <div className="hidden lg:block">
+      {/* 🆕 ESTABLISHMENT SWITCHER - Masqué sur mobile et tablette */}
+      <div className="hidden xl:block flex-shrink-0">
         <EstablishmentSwitcher />
       </div>
 
-      {/* Barre de recherche globale - Cmd+K */}
-      <div className="flex-1 max-w-md">
+      {/* Barre de recherche globale - Cmd+K - Responsive */}
+      <div className="flex-1 max-w-xs sm:max-w-md">
         <SearchButton />
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2">
-        {/* 🆕 Network Indicator */}
-        <NetworkIndicator />
+      {/* Actions - Responsive gap */}
+      <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        {/* 🆕 Network Indicator - Masqué sur mobile */}
+        <div className="hidden sm:block">
+          <NetworkIndicator />
+        </div>
 
-        {/* 🆕 Theme Toggle */}
-        <ThemeToggle />
+        {/* 🆕 Theme Toggle - Masqué sur très petit mobile */}
+        <div className="hidden xs:block">
+          <ThemeToggle />
+        </div>
 
         {/* 🆕 Notifications - Clic vers le centre de notifications */}
         <Button
           variant="ghost"
           size="icon"
-          className="relative"
+          className="relative flex-shrink-0"
           onClick={() => navigate('/app/notifications')}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
           {unreadCount > 0 && (
             <>
               <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-[9px] sm:text-[10px] text-white font-medium">
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             </>
           )}
         </Button>
 
-        {/* Menu utilisateur */}
+        {/* Menu utilisateur - Avatar plus petit sur mobile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-              <Avatar>
+            <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0">
+              <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                 <AvatarImage src={user?.photoURL} alt={user?.displayName} />
                 <AvatarFallback
                   style={{
                     backgroundColor: 'hsl(var(--theme-primary-light) / 0.2)',
                     color: 'hsl(var(--theme-primary-dark))',
                   }}
+                  className="text-xs sm:text-sm"
                 >
                   {user?.displayName ? getInitials(user.displayName) : 'U'}
                 </AvatarFallback>
@@ -123,8 +128,8 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{user?.displayName}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+                <p className="text-sm font-medium truncate">{user?.displayName}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.email}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

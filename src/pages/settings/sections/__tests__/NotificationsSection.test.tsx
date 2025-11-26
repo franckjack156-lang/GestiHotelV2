@@ -241,9 +241,8 @@ describe('NotificationsSection', () => {
       // Vérifier qu'un indicateur de sauvegarde apparaît
       // (selon l'implémentation, cela pourrait être un spinner ou un texte)
       await waitFor(() => {
-        const savingIndicator =
-          screen.queryByText(/sauvegarde/i) || screen.queryByText(/enregistrement/i);
-        // L'indicateur peut apparaître brièvement
+        // L'indicateur peut apparaître brièvement - vérification optionnelle
+        screen.queryByText(/sauvegarde/i) || screen.queryByText(/enregistrement/i);
         expect(true).toBe(true); // Toujours passer si pas d'indicateur
       });
     });

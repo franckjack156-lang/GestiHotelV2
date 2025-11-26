@@ -83,18 +83,18 @@ const DEFAULT_VALIDATION_RULES = {
  * Nettoyer un objet de toutes ses propriétés undefined
  * Firestore n'accepte pas les valeurs undefined
  */
-const removeUndefined = (obj: any): any => {
+const removeUndefined = <T>(obj: T): T => {
   if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) return obj.map(removeUndefined);
+  if (Array.isArray(obj)) return obj.map(removeUndefined) as T;
   if (typeof obj !== 'object') return obj;
 
-  const cleaned: any = {};
+  const cleaned: Record<string, unknown> = {};
   for (const key in obj) {
     if (obj[key] !== undefined) {
       cleaned[key] = removeUndefined(obj[key]);
     }
   }
-  return cleaned;
+  return cleaned as T;
 };
 
 // ============================================================================
@@ -124,7 +124,7 @@ async function performListOperation<T>(
   listKey: ListKey,
   operation: (list: ListConfig) => T,
   auditAction: AuditAction,
-  auditData?: { itemId?: string; before?: any; after?: any }
+  auditData?: { itemId?: string; before?: unknown; after?: unknown }
 ): Promise<T> {
   const allLists = await getAllLists(establishmentId);
   if (!allLists) throw new Error('Listes non trouvées');
@@ -203,13 +203,13 @@ export const getAllLists = async (
           ...config,
           items: (config.items || []).map((item: any) => ({
             ...item,
-            createdAt: item.createdAt?.toDate?.(),
-            updatedAt: item.updatedAt?.toDate?.(),
-            lastUsed: item.lastUsed?.toDate?.(),
+            createdAt: item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt,
+            updatedAt: item.updatedAt?.toDate ? item.updatedAt.toDate() : item.updatedAt,
+            lastUsed: item.lastUsed?.toDate ? item.lastUsed.toDate() : item.lastUsed,
           })),
         };
         return acc;
-      }, {} as any),
+      }, {} as Record<string, ListConfig>),
     } as EstablishmentReferenceLists;
   } catch (error) {
     console.error('❌ Erreur chargement listes:', error);
@@ -256,7 +256,7 @@ export const initializeEmptyLists = async (
       version: 1,
       lastModified: new Date(),
       modifiedBy: userId,
-      lists: {} as any,
+      lists: {} as Record<string, ListConfig>,
     };
 
     await setDoc(docRef, {
@@ -378,7 +378,7 @@ export const addItem = async (
         }
 
         // Construire l'item avec uniquement les champs définis (pas undefined)
-        const newItem: any = {
+        const newItem: ReferenceItem = {
           id: `${input.value}_${Date.now()}`,
           value: input.value,
           label: input.label,
@@ -387,16 +387,14 @@ export const addItem = async (
           createdAt: new Date(),
           createdBy: userId,
           usageCount: 0,
+          color: input.color,
+          icon: input.icon,
+          description: input.description,
+          labels: input.labels,
+          metadata: input.metadata,
         };
 
-        // Ajouter les champs optionnels uniquement s'ils sont définis et non undefined
-        if (input.color !== undefined) newItem.color = input.color;
-        if (input.icon !== undefined) newItem.icon = input.icon;
-        if (input.description !== undefined) newItem.description = input.description;
-        if (input.labels !== undefined) newItem.labels = input.labels;
-        if (input.metadata !== undefined) newItem.metadata = input.metadata;
-
-        list.items.push(newItem as ReferenceItem);
+        list.items.push(newItem);
         return newItem.id;
       },
       'ADD_ITEM'
@@ -618,24 +616,26 @@ export const importFromFile = async (
     const data = XLSX.utils.sheet_to_json(worksheet);
 
     const items: ReferenceItem[] = [];
-    const errors: any[] = [];
+    const errors: Array<{ row: number; field: string; value: unknown; error: string }> = [];
     let itemsImported = 0;
     let itemsSkipped = 0;
     let itemsUpdated = 0;
 
     for (let i = 0; i < data.length; i++) {
-      const row: any = data[i];
+      const row = data[i] as Record<string, unknown>;
 
       try {
         const item: ReferenceItem = {
-          id: row.ID || `import_${Date.now()}_${i}`,
-          value: row.Valeur || row.value,
-          label: row.Label || row.label,
-          color: row.Couleur || row.color,
-          icon: row.Icône || row.icon,
+          id: (row.ID as string) || `import_${Date.now()}_${i}`,
+          value: (row.Valeur as string) || (row.value as string) || '',
+          label: (row.Label as string) || (row.label as string) || '',
+          color: (row.Couleur as string) || (row.color as string),
+          icon: (row.Icône as string) || (row.icon as string),
           order: typeof row.Ordre === 'number' ? row.Ordre : i,
           isActive: row.Actif === 'Oui' || row.Actif === true || true,
-          description: row.Description || row.description,
+          description: (row.Description as string) || (row.description as string),
+          createdAt: new Date(),
+          usageCount: 0,
         };
 
         if (options.validate) {
@@ -654,12 +654,12 @@ export const importFromFile = async (
 
         items.push(item);
         itemsImported++;
-      } catch (error: any) {
+      } catch (error) {
         errors.push({
           row: i + 2,
           field: 'parse',
           value: row,
-          error: error.message,
+          error: error instanceof Error ? error.message : 'Erreur inconnue',
         });
         itemsSkipped++;
       }
@@ -717,7 +717,7 @@ export const importFromFile = async (
       errors,
       warnings: [],
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error('❌ Erreur import:', error);
     throw error;
   }
@@ -810,7 +810,7 @@ export const trackItemUsage = async (
     if (itemIndex === -1) return;
 
     const item = list.items[itemIndex];
-    const updatedItem = {
+    const updatedItem: ReferenceItem = {
       ...item,
       usageCount: (item.usageCount || 0) + 1,
       lastUsed: new Date(),
@@ -847,8 +847,8 @@ const logAudit = async (
   action: AuditAction,
   listKey: string,
   listName: string,
-  before: any,
-  after: any,
+  before: unknown,
+  after: unknown,
   comment?: string
 ): Promise<void> => {
   try {

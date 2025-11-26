@@ -138,9 +138,10 @@ export const GenerateFloorsDialog = ({
         onSuccess?.();
         onClose();
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erreur génération étages:', err);
-      setError(err.message || 'Une erreur est survenue');
+      const message = err instanceof Error ? err.message : 'Une erreur est survenue';
+      setError(message);
     } finally {
       setIsGenerating(false);
     }
@@ -249,7 +250,7 @@ export const GenerateFloorsDialog = ({
           {/* Format */}
           <div className="space-y-3">
             <Label>Format d'affichage</Label>
-            <RadioGroup value={format} onValueChange={value => setFormat(value as any)}>
+            <RadioGroup value={format} onValueChange={value => setFormat(value as 'numeric' | 'ordinal')}>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="numeric" id="format-numeric" />
                 <Label htmlFor="format-numeric" className="cursor-pointer font-normal">

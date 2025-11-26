@@ -1,0 +1,340 @@
+/**
+ * Dashboard Types
+ *
+ * Types pour les statistiques et préférences de dashboard personnalisables
+ */
+
+import type { TimestampedDocument } from '@/shared/types/common.types';
+
+// ============================================================================
+// WIDGET TYPES
+// ============================================================================
+
+export type WidgetType =
+  | 'stats_card'
+  | 'line_chart'
+  | 'bar_chart'
+  | 'pie_chart'
+  | 'area_chart'
+  | 'donut_chart'
+  | 'table'
+  | 'calendar'
+  | 'list'
+  | 'clock'           // Horloge (analogique ou digitale)
+  | 'quick_links'     // Liens rapides cliquables
+  | 'button_grid'     // Grille de boutons d'action
+  | 'iframe'          // Iframe pour sites web
+  | 'custom_list'     // Liste personnalisée éditable
+  | 'note'            // Note/texte libre
+  | 'weather';        // Météo (si intégration API)
+
+export type WidgetSize = 'small' | 'medium' | 'large' | 'full';
+
+export type WidgetDataSource =
+  | 'interventions_by_status'
+  | 'interventions_by_priority'
+  | 'interventions_by_type'
+  | 'interventions_by_room'
+  | 'interventions_by_technician'
+  | 'interventions_timeline'
+  | 'interventions_completion_rate'
+  | 'sla_compliance'
+  | 'response_time_avg'
+  | 'recent_interventions'
+  | 'overdue_interventions'
+  | 'upcoming_interventions'
+  | 'rooms_status'
+  | 'rooms_by_type'
+  | 'blockages_active'
+  | 'custom'          // Données personnalisées
+  | 'static';         // Widget statique (horloge, liens, etc.)
+
+// ============================================================================
+// WIDGET CONFIGURATION
+// ============================================================================
+
+export interface WidgetConfig {
+  id: string;
+  type: WidgetType;
+  dataSource: WidgetDataSource;
+  title: string;
+  size: WidgetSize;
+  position: { row: number; col: number };
+  visible: boolean;
+  refreshInterval?: number; // en secondes
+  filters?: {
+    dateRange?: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+    customDateFrom?: Date;
+    customDateTo?: Date;
+    status?: string[];
+    priority?: string[];
+    roomType?: string[];
+  };
+  chartOptions?: {
+    showLegend?: boolean;
+    showGrid?: boolean;
+    showTooltip?: boolean;
+    colors?: string[];
+    stacked?: boolean;
+    showValues?: boolean;
+  };
+  // Configurations spécifiques par type de widget
+  clockOptions?: {
+    format: '12h' | '24h' | 'analog';
+    showSeconds?: boolean;
+    showDate?: boolean;
+    timezone?: string;
+  };
+  linksOptions?: {
+    links: Array<{
+      id: string;
+      label: string;
+      url: string;
+      icon?: string;
+      color?: string;
+      openInNewTab?: boolean;
+    }>;
+    columns?: number; // Nombre de colonnes pour afficher les liens
+  };
+  buttonsOptions?: {
+    buttons: Array<{
+      id: string;
+      label: string;
+      action: 'navigate' | 'external_link' | 'custom';
+      target?: string; // URL ou chemin
+      icon?: string;
+      color?: string;
+      variant?: 'default' | 'outline' | 'destructive';
+    }>;
+    columns?: number;
+  };
+  iframeOptions?: {
+    url: string;
+    allowFullscreen?: boolean;
+    allowScripts?: boolean;
+  };
+  customListOptions?: {
+    items: Array<{
+      id: string;
+      text: string;
+      checked?: boolean;
+      priority?: 'low' | 'medium' | 'high';
+    }>;
+    editable?: boolean;
+    showCheckboxes?: boolean;
+  };
+  noteOptions?: {
+    content: string;
+    backgroundColor?: string;
+    textColor?: string;
+    fontSize?: 'small' | 'medium' | 'large';
+  };
+}
+
+// ============================================================================
+// DASHBOARD PREFERENCES
+// ============================================================================
+
+export interface DashboardPreferences extends TimestampedDocument {
+  userId: string;
+  establishmentId: string;
+  widgets: WidgetConfig[];
+  layout: 'grid' | 'list';
+  columns: number; // 2, 3, ou 4 colonnes
+  theme?: 'light' | 'dark' | 'auto';
+  defaultDateRange: 'today' | 'week' | 'month' | 'quarter' | 'year';
+  autoRefresh: boolean;
+  refreshInterval: number; // en secondes
+}
+
+// ============================================================================
+// STATS DATA
+// ============================================================================
+
+export interface InterventionStats {
+  total: number;
+  byStatus: Record<string, number>;
+  byPriority: Record<string, number>;
+  byType: Record<string, number>;
+  byRoom: Record<string, number>;
+  byTechnician: Record<string, number>;
+  completionRate: number;
+  avgResponseTime: number; // en heures
+  slaCompliance: number; // pourcentage
+  overdue: number;
+  upcoming: number;
+}
+
+export interface TimelineData {
+  date: string;
+  created: number;
+  completed: number;
+  inProgress: number;
+  cancelled: number;
+}
+
+export interface RoomStats {
+  total: number;
+  byType: Record<string, number>;
+  byStatus: Record<string, number>;
+  available: number;
+  occupied: number;
+  maintenance: number;
+  blocked: number;
+}
+
+export interface TechnicianPerformance {
+  userId: string;
+  name: string;
+  totalAssigned: number;
+  completed: number;
+  inProgress: number;
+  avgCompletionTime: number; // en heures
+  completionRate: number;
+}
+
+// ============================================================================
+// CHART DATA
+// ============================================================================
+
+export interface ChartDataPoint {
+  name: string;
+  value: number;
+  label?: string;
+  color?: string;
+}
+
+export interface TimeSeriesDataPoint {
+  date: string;
+  [key: string]: string | number;
+}
+
+// ============================================================================
+// DEFAULT CONFIGURATIONS
+// ============================================================================
+
+export const DEFAULT_WIDGET_CONFIGS: Omit<WidgetConfig, 'id'>[] = [
+  // Cartes de statistiques
+  {
+    type: 'stats_card',
+    dataSource: 'interventions_by_status',
+    title: 'Interventions par statut',
+    size: 'small',
+    position: { row: 0, col: 0 },
+    visible: true,
+  },
+  {
+    type: 'stats_card',
+    dataSource: 'interventions_completion_rate',
+    title: 'Taux de complétion',
+    size: 'small',
+    position: { row: 0, col: 1 },
+    visible: true,
+  },
+  {
+    type: 'stats_card',
+    dataSource: 'sla_compliance',
+    title: 'Conformité SLA',
+    size: 'small',
+    position: { row: 0, col: 2 },
+    visible: true,
+  },
+  {
+    type: 'stats_card',
+    dataSource: 'response_time_avg',
+    title: 'Temps de réponse moyen',
+    size: 'small',
+    position: { row: 0, col: 3 },
+    visible: true,
+  },
+
+  // Graphiques
+  {
+    type: 'line_chart',
+    dataSource: 'interventions_timeline',
+    title: 'Évolution des interventions',
+    size: 'large',
+    position: { row: 1, col: 0 },
+    visible: true,
+    filters: {
+      dateRange: 'month',
+    },
+    chartOptions: {
+      showLegend: true,
+      showGrid: true,
+      showTooltip: true,
+      stacked: false,
+    },
+  },
+  {
+    type: 'pie_chart',
+    dataSource: 'interventions_by_status',
+    title: 'Répartition par statut',
+    size: 'medium',
+    position: { row: 1, col: 2 },
+    visible: true,
+    chartOptions: {
+      showLegend: true,
+      showTooltip: true,
+    },
+  },
+  {
+    type: 'bar_chart',
+    dataSource: 'interventions_by_priority',
+    title: 'Interventions par priorité',
+    size: 'medium',
+    position: { row: 2, col: 0 },
+    visible: true,
+    chartOptions: {
+      showLegend: false,
+      showGrid: true,
+      showTooltip: true,
+      showValues: true,
+    },
+  },
+  {
+    type: 'bar_chart',
+    dataSource: 'interventions_by_technician',
+    title: 'Interventions par technicien',
+    size: 'medium',
+    position: { row: 2, col: 2 },
+    visible: true,
+    chartOptions: {
+      showLegend: false,
+      showGrid: true,
+      showTooltip: true,
+      showValues: true,
+    },
+  },
+  {
+    type: 'list',
+    dataSource: 'recent_interventions',
+    title: 'Interventions récentes',
+    size: 'medium',
+    position: { row: 3, col: 0 },
+    visible: true,
+  },
+  {
+    type: 'list',
+    dataSource: 'overdue_interventions',
+    title: 'Interventions en retard',
+    size: 'medium',
+    position: { row: 3, col: 2 },
+    visible: true,
+  },
+];
+
+export const DEFAULT_DASHBOARD_PREFERENCES: Omit<
+  DashboardPreferences,
+  'id' | 'userId' | 'establishmentId' | 'createdAt' | 'updatedAt'
+> = {
+  widgets: DEFAULT_WIDGET_CONFIGS.map((config, index) => ({
+    ...config,
+    id: `widget_${index}`,
+  })),
+  layout: 'grid',
+  columns: 4,
+  defaultDateRange: 'month',
+  autoRefresh: false,
+  refreshInterval: 300, // 5 minutes
+};

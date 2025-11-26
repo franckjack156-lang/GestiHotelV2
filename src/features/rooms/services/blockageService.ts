@@ -134,11 +134,8 @@ export const createBlockageFromIntervention = async (
     const blockagesRef = getBlockagesCollection(establishmentId);
     const docRef = await addDoc(blockagesRef, blockageData);
 
-    console.log(`✅ Blockage created: ${docRef.id} for room ${room.number}`);
-
     return docRef.id;
   } catch (error) {
-    console.error('Error creating blockage:', error);
     throw error;
   }
 };
@@ -196,10 +193,7 @@ export const resolveBlockage = async (
       isActive: false,
       updatedAt: serverTimestamp(),
     });
-
-    console.log(`✅ Blockage resolved: ${blockageId} (${duration.days}d ${duration.hours}h)`);
   } catch (error) {
-    console.error('Error resolving blockage:', error);
     throw error;
   }
 };
@@ -222,14 +216,12 @@ export const resolveBlockageForIntervention = async (
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      console.log(`No active blockage found for intervention ${interventionId}`);
       return;
     }
 
     const blockageDoc = snapshot.docs[0];
     await resolveBlockage(blockageDoc.id, establishmentId);
   } catch (error) {
-    console.error('Error resolving blockage for intervention:', error);
     throw error;
   }
 };
@@ -259,7 +251,6 @@ export const getActiveBlockages = async (
       ...doc.data(),
     })) as RoomBlockage[];
   } catch (error) {
-    console.error('Error getting active blockages:', error);
     throw error;
   }
 };
@@ -286,7 +277,6 @@ export const getBlockageHistory = async (
       ...doc.data(),
     })) as RoomBlockage[];
   } catch (error) {
-    console.error('Error getting blockage history:', error);
     throw error;
   }
 };
@@ -357,7 +347,6 @@ export const getBlockageStats = async (establishmentId: string): Promise<Blockag
       byInterventionType: byInterventionType as Record<string, number>,
     };
   } catch (error) {
-    console.error('Error getting blockage stats:', error);
     throw error;
   }
 };
@@ -416,7 +405,6 @@ export const getTopBlockedRooms = async (
     // Sort by blockage count and limit
     return topRooms.sort((a, b) => b.blockageCount - a.blockageCount).slice(0, limitCount);
   } catch (error) {
-    console.error('Error getting top blocked rooms:', error);
     throw error;
   }
 };
@@ -444,14 +432,12 @@ export const subscribeToActiveBlockages = (
         callback(blockages);
       },
       (error: Error) => {
-        console.error('Error in blockages subscription:', error);
         if (errorCallback) {
           errorCallback(error);
         }
       }
     );
   } catch (error) {
-    console.error('Error subscribing to blockages:', error);
     throw error;
   }
 };
@@ -471,10 +457,7 @@ export const updateBlockage = async (
       ...data,
       updatedAt: serverTimestamp(),
     });
-
-    console.log(`✅ Blockage updated: ${blockageId}`);
   } catch (error) {
-    console.error('Error updating blockage:', error);
     throw error;
   }
 };
@@ -489,10 +472,7 @@ export const deleteBlockage = async (
   try {
     const blockageRef = doc(db, `establishments/${establishmentId}/room_blockages/${blockageId}`);
     await deleteDoc(blockageRef);
-
-    console.log(`✅ Blockage deleted: ${blockageId}`);
   } catch (error) {
-    console.error('Error deleting blockage:', error);
     throw error;
   }
 };

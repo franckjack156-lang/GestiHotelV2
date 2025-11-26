@@ -1,19 +1,13 @@
 /**
- * ============================================================================
- * NOTIFICATION CENTER - COMPLET
- * ============================================================================
+ * NotificationCenterPage
  *
- * Centre de notifications avec :
- * - Liste notifications temps réel
- * - Marquer comme lu
- * - Filtres par type
- * - Groupement par date
- * - Actions rapides
+ * Centre de notifications avec liste temps réel, filtres, et actions
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, CheckCheck } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, Filter } from 'lucide-react';
+import { useNotifications } from '@/features/notifications/hooks/useNotifications';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import {
@@ -23,81 +17,69 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import { EmptyState, LoadingSkeleton } from '@/shared/components/ui-extended';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import notificationService, {
-  type Notification,
-  type NotificationType,
-} from '@/shared/services/notificationService';
+import type { Notification, NotificationType } from '@/features/notifications/types/notification.types';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { Timestamp } from 'firebase/firestore';
 
-// ============================================================================
-// TYPES DE NOTIFICATIONS
-// ============================================================================
-
+// Types de notifications avec labels
 const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
+  intervention_created: 'Intervention créée',
   intervention_assigned: 'Intervention assignée',
-  intervention_updated: 'Intervention modifiée',
+  intervention_status_changed: 'Statut modifié',
   intervention_completed: 'Intervention terminée',
-  intervention_urgent: 'Intervention urgente',
+  intervention_comment: 'Nouveau commentaire',
+  intervention_overdue: 'Intervention en retard',
+  sla_at_risk: 'SLA à risque',
+  sla_breached: 'SLA dépassé',
   message_received: 'Nouveau message',
-  status_changed: 'Statut modifié',
-  room_blocked: 'Chambre bloquée',
-  room_unblocked: 'Chambre débloquée',
   mention: 'Mention',
-  validation_required: 'Validation requise',
+  system: 'Système',
+  other: 'Autre',
 };
-
-// ============================================================================
-// COMPONENT
-// ============================================================================
 
 export const NotificationCenterPage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    notifications,
+    unreadCount,
+    stats,
+    isLoading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    deleteAllRead,
+    applyFilters,
+    resetFilters,
+  } = useNotifications({
+    autoLoad: true,
+    realTime: true,
+    limitCount: 100,
+  });
 
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState<string>('all');
   const [filterRead, setFilterRead] = useState<string>('all');
 
-  // Charger les notifications
-  useEffect(() => {
-    if (!user?.id) return;
+  // Appliquer les filtres
+  const handleFilterTypeChange = (value: string) => {
+    setFilterType(value);
+    if (value === 'all') {
+      applyFilters({ type: undefined });
+    } else {
+      applyFilters({ type: value as NotificationType });
+    }
+  };
 
-    const unsubscribe = notificationService.subscribeToNotifications(
-      user.id,
-      data => {
-        setNotifications(data);
-        setIsLoading(false);
-      },
-      100 // Plus de notifications
-    );
-
-    return () => unsubscribe();
-  }, [user?.id]);
-
-  // Filtrer les notifications
-  const filteredNotifications = useMemo(() => {
-    return notifications.filter(notif => {
-      // Filtre par type
-      if (filterType !== 'all' && notif.type !== filterType) {
-        return false;
-      }
-
-      // Filtre par statut lu/non lu
-      if (filterRead === 'unread' && notif.isRead) {
-        return false;
-      }
-      if (filterRead === 'read' && !notif.isRead) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [notifications, filterType, filterRead]);
+  const handleFilterReadChange = (value: string) => {
+    setFilterRead(value);
+    if (value === 'all') {
+      applyFilters({ read: undefined });
+    } else {
+      applyFilters({ read: value === 'read' });
+    }
+  };
 
   // Grouper par date
   const groupedNotifications = useMemo(() => {
@@ -107,8 +89,12 @@ export const NotificationCenterPage = () => {
       older: [],
     };
 
-    filteredNotifications.forEach(notif => {
-      const date = notif.createdAt.toDate();
+    notifications.forEach(notif => {
+      if (!notif.createdAt) return;
+
+      const date = notif.createdAt instanceof Timestamp
+        ? notif.createdAt.toDate()
+        : new Date(notif.createdAt);
 
       if (isToday(date)) {
         groups.today.push(notif);
@@ -120,170 +106,226 @@ export const NotificationCenterPage = () => {
     });
 
     return groups;
-  }, [filteredNotifications]);
+  }, [notifications]);
 
-  // Marquer comme lue
-  const handleMarkAsRead = async (notificationId: string) => {
+  // Gérer le clic sur une notification
+  const handleNotificationClick = async (notification: Notification) => {
+    // Marquer comme lue si non lue
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+
+    // Naviguer vers l'URL d'action si définie
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    } else if (notification.data?.interventionId) {
+      navigate(`/app/interventions/${notification.data.interventionId}`);
+    }
+  };
+
+  // Gérer la suppression
+  const handleDelete = async (notificationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
-      await notificationService.markAsRead(notificationId);
-      toast.success('Marquée comme lue');
+      await deleteNotification(notificationId);
+      toast.success('Notification supprimée');
     } catch {
-      toast.error('Erreur');
+      toast.error('Erreur lors de la suppression');
     }
   };
 
   // Marquer toutes comme lues
   const handleMarkAllAsRead = async () => {
-    if (!user?.id) return;
-
     try {
-      await notificationService.markAllAsRead(user.id);
-      toast.success('Toutes marquées comme lues');
+      await markAllAsRead();
+      toast.success('Toutes les notifications ont été marquées comme lues');
     } catch {
-      toast.error('Erreur');
+      toast.error('Erreur lors de la mise à jour');
     }
   };
 
-  // Cliquer sur une notification
-  const handleNotificationClick = async (notification: Notification) => {
-    // Marquer comme lue si non lue
-    if (!notification.isRead) {
-      await handleMarkAsRead(notification.id);
-    }
-
-    // Naviguer vers la ressource liée
-    if (notification.relatedType === 'intervention' && notification.relatedId) {
-      navigate(`/app/interventions/${notification.relatedId}`);
+  // Supprimer toutes les lues
+  const handleDeleteAllRead = async () => {
+    try {
+      await deleteAllRead();
+      toast.success('Notifications lues supprimées');
+    } catch {
+      toast.error('Erreur lors de la suppression');
     }
   };
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = notifications.length;
-    const unread = notifications.filter(n => !n.isRead).length;
-    const urgent = notifications.filter(n => n.type === 'intervention_urgent' && !n.isRead).length;
-
-    return { total, unread, urgent };
-  }, [notifications]);
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <Bell className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-lg text-gray-900 font-medium mb-2">Erreur de chargement</p>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoading) {
-    return <LoadingSkeleton type="card" count={5} />;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-gray-600">Chargement des notifications...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {stats.unread > 0
-              ? `${stats.unread} notification(s) non lue(s)`
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <Bell className="w-8 h-8" />
+            Notifications
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {unreadCount > 0
+              ? `${unreadCount} notification(s) non lue(s)`
               : 'Aucune notification non lue'}
           </p>
         </div>
 
         <div className="flex gap-2">
-          {stats.unread > 0 && (
+          {unreadCount > 0 && (
             <Button onClick={handleMarkAllAsRead}>
-              <CheckCheck size={16} className="mr-2" />
+              <CheckCheck className="w-4 h-4 mr-2" />
               Tout marquer comme lu
+            </Button>
+          )}
+          {stats && stats.total - stats.unread > 0 && (
+            <Button variant="outline" onClick={handleDeleteAllRead}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Supprimer les lues
             </Button>
           )}
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+      {stats && (
+        <div className="grid md:grid-cols-3 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                </div>
+                <Bell className="text-gray-400 w-8 h-8" />
               </div>
-              <Bell className="text-gray-400" size={32} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Non lues</p>
-                <p className="text-2xl font-bold text-indigo-600">{stats.unread}</p>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Non lues</p>
+                  <p className="text-2xl font-bold text-blue-600">{stats.unread}</p>
+                </div>
+                <Bell className="text-blue-400 w-8 h-8" />
               </div>
-              <Bell className="text-indigo-400" size={32} />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Urgentes</p>
-                <p className="text-2xl font-bold text-red-600">{stats.urgent}</p>
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Taux de lecture</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats.readRate.toFixed(0)}%
+                  </p>
+                </div>
+                <CheckCheck className="text-green-400 w-8 h-8" />
               </div>
-              <Bell className="text-red-400" size={32} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filtres */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <Select value={filterType} onValueChange={setFilterType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                {Object.entries(NOTIFICATION_TYPE_LABELS).map(([key, label]) => (
-                  <SelectItem key={key} value={key}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <CardContent className="p-6">
+          <div className="flex items-center gap-4">
+            <Filter className="w-5 h-5 text-gray-600" />
+            <div className="grid md:grid-cols-2 gap-4 flex-1">
+              <Select value={filterType} onValueChange={handleFilterTypeChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tous les types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les types</SelectItem>
+                  {Object.entries(NOTIFICATION_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-            <Select value={filterRead} onValueChange={setFilterRead}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
-                <SelectItem value="unread">Non lues</SelectItem>
-                <SelectItem value="read">Lues</SelectItem>
-              </SelectContent>
-            </Select>
+              <Select value={filterRead} onValueChange={handleFilterReadChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Toutes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes</SelectItem>
+                  <SelectItem value="unread">Non lues</SelectItem>
+                  <SelectItem value="read">Lues</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(filterType !== 'all' || filterRead !== 'all') && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setFilterType('all');
+                  setFilterRead('all');
+                  resetFilters();
+                }}
+              >
+                Réinitialiser
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Liste des notifications */}
-      {filteredNotifications.length === 0 ? (
-        <EmptyState
-          icon={<Bell size={48} />}
-          title="Aucune notification"
-          description="Vous n'avez aucune notification pour le moment"
-        />
+      {notifications.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Aucune notification
+            </h3>
+            <p className="text-gray-600">
+              Vous n'avez aucune notification pour le moment
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-6">
           {/* Aujourd'hui */}
           {groupedNotifications.today.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-3">Aujourd'hui</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">Aujourd'hui</h3>
               <div className="space-y-2">
                 {groupedNotifications.today.map(notification => (
                   <NotificationItem
                     key={notification.id}
                     notification={notification}
                     onClick={() => handleNotificationClick(notification)}
-                    onMarkAsRead={() => handleMarkAsRead(notification.id)}
+                    onMarkAsRead={() => markAsRead(notification.id)}
+                    onDelete={(e) => handleDelete(notification.id, e)}
                   />
                 ))}
               </div>
@@ -293,14 +335,15 @@ export const NotificationCenterPage = () => {
           {/* Hier */}
           {groupedNotifications.yesterday.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-3">Hier</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">Hier</h3>
               <div className="space-y-2">
                 {groupedNotifications.yesterday.map(notification => (
                   <NotificationItem
                     key={notification.id}
                     notification={notification}
                     onClick={() => handleNotificationClick(notification)}
-                    onMarkAsRead={() => handleMarkAsRead(notification.id)}
+                    onMarkAsRead={() => markAsRead(notification.id)}
+                    onDelete={(e) => handleDelete(notification.id, e)}
                   />
                 ))}
               </div>
@@ -310,14 +353,15 @@ export const NotificationCenterPage = () => {
           {/* Plus ancien */}
           {groupedNotifications.older.length > 0 && (
             <div>
-              <h3 className="font-semibold mb-3">Plus ancien</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">Plus ancien</h3>
               <div className="space-y-2">
                 {groupedNotifications.older.map(notification => (
                   <NotificationItem
                     key={notification.id}
                     notification={notification}
                     onClick={() => handleNotificationClick(notification)}
-                    onMarkAsRead={() => handleMarkAsRead(notification.id)}
+                    onMarkAsRead={() => markAsRead(notification.id)}
+                    onDelete={(e) => handleDelete(notification.id, e)}
                   />
                 ))}
               </div>
@@ -329,66 +373,85 @@ export const NotificationCenterPage = () => {
   );
 };
 
-// ============================================================================
-// NOTIFICATION ITEM
-// ============================================================================
-
+// Composant NotificationItem
 interface NotificationItemProps {
   notification: Notification;
   onClick: () => void;
   onMarkAsRead: () => void;
+  onDelete: (e: React.MouseEvent) => void;
 }
 
-const NotificationItem = ({ notification, onClick, onMarkAsRead }: NotificationItemProps) => {
-  const icon = notificationService.NOTIFICATION_ICONS[notification.type];
+const NotificationItem = ({
+  notification,
+  onClick,
+  onMarkAsRead,
+  onDelete,
+}: NotificationItemProps) => {
+  const createdDate = notification.createdAt instanceof Timestamp
+    ? notification.createdAt.toDate()
+    : new Date(notification.createdAt);
 
   return (
     <Card
-      className={`cursor-pointer transition-colors ${
-        !notification.isRead ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200' : ''
+      className={`cursor-pointer transition-colors hover:bg-gray-50 ${
+        !notification.read ? 'bg-blue-50 border-blue-200' : ''
       }`}
       onClick={onClick}
     >
       <CardContent className="p-4">
         <div className="flex gap-4">
-          {/* Icon */}
-          <div className="text-2xl">{icon}</div>
+          {/* Icône */}
+          <div className="flex-shrink-0">
+            <Bell className={`w-6 h-6 ${!notification.read ? 'text-blue-600' : 'text-gray-400'}`} />
+          </div>
 
           {/* Contenu */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-1">
-              <h4 className="font-medium">{notification.title}</h4>
-              <span className="text-xs text-gray-500">
-                {formatDistanceToNow(notification.createdAt.toDate(), {
+              <h4 className="font-medium text-gray-900">{notification.title}</h4>
+              <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                {formatDistanceToNow(createdDate, {
                   locale: fr,
                   addSuffix: true,
                 })}
               </span>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{notification.message}</p>
+            <p className="text-sm text-gray-600">{notification.body}</p>
+            {notification.actionLabel && (
+              <span className="text-xs text-blue-600 mt-1 inline-block">
+                {notification.actionLabel}
+              </span>
+            )}
           </div>
 
           {/* Actions */}
-          {!notification.isRead && (
+          <div className="flex items-center gap-1">
+            {!notification.read && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={e => {
+                  e.stopPropagation();
+                  onMarkAsRead();
+                }}
+                title="Marquer comme lue"
+              >
+                <Check className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={e => {
-                e.stopPropagation();
-                onMarkAsRead();
-              }}
+              onClick={onDelete}
+              title="Supprimer"
             >
-              <Check size={16} />
+              <Trash2 className="w-4 h-4 text-red-500" />
             </Button>
-          )}
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 };
-
-// ============================================================================
-// EXPORT
-// ============================================================================
 
 export default NotificationCenterPage;

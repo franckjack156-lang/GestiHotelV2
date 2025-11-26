@@ -172,25 +172,25 @@ export const InterventionDetailsPage = () => {
       ======================================================================== */}
       <div className="bg-white dark:bg-gray-800 border-b sticky top-0 z-10 shadow-sm">
         {/* Header avec actions */}
-        <div className="px-6 py-4">
-          <div className="flex items-start justify-between gap-4">
+        <div className="px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
             {/* Gauche - Retour + Titre */}
-            <div className="flex items-start gap-4 flex-1 min-w-0">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/app/interventions')}>
+            <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/app/interventions')} className="flex-shrink-0">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white line-clamp-2 sm:truncate">
                   {intervention.title}
                 </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 truncate">
                   {intervention.reference || `#${intervention.id.slice(0, 8)}`}
                 </p>
               </div>
             </div>
 
             {/* Droite - Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-wrap sm:flex-nowrap">
               {/* Actions rapides de statut */}
               {canStart && (
                 <Button
@@ -198,8 +198,8 @@ export const InterventionDetailsPage = () => {
                   className="bg-green-600 hover:bg-green-700"
                   size="sm"
                 >
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  Démarrer
+                  <PlayCircle className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Démarrer</span>
                 </Button>
               )}
               {canComplete && (
@@ -208,8 +208,8 @@ export const InterventionDetailsPage = () => {
                   className="bg-blue-600 hover:bg-blue-700"
                   size="sm"
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Terminer
+                  <CheckCircle2 className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Terminer</span>
                 </Button>
               )}
               {canValidate && (
@@ -218,12 +218,12 @@ export const InterventionDetailsPage = () => {
                   className="bg-purple-600 hover:bg-purple-700"
                   size="sm"
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Valider
+                  <CheckCircle2 className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Valider</span>
                 </Button>
               )}
 
-              {/* Block/Unblock Room Button */}
+              {/* Block/Unblock Room Button - Masqué sur très petit mobile */}
               {intervention.roomNumber && currentRoom && (
                 <>
                   {currentRoom.isBlocked ? (
@@ -232,10 +232,10 @@ export const InterventionDetailsPage = () => {
                       onClick={handleUnblockRoom}
                       disabled={isBlockingRoom}
                       size="sm"
-                      className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                      className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-950 hidden xs:flex"
                     >
-                      <Unlock className="mr-2 h-4 w-4" />
-                      Débloquer
+                      <Unlock className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Débloquer</span>
                     </Button>
                   ) : (
                     <Button
@@ -243,10 +243,10 @@ export const InterventionDetailsPage = () => {
                       onClick={() => setShowBlockRoomDialog(true)}
                       disabled={isBlockingRoom}
                       size="sm"
-                      className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                      className="border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 hidden xs:flex"
                     >
-                      <Lock className="mr-2 h-4 w-4" />
-                      Bloquer
+                      <Lock className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Bloquer</span>
                     </Button>
                   )}
                 </>
@@ -313,8 +313,8 @@ export const InterventionDetailsPage = () => {
         </div>
 
         {/* Informations rapides (badges et infos clés) */}
-        <div className="px-6 pb-4">
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="px-3 sm:px-6 pb-3 sm:pb-4">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* eslint-disable @typescript-eslint/no-explicit-any */}
             <StatusBadgeDropdown
               currentStatus={intervention.status as any}
@@ -328,21 +328,22 @@ export const InterventionDetailsPage = () => {
             <TypeBadge type={intervention.type} />
 
             {intervention.isUrgent && (
-              <Badge variant="destructive" className="bg-red-600">
+              <Badge variant="destructive" className="bg-red-600 text-xs">
                 URGENT
               </Badge>
             )}
             {intervention.isBlocking && (
-              <Badge variant="destructive" className="bg-orange-600">
+              <Badge variant="destructive" className="bg-orange-600 text-xs">
                 BLOQUANT
               </Badge>
             )}
 
-            <span className="text-sm text-gray-500">•</span>
+            {/* Séparateur visible uniquement sur desktop */}
+            <span className="hidden sm:inline text-sm text-gray-500">•</span>
 
             {intervention.roomNumber && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
+                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
                   Chambre {intervention.roomNumber}
                 </span>
                 {currentRoom && (
@@ -353,15 +354,16 @@ export const InterventionDetailsPage = () => {
 
             {intervention.assignedToName && (
               <>
-                <span className="text-sm text-gray-500">•</span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="hidden sm:inline text-sm text-gray-500">•</span>
+                <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate max-w-[150px] sm:max-w-none">
                   Assigné à {intervention.assignedToName}
                 </span>
               </>
             )}
 
-            <span className="text-sm text-gray-500">•</span>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
+            {/* Date visible uniquement sur desktop */}
+            <span className="hidden md:inline text-sm text-gray-500">•</span>
+            <span className="hidden md:inline text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Créé{' '}
               {intervention.createdAt &&
                 format(intervention.createdAt.toDate(), 'dd MMM yyyy', { locale: fr })}
@@ -373,55 +375,57 @@ export const InterventionDetailsPage = () => {
       {/* ========================================================================
           ONGLETS AVEC CONTENU
       ======================================================================== */}
-      <div className="px-6 py-6">
-        <Tabs defaultValue="details" className="space-y-6">
-          {/* Liste des onglets */}
-          <TabsList className="w-full justify-start h-auto p-1 bg-gray-100 dark:bg-gray-800">
-            <TabsTrigger value="details" className="gap-2">
-              <Info className="h-4 w-4" />
-              Détails
-            </TabsTrigger>
-
-            {hasFeature('comments') && (
-              <TabsTrigger value="comments" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Commentaires
+      <div className="px-3 sm:px-6 py-4 sm:py-6">
+        <Tabs defaultValue="details" className="space-y-4 sm:space-y-6">
+          {/* Liste des onglets - Scrollable sur mobile */}
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 scrollbar-hide">
+            <TabsList className="inline-flex w-max sm:w-full justify-start h-auto p-1 bg-gray-100 dark:bg-gray-800">
+              <TabsTrigger value="details" className="gap-1.5 sm:gap-2 whitespace-nowrap">
+                <Info className="h-4 w-4 flex-shrink-0" />
+                <span className="text-xs sm:text-sm">Détails</span>
               </TabsTrigger>
-            )}
 
-            {hasFeature('photos') && (
-              <TabsTrigger value="photos" className="gap-2">
-                <ImageIcon className="h-4 w-4" />
-                Photos
-                {intervention.photosCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1">
-                    {intervention.photosCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            )}
+              {hasFeature('comments') && (
+                <TabsTrigger value="comments" className="gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Commentaires</span>
+                </TabsTrigger>
+              )}
 
-            {hasFeature('parts') && (
-              <TabsTrigger value="parts" className="gap-2">
-                <Package className="h-4 w-4" />
-                Pièces
-              </TabsTrigger>
-            )}
+              {hasFeature('photos') && (
+                <TabsTrigger value="photos" className="gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <ImageIcon className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Photos</span>
+                  {intervention.photosCount > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 text-[10px] sm:text-xs">
+                      {intervention.photosCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              )}
 
-            {hasFeature('timeTracking') && (
-              <TabsTrigger value="time" className="gap-2">
-                <Clock className="h-4 w-4" />
-                Temps
-              </TabsTrigger>
-            )}
+              {hasFeature('parts') && (
+                <TabsTrigger value="parts" className="gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <Package className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Pièces</span>
+                </TabsTrigger>
+              )}
 
-            {hasFeature('history') && (
-              <TabsTrigger value="history" className="gap-2">
-                <History className="h-4 w-4" />
-                Historique
-              </TabsTrigger>
-            )}
-          </TabsList>
+              {hasFeature('timeTracking') && (
+                <TabsTrigger value="time" className="gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Temps</span>
+                </TabsTrigger>
+              )}
+
+              {hasFeature('history') && (
+                <TabsTrigger value="history" className="gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <History className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Historique</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
 
           {/* Contenu des onglets */}
           <TabsContent value="details" className="mt-6">

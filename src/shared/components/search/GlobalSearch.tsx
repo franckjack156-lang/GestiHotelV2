@@ -32,6 +32,7 @@ import { useInterventions } from '@/features/interventions/hooks/useIntervention
 import { useUsers } from '@/features/users/hooks/useUsers';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
+import { useSearch } from './SearchContext';
 
 interface SearchResult {
   id: string;
@@ -106,7 +107,7 @@ const PAGES: SearchResult[] = [
 
 export const GlobalSearch = () => {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const { isOpen, closeSearch, toggleSearch } = useSearch();
   const [query, setQuery] = useState('');
   const { establishmentId } = useCurrentEstablishment();
 
@@ -122,13 +123,13 @@ export const GlobalSearch = () => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((open) => !open);
+        toggleSearch();
       }
     };
 
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
-  }, []);
+  }, [toggleSearch]);
 
   /**
    * Convertir les interventions en résultats de recherche
@@ -217,13 +218,13 @@ export const GlobalSearch = () => {
    * Naviguer vers un résultat
    */
   const handleSelect = (url: string) => {
-    setOpen(false);
+    closeSearch();
     setQuery('');
     navigate(url);
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
+    <CommandDialog open={isOpen} onOpenChange={closeSearch}>
       <CommandInput
         placeholder="Rechercher des interventions, utilisateurs, chambres..."
         value={query}

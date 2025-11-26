@@ -11,7 +11,7 @@ import { fr } from 'date-fns/locale';
 import { ReferenceDisplay } from '@/shared/components/ReferenceDisplay';
 import { useInterventionActions } from '../../hooks/useInterventionActions';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { QuickNotesEditor, TechnicianActions } from '../quick-edit';
+import { QuickNotesEditor, TechnicianActions, QuickSchedulingEditor } from '../quick-edit';
 import type { Intervention } from '../../types/intervention.types';
 
 interface DetailsTabProps {
@@ -42,6 +42,16 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
   const handleStatusChange = async (newStatus: string): Promise<boolean> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await changeStatus(intervention.id, { newStatus: newStatus as any });
+  };
+
+  const handleSaveScheduling = async (
+    scheduledAt: Date | null,
+    estimatedDuration: number | null
+  ): Promise<boolean> => {
+    return await updateIntervention(intervention.id, {
+      scheduledAt: scheduledAt || undefined,
+      estimatedDuration: estimatedDuration || undefined,
+    });
   };
 
   return (
@@ -133,6 +143,13 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
             isUpdating={isUpdating}
           />
         )}
+
+        {/* Planification - Édition rapide */}
+        <QuickSchedulingEditor
+          intervention={intervention}
+          onSave={handleSaveScheduling}
+          canEdit={canEdit || isTechnician}
+        />
 
         {/* Assignation */}
         <Card>

@@ -124,8 +124,6 @@ export const EstablishmentFeaturesPage = () => {
    * Activer une fonctionnalité et toutes ses dépendances
    */
   const enableFeatureWithDependencies = (featureKey: keyof EstablishmentFeatures) => {
-    // TODO: feature unused but kept for potential future use
-    // const feature = FEATURES_CATALOG.find(f => f.key === featureKey);
     const newFeatures = { ...features };
 
     // Activer récursivement toutes les dépendances
@@ -151,7 +149,6 @@ export const EstablishmentFeaturesPage = () => {
   /**
    * Toggle une feature
    */
-  // TODO: feature parameter unused in enableFeatureWithDependencies
   const toggleFeature = (featureKey: keyof EstablishmentFeatures) => {
     const feature = FEATURES_CATALOG.find(f => f.key === featureKey);
 
@@ -230,10 +227,11 @@ export const EstablishmentFeaturesPage = () => {
 
       toast.success('Fonctionnalités mises à jour avec succès');
       setHasChanges(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating features:', error);
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
       toast.error('Erreur lors de la mise à jour', {
-        description: error.message,
+        description: message,
       });
     } finally {
       setSaving(false);
@@ -262,7 +260,7 @@ export const EstablishmentFeaturesPage = () => {
    * Obtenir le composant icône
    */
   const getIcon = (iconName: string) => {
-    const Icon = (LucideIcons as any)[iconName];
+    const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[iconName];
     return Icon ? <Icon size={20} /> : <AlertCircle size={20} />;
   };
 

@@ -94,41 +94,42 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
 
   return (
     <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-300">
-      <CardHeader className="space-y-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1.5">
+      <CardHeader className="space-y-3 px-3 sm:px-6 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="space-y-1.5 min-w-0">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm">
-                <UserCircle className="h-5 w-5 text-white" />
+              <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm flex-shrink-0">
+                <UserCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <CardTitle className="text-2xl">Informations personnelles</CardTitle>
+              <CardTitle className="text-lg sm:text-2xl truncate">Informations personnelles</CardTitle>
             </div>
-            <CardDescription className="text-base">
+            <CardDescription className="text-sm sm:text-base">
               Gérez vos informations de profil et vos coordonnées
             </CardDescription>
           </div>
           {isDirty && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-full">
+            <div className="flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-full flex-shrink-0">
               <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                Modifications non enregistrées
+              <span className="text-xs font-medium text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                <span className="hidden sm:inline">Modifications non enregistrées</span>
+                <span className="sm:hidden">Non enregistré</span>
               </span>
             </div>
           )}
         </div>
       </CardHeader>
 
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+      <CardContent className="px-3 sm:px-6 pb-4 sm:pb-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
           {/* Informations principales */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+              <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+              <h3 className="font-semibold text-xs sm:text-sm uppercase tracking-wide text-muted-foreground">
                 Informations principales
               </h3>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2 group">
                 <Label
                   htmlFor="displayName"
@@ -185,14 +186,14 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
           </div>
 
           {/* Coordonnées professionnelles */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b">
-              <Briefcase className="h-4 w-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+              <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+              <h3 className="font-semibold text-xs sm:text-sm uppercase tracking-wide text-muted-foreground">
                 Coordonnées professionnelles
               </h3>
             </div>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label
                   htmlFor="phoneNumber"
@@ -222,7 +223,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                 />
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="department" className="flex items-center gap-2 text-sm font-medium">
                   <Building className="h-3.5 w-3.5 text-orange-500" />
                   Département
@@ -238,21 +239,23 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-6 border-t">
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Les modifications seront visibles immédiatement
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 pt-4 sm:pt-6 border-t">
+            <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
+              <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Les modifications seront visibles immédiatement</span>
+              <span className="sm:hidden">Visibles immédiatement</span>
             </p>
             <Button
               type="submit"
               disabled={isUpdating || !isDirty}
               size="lg"
-              className="relative overflow-hidden group min-w-[160px]"
+              className="relative overflow-hidden group w-full sm:w-auto sm:min-w-[160px]"
             >
               {isUpdating ? (
                 <>
                   <Loader2 size={16} className="mr-2 animate-spin" />
-                  Enregistrement...
+                  <span className="hidden sm:inline">Enregistrement...</span>
+                  <span className="sm:hidden">Enregistrement...</span>
                 </>
               ) : (
                 <>

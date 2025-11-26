@@ -196,8 +196,8 @@ export const sortInterventions = (
   order: 'asc' | 'desc'
 ): Intervention[] => {
   const sorted = [...interventions].sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
+    let aValue: string | number;
+    let bValue: string | number;
 
     switch (field) {
       case 'createdAt':
@@ -222,8 +222,12 @@ export const sortInterventions = (
         bValue = b.title.toLowerCase();
         break;
       default:
-        aValue = a[field as keyof Intervention];
-        bValue = b[field as keyof Intervention];
+        {
+          const defaultValue = a[field as keyof Intervention];
+          aValue = typeof defaultValue === 'string' || typeof defaultValue === 'number' ? defaultValue : '';
+          const defaultValueB = b[field as keyof Intervention];
+          bValue = typeof defaultValueB === 'string' || typeof defaultValueB === 'number' ? defaultValueB : '';
+        }
     }
 
     if (aValue < bValue) return order === 'asc' ? -1 : 1;
@@ -249,14 +253,14 @@ export const generateExportFileName = (
 /**
  * Valider les données d'intervention avant création
  */
-export const validateInterventionData = (data: any): { valid: boolean; errors: string[] } => {
+export const validateInterventionData = (data: Record<string, unknown>): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
-  if (!data.title || data.title.trim().length < 3) {
+  if (!data.title || typeof data.title !== 'string' || data.title.trim().length < 3) {
     errors.push('Le titre doit contenir au moins 3 caractères');
   }
 
-  if (!data.description || data.description.trim().length < 10) {
+  if (!data.description || typeof data.description !== 'string' || data.description.trim().length < 10) {
     errors.push('La description doit contenir au moins 10 caractères');
   }
 
@@ -272,11 +276,11 @@ export const validateInterventionData = (data: any): { valid: boolean; errors: s
     errors.push('La priorité est requise');
   }
 
-  if (!data.location || data.location.trim().length < 3) {
+  if (!data.location || typeof data.location !== 'string' || data.location.trim().length < 3) {
     errors.push('La localisation doit contenir au moins 3 caractères');
   }
 
-  if (data.photos && data.photos.length > 5) {
+  if (data.photos && Array.isArray(data.photos) && data.photos.length > 5) {
     errors.push('Vous ne pouvez pas uploader plus de 5 photos');
   }
 

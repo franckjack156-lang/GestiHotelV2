@@ -12,15 +12,16 @@ import { Footer } from './Footer';
 import { useApplyPreferences } from '@/features/users/hooks/useApplyPreferences';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 import { OfflineBanner } from '@/shared/components/indicators/NetworkIndicator';
-import { GlobalSearch } from '@/shared/components/search';
+import { GlobalSearch, SearchProvider } from '@/shared/components/search';
 
 export const MainLayout = () => {
   const { displayPreferences, updateDisplayPreferences } = useUserPreferences();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Fermé par défaut sur mobile
 
-  // Appliquer l'état initial du sidebar depuis les préférences
+  // Appliquer l'état initial du sidebar depuis les préférences (desktop seulement)
   useEffect(() => {
-    if (displayPreferences?.sidebarCollapsed !== undefined) {
+    const isDesktop = window.innerWidth >= 1024; // lg breakpoint
+    if (isDesktop && displayPreferences?.sidebarCollapsed !== undefined) {
       setSidebarOpen(!displayPreferences.sidebarCollapsed);
     }
   }, [displayPreferences?.sidebarCollapsed]);
@@ -32,37 +33,42 @@ export const MainLayout = () => {
   const handleToggleSidebar = () => {
     const newState = !sidebarOpen;
     setSidebarOpen(newState);
-    updateDisplayPreferences({ sidebarCollapsed: !newState });
+    const isDesktop = window.innerWidth >= 1024;
+    if (isDesktop) {
+      updateDisplayPreferences({ sidebarCollapsed: !newState });
+    }
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
-      {/* Offline Banner - affiché en haut de tout */}
-      <OfflineBanner />
+    <SearchProvider>
+      <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+        {/* Offline Banner - affiché en haut de tout */}
+        <OfflineBanner />
 
-      {/* Global Search - Cmd+K */}
-      <GlobalSearch />
+        {/* Global Search - Cmd+K */}
+        <GlobalSearch />
 
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={sidebarOpen}
-        isCollapsed={displayPreferences?.sidebarCollapsed || false}
-        onClose={() => setSidebarOpen(false)}
-      />
+        {/* Sidebar */}
+        <Sidebar
+          isOpen={sidebarOpen}
+          isCollapsed={displayPreferences?.sidebarCollapsed || false}
+          onClose={() => setSidebarOpen(false)}
+        />
 
-      {/* Contenu principal */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Header */}
-        <Header onMenuClick={handleToggleSidebar} />
+        {/* Contenu principal */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Header */}
+          <Header onMenuClick={handleToggleSidebar} />
 
-        {/* Contenu de la page */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
-        </main>
+          {/* Contenu de la page - Responsive padding */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8">
+            <Outlet />
+          </main>
 
-        {/* Footer */}
-        <Footer />
+          {/* Footer */}
+          <Footer />
+        </div>
       </div>
-    </div>
+    </SearchProvider>
   );
 };

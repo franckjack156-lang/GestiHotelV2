@@ -35,8 +35,10 @@ export interface Intervention extends TimestampedDocument {
   building?: string;
 
   // Assignation
-  assignedTo?: string; // userId du technicien
-  assignedToName?: string; // Nom du technicien (dénormalisé)
+  assignedTo?: string; // userId du technicien (deprecated - utiliser assignedToIds)
+  assignedToName?: string; // Nom du technicien (dénormalisé - deprecated)
+  assignedToIds?: string[]; // Liste des userIds des techniciens assignés
+  assignedToNames?: string[]; // Noms des techniciens assignés (dénormalisés)
   assignedAt?: Timestamp;
   createdBy: string; // userId du créateur
   createdByName?: string; // Nom du créateur (dénormalisé)
@@ -86,6 +88,13 @@ export interface Intervention extends TimestampedDocument {
   isDeleted: boolean;
   deletedAt?: Timestamp;
   deletedBy?: string;
+
+  // Récurrence
+  isRecurring?: boolean;
+  recurrenceConfig?: RecurrenceConfig;
+  recurrenceGroupId?: string;
+  parentInterventionId?: string;
+  occurrenceIndex?: number;
 }
 
 /**
@@ -101,7 +110,8 @@ export interface CreateInterventionData {
   roomNumber?: string;
   floor?: number;
   building?: string;
-  assignedTo?: string;
+  assignedTo?: string; // Single technician (legacy - utiliser assignedToIds)
+  assignedToIds?: string[]; // Multiple technicians
   scheduledAt?: Date;
   estimatedDuration?: number;
   internalNotes?: string;
@@ -115,7 +125,8 @@ export interface CreateInterventionData {
   createdBy?: string; // Permet de spécifier le créateur pour les données historiques
   createdByName?: string; // Nom du créateur pour les données historiques
   createdAt?: Date | Timestamp; // Date de création pour les données historiques
-  assignedToName?: string; // Nom du technicien assigné pour les données historiques
+  assignedToName?: string; // Nom du technicien assigné pour les données historiques (legacy)
+  assignedToNames?: string[]; // Noms des techniciens assignés pour les données historiques
   assignedAt?: Date | Timestamp; // Date d'assignation pour les données historiques
 }
 
@@ -133,7 +144,8 @@ export interface UpdateInterventionData {
   roomNumber?: string;
   floor?: number;
   building?: string;
-  assignedTo?: string;
+  assignedTo?: string; // Single technician (legacy)
+  assignedToIds?: string[]; // Multiple technicians
   scheduledAt?: Date;
   estimatedDuration?: number;
   internalNotes?: string;
@@ -413,4 +425,37 @@ export interface SLAInfo {
   breachedAt?: Date;
   responseTime?: number;
   resolutionTime?: number;
+}
+
+// ============================================================================
+// TYPES POUR INTERVENTIONS RÉCURRENTES
+// ============================================================================
+
+/**
+ * Type de récurrence
+ */
+export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+/**
+ * Configuration de récurrence
+ */
+export interface RecurrenceConfig {
+  frequency: RecurrenceFrequency;
+  interval: number; // tous les X jours/semaines/mois/années
+  count?: number; // nombre d'occurrences (si défini, prend priorité sur endDate)
+  endDate?: Date; // date de fin de récurrence
+  daysOfWeek?: number[]; // 0-6 (dimanche-samedi) pour récurrence hebdomadaire
+  dayOfMonth?: number; // 1-31 pour récurrence mensuelle
+  monthOfYear?: number; // 1-12 pour récurrence annuelle
+}
+
+/**
+ * Métadonnées de récurrence (stockées dans Firestore)
+ */
+export interface RecurrenceMetadata {
+  isRecurring: boolean;
+  recurrenceConfig?: RecurrenceConfig;
+  recurrenceGroupId?: string; // ID pour regrouper les interventions de la même série
+  parentInterventionId?: string; // ID de l'intervention d'origine
+  occurrenceIndex?: number; // Numéro dans la série (0 = première)
 }

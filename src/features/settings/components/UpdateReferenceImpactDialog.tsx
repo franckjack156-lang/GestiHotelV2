@@ -63,27 +63,16 @@ export const UpdateReferenceImpactDialog: React.FC<UpdateReferenceImpactDialogPr
   useEffect(() => {
     const loadCount = async () => {
       if (!isOpen) {
-        console.log('❌ Dialog not open, skipping count');
         return;
       }
-
-      console.log('🔍 Loading intervention count:', {
-        establishmentId,
-        listKey,
-        oldValue,
-        newValue,
-        itemLabel,
-      });
 
       setIsLoadingCount(true);
       setError(null);
 
       try {
         const count = await countInterventionsByReferenceValue(establishmentId, listKey, oldValue);
-        console.log('✅ Intervention count loaded:', count);
         setInterventionCount(count);
       } catch (err) {
-        console.error('❌ Error loading intervention count:', err);
         setError("Impossible de charger le nombre d'interventions");
       } finally {
         setIsLoadingCount(false);
@@ -101,7 +90,6 @@ export const UpdateReferenceImpactDialog: React.FC<UpdateReferenceImpactDialogPr
       await onConfirm(updateInterventions);
       onClose();
     } catch (err) {
-      console.error('Error updating reference:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
     } finally {
       setIsUpdating(false);

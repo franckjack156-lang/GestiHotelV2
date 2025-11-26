@@ -44,57 +44,59 @@ export const UsersManagementSection = () => {
 
   return (
     <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-300">
-      <CardHeader className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1.5">
+      <CardHeader className="space-y-3 px-3 sm:px-6 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="space-y-1.5 min-w-0">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 shadow-sm">
-                <Users className="h-5 w-5 text-white" />
+              <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 shadow-sm flex-shrink-0">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <CardTitle className="text-2xl">Gestion des utilisateurs</CardTitle>
+              <CardTitle className="text-lg sm:text-2xl truncate">Gestion des utilisateurs</CardTitle>
             </div>
-            <CardDescription className="text-base">
+            <CardDescription className="text-sm sm:text-base">
               Gérez les membres de votre équipe et leurs permissions
             </CardDescription>
           </div>
           <Button
             onClick={() => navigate('/app/users')}
-            className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700"
+            className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 w-full sm:w-auto flex-shrink-0"
+            size="sm"
           >
-            <Users size={16} className="mr-2" />
-            Voir tous
+            <Users size={16} className="sm:mr-2" />
+            <span className="hidden sm:inline">Voir tous</span>
+            <span className="sm:hidden">Tous les utilisateurs</span>
             <ChevronRight size={16} className="ml-1" />
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 sm:px-6 pb-4 sm:pb-6">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-12 w-12 animate-spin text-purple-500 mb-4" />
-            <p className="text-muted-foreground">Chargement des utilisateurs...</p>
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16">
+            <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-purple-500 mb-3 sm:mb-4" />
+            <p className="text-sm sm:text-base text-muted-foreground">Chargement des utilisateurs...</p>
           </div>
         ) : users.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="inline-flex p-4 rounded-full bg-purple-50 dark:bg-purple-950/20 mb-4">
-              <Users className="h-12 w-12 text-purple-500" />
+          <div className="text-center py-12 sm:py-16">
+            <div className="inline-flex p-3 sm:p-4 rounded-full bg-purple-50 dark:bg-purple-950/20 mb-3 sm:mb-4">
+              <Users className="h-10 w-10 sm:h-12 sm:w-12 text-purple-500" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Aucun utilisateur</h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">Aucun utilisateur</h3>
+            <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto px-4">
               Commencez par créer votre premier utilisateur pour collaborer avec votre équipe
             </p>
             <Button
               onClick={() => navigate('/app/users/create')}
               size="lg"
-              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700"
+              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 w-full sm:w-auto"
             >
               <Plus size={18} className="mr-2" />
               Créer un utilisateur
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               <div className="p-5 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 rounded-xl border border-blue-100 dark:border-blue-900">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
@@ -136,43 +138,43 @@ export const UsersManagementSection = () => {
             </div>
 
             {/* Liste d'utilisateurs */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {users.slice(0, 5).map((user: UserData) => (
                 <div
                   key={user.id}
-                  className="group p-4 border-2 rounded-xl hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/10 cursor-pointer transition-all duration-200"
+                  className="group p-3 sm:p-4 border-2 rounded-xl hover:border-purple-300 dark:hover:border-purple-700 hover:bg-purple-50/50 dark:hover:bg-purple-950/10 cursor-pointer transition-all duration-200"
                   onClick={() => navigate(`/app/users/${user.id}`)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-md">
-                          <span className="text-base font-semibold text-white">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                      <div className="relative flex-shrink-0">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-md">
+                          <span className="text-sm sm:text-base font-semibold text-white">
                             {user.firstName?.[0]}
                             {user.lastName?.[0]}
                           </span>
                         </div>
                         {user.status === 'active' && (
-                          <div className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-500 border-2 border-background rounded-full" />
+                          <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 bg-green-500 border-2 border-background rounded-full" />
                         )}
                       </div>
-                      <div>
-                        <div className="font-semibold flex items-center gap-2">
-                          {user.firstName} {user.lastName}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-sm sm:text-base flex items-center gap-2 truncate">
+                          <span className="truncate">{user.firstName} {user.lastName}</span>
                           {user.role === 'super_admin' && (
-                            <Shield className="h-4 w-4 text-red-500" />
+                            <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-2">
-                          <Mail className="h-3 w-3" />
-                          {user.email}
+                        <div className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1 sm:gap-2 truncate">
+                          <Mail className="h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0" />
+                          <span className="truncate">{user.email}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                       <span
                         className={cn(
-                          'px-3 py-1 text-xs font-medium rounded-full',
+                          'px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-full whitespace-nowrap',
                           user.role === 'admin' &&
                             'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
                           user.role === 'super_admin' &&
@@ -183,7 +185,7 @@ export const UsersManagementSection = () => {
                       >
                         {user.role}
                       </span>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:translate-x-1 transition-transform hidden sm:block" />
                     </div>
                   </div>
                 </div>

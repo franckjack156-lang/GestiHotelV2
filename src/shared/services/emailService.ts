@@ -72,9 +72,10 @@ export const sendUserInvitationEmail = async (
 
     const result = await response.json();
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erreur lors de l'envoi de l'email d'invitation:", error);
-    throw new Error(error.message || "Impossible d'envoyer l'email d'invitation");
+    const message = error instanceof Error ? error.message : "Impossible d'envoyer l'email d'invitation";
+    throw new Error(message);
   }
 };
 
@@ -113,8 +114,9 @@ export const sendPartOrderEmail = async (
 
     const result = await response.json();
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erreur lors de l'envoi de l'email:", error);
-    throw new Error(error.message || "Impossible d'envoyer l'email");
+    const message = error instanceof Error ? error.message : "Impossible d'envoyer l'email";
+    throw new Error(message);
   }
 };

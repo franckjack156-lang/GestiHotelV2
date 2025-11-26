@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import {
   getBlockageHistory,
   getBlockageStats,
@@ -70,7 +70,7 @@ interface UseBlockageHistoryReturn {
 // ============================================================================
 
 export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
-  const { currentEstablishment } = useAuth();
+  const { currentEstablishment } = useCurrentEstablishment();
   const establishmentId = currentEstablishment?.id;
 
   const [activeBlockages, setActiveBlockages] = useState<RoomBlockage[]>([]);
@@ -103,7 +103,6 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
         setIsLoading(false);
       },
       err => {
-        console.error('Error in blockages subscription:', err);
         setError(err);
         setIsLoading(false);
       }
@@ -126,7 +125,6 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
       const blockageStats = await getBlockageStats(establishmentId);
       setStats(blockageStats);
     } catch (err) {
-      console.error('Error loading blockage stats:', err);
       setError(err as Error);
     } finally {
       setIsLoadingStats(false);
@@ -148,7 +146,6 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
       const topRooms = await getTopBlockedRooms(establishmentId, 10);
       setTopBlockedRooms(topRooms);
     } catch (err) {
-      console.error('Error loading top blocked rooms:', err);
       setError(err as Error);
     }
   }, [establishmentId]);
@@ -171,7 +168,6 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
         await refreshStats();
         await refreshTopRooms();
       } catch (err) {
-        console.error('Error resolving blockage:', err);
         throw err;
       }
     },
@@ -186,7 +182,6 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
         await updateBlockage(blockageId, establishmentId, data);
         // Real-time subscription will update activeBlockages automatically
       } catch (err) {
-        console.error('Error updating blockage:', err);
         throw err;
       }
     },
@@ -203,7 +198,6 @@ export const useBlockages = (filters?: BlockageFilters): UseBlockagesReturn => {
         await refreshStats();
         await refreshTopRooms();
       } catch (err) {
-        console.error('Error deleting blockage:', err);
         throw err;
       }
     },
@@ -250,7 +244,6 @@ export const useBlockageHistory = (
       const blockageHistory = await getBlockageHistory(roomId, establishmentId);
       setHistory(blockageHistory);
     } catch (err) {
-      console.error('Error loading blockage history:', err);
       setError(err as Error);
     } finally {
       setIsLoading(false);

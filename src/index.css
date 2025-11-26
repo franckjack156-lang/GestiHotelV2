@@ -252,3 +252,15 @@
 .density-spacious h3 {
   font-size: 1.5rem !important;
 }
+
+/* Masquer la scrollbar sur les onglets mobiles */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

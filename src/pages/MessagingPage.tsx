@@ -41,6 +41,7 @@ import type {
 } from '@/features/messaging/types/message.types';
 import { toast } from 'sonner';
 import { Loader2, Lock, MessageCircle } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
 
 export const MessagingPage = () => {
   const { user, firebaseUser } = useAuth();
@@ -143,8 +144,7 @@ export const MessagingPage = () => {
         user?.displayName || user?.email || 'Utilisateur',
         data
       );
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch {
       toast.error("Erreur lors de l'envoi du message");
     } finally {
       // setIsSendingMessage(false); // TODO: Uncomment when using loader
@@ -153,37 +153,27 @@ export const MessagingPage = () => {
 
   const handleCreateConversation = async (data: CreateConversationData) => {
     if (!currentEstablishment?.id || !userId) {
-      console.error('Missing establishment or user:', {
-        establishmentId: currentEstablishment?.id,
-        userId,
-      });
       return;
     }
-
-    console.log('Creating conversation with data:', data);
 
     try {
       let conversationId: string;
 
       // Si c'est une conversation directe avec un seul participant
       if (data.type === 'direct' && data.participantIds.length === 1) {
-        console.log('Creating direct conversation...');
         conversationId = await getOrCreateDirectConversation(
           currentEstablishment.id,
           userId,
           data.participantIds[0]
         );
       } else {
-        console.log('Creating group conversation...');
         conversationId = await createConversation(currentEstablishment.id, userId, data);
       }
 
-      console.log('Conversation created with ID:', conversationId);
       setSelectedConversationId(conversationId);
       setIsNewConversationOpen(false);
       toast.success('Conversation créée avec succès');
     } catch (error) {
-      console.error('Error creating conversation:', error);
       toast.error(
         `Erreur lors de la création de la conversation: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -197,8 +187,7 @@ export const MessagingPage = () => {
       await deleteConversationForUser(selectedConversationId, userId);
       setSelectedConversationId(null);
       toast.success('Conversation supprimée');
-    } catch (error) {
-      console.error('Error deleting conversation:', error);
+    } catch {
       toast.error('Erreur lors de la suppression de la conversation');
     }
   };
@@ -213,8 +202,7 @@ export const MessagingPage = () => {
         user?.displayName || user?.email || 'Utilisateur',
         emoji
       );
-    } catch (error) {
-      console.error('Error adding reaction:', error);
+    } catch {
       toast.error("Erreur lors de l'ajout de la réaction");
     }
   };
@@ -224,8 +212,7 @@ export const MessagingPage = () => {
 
     try {
       await removeReaction(messageId, userId);
-    } catch (error) {
-      console.error('Error removing reaction:', error);
+    } catch {
       toast.error('Erreur lors de la suppression de la réaction');
     }
   };
@@ -253,8 +240,7 @@ export const MessagingPage = () => {
       // Ajouter les anciens messages au début
       setMessages(prev => [...olderMessages, ...prev]);
       setHasMoreMessages(hasMore);
-    } catch (error) {
-      console.error('Error loading more messages:', error);
+    } catch {
       toast.error('Erreur lors du chargement des messages');
     } finally {
       setIsLoadingMore(false);
@@ -269,9 +255,7 @@ export const MessagingPage = () => {
       userId,
       user?.displayName || user?.email || 'Utilisateur',
       true
-    ).catch(error => {
-      console.error('Error setting typing indicator:', error);
-    });
+    ).catch(() => {});
   };
 
   const handleTypingStop = () => {
@@ -282,9 +266,7 @@ export const MessagingPage = () => {
       userId,
       user?.displayName || user?.email || 'Utilisateur',
       false
-    ).catch(error => {
-      console.error('Error removing typing indicator:', error);
-    });
+    ).catch(() => {});
   };
 
   // ============================================================================
@@ -319,8 +301,8 @@ export const MessagingPage = () => {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar - Liste des conversations */}
-      <div className="w-80 border-r bg-white dark:bg-gray-950 flex flex-col">
+      {/* Sidebar - Liste des conversations - Cachée sur mobile si conversation sélectionnée */}
+      <div className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r bg-white dark:bg-gray-950 flex-col`}>
         <ConversationList
           conversations={conversations}
           selectedId={selectedConversationId || undefined}
@@ -331,32 +313,48 @@ export const MessagingPage = () => {
         />
       </div>
 
-      {/* Zone de chat principale */}
-      <div className="flex-1 flex flex-col bg-white dark:bg-gray-950">
+      {/* Zone de chat principale - Cachée sur mobile si pas de conversation sélectionnée */}
+      <div className={`${selectedConversationId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-white dark:bg-gray-950`}>
         {selectedConversation ? (
-          <ChatWindow
-            conversation={selectedConversation}
-            messages={messages}
-            currentUserId={userId}
-            onSendMessage={handleSendMessage}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMoreMessages}
-            isLoading={isLoadingMore}
-            onReaction={handleReaction}
-            onRemoveReaction={handleRemoveReaction}
-            onTypingStart={handleTypingStart}
-            onTypingStop={handleTypingStop}
-            onDeleteConversation={handleDeleteConversation}
-          />
+          <div className="flex flex-col h-full">
+            {/* Bouton retour mobile */}
+            <div className="md:hidden border-b px-3 py-2 bg-white dark:bg-gray-950 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedConversationId(null)}
+                className="gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+                Conversations
+              </Button>
+            </div>
+            <ChatWindow
+              conversation={selectedConversation}
+              messages={messages}
+              currentUserId={userId}
+              onSendMessage={handleSendMessage}
+              onLoadMore={handleLoadMore}
+              hasMore={hasMoreMessages}
+              isLoading={isLoadingMore}
+              onReaction={handleReaction}
+              onRemoveReaction={handleRemoveReaction}
+              onTypingStart={handleTypingStart}
+              onTypingStop={handleTypingStop}
+              onDeleteConversation={handleDeleteConversation}
+            />
+          </div>
         ) : (
           // État vide - Aucune conversation sélectionnée
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center max-w-md">
               <div className="mb-4 flex justify-center">
-                <MessageCircle className="h-16 w-16 text-muted-foreground" />
+                <MessageCircle className="h-12 sm:h-16 w-12 sm:w-16 text-muted-foreground" />
               </div>
-              <h2 className="text-2xl font-bold mb-2">Messagerie GestiHôtel</h2>
-              <p className="text-muted-foreground mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold mb-2">Messagerie GestiHôtel</h2>
+              <p className="text-sm sm:text-base text-muted-foreground mb-6">
                 Sélectionnez une conversation ou démarrez-en une nouvelle pour commencer à discuter
                 avec votre équipe.
               </p>

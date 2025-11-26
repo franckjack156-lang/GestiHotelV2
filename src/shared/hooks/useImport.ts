@@ -40,6 +40,14 @@ export const useImportInterventions = (
   const [isImporting, setIsImporting] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [userMappings, setUserMappings] = useState<Map<string, string>>(new Map()); // Mappings excelName -> userId
+  const [referenceMappings, setReferenceMappings] = useState<{
+    buildings?: Map<string, string>;
+    locations?: Map<string, string>;
+    floors?: Map<string, string>;
+    types?: Map<string, string>;
+    categories?: Map<string, string>;
+    priorities?: Map<string, string>;
+  }>({});
   const { data: referenceLists, reload } = useAllReferenceLists({
     realtime: false,
     autoLoad: true,
@@ -125,6 +133,13 @@ export const useImportInterventions = (
             referenceLists.lists['technicians']?.items?.map(
               (item: { label: string }) => item.label
             ) || [],
+          // NOUVELLES listes complètes pour le matching
+          buildingsList: referenceLists.lists['buildings']?.items || [],
+          locationsList: referenceLists.lists['interventionLocations']?.items || [],
+          floorsList: referenceLists.lists['floors']?.items || [],
+          typesList: referenceLists.lists['interventionTypes']?.items || [],
+          categoriesList: referenceLists.lists['interventionCategories']?.items || [],
+          prioritiesList: referenceLists.lists['interventionPriorities']?.items || [],
         }
       : undefined;
 
@@ -157,6 +172,32 @@ export const useImportInterventions = (
           });
         });
       }
+
+      // Afficher les suggestions pour les listes de référence
+      const referenceCategories = [
+        { key: 'buildings', label: '🏢 BÂTIMENTS', map: result.matchSuggestions.buildings },
+        { key: 'locations', label: '📍 LOCALISATIONS', map: result.matchSuggestions.locations },
+        { key: 'floors', label: '🏢 ÉTAGES', map: result.matchSuggestions.floors },
+        { key: 'types', label: '🔧 TYPES', map: result.matchSuggestions.types },
+        { key: 'categories', label: '📂 CATÉGORIES', map: result.matchSuggestions.categories },
+        { key: 'priorities', label: '⚠️ PRIORITÉS', map: result.matchSuggestions.priorities },
+      ];
+
+      referenceCategories.forEach(({ label, map }) => {
+        if (map.size > 0) {
+          console.log(`\n\n${label}:`);
+          map.forEach((suggestions, excelValue) => {
+            console.log(`\n  "${excelValue}" pourrait correspondre à:`);
+            suggestions.forEach((sug, idx) => {
+              const score = Math.round(sug.matchScore * 100);
+              const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
+              console.log(
+                `    ${emoji} ${idx + 1}. ${sug.referenceLabel} [${sug.referenceValue}] (${score}% - ${sug.matchType})`
+              );
+            });
+          });
+        }
+      });
     }
 
     return result;
@@ -165,14 +206,15 @@ export const useImportInterventions = (
   const handleConfirm = async (data: InterventionImportRow[]) => {
     setIsImporting(true);
     try {
-      // Convertir avec la liste des utilisateurs pour le matching + mappings utilisateur
+      // Convertir avec la liste des utilisateurs pour le matching + mappings (utilisateurs ET références)
       const interventions = convertToInterventions(
         data,
         establishmentId,
         userId,
         userName || 'Utilisateur',
         users,
-        userMappings
+        userMappings,
+        referenceMappings
       );
 
       // Créer les interventions en batch (par groupes de 10)
@@ -190,15 +232,37 @@ export const useImportInterventions = (
     }
   };
 
-  const handleCreateMissingValues = async (missingValues: MissingListValues, mappings?: Map<string, string>) => {
+  const handleCreateMissingValues = async (
+    missingValues: MissingListValues,
+    userMappings?: Map<string, string>,
+    referenceMappings?: {
+      buildings?: Map<string, string>;
+      locations?: Map<string, string>;
+      floors?: Map<string, string>;
+      types?: Map<string, string>;
+      categories?: Map<string, string>;
+      priorities?: Map<string, string>;
+    }
+  ) => {
     if (!currentEstablishment?.id || !user?.id) {
       throw new Error('Établissement ou utilisateur non trouvé');
     }
 
-    // Stocker les mappings pour la conversion
-    if (mappings) {
-      setUserMappings(mappings);
-      console.log('\n📌 Mappings utilisateur enregistrés:', Object.fromEntries(mappings));
+    // Stocker les mappings utilisateur pour la conversion
+    if (userMappings) {
+      setUserMappings(userMappings);
+      console.log('\n📌 Mappings utilisateur enregistrés:', Object.fromEntries(userMappings));
+    }
+
+    // Stocker les mappings de référence pour la conversion
+    if (referenceMappings) {
+      setReferenceMappings(referenceMappings);
+      console.log('\n📌 Mappings de référence enregistrés:');
+      Object.entries(referenceMappings).forEach(([key, map]) => {
+        if (map && map.size > 0) {
+          console.log(`  ${key}:`, Object.fromEntries(map));
+        }
+      });
     }
 
     /**

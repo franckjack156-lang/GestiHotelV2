@@ -124,6 +124,7 @@ const interventionCategoriesDefault: ListConfig = {
 
 /**
  * Statuts d'intervention (système, non modifiable)
+ * Couleurs autorisées: gray, red, orange, yellow, green, blue, indigo, purple, pink
  */
 const interventionStatusesDefault: ListConfig = {
   name: "Statuts d'intervention",
@@ -138,7 +139,7 @@ const interventionStatusesDefault: ListConfig = {
     createItem('in_progress', 'En cours', 4, { color: 'indigo', icon: 'PlayCircle' }),
     createItem('on_hold', 'En pause', 5, { color: 'orange', icon: 'PauseCircle' }),
     createItem('completed', 'Terminée', 6, { color: 'green', icon: 'CheckCircle' }),
-    createItem('validated', 'Validée', 7, { color: 'emerald', icon: 'CheckCheck' }),
+    createItem('validated', 'Validée', 7, { color: 'purple', icon: 'CheckCheck' }),
     createItem('cancelled', 'Annulée', 8, { color: 'red', icon: 'XCircle' }),
   ],
 };

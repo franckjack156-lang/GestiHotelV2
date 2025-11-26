@@ -144,28 +144,36 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
 
   return (
     <>
-      {/* Overlay mobile */}
-      {isOpen && <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={onClose} />}
+      {/* Overlay mobile - avec animation */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden animate-in fade-in duration-200"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-30 h-full border-r bg-white transition-all duration-300 dark:bg-gray-800 dark:border-gray-700 lg:sticky lg:translate-x-0',
+          'fixed left-0 top-0 z-30 h-full border-r bg-white shadow-lg transition-all duration-300 ease-in-out dark:bg-gray-800 dark:border-gray-700',
+          'lg:sticky lg:translate-x-0 lg:shadow-none',
           isOpen ? 'translate-x-0' : '-translate-x-full',
-          isCollapsed ? 'w-16' : 'w-64'
+          isCollapsed ? 'w-16' : 'w-72 sm:w-64'
         )}
+        aria-label="Menu de navigation"
       >
         <div className="flex h-full flex-col">
-          {/* Logo mobile */}
-          <div className="flex h-16 items-center gap-2 border-b px-6 lg:hidden dark:border-gray-700">
-            <Building2 className="h-6 w-6" style={{ color: 'hsl(var(--theme-primary))' }} />
+          {/* Logo mobile - Plus grand et avec padding adaptatif */}
+          <div className="flex h-14 sm:h-16 items-center gap-2 border-b px-4 sm:px-6 lg:hidden dark:border-gray-700">
+            <Building2 className="h-6 w-6 flex-shrink-0" style={{ color: 'hsl(var(--theme-primary))' }} />
             {!isCollapsed && (
-              <span className="font-bold text-gray-900 dark:text-white">GestiHôtel</span>
+              <span className="font-bold text-gray-900 dark:text-white text-lg">GestiHôtel</span>
             )}
           </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+          {/* Navigation - Scrollable avec meilleur padding */}
+          <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
             {navItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.href);
@@ -176,9 +184,10 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
                   to={item.href}
                   onClick={onClose}
                   className={cn(
-                    'flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                    'hover:bg-gray-100 dark:hover:bg-gray-700',
-                    isCollapsed ? 'justify-center' : 'gap-3'
+                    'flex items-center rounded-lg px-3 py-2.5 sm:py-2 text-sm font-medium transition-colors touch-manipulation',
+                    'hover:bg-gray-100 dark:hover:bg-gray-700 active:scale-95',
+                    isCollapsed ? 'justify-center' : 'gap-3',
+                    'min-h-[44px]' // Touch target minimum size
                   )}
                   style={
                     active
@@ -189,20 +198,23 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
                       : undefined
                   }
                   title={isCollapsed ? t(`nav.${item.translationKey}`) : undefined}
+                  aria-current={active ? 'page' : undefined}
                 >
                   <Icon className="h-5 w-5 flex-shrink-0" />
-                  {!isCollapsed && <span>{t(`nav.${item.translationKey}`)}</span>}
+                  {!isCollapsed && (
+                    <span className="truncate">{t(`nav.${item.translationKey}`)}</span>
+                  )}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Footer */}
+          {/* Footer - Responsive */}
           {!isCollapsed && (
-            <div className="border-t p-4 dark:border-gray-700">
+            <div className="border-t p-3 sm:p-4 dark:border-gray-700">
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                <p className="font-medium">{t('footer.version')}</p>
-                <p className="mt-1">{t('footer.copyright')}</p>
+                <p className="font-medium truncate">{t('footer.version')}</p>
+                <p className="mt-1 truncate">{t('footer.copyright')}</p>
               </div>
             </div>
           )}

@@ -73,12 +73,12 @@ export const RoomDetailPage = () => {
   // Charger l'historique des blocages
   const { history: blockageHistory, isLoading: isLoadingHistory } = useBlockageHistory(
     roomId!,
-    establishmentId
+    establishmentId || undefined
   );
 
   // Charger les interventions liées à cette chambre
   const { interventions: roomInterventions, isLoading: isLoadingInterventions } =
-    useRoomInterventions(establishmentId, room?.number);
+    useRoomInterventions(establishmentId || undefined, room?.number);
 
   // Récupérer les informations de l'utilisateur qui a bloqué la chambre
   const { user: blockedByUser } = useUser(room?.blockedBy);
@@ -140,22 +140,22 @@ export const RoomDetailPage = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/app/rooms')}>
+    <div className="space-y-4 sm:space-y-6">
+      {/* Header - Responsive optimisé */}
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/app/rooms')} className="flex-shrink-0">
             <ArrowLeft size={16} />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Chambre {room.number}</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Chambre {room.number}</h1>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 truncate">
               {ROOM_TYPES[room.type]} - Étage {room.floor}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {currentEstablishment && (
             <QRCodeGenerator
               roomData={{
@@ -168,26 +168,27 @@ export const RoomDetailPage = () => {
               }}
             />
           )}
-          <Button variant="outline" onClick={() => navigate(`/app/rooms/${room.id}/edit`)}>
-            <Edit size={16} className="mr-2" />
-            Modifier
+          <Button variant="outline" onClick={() => navigate(`/app/rooms/${room.id}/edit`)} size="sm" className="flex-1 sm:flex-initial">
+            <Edit size={16} className="sm:mr-2" />
+            <span className="hidden sm:inline">Modifier</span>
           </Button>
           {room.isBlocked ? (
-            <Button variant="outline" onClick={handleUnblock} className="text-green-600">
-              <Unlock size={16} className="mr-2" />
-              Débloquer
+            <Button variant="outline" onClick={handleUnblock} className="text-green-600 flex-1 sm:flex-initial" size="sm">
+              <Unlock size={16} className="sm:mr-2" />
+              <span className="hidden sm:inline">Débloquer</span>
             </Button>
           ) : (
             <Button
               variant="outline"
               onClick={() => setBlockDialogOpen(true)}
-              className="text-orange-600"
+              className="text-orange-600 flex-1 sm:flex-initial"
+              size="sm"
             >
-              <Lock size={16} className="mr-2" />
-              Bloquer
+              <Lock size={16} className="sm:mr-2" />
+              <span className="hidden sm:inline">Bloquer</span>
             </Button>
           )}
-          <Button variant="outline" onClick={handleDelete} className="text-red-600">
+          <Button variant="outline" onClick={handleDelete} className="text-red-600 hidden sm:flex" size="sm">
             <Trash2 size={16} className="mr-2" />
             Supprimer
           </Button>
@@ -378,16 +379,18 @@ export const RoomDetailPage = () => {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="blockages" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="blockages" className="flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Blocages ({blockageHistory.length})
-              </TabsTrigger>
-              <TabsTrigger value="interventions" className="flex items-center gap-2">
-                <Wrench className="h-4 w-4" />
-                Interventions ({roomInterventions.length})
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 scrollbar-hide">
+              <TabsList className="inline-flex w-max sm:grid sm:w-full sm:grid-cols-2">
+                <TabsTrigger value="blockages" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <Lock className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Blocages ({blockageHistory.length})</span>
+                </TabsTrigger>
+                <TabsTrigger value="interventions" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                  <Wrench className="h-4 w-4 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm">Interventions ({roomInterventions.length})</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="blockages" className="space-y-4 mt-4">
               {isLoadingHistory ? (

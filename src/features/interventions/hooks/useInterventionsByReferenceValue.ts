@@ -100,7 +100,6 @@ export const useInterventionsByReferenceValue = (
     // Obtenir les champs à rechercher pour cette liste
     const fields = FIELD_MAPPING[listKey];
     if (!fields || fields.length === 0) {
-      console.warn(`No field mapping found for list key: ${listKey}`);
       setCount(0);
       setInterventions([]);
       setIsLoading(false);
@@ -141,7 +140,6 @@ export const useInterventionsByReferenceValue = (
         setInterventions(allInterventions);
       }
     } catch (err) {
-      console.error('Error loading interventions by reference value:', err);
       setError(err as Error);
       setCount(0);
       setInterventions([]);

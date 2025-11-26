@@ -78,9 +78,10 @@ export const InventoryPage = () => {
     }
   };
 
-  const handleStockMovement = async (data: any) => {
+  const handleStockMovement = async (data: { type: 'in' | 'out' | 'transfer' | 'adjustment'; quantity: number; reason?: string; notes?: string }): Promise<boolean> => {
     if (!movementItem) return false;
-    return await createMovement(movementItem.id, data);
+    const result = await createMovement(movementItem.id, data);
+    return result !== undefined;
   };
 
   const handleFiltersChange = (filters: InventoryFilters) => {
@@ -94,40 +95,41 @@ export const InventoryPage = () => {
   const totalValue = items.reduce((sum, item) => sum + item.totalValue, 0);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Inventaire</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+      {/* En-tête - Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold truncate">Inventaire</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Gestion des stocks et des articles
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvel article
+        <Button onClick={() => setCreateDialogOpen(true)} size="sm" className="flex-shrink-0">
+          <Plus className="h-4 w-4 sm:mr-2" />
+          <span className="hidden xs:inline">Nouvel article</span>
+          <span className="xs:hidden">+</span>
         </Button>
       </div>
 
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Statistiques - Responsive */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total articles</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Total articles</CardTitle>
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{items.length}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold">{items.length}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Valeur totale</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Valeur totale</CardTitle>
+            <Package className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalValue.toFixed(2)} €</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold">{totalValue.toFixed(2)} €</div>
           </CardContent>
         </Card>
 
@@ -137,12 +139,12 @@ export const InventoryPage = () => {
           }`}
           onClick={() => loadItems({ status: 'low_stock' })}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Stock faible</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Stock faible</CardTitle>
+            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{lowStock.length}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold">{lowStock.length}</div>
           </CardContent>
         </Card>
 
@@ -152,12 +154,12 @@ export const InventoryPage = () => {
           }`}
           onClick={() => loadItems({ status: 'out_of_stock' })}
         >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Rupture de stock</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Rupture</CardTitle>
+            <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{outOfStock.length}</div>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+            <div className="text-xl sm:text-2xl font-bold">{outOfStock.length}</div>
           </CardContent>
         </Card>
       </div>

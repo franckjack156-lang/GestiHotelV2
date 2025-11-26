@@ -128,8 +128,7 @@ const SortableItem: React.FC<{
     transition,
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Icon = item.icon && (LucideIcons as any)[item.icon];
+  const Icon = item.icon ? ((LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[item.icon]) : undefined;
   const colorStyles = item.color ? getColorStyles(item.color) : null;
 
   return (
@@ -267,16 +266,15 @@ const ItemFormDialog: React.FC<{
     try {
       await onSubmit(formData);
       onClose();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      setErrors([error.message || 'Une erreur est survenue']);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Une erreur est survenue';
+      setErrors([message]);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const Icon = formData.icon && (LucideIcons as any)[formData.icon];
+  const Icon = formData.icon ? ((LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[formData.icon]) : undefined;
   const colorStyles = getColorStyles(formData.color);
 
   return (
@@ -604,13 +602,15 @@ export const ReferenceListsManager: React.FC = () => {
     })
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: { active: { id: string | number }; over: { id: string | number } | null }) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = filteredItems.findIndex(item => item.id === active.id);
-    const newIndex = filteredItems.findIndex(item => item.id === over.id);
+    const activeId = String(active.id);
+    const overId = String(over.id);
+
+    const oldIndex = filteredItems.findIndex(item => item.id === activeId);
+    const newIndex = filteredItems.findIndex(item => item.id === overId);
 
     const newOrder = arrayMove(filteredItems, oldIndex, newIndex);
     await reorderItems(newOrder.map(item => item.id));
@@ -629,9 +629,9 @@ export const ReferenceListsManager: React.FC = () => {
   const handleToggleActive = async (item: ReferenceItem) => {
     try {
       await updateItem(item.id, { isActive: !item.isActive });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      alert(`Erreur : ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      alert(`Erreur : ${message}`);
     }
   };
 
@@ -640,9 +640,9 @@ export const ReferenceListsManager: React.FC = () => {
 
     try {
       await deleteItem(item.id);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      alert(`Erreur : ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      alert(`Erreur : ${message}`);
     }
   };
 
@@ -651,18 +651,8 @@ export const ReferenceListsManager: React.FC = () => {
       // Vérifier si la valeur technique a changé
       const hasValueChanged = editingItem.value !== formData.value;
 
-      console.log('🔍 Form submission:', {
-        hasValueChanged,
-        oldValue: editingItem.value,
-        newValue: formData.value,
-        oldLabel: editingItem.label,
-        newLabel: formData.label,
-        listKey: selectedListKey,
-      });
-
       if (hasValueChanged) {
         // La VALUE a changé : afficher le dialog d'impact
-        console.log('✅ Showing impact dialog (value changed)');
 
         setPendingUpdate({
           itemId: editingItem.id,
@@ -675,7 +665,6 @@ export const ReferenceListsManager: React.FC = () => {
       } else {
         // Seulement le label a changé (ou rien) : mise à jour directe
         // Les interventions utilisent la value, donc le nouveau label s'affichera automatiquement
-        console.log('➡️ Direct update (no value change, label will update automatically)');
         await updateItem(editingItem.id, formData);
         setIsDialogOpen(false);
       }
@@ -700,12 +689,6 @@ export const ReferenceListsManager: React.FC = () => {
 
       // 2. Si demandé, mettre à jour les interventions en cascade
       if (updateInterventions && user && currentEstablishment) {
-        console.log('🔄 Updating interventions:', {
-          oldValue,
-          newValue,
-          listKey: selectedListKey,
-        });
-
         await updateInterventionsByReferenceValue({
           establishmentId: currentEstablishment.id,
           listKey: selectedListKey,
@@ -720,7 +703,6 @@ export const ReferenceListsManager: React.FC = () => {
       setIsDialogOpen(false);
       setPendingUpdate(null);
     } catch (error) {
-      console.error('Error updating reference with cascade:', error);
       throw error;
     }
   };

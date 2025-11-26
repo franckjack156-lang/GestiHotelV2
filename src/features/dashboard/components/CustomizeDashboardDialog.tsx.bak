@@ -1,0 +1,325 @@
+/**
+ * CustomizeDashboardDialog Component
+ *
+ * Dialogue pour personnaliser le dashboard
+ */
+
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/shared/components/ui/dialog';
+import { Button } from '@/shared/components/ui/button';
+import { Label } from '@/shared/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
+import { Switch } from '@/shared/components/ui/switch';
+import { Input } from '@/shared/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import type { DashboardPreferences, WidgetConfig, WidgetType, WidgetDataSource } from '../types/dashboard.types';
+import { Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface CustomizeDashboardDialogProps {
+  open: boolean;
+  onClose: () => void;
+  preferences: DashboardPreferences;
+  onUpdatePreferences: (updates: Partial<DashboardPreferences>) => Promise<void>;
+  onUpdateWidget: (widgetId: string, updates: Partial<WidgetConfig>) => Promise<void>;
+  onRemoveWidget: (widgetId: string) => Promise<void>;
+}
+
+const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
+  stats_card: 'Carte statistique',
+  line_chart: 'Graphique linéaire',
+  bar_chart: 'Graphique en barres',
+  pie_chart: 'Camembert',
+  area_chart: 'Graphique en aire',
+  donut_chart: 'Donut',
+  table: 'Tableau',
+  calendar: 'Calendrier',
+  list: 'Liste',
+};
+
+const DATA_SOURCE_LABELS: Record<WidgetDataSource, string> = {
+  interventions_by_status: 'Interventions par statut',
+  interventions_by_priority: 'Interventions par priorité',
+  interventions_by_type: 'Interventions par type',
+  interventions_by_room: 'Interventions par chambre',
+  interventions_by_technician: 'Interventions par technicien',
+  interventions_timeline: 'Évolution des interventions',
+  interventions_completion_rate: 'Taux de complétion',
+  sla_compliance: 'Conformité SLA',
+  response_time_avg: 'Temps de réponse moyen',
+  recent_interventions: 'Interventions récentes',
+  overdue_interventions: 'Interventions en retard',
+  upcoming_interventions: 'Interventions à venir',
+  rooms_status: 'Statut des chambres',
+  rooms_by_type: 'Chambres par type',
+  blockages_active: 'Blocages actifs',
+};
+
+export const CustomizeDashboardDialog = ({
+  open,
+  onClose,
+  preferences,
+  onUpdatePreferences,
+  onUpdateWidget,
+  onRemoveWidget,
+}: CustomizeDashboardDialogProps) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleUpdatePreferences = async (updates: Partial<DashboardPreferences>) => {
+    setIsSaving(true);
+    try {
+      await onUpdatePreferences(updates);
+      toast.success('Préférences mises à jour');
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+      console.error(error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleWidget = async (widgetId: string, visible: boolean) => {
+    try {
+      await onUpdateWidget(widgetId, { visible });
+      toast.success(visible ? 'Widget activé' : 'Widget masqué');
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour');
+      console.error(error);
+    }
+  };
+
+  const handleRemoveWidget = async (widgetId: string) => {
+    if (!confirm('Voulez-vous vraiment supprimer ce widget ?')) return;
+
+    try {
+      await onRemoveWidget(widgetId);
+      toast.success('Widget supprimé');
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+      console.error(error);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Personnaliser le dashboard</DialogTitle>
+        </DialogHeader>
+
+        <Tabs defaultValue="general" className="mt-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="general">Général</TabsTrigger>
+            <TabsTrigger value="widgets">Widgets</TabsTrigger>
+            <TabsTrigger value="advanced">Avancé</TabsTrigger>
+          </TabsList>
+
+          {/* Onglet Général */}
+          <TabsContent value="general" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Paramètres généraux</CardTitle>
+                <CardDescription>
+                  Configurez l'apparence et le comportement de votre dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Layout */}
+                <div className="space-y-2">
+                  <Label>Disposition</Label>
+                  <Select
+                    value={preferences.layout}
+                    onValueChange={(value: 'grid' | 'list') =>
+                      handleUpdatePreferences({ layout: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="grid">Grille</SelectItem>
+                      <SelectItem value="list">Liste</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Colonnes */}
+                {preferences.layout === 'grid' && (
+                  <div className="space-y-2">
+                    <Label>Nombre de colonnes</Label>
+                    <Select
+                      value={preferences.columns.toString()}
+                      onValueChange={(value) =>
+                        handleUpdatePreferences({ columns: parseInt(value) })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2 colonnes</SelectItem>
+                        <SelectItem value="3">3 colonnes</SelectItem>
+                        <SelectItem value="4">4 colonnes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Plage de dates par défaut */}
+                <div className="space-y-2">
+                  <Label>Plage de dates par défaut</Label>
+                  <Select
+                    value={preferences.defaultDateRange}
+                    onValueChange={(value: any) =>
+                      handleUpdatePreferences({ defaultDateRange: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="today">Aujourd'hui</SelectItem>
+                      <SelectItem value="week">Cette semaine</SelectItem>
+                      <SelectItem value="month">Ce mois</SelectItem>
+                      <SelectItem value="quarter">Ce trimestre</SelectItem>
+                      <SelectItem value="year">Cette année</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Auto-refresh */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Actualisation automatique</Label>
+                    <p className="text-sm text-gray-500">
+                      Rafraîchir les données automatiquement
+                    </p>
+                  </div>
+                  <Switch
+                    checked={preferences.autoRefresh}
+                    onCheckedChange={(checked) =>
+                      handleUpdatePreferences({ autoRefresh: checked })
+                    }
+                  />
+                </div>
+
+                {/* Refresh interval */}
+                {preferences.autoRefresh && (
+                  <div className="space-y-2">
+                    <Label>Intervalle de rafraîchissement (secondes)</Label>
+                    <Input
+                      type="number"
+                      min={60}
+                      max={3600}
+                      value={preferences.refreshInterval}
+                      onChange={(e) =>
+                        handleUpdatePreferences({
+                          refreshInterval: parseInt(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Widgets */}
+          <TabsContent value="widgets" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gestion des widgets</CardTitle>
+                <CardDescription>
+                  Activez, masquez ou supprimez les widgets de votre dashboard
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {preferences.widgets.map((widget) => (
+                    <div
+                      key={widget.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium">{widget.title}</p>
+                        <p className="text-sm text-gray-500">
+                          {WIDGET_TYPE_LABELS[widget.type]} •{' '}
+                          {DATA_SOURCE_LABELS[widget.dataSource]}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleWidget(widget.id, !widget.visible)}
+                        >
+                          {widget.visible ? (
+                            <Eye className="w-4 h-4" />
+                          ) : (
+                            <EyeOff className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveWidget(widget.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Avancé */}
+          <TabsContent value="advanced" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Paramètres avancés</CardTitle>
+                <CardDescription>
+                  Fonctionnalités avancées de personnalisation
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    Les fonctionnalités avancées de personnalisation seront disponibles
+                    prochainement :
+                  </p>
+                  <ul className="mt-2 text-sm text-gray-600 list-disc list-inside space-y-1">
+                    <li>Création de widgets personnalisés</li>
+                    <li>Thèmes de couleurs personnalisés</li>
+                    <li>Export/Import de configurations</li>
+                    <li>Partage de dashboards</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            Fermer
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

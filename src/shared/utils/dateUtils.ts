@@ -20,8 +20,8 @@ export const toDate = (timestamp: Timestamp | Date | undefined | null): Date => 
 /**
  * Vérifie si une valeur est un Timestamp Firestore
  */
-export const isTimestamp = (value: any): value is Timestamp => {
-  return (
+export const isTimestamp = (value: unknown): value is Timestamp => {
+  return Boolean(
     value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function'
   );
 };

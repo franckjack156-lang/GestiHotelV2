@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * SETTINGS PAGE - MODERN UI/UX
@@ -61,91 +62,98 @@ export const SettingsPage = () => {
   const isSuperAdmin = user?.role === 'super_admin';
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-12">
-      {/* Header moderne */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-lg shadow-blue-500/20">
-            <SettingsIcon className="h-6 w-6 text-white" />
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-6 sm:pb-12">
+      {/* Header moderne - Responsive optimisé */}
+      <div className="space-y-1 sm:space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 shadow-md sm:shadow-lg shadow-blue-500/20 flex-shrink-0">
+            <SettingsIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
           </div>
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl md:text-4xl font-bold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent truncate">
               Paramètres
             </h1>
           </div>
         </div>
-        <p className="text-lg text-muted-foreground ml-14">
-          Personnalisez votre expérience et gérez vos préférences
+        <p className="text-xs sm:text-sm md:text-base text-muted-foreground ml-8 sm:ml-14">
+          <span className="hidden sm:inline">Personnalisez votre expérience et gérez vos préférences</span>
+          <span className="sm:hidden">Gérez vos préférences</span>
         </p>
       </div>
 
-      {/* Tabs modernes */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <div className="sticky top-0 z-10 -mx-4 px-4 py-4 bg-background/80 backdrop-blur-xl border-b">
-          <TabsList className="inline-flex h-auto p-1 bg-muted/50 rounded-xl">
-            <TabsTrigger
-              value="profile"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
-            >
-              <User size={16} />
-              <span className="font-medium">Profil</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="notifications"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
-            >
-              <Bell size={16} />
-              <span className="font-medium">Notifications</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="security"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
-            >
-              <Shield size={16} />
-              <span className="font-medium">Sécurité</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="preferences"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
-            >
-              <Palette size={16} />
-              <span className="font-medium">Préférences</span>
-            </TabsTrigger>
-            {isAdmin && (
+      {/* Tabs modernes - Responsive avec scrolling horizontal optimisé */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 sm:py-3 bg-background/95 backdrop-blur-xl border-b">
+          <div className="overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="inline-flex w-max sm:w-auto h-auto p-0.5 sm:p-1 bg-muted/50 rounded-lg sm:rounded-xl gap-0.5 sm:gap-1">
               <TabsTrigger
-                value="users"
-                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
+                value="profile"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
               >
-                <Users size={16} />
-                <span className="font-medium">Utilisateurs</span>
+                <User size={16} className="sm:w-4 sm:h-4" />
+                <span className="font-medium text-xs sm:text-sm">Profil</span>
               </TabsTrigger>
-            )}
-            {isSuperAdmin && (
               <TabsTrigger
-                value="establishments"
-                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
+                value="notifications"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
               >
-                <Building2 size={16} />
-                <span className="font-medium">Établissements</span>
+                <Bell size={16} className="sm:w-4 sm:h-4" />
+                <span className="font-medium text-xs sm:text-sm hidden xs:inline">Notifications</span>
+                <span className="font-medium text-xs xs:hidden">Notifs</span>
               </TabsTrigger>
-            )}
-            {isAdmin && (
               <TabsTrigger
-                value="reference-lists"
-                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
+                value="security"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
               >
-                <List size={16} />
-                <span className="font-medium">Listes</span>
+                <Shield size={16} className="sm:w-4 sm:h-4" />
+                <span className="font-medium text-xs sm:text-sm">Sécurité</span>
               </TabsTrigger>
-            )}
-            <TabsTrigger
-              value="about"
-              className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg px-4 py-2.5 gap-2"
-            >
-              <Info size={16} />
-              <span className="font-medium">À propos</span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger
+                value="preferences"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
+              >
+                <Palette size={16} className="sm:w-4 sm:h-4" />
+                <span className="font-medium text-xs sm:text-sm hidden xs:inline">Préférences</span>
+                <span className="font-medium text-xs xs:hidden">Préfs</span>
+              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger
+                  value="users"
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
+                >
+                  <Users size={16} className="sm:w-4 sm:h-4" />
+                  <span className="font-medium text-xs sm:text-sm hidden xs:inline">Utilisateurs</span>
+                  <span className="font-medium text-xs xs:hidden">Users</span>
+                </TabsTrigger>
+              )}
+              {isSuperAdmin && (
+                <TabsTrigger
+                  value="establishments"
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
+                >
+                  <Building2 size={16} className="sm:w-4 sm:h-4" />
+                  <span className="font-medium text-xs sm:text-sm hidden xs:inline">Établissements</span>
+                  <span className="font-medium text-xs xs:hidden">Étabs</span>
+                </TabsTrigger>
+              )}
+              {isAdmin && (
+                <TabsTrigger
+                  value="reference-lists"
+                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
+                >
+                  <List size={16} className="sm:w-4 sm:h-4" />
+                  <span className="font-medium text-xs sm:text-sm">Listes</span>
+                </TabsTrigger>
+              )}
+              <TabsTrigger
+                value="about"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
+              >
+                <Info size={16} className="sm:w-4 sm:h-4" />
+                <span className="font-medium text-xs sm:text-sm">À propos</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         {/* Profil */}

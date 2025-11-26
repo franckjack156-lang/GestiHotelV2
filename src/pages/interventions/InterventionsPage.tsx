@@ -30,6 +30,11 @@ import {
   Eye,
   MapPin,
   User,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { ReferenceDisplay } from '@/shared/components/ReferenceDisplay';
 import { Button } from '@/shared/components/ui/button';
@@ -43,6 +48,8 @@ import {
 } from '@/shared/components/ui/select';
 import { Card } from '@/shared/components/ui/card';
 import { Badge } from '@/shared/components/ui/badge';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Label } from '@/shared/components/ui/label';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +91,7 @@ import { ConfirmDialog } from '@/shared/components/ui-extended';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 import { cn } from '@/shared/lib/utils';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
+import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
 
 const InterventionsPageComponent = () => {
   const navigate = useNavigate();
@@ -91,8 +99,17 @@ const InterventionsPageComponent = () => {
   const { canCreateInterventions } = usePermissions();
   const { user } = useAuth();
 
-  const { allInterventions: interventions, isLoading, error, filters, stats } = useInterventions();
+  const {
+    allInterventions: interventions,
+    isLoading,
+    error,
+    filters,
+    stats,
+    applyFilters,
+    clearFilters,
+  } = useInterventions();
   const { displayPreferences } = useUserPreferences();
+  const { data: referenceListsData } = useAllReferenceLists({ autoLoad: true });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
@@ -108,6 +125,7 @@ const InterventionsPageComponent = () => {
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeIntervention, setActiveIntervention] = useState<Intervention | null>(null);
+  const [showCompletedInKanban, setShowCompletedInKanban] = useState(false);
 
   const { deleteIntervention, isDeleting, updateIntervention } = useInterventionActions();
   const importHook = useImportInterventions(
@@ -128,20 +146,31 @@ const InterventionsPageComponent = () => {
   // Gérer la recherche
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    // TODO: Implémenter setFilters dans le hook useInterventions
   };
 
   // Gérer les filtres
-  const handleStatusFilter = () => {
-    // TODO: Implémenter setFilters dans le hook useInterventions
+  const handleStatusFilter = (value: string) => {
+    if (value === 'all') {
+      applyFilters({ status: undefined });
+    } else {
+      applyFilters({ status: [value as InterventionStatus] });
+    }
   };
 
-  const handlePriorityFilter = () => {
-    // TODO: Implémenter setFilters dans le hook useInterventions
+  const handlePriorityFilter = (value: string) => {
+    if (value === 'all') {
+      applyFilters({ priority: undefined });
+    } else {
+      applyFilters({ priority: [value as any] });
+    }
   };
 
-  const handleTypeFilter = () => {
-    // TODO: Implémenter setFilters dans le hook useInterventions
+  const handleTypeFilter = (value: string) => {
+    if (value === 'all') {
+      applyFilters({ type: undefined });
+    } else {
+      applyFilters({ type: value as any });
+    }
   };
 
   // Actions
@@ -191,10 +220,9 @@ const InterventionsPageComponent = () => {
 
   const handleRefresh = () => window.location.reload();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleImportConfirm = async (data: any[]) => {
+  const handleImportConfirm = async (data: Record<string, unknown>[]) => {
     try {
-      await importHook.handleConfirm(data);
+      await importHook.handleConfirm(data as any);
       toast.success('Import réussi', { description: `${data.length} intervention(s) importée(s)` });
       setImportDialogOpen(false);
     } catch {
@@ -225,19 +253,102 @@ const InterventionsPageComponent = () => {
     }
   };
 
-  const hasActiveFilters = filters.status || filters.priority || filters.type || filters.search;
+  // Filtrer les interventions par recherche
+  const filteredInterventions = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return interventions;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+
+    return interventions.filter(intervention => {
+      // Recherche dans le titre
+      if (intervention.title?.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      // Recherche dans la description
+      if (intervention.description?.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      // Recherche dans le numéro de chambre
+      if (intervention.roomNumber?.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      // Recherche dans la localisation
+      if (intervention.location?.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      // Recherche dans le bâtiment
+      if (intervention.building?.toLowerCase().includes(query)) {
+        return true;
+      }
+
+      // Recherche dans l'étage (peut être string ou number)
+      if (intervention.floor?.toString().toLowerCase().includes(query)) {
+        return true;
+      }
+
+      return false;
+    });
+  }, [interventions, searchQuery]);
+
+  const hasActiveFilters = filters.status || filters.priority || filters.type || filters.search || searchQuery;
 
   // Grouper par statut pour le Kanban
   const kanbanColumns = {
-    draft: interventions.filter(i => i.status === 'draft'),
-    pending: interventions.filter(i => i.status === 'pending'),
-    assigned: interventions.filter(i => i.status === 'assigned'),
-    in_progress: interventions.filter(i => i.status === 'in_progress'),
-    on_hold: interventions.filter(i => i.status === 'on_hold'),
-    completed: interventions.filter(i => i.status === 'completed'),
-    validated: interventions.filter(i => i.status === 'validated'),
-    cancelled: interventions.filter(i => i.status === 'cancelled'),
+    draft: filteredInterventions.filter(i => i.status === 'draft'),
+    pending: filteredInterventions.filter(i => i.status === 'pending'),
+    assigned: filteredInterventions.filter(i => i.status === 'assigned'),
+    in_progress: filteredInterventions.filter(i => i.status === 'in_progress'),
+    on_hold: filteredInterventions.filter(i => i.status === 'on_hold'),
+    // Les interventions terminées ne sont affichées que si l'option est activée
+    completed: showCompletedInKanban ? filteredInterventions.filter(i => i.status === 'completed') : [],
+    validated: showCompletedInKanban ? filteredInterventions.filter(i => i.status === 'validated') : [],
+    cancelled: filteredInterventions.filter(i => i.status === 'cancelled'),
   };
+
+  // Récupérer les couleurs depuis les listes de référence
+  const statusColors = useMemo(() => {
+    const statusList = referenceListsData?.lists?.interventionStatuses;
+    if (!statusList?.items) {
+      // Couleurs par défaut si pas de liste de référence
+      // Couleurs autorisées: gray, red, orange, yellow, green, blue, indigo, purple, pink
+      return {
+        draft: 'gray',
+        pending: 'yellow',
+        assigned: 'blue',
+        in_progress: 'indigo',
+        on_hold: 'orange',
+        completed: 'green',
+        validated: 'purple',
+        cancelled: 'red',
+      };
+    }
+
+    // Créer un mapping value → color depuis la liste de référence
+    const colorMap: Record<string, string> = {};
+    statusList.items.forEach(item => {
+      if (item.value && item.color) {
+        colorMap[item.value] = item.color;
+      }
+    });
+
+    // Fallback sur couleurs par défaut si certaines couleurs manquent
+    return {
+      draft: colorMap.draft || 'gray',
+      pending: colorMap.pending || 'yellow',
+      assigned: colorMap.assigned || 'blue',
+      in_progress: colorMap.in_progress || 'indigo',
+      on_hold: colorMap.on_hold || 'orange',
+      completed: colorMap.completed || 'green',
+      validated: colorMap.validated || 'purple',
+      cancelled: colorMap.cancelled || 'red',
+    };
+  }, [referenceListsData]);
 
   if (!establishmentId) {
     return (
@@ -248,68 +359,70 @@ const InterventionsPageComponent = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header moderne */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Interventions</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Interventions</h1>
+          <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             Gérez et suivez toutes vos interventions
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
           {/* Toggle view mode */}
-          <div className="flex border rounded-lg bg-white dark:bg-gray-800">
+          <div className="flex border rounded-lg bg-white dark:bg-gray-800 flex-shrink-0">
             <Button
               variant={viewMode === 'kanban' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('kanban')}
-              className="rounded-r-none"
+              className="rounded-r-none flex-1 sm:flex-initial"
             >
-              <LayoutGrid className="h-4 w-4 mr-2" />
-              Kanban
+              <LayoutGrid className="h-4 w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Kanban</span>
             </Button>
             <Button
               variant={viewMode === 'table' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => setViewMode('table')}
-              className="rounded-l-none"
+              className="rounded-l-none flex-1 sm:flex-initial"
             >
-              <TableIcon className="h-4 w-4 mr-2" />
-              Liste
+              <TableIcon className="h-4 w-4 sm:mr-2" />
+              <span className="hidden xs:inline">Liste</span>
             </Button>
           </div>
 
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            Actualiser
-          </Button>
-
-          {/* Bouton SuperAdmin pour supprimer toutes les interventions */}
-          {user?.role === 'super_admin' && interventions.length > 0 && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setShowDeleteAllDialog(true)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Supprimer tout ({interventions.length})
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading} className="flex-1 sm:flex-initial">
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline ml-2">Actualiser</span>
             </Button>
-          )}
 
-          {canCreateInterventions && (
-            <>
-              <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Importer
+            {/* Bouton SuperAdmin pour supprimer toutes les interventions */}
+            {user?.role === 'super_admin' && interventions.length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteAllDialog(true)}
+                className="bg-red-600 hover:bg-red-700 hidden md:flex"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Supprimer tout ({interventions.length})
               </Button>
-              <Button size="sm" onClick={handleCreateIntervention}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle intervention
-              </Button>
-            </>
-          )}
+            )}
+
+            {canCreateInterventions && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)} className="flex-1 sm:flex-initial">
+                  <Upload className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Importer</span>
+                </Button>
+                <Button size="sm" onClick={handleCreateIntervention} className="flex-1 sm:flex-initial">
+                  <Plus className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden xs:inline">Nouvelle</span>
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -400,6 +513,23 @@ const InterventionsPageComponent = () => {
           </Button>
         </div>
 
+        {/* Checkbox pour afficher les interventions terminées (Kanban uniquement) */}
+        {viewMode === 'kanban' && (
+          <div className="flex items-center gap-2 px-1">
+            <Checkbox
+              id="showCompleted"
+              checked={showCompletedInKanban}
+              onCheckedChange={checked => setShowCompletedInKanban(checked as boolean)}
+            />
+            <Label
+              htmlFor="showCompleted"
+              className="text-sm font-medium cursor-pointer select-none"
+            >
+              Afficher les interventions terminées et validées
+            </Label>
+          </div>
+        )}
+
         {/* Filtres expandables */}
         {showFilters && (
           <Card className="p-4">
@@ -447,7 +577,14 @@ const InterventionsPageComponent = () => {
               </Select>
 
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={() => setSearchQuery('')}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    clearFilters();
+                  }}
+                >
                   <X className="h-4 w-4 mr-2" />
                   Réinitialiser
                 </Button>
@@ -468,11 +605,11 @@ const InterventionsPageComponent = () => {
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="h-8 w-8 animate-spin text-indigo-600" />
         </div>
-      ) : interventions.length === 0 ? (
+      ) : filteredInterventions.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">
             {hasActiveFilters
-              ? 'Aucune intervention ne correspond aux filtres'
+              ? 'Aucune intervention ne correspond aux filtres ou à la recherche'
               : 'Aucune intervention'}
           </p>
           {canCreateInterventions && !hasActiveFilters && (
@@ -494,6 +631,8 @@ const InterventionsPageComponent = () => {
             onInterventionClick={handleInterventionClick}
             onEdit={handleEdit}
             onDelete={handleDeleteClick}
+            showCompleted={showCompletedInKanban}
+            statusColors={statusColors}
           />
           <DragOverlay>
             {activeIntervention ? (
@@ -503,13 +642,14 @@ const InterventionsPageComponent = () => {
                 onEdit={() => {}}
                 onDelete={() => {}}
                 isDragging
+                statusColor={statusColors[activeIntervention.status]}
               />
             ) : null}
           </DragOverlay>
         </DndContext>
       ) : (
         <TableView
-          interventions={interventions}
+          interventions={filteredInterventions}
           onInterventionClick={handleInterventionClick}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
@@ -539,16 +679,15 @@ const InterventionsPageComponent = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {data.slice(0, 5).map((row: any, idx) => (
+                {data.slice(0, 5).map((row: Record<string, unknown>, idx) => (
                   <tr key={idx} className="border-t border-gray-200 dark:border-gray-700">
-                    <td className="px-3 py-2">{row.titre}</td>
-                    <td className="px-3 py-2">{row.type}</td>
-                    <td className="px-3 py-2">{row.priorite}</td>
+                    <td className="px-3 py-2">{String(row.titre)}</td>
+                    <td className="px-3 py-2">{String(row.type)}</td>
+                    <td className="px-3 py-2">{String(row.priorite)}</td>
                     <td className="px-3 py-2">
                       {row.numero_chambre
-                        ? `Chambre ${row.numero_chambre}`
-                        : row.localisation || row.batiment || '-'}
+                        ? `Chambre ${String(row.numero_chambre)}`
+                        : String(row.localisation || row.batiment || '-')}
                     </td>
                   </tr>
                 ))}
@@ -598,6 +737,8 @@ interface KanbanViewProps {
   onInterventionClick: (id: string) => void;
   onEdit: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string, e: React.MouseEvent) => void;
+  showCompleted?: boolean;
+  statusColors: Record<string, string>;
 }
 
 const KanbanViewComponent = ({
@@ -605,22 +746,42 @@ const KanbanViewComponent = ({
   onInterventionClick,
   onEdit,
   onDelete,
+  showCompleted = false,
+  statusColors,
 }: KanbanViewProps) => {
   const columnConfig = {
-    pending: { label: 'En attente', icon: Clock, color: 'orange' },
-    in_progress: { label: 'En cours', icon: AlertCircle, color: 'blue' },
-    on_hold: { label: 'En pause', icon: Pause, color: 'gray' },
-    completed: { label: 'Terminées', icon: CheckCircle2, color: 'green' },
-    validated: { label: 'Validées', icon: CheckCircle2, color: 'purple' },
+    draft: { label: 'Brouillon', icon: Edit, color: statusColors.draft },
+    pending: { label: 'En attente', icon: Clock, color: statusColors.pending },
+    assigned: { label: 'Assignées', icon: User, color: statusColors.assigned },
+    in_progress: { label: 'En cours', icon: AlertCircle, color: statusColors.in_progress },
+    on_hold: { label: 'En pause', icon: Pause, color: statusColors.on_hold },
+    completed: { label: 'Terminées', icon: CheckCircle2, color: statusColors.completed },
+    validated: { label: 'Validées', icon: CheckCircle2, color: statusColors.validated },
+    cancelled: { label: 'Annulées', icon: X, color: statusColors.cancelled },
   };
 
+  // Filtrer les colonnes selon showCompleted
+  const visibleColumns = Object.entries(columnConfig).filter(([status]) => {
+    // Masquer les colonnes 'completed' et 'validated' si showCompleted est false
+    if (!showCompleted && (status === 'completed' || status === 'validated')) {
+      return false;
+    }
+    return true;
+  });
+
+  // Calculer le nombre de colonnes pour la grille
+  const gridCols = visibleColumns.length;
+  const gridClass = cn(
+    'grid gap-4',
+    gridCols === 6 && 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6',
+    gridCols === 8 && 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8'
+  );
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-      {(Object.entries(columnConfig) as [InterventionStatus, typeof columnConfig.pending][]).map(
+    <div className={gridClass}>
+      {visibleColumns.map(
         ([status, config]) => {
-          // TODO: Icon unused
-          // const Icon = config.icon;
-          const items = columns[status] || [];
+          const items = columns[status as InterventionStatus] || [];
 
           return (
             <DroppableColumn key={status} id={status} config={config} items={items}>
@@ -631,6 +792,7 @@ const KanbanViewComponent = ({
                   onClick={() => onInterventionClick(intervention.id)}
                   onEdit={e => onEdit(intervention.id, e)}
                   onDelete={e => onDelete(intervention.id, e)}
+                  statusColor={config.color}
                 />
               ))}
             </DroppableColumn>
@@ -653,7 +815,7 @@ interface DroppableColumnProps {
   id: string;
   config: {
     label: string;
-    icon: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    icon: React.ComponentType<{ className?: string }>;
     color: string;
   };
   items: Intervention[];
@@ -664,18 +826,53 @@ const DroppableColumnComponent = ({ id, config, items, children }: DroppableColu
   const { setNodeRef, isOver } = useDroppable({ id });
   const Icon = config.icon;
 
+  // Convertir la couleur en style CSS
+  const getColorStyle = (color: string): React.CSSProperties => {
+    // Si c'est un code hex ou rgb, l'utiliser directement
+    if (color.startsWith('#') || color.startsWith('rgb')) {
+      return {
+        backgroundColor: `${color}20`, // Ajouter 20 pour l'opacité (hex alpha)
+      };
+    }
+
+    // Sinon, mapping des couleurs Tailwind vers hex
+    const tailwindColors: Record<string, string> = {
+      slate: '#64748b',
+      gray: '#6b7280',
+      zinc: '#71717a',
+      neutral: '#737373',
+      stone: '#78716c',
+      red: '#ef4444',
+      orange: '#f97316',
+      amber: '#f59e0b',
+      yellow: '#eab308',
+      lime: '#84cc16',
+      green: '#22c55e',
+      emerald: '#10b981',
+      teal: '#14b8a6',
+      cyan: '#06b6d4',
+      sky: '#0ea5e9',
+      blue: '#3b82f6',
+      indigo: '#6366f1',
+      violet: '#8b5cf6',
+      purple: '#a855f7',
+      fuchsia: '#d946ef',
+      pink: '#ec4899',
+      rose: '#f43f5e',
+    };
+
+    const hexColor = tailwindColors[color] || '#6b7280'; // gray par défaut
+    return {
+      backgroundColor: `${hexColor}20`, // Opacité de 12.5% (20 en hex)
+    };
+  };
+
   return (
     <div className="flex flex-col min-h-[400px]">
       {/* En-tête de colonne */}
       <div
-        className={cn(
-          'flex items-center justify-between p-3 rounded-lg mb-3',
-          config.color === 'orange' && 'bg-orange-100 dark:bg-orange-900/30',
-          config.color === 'blue' && 'bg-blue-100 dark:bg-blue-900/30',
-          config.color === 'gray' && 'bg-gray-100 dark:bg-gray-800',
-          config.color === 'green' && 'bg-green-100 dark:bg-green-900/30',
-          config.color === 'purple' && 'bg-purple-100 dark:bg-purple-900/30'
-        )}
+        className="flex items-center justify-between p-3 rounded-lg mb-3"
+        style={getColorStyle(config.color)}
       >
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4" />
@@ -713,6 +910,7 @@ interface DraggableCardProps {
   onClick: () => void;
   onEdit: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
+  statusColor?: string;
 }
 
 const DraggableCardComponent = ({
@@ -720,6 +918,7 @@ const DraggableCardComponent = ({
   onClick,
   onEdit,
   onDelete,
+  statusColor,
 }: DraggableCardProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: intervention.id,
@@ -739,6 +938,7 @@ const DraggableCardComponent = ({
         onEdit={onEdit}
         onDelete={onDelete}
         isDragging={isDragging}
+        statusColor={statusColor}
       />
     </div>
   );
@@ -758,6 +958,7 @@ interface KanbanCardProps {
   onEdit: (e: React.MouseEvent) => void;
   onDelete: (e: React.MouseEvent) => void;
   isDragging?: boolean;
+  statusColor?: string;
 }
 
 const KanbanCardComponent = ({
@@ -766,6 +967,7 @@ const KanbanCardComponent = ({
   onEdit,
   onDelete,
   isDragging = false,
+  statusColor,
 }: KanbanCardProps) => {
   const { user } = useAuth();
 
@@ -784,32 +986,73 @@ const KanbanCardComponent = ({
     [intervention.createdAt]
   );
 
+  // Obtenir la couleur de bordure selon le statut
+  const getStatusBorderColor = (): string => {
+    if (!statusColor) return '#d1d5db'; // gray-300 par défaut
+
+    // Si c'est un code hex ou rgb, l'utiliser directement
+    if (statusColor.startsWith('#') || statusColor.startsWith('rgb')) {
+      return statusColor;
+    }
+
+    // Sinon, mapping des couleurs Tailwind vers hex
+    const tailwindColors: Record<string, string> = {
+      slate: '#64748b',
+      gray: '#6b7280',
+      zinc: '#71717a',
+      neutral: '#737373',
+      stone: '#78716c',
+      red: '#ef4444',
+      orange: '#f97316',
+      amber: '#f59e0b',
+      yellow: '#eab308',
+      lime: '#84cc16',
+      green: '#22c55e',
+      emerald: '#10b981',
+      teal: '#14b8a6',
+      cyan: '#06b6d4',
+      sky: '#0ea5e9',
+      blue: '#3b82f6',
+      indigo: '#6366f1',
+      violet: '#8b5cf6',
+      purple: '#a855f7',
+      fuchsia: '#d946ef',
+      pink: '#ec4899',
+      rose: '#f43f5e',
+    };
+
+    return tailwindColors[statusColor] || '#6b7280';
+  };
+
   return (
     <Card
       onClick={onClick}
       className={cn(
-        'group p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all',
-        'border-l-4',
-        intervention.priority === 'urgent' && 'border-l-red-500',
-        intervention.priority === 'high' && 'border-l-orange-500',
-        intervention.priority === 'normal' && 'border-l-yellow-500',
-        intervention.priority === 'low' && 'border-l-blue-500',
-        isDragging && 'opacity-50 shadow-xl scale-105'
+        'group p-0 cursor-grab active:cursor-grabbing transition-all duration-200 overflow-hidden',
+        'border-t-4 border-x border-b',
+        'bg-white dark:bg-gray-900',
+        'hover:shadow-lg hover:scale-[1.02]',
+        isDragging && 'opacity-50 shadow-2xl scale-105 rotate-2'
       )}
+      style={{
+        borderTopColor: getStatusBorderColor(),
+      }}
     >
-      <div className="space-y-2">
-        {/* Header */}
+      {/* En-tête avec titre et menu */}
+      <div className="px-3.5 pt-3.5 pb-2">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-medium text-sm line-clamp-2 flex-1">{intervention.title}</h4>
+          <h4 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 flex-1 leading-snug group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {intervention.title}
+          </h4>
           {(canEdit || canDelete) && !isDragging && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100"
+                  className="h-7 w-7 -mt-1 -mr-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
-                  <MoreVertical className="h-3 w-3" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -833,31 +1076,56 @@ const KanbanCardComponent = ({
             </DropdownMenu>
           )}
         </div>
+      </div>
 
-        {/* Badges */}
+      {/* Badges dans une bande grise très légère */}
+      <div className="px-3.5 py-2 bg-gray-50/50 dark:bg-gray-800/30 border-y border-gray-100 dark:border-gray-800">
         <div className="flex gap-1.5 flex-wrap">
           <PriorityBadge priority={intervention.priority} size="sm" />
           <TypeBadge type={intervention.type} size="sm" />
         </div>
+      </div>
 
-        {/* Infos */}
-        <div className="space-y-1 text-xs text-gray-600 dark:text-gray-400">
-          {intervention.location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              <span className="truncate">{intervention.location}</span>
+      {/* Informations détaillées */}
+      <div className="px-3.5 py-3 space-y-2">
+        {/* Localisation */}
+        {(intervention.roomNumber || intervention.location || intervention.building) && (
+          <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-950">
+              <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
             </div>
-          )}
-          {intervention.assignedToName && (
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span className="truncate">{intervention.assignedToName}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1 text-gray-500">
-            <Clock className="h-3 w-3" />
-            <span>{timeAgo}</span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium truncate">
+              {intervention.roomNumber ? (
+                `Chambre ${intervention.roomNumber}`
+              ) : intervention.location ? (
+                <ReferenceDisplay listKey="interventionLocations" value={intervention.location} />
+              ) : intervention.building ? (
+                <ReferenceDisplay listKey="buildings" value={intervention.building} />
+              ) : null}
+            </span>
           </div>
+        )}
+
+        {/* Assigné à */}
+        {intervention.assignedToName && (
+          <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-50 dark:bg-purple-950">
+              <User className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <span className="text-gray-700 dark:text-gray-300 font-medium truncate">
+              {intervention.assignedToName}
+            </span>
+          </div>
+        )}
+
+        {/* Date */}
+        <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800">
+            <Clock className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
+          </div>
+          <span className="text-gray-500 dark:text-gray-400">
+            {timeAgo}
+          </span>
         </div>
       </div>
     </Card>
@@ -880,6 +1148,9 @@ interface TableViewProps {
   itemsPerPage: number;
 }
 
+type SortField = 'title' | 'status' | 'priority' | 'type' | 'location' | 'assignedTo' | 'date';
+type SortDirection = 'asc' | 'desc';
+
 const TableViewComponent = ({
   interventions,
   onInterventionClick,
@@ -889,12 +1160,73 @@ const TableViewComponent = ({
 }: TableViewProps) => {
   const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Fonction de tri
+  const handleSort = useCallback((field: SortField) => {
+    if (sortField === field) {
+      // Si on clique sur la même colonne, inverser la direction
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Nouvelle colonne, ordre croissant par défaut (sauf pour la date)
+      setSortField(field);
+      setSortDirection(field === 'date' ? 'desc' : 'asc');
+    }
+    setCurrentPage(1); // Retour à la première page après tri
+  }, [sortField]);
+
+  // Trier les interventions
+  const sortedInterventions = useMemo(() => {
+    const sorted = [...interventions].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case 'title':
+          comparison = a.title.localeCompare(b.title, 'fr');
+          break;
+        case 'status':
+          comparison = (STATUS_LABELS[a.status] || '').localeCompare(STATUS_LABELS[b.status] || '', 'fr');
+          break;
+        case 'priority':
+          const priorityOrder: Record<string, number> = {
+            critical: 5,
+            urgent: 4,
+            high: 3,
+            normal: 2,
+            low: 1
+          };
+          comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
+          break;
+        case 'type':
+          comparison = (INTERVENTION_TYPE_LABELS[a.type] || '').localeCompare(INTERVENTION_TYPE_LABELS[b.type] || '', 'fr');
+          break;
+        case 'location':
+          const locationA = a.roomNumber || a.location || a.building || '';
+          const locationB = b.roomNumber || b.location || b.building || '';
+          comparison = locationA.localeCompare(locationB, 'fr');
+          break;
+        case 'assignedTo':
+          comparison = (a.assignedToName || '').localeCompare(b.assignedToName || '', 'fr');
+          break;
+        case 'date':
+          const dateA = a.createdAt?.toDate().getTime() || 0;
+          const dateB = b.createdAt?.toDate().getTime() || 0;
+          comparison = dateA - dateB;
+          break;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+
+    return sorted;
+  }, [interventions, sortField, sortDirection]);
 
   // Pagination
-  const totalPages = Math.ceil(interventions.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedInterventions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentInterventions = interventions.slice(startIndex, endIndex);
+  const currentInterventions = sortedInterventions.slice(startIndex, endIndex);
 
   // Reset page when interventions change
   useState(() => {
@@ -903,57 +1235,79 @@ const TableViewComponent = ({
     }
   });
 
-  // Couleurs par statut - memoized
-  const getStatusColor = useCallback((status: InterventionStatus) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-orange-50 dark:bg-orange-950/20 border-l-orange-400';
-      case 'in_progress':
-        return 'bg-blue-50 dark:bg-blue-950/20 border-l-blue-400';
-      case 'on_hold':
-        return 'bg-gray-50 dark:bg-gray-800/50 border-l-gray-400';
-      case 'completed':
-        return 'bg-green-50 dark:bg-green-950/20 border-l-green-400';
-      case 'validated':
-        return 'bg-purple-50 dark:bg-purple-950/20 border-l-purple-400';
-      default:
-        return '';
-    }
-  }, []);
+  // Composant pour les en-têtes triables
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => {
+    const isActive = sortField === field;
+    const Icon = isActive ? (sortDirection === 'asc' ? ArrowUp : ArrowDown) : ArrowUpDown;
+
+    return (
+      <th
+        className={cn(
+          "px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all",
+          "hover:bg-white/50 dark:hover:bg-gray-700/50",
+          isActive
+            ? "text-blue-700 dark:text-blue-400"
+            : "text-gray-600 dark:text-gray-400"
+        )}
+        onClick={() => handleSort(field)}
+      >
+        <div className="flex items-center gap-2 group">
+          <span>{children}</span>
+          <Icon className={cn(
+            "h-3.5 w-3.5 transition-all",
+            isActive
+              ? "text-blue-600 dark:text-blue-400 opacity-100"
+              : "text-gray-400 opacity-0 group-hover:opacity-50"
+          )} />
+        </div>
+      </th>
+    );
+  };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-0 shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-800 border-b">
+        <table className="w-full border-separate" style={{ borderSpacing: '0 8px' }}>
+          <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 border-b-2 border-gray-200 dark:border-gray-700">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Intervention
+              <SortableHeader field="title">Intervention</SortableHeader>
+              <SortableHeader field="status">Statut</SortableHeader>
+              <th className="hidden md:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('priority')}>
+                <div className="flex items-center gap-2 group">
+                  <span>Priorité</span>
+                  <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
+                </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Statut
+              <th className="hidden lg:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('type')}>
+                <div className="flex items-center gap-2 group">
+                  <span>Type</span>
+                  <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
+                </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Priorité
+              <th className="hidden sm:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('location')}>
+                <div className="flex items-center gap-2 group">
+                  <span>Localisation</span>
+                  <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
+                </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Type
+              <th className="hidden xl:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('assignedTo')}>
+                <div className="flex items-center gap-2 group">
+                  <span>Assigné à</span>
+                  <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
+                </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Localisation
+              <th className="hidden lg:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('date')}>
+                <div className="flex items-center gap-2 group">
+                  <span>Date</span>
+                  <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
+                </div>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Assigné à
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300">
-                Date
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-700 dark:text-gray-300">
-                Actions
+              <th className="px-3 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                <span className="hidden sm:inline">Actions</span>
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-gray-50 dark:bg-gray-950">
             {currentInterventions.map(intervention => {
               const canEdit =
                 user?.role === 'admin' ||
@@ -961,38 +1315,87 @@ const TableViewComponent = ({
                 user?.id === intervention.createdBy;
               const canDelete = user?.role === 'admin' || user?.role === 'super_admin';
 
+              const getStatusBorderColor = () => {
+                switch (intervention.status) {
+                  case 'draft':
+                    return '#9ca3af'; // gray-400
+                  case 'pending':
+                    return '#f97316'; // orange-500
+                  case 'assigned':
+                    return '#eab308'; // yellow-500
+                  case 'in_progress':
+                    return '#3b82f6'; // blue-500
+                  case 'on_hold':
+                    return '#6b7280'; // gray-500
+                  case 'completed':
+                    return '#22c55e'; // green-500
+                  case 'validated':
+                    return '#a855f7'; // purple-500
+                  case 'cancelled':
+                    return '#ef4444'; // red-500
+                  default:
+                    return '#d1d5db'; // gray-300
+                }
+              };
+
               return (
                 <tr
                   key={intervention.id}
                   onClick={() => onInterventionClick(intervention.id)}
                   className={cn(
-                    'hover:shadow-md cursor-pointer transition-all border-l-4',
-                    getStatusColor(intervention.status)
+                    'group cursor-pointer transition-all duration-200',
+                    'bg-white dark:bg-gray-900',
+                    'border border-gray-200 dark:border-gray-700',
+                    'rounded-lg',
+                    'shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.3)]',
+                    'hover:shadow-[0_8px_24px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)]',
+                    'hover:scale-[1.01]',
+                    'hover:border-gray-300 dark:hover:border-gray-600'
                   )}
                 >
-                  <td className="px-4 py-3">
-                    <div className="max-w-xs">
-                      <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                        {intervention.title}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {intervention.description}
-                      </p>
+                  {/* Titre et description - première cellule avec arrondi gauche et bandeau de couleur */}
+                  <td
+                    className="px-4 py-3.5 rounded-l-lg"
+                    style={{
+                      borderLeft: `5px solid ${getStatusBorderColor()}`,
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 min-w-0 space-y-0.5">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {intervention.title}
+                        </p>
+                        {intervention.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {intervention.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Statut */}
+                  <td className="px-3 py-3.5">
                     <StatusBadge status={intervention.status} size="sm" />
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Priorité - Masquée sur mobile */}
+                  <td className="hidden md:table-cell px-3 py-3.5">
                     <PriorityBadge priority={intervention.priority} size="sm" />
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Type - Masqué sur tablette et mobile */}
+                  <td className="hidden lg:table-cell px-3 py-3.5">
                     <TypeBadge type={intervention.type} size="sm" />
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                      <MapPin className="h-3 w-3" />
-                      <span className="truncate max-w-[120px]">
+
+                  {/* Localisation - Masquée sur très petit mobile */}
+                  <td className="hidden sm:table-cell px-3 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 dark:bg-blue-950/50">
+                        <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[140px]">
                         {intervention.roomNumber ? (
                           `Chambre ${intervention.roomNumber}`
                         ) : intervention.location ? (
@@ -1003,30 +1406,46 @@ const TableViewComponent = ({
                         ) : intervention.building ? (
                           <ReferenceDisplay listKey="buildings" value={intervention.building} />
                         ) : (
-                          '-'
+                          <span className="text-gray-400">-</span>
                         )}
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-600 dark:text-gray-400 truncate block max-w-[120px]">
-                      {intervention.assignedToName || '-'}
-                    </span>
+
+                  {/* Assigné à - Masqué sur tablette et mobile */}
+                  <td className="hidden xl:table-cell px-3 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-md bg-purple-50 dark:bg-purple-950/50">
+                        <User className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 truncate max-w-[120px]">
+                        {intervention.assignedToName || <span className="text-gray-400">-</span>}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {intervention.createdAt
-                        ? format(intervention.createdAt.toDate(), 'dd/MM/yy', { locale: fr })
-                        : '-'}
-                    </span>
+
+                  {/* Date - Masquée sur tablette et mobile */}
+                  <td className="hidden lg:table-cell px-3 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 dark:bg-gray-800">
+                        <Clock className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
+                      </div>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        {intervention.createdAt
+                          ? format(intervention.createdAt.toDate(), 'dd/MM/yy', { locale: fr })
+                          : '-'}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center justify-center gap-2">
+
+                  {/* Actions - dernière cellule avec arrondi droit */}
+                  <td className="px-3 py-3.5 rounded-r-lg" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {canEdit && (
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                          className="h-8 w-8 text-blue-600 hover:text-white hover:bg-blue-600 transition-colors"
                           onClick={e => {
                             e.stopPropagation();
                             onEdit(intervention.id, e);
@@ -1038,9 +1457,9 @@ const TableViewComponent = ({
                       )}
                       {canDelete && (
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                          className="h-8 w-8 text-red-600 hover:text-white hover:bg-red-600 transition-colors"
                           onClick={e => {
                             e.stopPropagation();
                             onDelete(intervention.id, e);
@@ -1061,21 +1480,28 @@ const TableViewComponent = ({
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Affichage de {startIndex + 1} à {Math.min(endIndex, interventions.length)} sur{' '}
-            {interventions.length} intervention(s)
+        <div className="px-6 py-4 border-t bg-gradient-to-r from-gray-50/50 to-white dark:from-gray-900/50 dark:to-gray-950 flex items-center justify-between">
+          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <span className="text-gray-900 dark:text-white">{startIndex + 1}</span>
+            {' - '}
+            <span className="text-gray-900 dark:text-white">{Math.min(endIndex, sortedInterventions.length)}</span>
+            {' sur '}
+            <span className="text-gray-900 dark:text-white">{sortedInterventions.length}</span>
+            {' intervention'}
+            {sortedInterventions.length > 1 ? 's' : ''}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage === 1}
+              className="gap-1"
             >
-              Précédent
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Précédent</span>
             </Button>
-            <div className="flex items-center gap-1">
+            <div className="hidden sm:flex items-center gap-1">
               {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
                 // Afficher seulement quelques pages autour de la page courante
                 if (
@@ -1089,15 +1515,18 @@ const TableViewComponent = ({
                       variant={currentPage === page ? 'default' : 'ghost'}
                       size="sm"
                       onClick={() => setCurrentPage(page)}
-                      className="min-w-[40px]"
+                      className={cn(
+                        "min-w-[36px] h-9",
+                        currentPage === page && "bg-blue-600 hover:bg-blue-700 text-white"
+                      )}
                     >
                       {page}
                     </Button>
                   );
                 } else if (page === currentPage - 2 || page === currentPage + 2) {
                   return (
-                    <span key={page} className="px-2 text-muted-foreground">
-                      ...
+                    <span key={page} className="px-2 text-gray-400">
+                      •••
                     </span>
                   );
                 }
@@ -1109,8 +1538,10 @@ const TableViewComponent = ({
               size="sm"
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
+              className="gap-1"
             >
-              Suivant
+              <span className="hidden sm:inline">Suivant</span>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

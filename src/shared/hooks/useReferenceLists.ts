@@ -235,15 +235,15 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
             lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
               acc[key] = {
                 ...config,
-                items: (config.items || []).map((item: any) => ({
+                items: ((config.items as any[]) || []).map((item: any) => ({
                   ...item,
-                  createdAt: item.createdAt?.toDate?.(),
-                  updatedAt: item.updatedAt?.toDate?.(),
-                  lastUsed: item.lastUsed?.toDate?.(),
+                  createdAt: item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt,
+                  updatedAt: item.updatedAt?.toDate ? item.updatedAt.toDate() : item.updatedAt,
+                  lastUsed: item.lastUsed?.toDate ? item.lastUsed.toDate() : item.lastUsed,
                 })),
-              };
+              } as ListConfig;
               return acc;
-            }, {} as any),
+            }, {} as Record<string, ListConfig>),
           } as EstablishmentReferenceLists);
         }
       },
@@ -535,7 +535,7 @@ export const useMultipleReferenceLists = (listKeys: ListKey[]) => {
   });
 
   const listsData = useMemo(() => {
-    const result: Record<ListKey, ReferenceItem[]> = {} as any;
+    const result: Record<ListKey, ReferenceItem[]> = {} as Record<ListKey, ReferenceItem[]>;
     listKeys.forEach(key => {
       result[key] = getActiveItems(key);
     });

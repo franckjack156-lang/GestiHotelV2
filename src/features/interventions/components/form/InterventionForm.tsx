@@ -6,7 +6,7 @@
 
 import { useState, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, Calendar as CalendarIcon, Clock, TrendingUp, TrendingDown } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -20,6 +20,8 @@ import {
 } from '@/shared/components/ui/select';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import { Calendar } from '@/shared/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import {
   InterventionType,
   InterventionCategory,
@@ -28,9 +30,13 @@ import {
   CATEGORY_LABELS,
   PRIORITY_LABELS,
 } from '@/shared/types/status.types';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
-import { useInterventionForm } from '../../hooks/useInterventionForm';
+import { useInterventionForm, type InterventionFormData } from '../../hooks/useInterventionForm';
 import { useInterventionActions } from '../../hooks/useInterventionActions';
+import { useInterventions } from '../../hooks/useInterventions';
+import { useSchedulingSuggestions } from '../../hooks/useSchedulingSuggestions';
 import type { CreateInterventionData } from '../../types/intervention.types';
 
 interface InterventionFormProps {
@@ -59,6 +65,18 @@ const InterventionFormComponent = ({
   const [filePreviews, setFilePreviews] = useState<string[]>([]);
 
   const isLoading = isCreating || isUpdating;
+
+  // Charger les interventions pour les suggestions de planification
+  const { interventions } = useInterventions();
+
+  // Obtenir les suggestions de planification
+  const { topSuggestions, stats } = useSchedulingSuggestions({
+    interventions: interventions || [],
+    estimatedDuration: watch('estimatedDuration') || 60,
+    assignedTo: watch('assignedTo'),
+    priority: watch('priority'),
+    excludeWeekends: false,
+  });
 
   // Gérer l'upload de fichiers - memoized
   const handleFileChange = useCallback(
@@ -98,16 +116,22 @@ const InterventionFormComponent = ({
 
   // Soumettre le formulaire - memoized
   const onSubmit = useCallback(
-    async (data: any) => {
+    async (data: InterventionFormData) => {
       try {
+        // Convertir InterventionFormData en CreateInterventionData
+        const interventionData = {
+          ...data,
+          // Conversion explicite des champs optionnels du formulaire
+        } as CreateInterventionData;
+
         if (mode === 'create') {
-          const id = await createIntervention(data);
+          const id = await createIntervention(interventionData);
           if (id) {
             onSuccess?.(id);
             navigate(`/interventions/${id}`);
           }
         } else if (mode === 'edit' && interventionId) {
-          const success = await updateIntervention(interventionId, data);
+          const success = await updateIntervention(interventionId, interventionData);
           if (success) {
             onSuccess?.(interventionId);
             navigate(`/interventions/${interventionId}`);
@@ -159,7 +183,7 @@ const InterventionFormComponent = ({
           {/* Description */}
           <div className="space-y-2">
             <Label htmlFor="description">
-              Description <span className="text-red-500">*</span>
+              Description
             </Label>
             <Textarea
               id="description"
@@ -272,6 +296,218 @@ const InterventionFormComponent = ({
               </Label>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Planification */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Planification (optionnel)</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Date et heure planifiée */}
+          <div className="space-y-2">
+            <Label>Date et heure souhaitée</Label>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Sélecteur de date */}
+              <div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`w-full justify-start text-left font-normal ${
+                        !watch('scheduledAt') && 'text-muted-foreground'
+                      }`}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {watch('scheduledAt') ? (
+                        format(watch('scheduledAt') as Date, 'dd MMMM yyyy', { locale: fr })
+                      ) : (
+                        <span>Choisir une date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={watch('scheduledAt') as Date | undefined}
+                      onSelect={date => {
+                        if (date) {
+                          // Conserver l'heure si elle existe déjà
+                          const existingTime = watch('scheduledAt')
+                            ? {
+                                hours: (watch('scheduledAt') as Date).getHours(),
+                                minutes: (watch('scheduledAt') as Date).getMinutes(),
+                              }
+                            : { hours: 9, minutes: 0 };
+
+                          date.setHours(existingTime.hours, existingTime.minutes);
+                          setValue('scheduledAt', date);
+                        } else {
+                          setValue('scheduledAt', null);
+                        }
+                      }}
+                      disabled={date => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Sélecteur d'heure */}
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="HH"
+                  min="0"
+                  max="23"
+                  value={watch('scheduledAt') ? (watch('scheduledAt') as Date).getHours() : ''}
+                  onChange={e => {
+                    const hours = parseInt(e.target.value);
+                    if (hours >= 0 && hours <= 23) {
+                      const date = watch('scheduledAt')
+                        ? new Date(watch('scheduledAt') as Date)
+                        : new Date();
+                      date.setHours(hours);
+                      setValue('scheduledAt', date);
+                    }
+                  }}
+                  className="w-20"
+                />
+                <span className="flex items-center">:</span>
+                <Input
+                  type="number"
+                  placeholder="MM"
+                  min="0"
+                  max="59"
+                  value={watch('scheduledAt') ? (watch('scheduledAt') as Date).getMinutes() : ''}
+                  onChange={e => {
+                    const minutes = parseInt(e.target.value);
+                    if (minutes >= 0 && minutes <= 59) {
+                      const date = watch('scheduledAt')
+                        ? new Date(watch('scheduledAt') as Date)
+                        : new Date();
+                      date.setMinutes(minutes);
+                      setValue('scheduledAt', date);
+                    }
+                  }}
+                  className="w-20"
+                />
+              </div>
+            </div>
+            {watch('scheduledAt') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setValue('scheduledAt', null)}
+                className="mt-2"
+              >
+                Effacer la planification
+              </Button>
+            )}
+          </div>
+
+          {/* Durée estimée */}
+          <div className="space-y-2">
+            <Label htmlFor="estimatedDuration">Durée estimée</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="estimatedDuration"
+                type="number"
+                placeholder="Ex: 120"
+                min="5"
+                max="1440"
+                value={watch('estimatedDuration') ?? ''}
+                onChange={e =>
+                  setValue('estimatedDuration', e.target.value ? parseInt(e.target.value) : null)
+                }
+                className="w-32"
+              />
+              <span className="text-sm text-gray-500">minutes</span>
+            </div>
+            {watch('estimatedDuration') && (
+              <p className="text-xs text-gray-500">
+                ≈{' '}
+                {Math.floor((watch('estimatedDuration') as number) / 60) > 0 &&
+                  `${Math.floor((watch('estimatedDuration') as number) / 60)}h `}
+                {(watch('estimatedDuration') as number) % 60 > 0 &&
+                  `${(watch('estimatedDuration') as number) % 60}min`}
+              </p>
+            )}
+          </div>
+
+          {/* Suggestions de créneaux */}
+          {topSuggestions.length > 0 && (
+            <div className="space-y-2">
+              <Label>Créneaux suggérés</Label>
+              <div className="grid gap-2">
+                {topSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setValue('scheduledAt', suggestion.date)}
+                    className={`flex items-center justify-between p-3 text-left border rounded-lg transition-colors ${
+                      suggestion.isRecommended
+                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
+                        : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Clock size={14} />
+                        <span className="text-sm font-medium">{suggestion.label}</span>
+                        {suggestion.isRecommended && (
+                          <span className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                            Recommandé
+                          </span>
+                        )}
+                      </div>
+                      {suggestion.reason && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          {suggestion.reason}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {suggestion.load === 0 ? (
+                        <TrendingDown size={16} className="text-green-500" />
+                      ) : suggestion.load < 3 ? (
+                        <TrendingUp size={16} className="text-blue-500" />
+                      ) : (
+                        <TrendingUp size={16} className="text-orange-500" />
+                      )}
+                      <span className="text-xs text-gray-500">{suggestion.load}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Statistiques de charge */}
+          {stats.totalScheduled > 0 && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">
+                📊 Charge actuelle
+              </h4>
+              <div className="text-xs text-blue-800 dark:text-blue-400 space-y-1">
+                <p>
+                  <span className="font-medium">{stats.totalScheduled}</span> interventions
+                  planifiées
+                </p>
+                <p>
+                  Charge moyenne: <span className="font-medium">{stats.averageLoad.toFixed(1)}</span>{' '}
+                  interventions/jour
+                </p>
+                {stats.maxLoad > 0 && (
+                  <p>
+                    Charge maximale: <span className="font-medium">{stats.maxLoad}</span>{' '}
+                    interventions/jour
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -54,7 +54,18 @@ export interface ImportDialogProps<T> {
   onImport: (file: File) => Promise<ImportResult<T>>;
   onConfirm: (data: T[]) => Promise<void>;
   renderPreview?: (data: T[]) => React.ReactNode;
-  onCreateMissingValues?: (missingValues: ImportResult<T>['missingValues'], userMappings?: Map<string, string>) => Promise<void>; // Nouvelle fonction pour créer les valeurs manquantes
+  onCreateMissingValues?: (
+    missingValues: ImportResult<T>['missingValues'],
+    userMappings?: Map<string, string>,
+    referenceMappings?: {
+      buildings?: Map<string, string>;
+      locations?: Map<string, string>;
+      floors?: Map<string, string>;
+      types?: Map<string, string>;
+      categories?: Map<string, string>;
+      priorities?: Map<string, string>;
+    }
+  ) => Promise<void>; // Nouvelle fonction pour créer les valeurs manquantes
 }
 
 type Step = 'upload' | 'preview' | 'importing' | 'success';
@@ -143,19 +154,29 @@ export function ImportDialog<T>({
     } catch (error) {
       toast.dismiss();
       toast.error("Erreur lors de l'analyse du fichier");
-      console.error(error);
       setStep('upload');
     }
   };
 
-  const handleCreateMissingValues = async (selectedValues: ImportResult<T>['missingValues'], userMappings?: Map<string, string>) => {
+  const handleCreateMissingValues = async (
+    selectedValues: ImportResult<T>['missingValues'],
+    userMappings?: Map<string, string>,
+    referenceMappings?: {
+      buildings?: Map<string, string>;
+      locations?: Map<string, string>;
+      floors?: Map<string, string>;
+      types?: Map<string, string>;
+      categories?: Map<string, string>;
+      priorities?: Map<string, string>;
+    }
+  ) => {
     if (!onCreateMissingValues || !file) return;
 
     setIsCreatingValues(true);
     toast.loading('Création des valeurs manquantes...');
 
     try {
-      await onCreateMissingValues(selectedValues, userMappings);
+      await onCreateMissingValues(selectedValues, userMappings, referenceMappings);
       toast.dismiss();
       toast.success('Valeurs créées avec succès !', {
         description: 'Réimport automatique du fichier...',
@@ -169,7 +190,6 @@ export function ImportDialog<T>({
     } catch (error) {
       toast.dismiss();
       toast.error('Erreur lors de la création des valeurs');
-      console.error(error);
     } finally {
       setIsCreatingValues(false);
     }
@@ -193,7 +213,6 @@ export function ImportDialog<T>({
       }, 2000);
     } catch (error) {
       toast.error("Erreur lors de l'import");
-      console.error(error);
       setStep('preview');
     }
   };

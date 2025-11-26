@@ -6,3 +6,4 @@
 
 export { QuickNotesEditor } from './QuickNotesEditor';
 export { TechnicianActions } from './TechnicianActions';
+export { QuickSchedulingEditor } from './QuickSchedulingEditor';

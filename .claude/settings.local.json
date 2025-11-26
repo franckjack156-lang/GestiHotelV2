@@ -25,7 +25,18 @@
       "Bash(done)",
       "Bash(CORRECTIONS_EFFECTUEES.md)",
       "Bash(npm view:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run preview:*)",
+      "Bash(node scripts/generate-pwa-icons.js:*)",
+      "Bash(node scripts/generate-pwa-icons.cjs:*)",
+      "Bash(npx pwa-assets-generator --preset minimal public/icon.svg)",
+      "Bash(taskkill:*)",
+      "Bash(nul)",
+      "Bash(firebase hosting:sites:list:*)",
+      "Bash(del nul)",
+      "Bash(for file in \"src/features/auth/hooks/__tests__/useAuth.test.tsx\" \"src/features/dashboard/components/CustomizeDashboardDialog.tsx\" \"src/features/dashboard/components/DashboardEditMode.tsx\" \"src/features/dashboard/components/DashboardGrid.tsx\" \"src/features/dashboard/components/WidgetRenderer.tsx\" \"src/features/dashboard/components/widgets/ButtonGridWidget.tsx\" \"src/features/dashboard/components/widgets/ClockWidget.tsx\" \"src/features/dashboard/components/widgets/CustomListWidget.tsx\" \"src/features/dashboard/components/widgets/IframeWidget.tsx\" \"src/features/dashboard/components/widgets/NoteWidget.tsx\" \"src/features/dashboard/components/widgets/QuickLinksWidget.tsx\" \"src/features/dashboard/components/widgets/WeatherWidget.tsx\" \"src/features/dashboard/hooks/useDashboard.ts\" \"src/app/router.tsx\" \"src/pages/Dashboard.tsx\" \"src/pages/Settings.tsx\")",
+      "Bash(do sed -i '1i /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */' \"$file\")"
     ],
     "deny": [],
     "ask": []

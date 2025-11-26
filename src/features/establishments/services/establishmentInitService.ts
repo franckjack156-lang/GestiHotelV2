@@ -148,7 +148,7 @@ import { getDoc, updateDoc } from 'firebase/firestore';
 /**
  * Nettoyer les données pour Firestore (convertir Date en Timestamp)
  */
-const cleanForFirestore = (obj: any): any => {
+const cleanForFirestore = (obj: unknown): unknown => {
   if (obj === null || obj === undefined) {
     return null;
   }
@@ -162,7 +162,7 @@ const cleanForFirestore = (obj: any): any => {
   }
 
   if (typeof obj === 'object') {
-    const cleaned: any = {};
+    const cleaned: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       // Skip undefined values
       if (value !== undefined) {
@@ -188,7 +188,7 @@ export const addMissingLists = async (establishmentId: string, userId: string): 
 
     const currentData = docSnap.data() as EstablishmentReferenceLists;
     const allDefaultLists = DEFAULT_REFERENCE_LISTS;
-    const missingLists: Record<string, any> = {};
+    const missingLists: Record<string, unknown> = {};
 
     // Vérifier quelles listes prédéfinies manquent
     for (const [key, config] of Object.entries(allDefaultLists)) {

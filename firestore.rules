@@ -22,24 +22,33 @@ service cloud.firestore {
     }
     
     /**
+     * Vérifier si le document utilisateur existe
+     */
+    function userExists() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    /**
      * Récupérer le rôle de l'utilisateur actuel
      */
     function getUserRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
-    
+
     /**
      * Vérifier si l'utilisateur est admin ou super_admin
+     * Gère le cas où le document utilisateur n'existe pas encore
      */
     function isAdmin() {
-      return isAuthenticated() && getUserRole() in ['admin', 'super_admin'];
+      return isAuthenticated() && userExists() && getUserRole() in ['admin', 'super_admin'];
     }
-    
+
     /**
      * Vérifier si l'utilisateur est super_admin
+     * Gère le cas où le document utilisateur n'existe pas encore
      */
     function isSuperAdmin() {
-      return isAuthenticated() && getUserRole() == 'super_admin';
+      return isAuthenticated() && userExists() && getUserRole() == 'super_admin';
     }
     
     // ============================================================================
@@ -48,18 +57,10 @@ service cloud.firestore {
     
     match /users/{userId} {
       // LECTURE :
-      // - Soi-même peut lire son profil
-      // - Admins peuvent lire tous les profils
-      // - Utilisateurs du même établissement peuvent se voir
-      allow read: if isAuthenticated() && (
-        isOwner(userId) ||
-        isAdmin() ||
-        // Permettre la lecture si l'utilisateur partage au moins un établissement
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.establishmentIds.hasAny(
-          get(/databases/$(database)/documents/users/$(userId)).data.establishmentIds
-        )
-      );
+      // - Soi-même peut TOUJOURS lire son profil (priorité absolue, sans autres vérifications)
+      // - Tout utilisateur authentifié peut lire les autres profils (simplifié pour éviter les boucles)
+      // Note: Le filtrage par établissement se fait côté application
+      allow read: if isAuthenticated();
       
       // CRÉATION :
       // - ⚠️ IMPORTANT : Permettre la création lors du signup (userId == auth.uid)
@@ -363,6 +364,56 @@ service cloud.firestore {
 
       // Mise à jour et suppression : Seuls les super admins
       allow update, delete: if isSuperAdmin();
+    }
+
+    // ============================================================================
+    // DASHBOARD PREFERENCES COLLECTION
+    // ============================================================================
+
+    match /dashboardPreferences/{preferenceId} {
+      // Lecture : L'utilisateur peut lire ses propres préférences
+      // Format du preferenceId: userId_establishmentId
+      allow read: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*');
+
+      // Création : L'utilisateur peut créer ses propres préférences
+      allow create: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*') &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Mise à jour : L'utilisateur peut mettre à jour ses propres préférences
+      allow update: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*') &&
+        resource.data.userId == request.auth.uid;
+
+      // Suppression : L'utilisateur peut supprimer ses propres préférences
+      allow delete: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*') &&
+        resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================================================
+    // THEME PREFERENCES COLLECTION
+    // ============================================================================
+
+    match /themePreferences/{userId} {
+      // Lecture : L'utilisateur peut lire ses propres préférences de thème
+      allow read: if isAuthenticated() && isOwner(userId);
+
+      // Création : L'utilisateur peut créer ses propres préférences de thème
+      allow create: if isAuthenticated() &&
+        isOwner(userId) &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Mise à jour : L'utilisateur peut mettre à jour ses propres préférences de thème
+      allow update: if isAuthenticated() &&
+        isOwner(userId) &&
+        resource.data.userId == request.auth.uid;
+
+      // Suppression : L'utilisateur peut supprimer ses propres préférences de thème
+      allow delete: if isAuthenticated() &&
+        isOwner(userId) &&
+        resource.data.userId == request.auth.uid;
     }
 
     // ============================================================================

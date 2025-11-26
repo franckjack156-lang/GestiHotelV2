@@ -92,8 +92,8 @@ export const useInterventions = () => {
       );
 
       setInterventions(interventions);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }

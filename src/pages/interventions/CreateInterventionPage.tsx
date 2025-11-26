@@ -77,6 +77,7 @@ const interventionSchema = z.object({
   building: z.string().optional(),
   estimatedDuration: z.coerce.number().optional(),
   internalNotes: z.string().optional(),
+  scheduledAt: z.date().optional(), // Date/heure de planification
 });
 
 type FormData = z.infer<typeof interventionSchema>;
@@ -120,11 +121,11 @@ export const CreateInterventionPage = () => {
   // Brouillon auto-save
   const [draft, setDraft] = useLocalStorage<Partial<FormData>>('intervention-draft', {});
 
-  // Form - initialiser avec priorité normale par défaut
+  // Form - initialiser avec priorité normale par défaut (utiliser la valeur anglaise, pas le label)
   const form = useForm<FormData>({
     resolver: zodResolver(interventionSchema) as any,
     defaultValues: {
-      priority: 'normale',
+      priority: 'normal',
     },
   });
 
@@ -184,10 +185,31 @@ export const CreateInterventionPage = () => {
     });
   };
 
+  // Charger la date planifiée depuis l'URL si présente
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const scheduledAtParam = searchParams.get('scheduledAt');
+
+    if (scheduledAtParam) {
+      try {
+        const scheduledDate = new Date(decodeURIComponent(scheduledAtParam));
+        // Vérifier que la date est valide
+        if (!isNaN(scheduledDate.getTime())) {
+          // Utiliser setTimeout pour s'assurer que le setValue se fait après le reset du formulaire
+          setTimeout(() => {
+            setValue('scheduledAt', scheduledDate);
+          }, 100);
+        }
+      } catch {
+        // Ignorer les erreurs de parsing de date
+      }
+    }
+  }, [location.search, setValue]);
+
   // Réinitialiser le formulaire quand on navigue vers la page
   useEffect(() => {
-    // Valeurs par défaut à appliquer
-    const defaultValues = { priority: 'normale' };
+    // Valeurs par défaut à appliquer (utiliser la valeur anglaise, pas le label)
+    const defaultValues = { priority: 'normal' };
 
     // Vérifier si le brouillon a été explicitement supprimé
     const wasDraftCleared = window.localStorage.getItem('intervention-draft-cleared') === 'true';
@@ -265,29 +287,19 @@ export const CreateInterventionPage = () => {
   // Soumettre le formulaire
   const onSubmit = async (data: FormData) => {
     try {
-      console.log('🔍 [onSubmit] Form data received:', data);
-      console.log('🔍 [onSubmit] data.type:', data.type, 'is undefined?', data.type === undefined);
-
       const interventionData: CreateInterventionData = {
         ...data,
         type: data.type as InterventionType,
         category: data.category as InterventionCategory,
         priority: data.priority as InterventionPriority,
+        ...(data.scheduledAt && { scheduledAt: data.scheduledAt }),
         ...(hasFeature('photos') && selectedFiles.length > 0 && { photos: selectedFiles }),
       } as any;
-
-      console.log('🔍 [onSubmit] Prepared interventionData:', interventionData);
-      console.log('🔍 [onSubmit] interventionData.type:', interventionData.type);
 
       const id = await createIntervention(interventionData);
 
       if (id) {
         toast.success('Intervention créée avec succès');
-
-        console.log(
-          '🔍 [onSubmit] Avant suppression draft - localStorage:',
-          window.localStorage.getItem('intervention-draft')
-        );
 
         // Supprimer complètement le brouillon du localStorage
         window.localStorage.removeItem('intervention-draft');
@@ -295,22 +307,15 @@ export const CreateInterventionPage = () => {
         // IMPORTANT: Mettre à jour l'état du hook useLocalStorage aussi
         setDraft({});
 
-        console.log(
-          '🔍 [onSubmit] Après suppression draft - localStorage:',
-          window.localStorage.getItem('intervention-draft')
-        );
-        console.log('🔍 [onSubmit] setDraft({}) appelé');
-
         // Réinitialiser le formulaire et tous les états
         form.reset({});
         setSelectedFiles([]);
         setFilePreviews([]);
         setCurrentStep(1);
 
-        console.log('🔍 [onSubmit] Draft supprimé, navigation vers intervention');
         navigate(`/app/interventions/${id}`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Erreur lors de la création');
     }
   };
@@ -364,22 +369,11 @@ export const CreateInterventionPage = () => {
 
   // Fonction pour effacer le brouillon
   const clearDraft = () => {
-    console.log(
-      '🔍 [clearDraft] Avant suppression - localStorage:',
-      window.localStorage.getItem('intervention-draft')
-    );
-
     // Supprimer complètement le brouillon du localStorage
     window.localStorage.removeItem('intervention-draft');
 
     // IMPORTANT: Mettre à jour l'état du hook useLocalStorage aussi
     setDraft({});
-
-    console.log(
-      '🔍 [clearDraft] Après suppression - localStorage:',
-      window.localStorage.getItem('intervention-draft')
-    );
-    console.log('🔍 [clearDraft] setDraft({}) appelé');
 
     // Marquer explicitement que le brouillon a été supprimé
     window.localStorage.setItem('intervention-draft-cleared', 'true');
@@ -391,7 +385,6 @@ export const CreateInterventionPage = () => {
     setCurrentStep(1);
     setMode(null);
 
-    console.log('🔍 [clearDraft] Draft supprimé, form reset, états réinitialisés');
     toast.success('Brouillon supprimé');
   };
 

@@ -95,10 +95,11 @@ export const EstablishmentSettingsPage = () => {
       await updateEstablishment(currentEstablishment.id, { settings });
       toast.success('Paramètres enregistrés avec succès');
       setHasChanges(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating settings:', error);
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
       toast.error('Erreur lors de la sauvegarde', {
-        description: error.message,
+        description: message,
       });
     } finally {
       setSaving(false);

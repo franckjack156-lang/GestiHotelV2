@@ -93,9 +93,7 @@ export const createIntervention = async (
           const userData = userDoc.data();
           createdByName = userData.displayName || userData.email || 'Inconnu';
         }
-      } catch (error) {
-        console.warn('⚠️ Impossible de récupérer le nom du créateur:', error);
-      }
+      } catch {}
     }
 
     // Base data - only required fields
@@ -103,7 +101,8 @@ export const createIntervention = async (
       establishmentId,
       title: data.title,
       status: 'pending' as InterventionStatus,
-      location: data.location,
+      // N'inclure location que si elle est définie et non nulle
+      ...(data.location && { location: data.location }),
       createdBy, // Utiliser createdBy fourni ou userId par défaut
       createdByName, // Utiliser createdByName fourni ou récupéré
       photos: [],
@@ -128,10 +127,10 @@ export const createIntervention = async (
     if (data.description !== undefined && data.description !== '') {
       interventionData.description = data.description;
     }
-    if (data.type !== undefined) {
+    if (data.type) {
       interventionData.type = data.type;
     }
-    if (data.category !== undefined) {
+    if (data.category) {
       interventionData.category = data.category;
     }
     // Priorité: utiliser la valeur fournie ou 'normal' par défaut
@@ -146,15 +145,55 @@ export const createIntervention = async (
     if (data.building !== undefined && data.building !== '') {
       interventionData.building = data.building;
     }
-    if (data.assignedTo) {
-      // Gérer le cas où assignedTo peut être une string ou un array
+    // Gestion de l'assignation (support multi-techniciens + rétrocompatibilité)
+    if (data.assignedToIds && data.assignedToIds.length > 0) {
+      // Nouveau format: plusieurs techniciens
+      interventionData.assignedToIds = data.assignedToIds;
+
+      // Utiliser assignedAt fourni (import historique) ou serverTimestamp()
+      interventionData.assignedAt = data.assignedAt
+        ? data.assignedAt instanceof Timestamp
+          ? data.assignedAt
+          : Timestamp.fromDate(data.assignedAt)
+        : serverTimestamp();
+
+      // Utiliser assignedToNames fourni (import historique) ou récupérer depuis la base
+      if (data.assignedToNames && data.assignedToNames.length === data.assignedToIds.length) {
+        interventionData.assignedToNames = data.assignedToNames;
+        interventionData.assignedToName = data.assignedToNames.join(', '); // Legacy
+        interventionData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
+      } else {
+        // Récupérer les noms des techniciens depuis Firestore
+        try {
+          const techNames: string[] = [];
+          for (const techId of data.assignedToIds) {
+            const techDoc = await getDoc(doc(db, 'users', techId));
+            if (techDoc.exists()) {
+              const techData = techDoc.data();
+              techNames.push(techData.displayName || techData.email || 'Inconnu');
+            } else {
+              techNames.push('Inconnu');
+            }
+          }
+          interventionData.assignedToNames = techNames;
+          interventionData.assignedToName = techNames.join(', '); // Legacy
+          interventionData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
+        } catch (error) {
+          console.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
+          interventionData.assignedToNames = data.assignedToIds.map(() => 'Inconnu');
+          interventionData.assignedToName = 'Inconnu';
+          interventionData.assignedTo = data.assignedToIds[0];
+        }
+      }
+    } else if (data.assignedTo) {
+      // Legacy format: un seul technicien
       const assignedToIds = Array.isArray(data.assignedTo) ? data.assignedTo : [data.assignedTo];
 
-      // Pour l'instant, on stocke seulement le premier technicien dans assignedTo
-      // TODO: Créer un champ assignedToIds pour stocker tous les IDs
+      // Stocker dans les deux formats pour compatibilité
       interventionData.assignedTo = assignedToIds[0];
+      interventionData.assignedToIds = assignedToIds;
 
-      // Utiliser assignedAt fourni (import historique) ou serverTimestamp() pour nouvelle assignation
+      // Utiliser assignedAt fourni (import historique) ou serverTimestamp()
       interventionData.assignedAt = data.assignedAt
         ? data.assignedAt instanceof Timestamp
           ? data.assignedAt
@@ -164,34 +203,32 @@ export const createIntervention = async (
       // Utiliser assignedToName fourni (import historique) ou récupérer depuis la base
       if (data.assignedToName) {
         interventionData.assignedToName = data.assignedToName;
+        interventionData.assignedToNames = [data.assignedToName];
       } else {
-        // Récupérer les noms de tous les techniciens assignés
+        // Récupérer les noms depuis Firestore
         try {
           const techNames: string[] = [];
-
           for (const techId of assignedToIds) {
             const techDoc = await getDoc(doc(db, 'users', techId));
-
             if (techDoc.exists()) {
               const techData = techDoc.data();
-              const techName = techData.displayName || techData.email || 'Inconnu';
-              techNames.push(techName);
+              techNames.push(techData.displayName || techData.email || 'Inconnu');
             } else {
               techNames.push('Inconnu');
             }
           }
-
-          // Joindre les noms avec une virgule
+          interventionData.assignedToNames = techNames;
           interventionData.assignedToName = techNames.join(', ');
         } catch (error) {
           console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+          interventionData.assignedToNames = ['Inconnu'];
           interventionData.assignedToName = 'Inconnu';
         }
       }
     } else if (data.assignedToName) {
       // Cas spécial pour import historique: nom de technicien fourni sans ID utilisateur
-      // (technicien dans liste de référence, pas dans users)
       interventionData.assignedToName = data.assignedToName;
+      interventionData.assignedToNames = [data.assignedToName];
       if (data.assignedAt) {
         interventionData.assignedAt =
           data.assignedAt instanceof Timestamp
@@ -202,7 +239,7 @@ export const createIntervention = async (
     if (data.scheduledAt) {
       interventionData.scheduledAt = Timestamp.fromDate(data.scheduledAt);
     }
-    if (data.estimatedDuration) {
+    if (data.estimatedDuration !== undefined && data.estimatedDuration !== null) {
       interventionData.estimatedDuration = data.estimatedDuration;
     }
     if (data.internalNotes) {
@@ -213,9 +250,16 @@ export const createIntervention = async (
     const priority = (data.priority || 'normal') as keyof typeof SLA_TARGETS;
     const createdDate = new Date();
     const customDueDate = data.dueDate;
+
+    console.log('🔍 DEBUG - Priority:', priority, 'SLA_TARGET:', SLA_TARGETS[priority]);
+
     const dueDate = calculateDueDate(createdDate, priority, customDueDate);
 
-    interventionData.slaTarget = SLA_TARGETS[priority];
+    // S'assurer que slaTarget a une valeur (défaut: 8h pour normal)
+    const slaTarget = SLA_TARGETS[priority] || SLA_TARGETS.normal || 480;
+    console.log('🔍 DEBUG - Final slaTarget:', slaTarget);
+
+    interventionData.slaTarget = slaTarget;
     interventionData.dueDate = Timestamp.fromDate(dueDate);
     interventionData.slaStatus = 'on_track';
 
@@ -224,6 +268,13 @@ export const createIntervention = async (
       interventionData.firstResponseAt = serverTimestamp();
       interventionData.responseTime = 0; // Assignation immédiate
     }
+
+    // DEBUG: Vérifier qu'il n'y a pas de valeurs undefined
+    console.log('🔍 DEBUG - interventionData avant addDoc:', JSON.stringify(
+      Object.entries(interventionData).filter(([_, value]) => value === undefined),
+      null,
+      2
+    ));
 
     const docRef = await addDoc(collectionRef, interventionData);
     console.log('✅ Intervention créée:', docRef.id);
@@ -337,15 +388,65 @@ export const updateIntervention = async (
     if (data.roomNumber !== undefined) updateData.roomNumber = data.roomNumber;
     if (data.floor !== undefined) updateData.floor = data.floor;
     if (data.building !== undefined) updateData.building = data.building;
-    if (data.assignedTo !== undefined) updateData.assignedTo = data.assignedTo;
+
+    // Gestion de l'assignation (support multi-techniciens)
+    if (data.assignedToIds !== undefined && data.assignedToIds.length > 0) {
+      // Nouveau format: plusieurs techniciens
+      updateData.assignedToIds = data.assignedToIds;
+      updateData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
+
+      // Récupérer les noms des techniciens
+      try {
+        const techNames: string[] = [];
+        for (const techId of data.assignedToIds) {
+          const techDoc = await getDoc(doc(db, 'users', techId));
+          if (techDoc.exists()) {
+            const techData = techDoc.data();
+            techNames.push(techData.displayName || techData.email || 'Inconnu');
+          } else {
+            techNames.push('Inconnu');
+          }
+        }
+        updateData.assignedToNames = techNames;
+        updateData.assignedToName = techNames.join(', '); // Legacy
+      } catch (error) {
+        console.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
+        updateData.assignedToNames = data.assignedToIds.map(() => 'Inconnu');
+        updateData.assignedToName = 'Inconnu';
+      }
+    } else if (data.assignedTo !== undefined) {
+      // Legacy format: un seul technicien
+      updateData.assignedTo = data.assignedTo;
+      updateData.assignedToIds = [data.assignedTo];
+
+      // Récupérer le nom du technicien
+      try {
+        const techDoc = await getDoc(doc(db, 'users', data.assignedTo));
+        if (techDoc.exists()) {
+          const techData = techDoc.data();
+          const techName = techData.displayName || techData.email || 'Inconnu';
+          updateData.assignedToName = techName;
+          updateData.assignedToNames = [techName];
+        } else {
+          updateData.assignedToName = 'Inconnu';
+          updateData.assignedToNames = ['Inconnu'];
+        }
+      } catch (error) {
+        console.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
+        updateData.assignedToName = 'Inconnu';
+        updateData.assignedToNames = ['Inconnu'];
+      }
+    }
+
     if (data.internalNotes !== undefined) updateData.internalNotes = data.internalNotes;
     if (data.resolutionNotes !== undefined) updateData.resolutionNotes = data.resolutionNotes;
     if (data.tags !== undefined) updateData.tags = data.tags;
     if (data.isUrgent !== undefined) updateData.isUrgent = data.isUrgent;
     if (data.isBlocking !== undefined) updateData.isBlocking = data.isBlocking;
 
-    if (data.scheduledAt) {
-      updateData.scheduledAt = Timestamp.fromDate(data.scheduledAt);
+    // Gérer scheduledAt (peut être null pour supprimer la planification)
+    if (data.scheduledAt !== undefined) {
+      updateData.scheduledAt = data.scheduledAt ? Timestamp.fromDate(data.scheduledAt) : null;
     }
     if (data.estimatedDuration !== undefined) {
       updateData.estimatedDuration = data.estimatedDuration;
@@ -708,20 +809,66 @@ export const subscribeToInterventions = (
     const constraints: QueryConstraint[] = [where('isDeleted', '==', false)];
 
     // Appliquer les filtres
-    if (filters?.status) {
-      constraints.push(where('status', '==', filters.status));
+    // Status - support multi-valeurs avec 'in' (max 10 valeurs)
+    if (filters?.status && filters.status.length > 0) {
+      if (filters.status.length === 1) {
+        constraints.push(where('status', '==', filters.status[0]));
+      } else {
+        // Firestore 'in' supporte max 10 valeurs
+        const statusValues = filters.status.slice(0, 10);
+        constraints.push(where('status', 'in', statusValues));
+      }
     }
-    if (filters?.priority) {
-      constraints.push(where('priority', '==', filters.priority));
+
+    // Priority - support multi-valeurs avec 'in' (max 10 valeurs)
+    if (filters?.priority && filters.priority.length > 0) {
+      if (filters.priority.length === 1) {
+        constraints.push(where('priority', '==', filters.priority[0]));
+      } else {
+        // Firestore 'in' supporte max 10 valeurs
+        const priorityValues = filters.priority.slice(0, 10);
+        constraints.push(where('priority', 'in', priorityValues));
+      }
     }
+
+    // Type - valeur simple
     if (filters?.type) {
       constraints.push(where('type', '==', filters.type));
     }
+
+    // Category - valeur simple
+    if (filters?.category) {
+      constraints.push(where('category', '==', filters.category));
+    }
+
+    // Assigned To - valeur simple
     if (filters?.assignedTo) {
       constraints.push(where('assignedTo', '==', filters.assignedTo));
     }
+
+    // Created By - valeur simple
+    if (filters?.createdBy) {
+      constraints.push(where('createdBy', '==', filters.createdBy));
+    }
+
+    // Is Urgent - booléen
     if (filters?.isUrgent !== undefined) {
       constraints.push(where('isUrgent', '==', filters.isUrgent));
+    }
+
+    // Is Blocking - booléen
+    if (filters?.isBlocking !== undefined) {
+      constraints.push(where('isBlocking', '==', filters.isBlocking));
+    }
+
+    // Date From - filtrer les interventions créées après cette date
+    if (filters?.dateFrom) {
+      constraints.push(where('createdAt', '>=', Timestamp.fromDate(filters.dateFrom)));
+    }
+
+    // Date To - filtrer les interventions créées avant cette date
+    if (filters?.dateTo) {
+      constraints.push(where('createdAt', '<=', Timestamp.fromDate(filters.dateTo)));
     }
 
     // Appliquer le tri
@@ -780,21 +927,65 @@ export const getInterventions = async (
 
     const constraints: QueryConstraint[] = [where('isDeleted', '==', false)];
 
-    // Appliquer les filtres
-    if (filters?.status) {
-      constraints.push(where('status', '==', filters.status));
+    // Appliquer les filtres (même logique que subscribeToInterventions)
+    // Status - support multi-valeurs avec 'in' (max 10 valeurs)
+    if (filters?.status && filters.status.length > 0) {
+      if (filters.status.length === 1) {
+        constraints.push(where('status', '==', filters.status[0]));
+      } else {
+        const statusValues = filters.status.slice(0, 10);
+        constraints.push(where('status', 'in', statusValues));
+      }
     }
-    if (filters?.priority) {
-      constraints.push(where('priority', '==', filters.priority));
+
+    // Priority - support multi-valeurs avec 'in' (max 10 valeurs)
+    if (filters?.priority && filters.priority.length > 0) {
+      if (filters.priority.length === 1) {
+        constraints.push(where('priority', '==', filters.priority[0]));
+      } else {
+        const priorityValues = filters.priority.slice(0, 10);
+        constraints.push(where('priority', 'in', priorityValues));
+      }
     }
+
+    // Type - valeur simple
     if (filters?.type) {
       constraints.push(where('type', '==', filters.type));
     }
+
+    // Category - valeur simple
+    if (filters?.category) {
+      constraints.push(where('category', '==', filters.category));
+    }
+
+    // Assigned To - valeur simple
     if (filters?.assignedTo) {
       constraints.push(where('assignedTo', '==', filters.assignedTo));
     }
+
+    // Created By - valeur simple
+    if (filters?.createdBy) {
+      constraints.push(where('createdBy', '==', filters.createdBy));
+    }
+
+    // Is Urgent - booléen
     if (filters?.isUrgent !== undefined) {
       constraints.push(where('isUrgent', '==', filters.isUrgent));
+    }
+
+    // Is Blocking - booléen
+    if (filters?.isBlocking !== undefined) {
+      constraints.push(where('isBlocking', '==', filters.isBlocking));
+    }
+
+    // Date From - filtrer les interventions créées après cette date
+    if (filters?.dateFrom) {
+      constraints.push(where('createdAt', '>=', Timestamp.fromDate(filters.dateFrom)));
+    }
+
+    // Date To - filtrer les interventions créées avant cette date
+    if (filters?.dateTo) {
+      constraints.push(where('createdAt', '<=', Timestamp.fromDate(filters.dateTo)));
     }
 
     // Appliquer le tri

@@ -69,8 +69,8 @@ import { functions } from '@/core/config/firebase';
  * @param obj - Objet à nettoyer
  * @returns Objet sans les champs undefined
  */
-const removeUndefinedFields = <T extends Record<string, any>>(obj: T): Partial<T> => {
-  const cleaned: any = {};
+const removeUndefinedFields = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+  const cleaned: Partial<T> = {};
 
   for (const key in obj) {
     if (obj[key] !== undefined) {
@@ -122,8 +122,6 @@ class UserService {
       throw new Error('Vous devez être connecté pour créer un utilisateur');
     }
 
-    console.log('🔵 [1/6] Début création utilisateur:', data.email);
-
     try {
       // Validation
       if (!isValidEmail(data.email)) {
@@ -136,15 +134,13 @@ class UserService {
 
       // 1. Créer l'utilisateur dans Firebase Auth
       // ⚠️ Ceci va automatiquement connecter le nouvel utilisateur
-      console.log('🔵 [2/6] Création dans Firebase Auth...');
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
 
       const userId = userCredential.user.uid;
-      console.log('✅ [2/6] Utilisateur Auth créé avec UID:', userId);
 
       // 2. Créer IMMÉDIATEMENT le document Firestore
       // (important pour que le profil existe quand AuthProvider vérifie)
-      const userData: any = {
+      const userData: Partial<User> = {
         email: data.email,
         displayName: `${data.firstName} ${data.lastName}`,
         firstName: data.firstName,
@@ -161,31 +157,24 @@ class UserService {
       };
 
       // Ajouter les champs optionnels seulement s'ils existent
-      if (data.photoURL) userData.photoURL = data.photoURL;
-      if (data.phoneNumber) userData.phoneNumber = data.phoneNumber;
-      if (data.jobTitle) userData.jobTitle = data.jobTitle;
-      if (data.department) userData.department = data.department;
-      if (data.skills) userData.skills = data.skills;
-      if (data.isTechnician !== undefined) userData.isTechnician = data.isTechnician;
-      if (data.specialties) userData.specialties = data.specialties;
-      if (data.experienceLevel) userData.experienceLevel = data.experienceLevel;
+      if (data.photoURL) (userData as any).photoURL = data.photoURL;
+      if (data.phoneNumber) (userData as any).phoneNumber = data.phoneNumber;
+      if (data.jobTitle) (userData as any).jobTitle = data.jobTitle;
+      if (data.department) (userData as any).department = data.department;
+      if (data.skills) (userData as any).skills = data.skills;
+      if (data.isTechnician !== undefined) (userData as any).isTechnician = data.isTechnician;
+      if (data.specialties) (userData as any).specialties = data.specialties;
+      if (data.experienceLevel) (userData as any).experienceLevel = data.experienceLevel;
 
       // ✅ Nettoyer et créer le document Firestore
       const cleanedUserData = removeUndefinedFields(userData);
 
-      console.log('🔵 [3/6] Création du document Firestore...');
-      console.log('📄 Données nettoyées:', Object.keys(cleanedUserData));
-
       try {
         await setDoc(doc(db, this.COLLECTION, userId), cleanedUserData);
-        console.log('✅ [3/6] Document Firestore créé');
-      } catch (firestoreError: any) {
-        console.error('❌ [3/6] ERREUR lors de la création du document Firestore:', firestoreError);
-        console.error('Code:', firestoreError.code);
-        console.error('Message:', firestoreError.message);
-
+      } catch (firestoreError) {
+        const error = firestoreError as { code?: string };
         // Erreur de permissions Firestore
-        if (firestoreError.code === 'permission-denied') {
+        if (error.code === 'permission-denied') {
           throw new Error(
             'Permissions Firestore insuffisantes. Vérifiez vos règles Firestore. ' +
               'Le document users/{userId} doit permettre "allow create: if isOwner(userId) || isAdmin()"'
@@ -196,23 +185,17 @@ class UserService {
       }
 
       // Vérification : le document existe-t-il vraiment ?
-      console.log('🔵 [4/6] Vérification de la création...');
       try {
         const verificationDoc = await getDoc(doc(db, this.COLLECTION, userId));
-        if (verificationDoc.exists()) {
-          console.log('✅ [4/6] Vérification OK : Document bien présent dans Firestore');
-        } else {
-          console.error('❌ [4/6] ALERTE : Document introuvable après création !');
+        if (!verificationDoc.exists()) {
           throw new Error("Le document Firestore n'a pas été créé correctement");
         }
       } catch (verifyError) {
-        console.error('❌ [4/6] Erreur lors de la vérification:', verifyError);
         // On continue quand même, l'erreur sera gérée à la connexion
       }
 
       // 3. Mettre à jour le profil Auth du nouvel utilisateur
-      console.log('🔵 [5/6] Mise à jour du profil Auth...');
-      const authProfileData: any = {
+      const authProfileData: { displayName: string; photoURL?: string } = {
         displayName: `${data.firstName} ${data.lastName}`,
       };
 
@@ -221,55 +204,40 @@ class UserService {
       }
 
       await updateProfile(userCredential.user, authProfileData);
-      console.log('✅ [5/6] Profil Auth mis à jour');
 
       // 4. ✅ Déconnecter le nouvel utilisateur pour que l'admin reste connecté
-      console.log('🔵 [6/6] Déconnexion du nouvel utilisateur...');
       await signOut(auth);
-      console.log('✅ [6/6] Déconnexion effectuée');
 
       // 5. Envoyer email d'invitation si demandé
       if (data.sendInvitation) {
         await this.sendInvitationEmail(data.email);
       }
 
-      console.log('✅ ========================================');
-      console.log(`✅ Utilisateur créé avec succès: ${userId}`);
-      console.log('✅ Email:', data.email);
-      console.log('✅ Rôle:', data.role);
-      console.log("ℹ️  L'admin va être automatiquement reconnecté");
-      console.log('✅ ========================================');
-
       return userId;
-    } catch (error: any) {
-      console.error('❌ ========================================');
-      console.error('❌ ERREUR lors de la création utilisateur');
-      console.error('❌ ========================================');
-      console.error('Erreur complète:', error);
-
+    } catch (error) {
       // En cas d'erreur, déconnecter quand même pour éviter d'être bloqué
       try {
         await signOut(auth);
-        console.log('🔄 Déconnexion effectuée après erreur');
       } catch (signOutError) {
-        console.error('Erreur lors de la déconnexion:', signOutError);
+        // Erreur silencieuse lors de la déconnexion
       }
 
+      const authError = error as { code?: string; message?: string };
       // Messages d'erreur plus clairs
-      if (error.code === 'auth/email-already-in-use') {
+      if (authError.code === 'auth/email-already-in-use') {
         throw new Error('Cet email est déjà utilisé');
-      } else if (error.code === 'auth/invalid-email') {
+      } else if (authError.code === 'auth/invalid-email') {
         throw new Error('Email invalide');
-      } else if (error.code === 'auth/weak-password') {
+      } else if (authError.code === 'auth/weak-password') {
         throw new Error('Mot de passe trop faible (minimum 6 caractères)');
-      } else if (error.code === 'permission-denied') {
+      } else if (authError.code === 'permission-denied') {
         throw new Error(
           'Permissions Firestore insuffisantes. ' +
             'Consultez le guide SOLUTION_PROFIL_INTROUVABLE.md pour corriger les règles Firestore.'
         );
       }
 
-      throw new Error(`Erreur lors de la création de l'utilisateur: ${error.message}`);
+      throw new Error(`Erreur lors de la création de l'utilisateur: ${authError.message || 'Erreur inconnue'}`);
     }
   }
 
@@ -280,7 +248,7 @@ class UserService {
     try {
       const invitationId = doc(collection(db, 'invitations')).id;
 
-      const invitation: any = {
+      const invitation: Record<string, unknown> = {
         email: data.email,
         role: data.role,
         establishmentIds: data.establishmentIds,
@@ -316,16 +284,14 @@ class UserService {
           invitationMessage: data.message,
           appUrl: window.location.origin,
         });
-      } catch (emailError: any) {
-        console.error('Erreur lors de l\'envoi de l\'email d\'invitation:', emailError);
+      } catch (emailError) {
         // Ne pas bloquer la création de l'invitation si l'email échoue
         // L'utilisateur peut toujours être invité manuellement
       }
 
       return invitationId;
-    } catch (error: any) {
-      console.error('Error inviting user:', error);
-      throw new Error(`Erreur lors de l'invitation: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de l'invitation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -349,9 +315,8 @@ class UserService {
         id: docSnap.id,
         ...docSnap.data(),
       } as User;
-    } catch (error: any) {
-      console.error('Error getting user:', error);
-      throw new Error(`Erreur lors de la récupération de l'utilisateur: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -364,9 +329,8 @@ class UserService {
       if (!user) return null;
 
       return user as UserProfile;
-    } catch (error: any) {
-      console.error('Error getting user profile:', error);
-      throw new Error(`Erreur lors de la récupération du profil: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération du profil: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -424,10 +388,14 @@ class UserService {
 
       const snapshot = await getDocs(q);
 
-      let users = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as User[];
+      // Mapper et filtrer les utilisateurs supprimés
+      let users = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as User[];
+
+      users = users.filter(user => !user.email?.includes('@deleted.com'));
 
       // Filtres côté client (recherche texte)
       if (filters?.search) {
@@ -440,9 +408,8 @@ class UserService {
       }
 
       return users;
-    } catch (error: any) {
-      console.error('Error getting users by establishment:', error);
-      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -492,10 +459,14 @@ class UserService {
 
       const snapshot = await getDocs(q);
 
-      let users = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as User[];
+      // Mapper et filtrer les utilisateurs supprimés
+      let users = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as User[];
+
+      users = users.filter(user => !user.email?.includes('@deleted.com'));
 
       // Filtres côté client
       if (filters?.search) {
@@ -508,9 +479,8 @@ class UserService {
       }
 
       return users;
-    } catch (error: any) {
-      console.error('Error getting all users:', error);
-      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -535,9 +505,8 @@ class UserService {
         id: doc.id,
         ...doc.data(),
       })) as User[];
-    } catch (error: any) {
-      console.error('Error getting users by role:', error);
-      throw new Error(`Erreur lors de la récupération des utilisateurs par rôle: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des utilisateurs par rôle: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -550,34 +519,35 @@ class UserService {
    */
   async updateUser(userId: string, data: UpdateUserData): Promise<void> {
     try {
-      const updateData: any = {
+      const updateData: Partial<User> = {
         updatedAt: Timestamp.now(),
       };
 
-      // Copier les champs fournis
+      // Copier les champs fournis (utiliser any pour les champs optionnels étendus)
+      const updates = updateData as any;
       if (data.firstName !== undefined) updateData.firstName = data.firstName;
       if (data.lastName !== undefined) updateData.lastName = data.lastName;
       if (data.role !== undefined) updateData.role = data.role;
       if (data.establishmentIds !== undefined) updateData.establishmentIds = data.establishmentIds;
       if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
       if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
-      if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle;
-      if (data.department !== undefined) updateData.department = data.department;
-      if (data.skills !== undefined) updateData.skills = data.skills;
-      if (data.isTechnician !== undefined) updateData.isTechnician = data.isTechnician;
-      if (data.specialties !== undefined) updateData.specialties = data.specialties;
-      if (data.experienceLevel !== undefined) updateData.experienceLevel = data.experienceLevel;
+      if (data.jobTitle !== undefined) updates.jobTitle = data.jobTitle;
+      if (data.department !== undefined) updates.department = data.department;
+      if (data.skills !== undefined) updates.skills = data.skills;
+      if (data.isTechnician !== undefined) updates.isTechnician = data.isTechnician;
+      if (data.specialties !== undefined) updates.specialties = data.specialties;
+      if (data.experienceLevel !== undefined) updates.experienceLevel = data.experienceLevel;
       if (data.status !== undefined) updateData.status = data.status;
       if (data.isActive !== undefined) updateData.isActive = data.isActive;
       if (data.customPermissions !== undefined)
         updateData.customPermissions = data.customPermissions;
 
       // Si firstName ou lastName changent, mettre à jour displayName
-      if (data.firstName || data.lastName) {
+      if (data.firstName !== undefined || data.lastName !== undefined) {
         const user = await this.getUser(userId);
         if (user) {
-          const firstName = data.firstName || user.firstName;
-          const lastName = data.lastName || user.lastName;
+          const firstName = data.firstName !== undefined ? data.firstName : user.firstName;
+          const lastName = data.lastName !== undefined ? data.lastName : user.lastName;
           updateData.displayName = `${firstName} ${lastName}`;
         }
       }
@@ -585,9 +555,8 @@ class UserService {
       // ✅ CORRECTION : Nettoyer avant updateDoc
       const cleanedData = removeUndefinedFields(updateData);
       await updateDoc(doc(db, this.COLLECTION, userId), cleanedData);
-    } catch (error: any) {
-      console.error('Error updating user:', error);
-      throw new Error(`Erreur lors de la mise à jour de l'utilisateur: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -596,11 +565,12 @@ class UserService {
    */
   async updateProfile(userId: string, data: UpdateProfileData): Promise<void> {
     try {
-      const updateData: any = {
+      const updateData: Partial<User> = {
         updatedAt: Timestamp.now(),
       };
 
-      // Copier les champs fournis
+      // Copier les champs fournis (utiliser any pour les champs optionnels étendus)
+      const updates = updateData as any;
       if (data.displayName !== undefined) {
         updateData.displayName = data.displayName;
         // Extraire firstName et lastName
@@ -613,24 +583,23 @@ class UserService {
       if (data.lastName !== undefined) updateData.lastName = data.lastName;
       if (data.photoURL !== undefined) updateData.photoURL = data.photoURL;
       if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
-      if (data.bio !== undefined) updateData.bio = data.bio;
-      if (data.jobTitle !== undefined) updateData.jobTitle = data.jobTitle;
-      if (data.department !== undefined) updateData.department = data.department;
-      if (data.skills !== undefined) updateData.skills = data.skills;
-      if (data.location !== undefined) updateData.location = data.location;
-      if (data.address !== undefined) updateData.address = data.address;
-      if (data.emergencyContact !== undefined) updateData.emergencyContact = data.emergencyContact;
+      if (data.bio !== undefined) updates.bio = data.bio;
+      if (data.jobTitle !== undefined) updates.jobTitle = data.jobTitle;
+      if (data.department !== undefined) updates.department = data.department;
+      if (data.skills !== undefined) updates.skills = data.skills;
+      if (data.location !== undefined) updates.location = data.location;
+      if (data.address !== undefined) updates.address = data.address;
+      if (data.emergencyContact !== undefined) updates.emergencyContact = data.emergencyContact;
       if (data.notificationPreferences !== undefined)
-        updateData.notificationPreferences = data.notificationPreferences;
+        updates.notificationPreferences = data.notificationPreferences;
       if (data.displayPreferences !== undefined)
-        updateData.displayPreferences = data.displayPreferences;
+        updates.displayPreferences = data.displayPreferences;
 
       // ✅ CORRECTION : Nettoyer avant updateDoc
       const cleanedData = removeUndefinedFields(updateData);
       await updateDoc(doc(db, this.COLLECTION, userId), cleanedData);
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      throw new Error(`Erreur lors de la mise à jour du profil: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la mise à jour du profil: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -644,9 +613,8 @@ class UserService {
         isActive: status === UserStatus.ACTIVE,
         updatedAt: Timestamp.now(),
       });
-    } catch (error: any) {
-      console.error('Error changing user status:', error);
-      throw new Error(`Erreur lors du changement de statut: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors du changement de statut: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -660,9 +628,8 @@ class UserService {
         status: isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
         updatedAt: Timestamp.now(),
       });
-    } catch (error: any) {
-      console.error('Error toggling user active:', error);
-      throw new Error(`Erreur lors de l'activation/désactivation: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de l'activation/désactivation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -674,8 +641,7 @@ class UserService {
       await updateDoc(doc(db, this.COLLECTION, userId), {
         lastLoginAt: Timestamp.now(),
       });
-    } catch (error: any) {
-      console.error('Error updating last login:', error);
+    } catch (error) {
       // Ne pas throw d'erreur, c'est une opération non-critique
     }
   }
@@ -701,9 +667,8 @@ class UserService {
         photoURL: null,
         updatedAt: Timestamp.now(),
       });
-    } catch (error: any) {
-      console.error('Error deleting user:', error);
-      throw new Error(`Erreur lors de la suppression de l'utilisateur: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -724,11 +689,8 @@ class UserService {
       if (!result.data.success) {
         throw new Error(result.data.message || 'Échec de la suppression');
       }
-
-      console.log('✅ Utilisateur supprimé définitivement:', userId);
-    } catch (error: any) {
-      console.error('Error permanently deleting user:', error);
-      throw new Error(`Erreur lors de la suppression définitive: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la suppression définitive: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -759,7 +721,6 @@ class UserService {
         }
       },
       error => {
-        console.error('Error in user subscription:', error);
         onError?.(error as Error);
       }
     );
@@ -787,15 +748,17 @@ class UserService {
     return onSnapshot(
       q,
       snapshot => {
-        const users = snapshot.docs.map(doc => ({
+        // Mapper et filtrer les utilisateurs supprimés
+        const allUsers = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
         })) as User[];
 
+        const users = allUsers.filter(user => !user.email?.includes('@deleted.com'));
+
         onData(users);
       },
       error => {
-        console.error('Error in users subscription:', error);
         onError?.(error as Error);
       }
     );
@@ -851,9 +814,8 @@ class UserService {
       }).length;
 
       return stats;
-    } catch (error: any) {
-      console.error('Error getting user stats:', error);
-      throw new Error(`Erreur lors de la récupération des statistiques: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la récupération des statistiques: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 
@@ -874,8 +836,7 @@ class UserService {
   private async sendInvitationEmail(email: string): Promise<void> {
     try {
       await sendPasswordResetEmail(auth, email);
-    } catch (error: any) {
-      console.error('Error sending invitation email:', error);
+    } catch (error) {
       // Ne pas throw, c'est une erreur non-critique
     }
   }
@@ -889,8 +850,7 @@ class UserService {
 
       const snapshot = await getDocs(q);
       return !snapshot.empty;
-    } catch (error: any) {
-      console.error('Error checking email:', error);
+    } catch (error) {
       return false;
     }
   }
@@ -929,9 +889,8 @@ class UserService {
           user.displayName.toLowerCase().includes(searchLower) ||
           user.email.toLowerCase().includes(searchLower)
       );
-    } catch (error: any) {
-      console.error('Error searching users:', error);
-      throw new Error(`Erreur lors de la recherche: ${error.message}`);
+    } catch (error) {
+      throw new Error(`Erreur lors de la recherche: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
   }
 }
