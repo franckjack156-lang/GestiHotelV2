@@ -19,12 +19,8 @@ export enum LogLevel {
   ERROR = 'error',
 }
 
-interface LogContext {
-  userId?: string;
-  establishmentId?: string;
-  action?: string;
-  [key: string]: unknown;
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LogContext = Record<string, any>;
 
 class Logger {
   private isDev = import.meta.env.DEV;
