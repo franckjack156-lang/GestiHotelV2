@@ -46,7 +46,7 @@ import {
 
 export const EstablishmentFeaturesPage = () => {
   const navigate = useNavigate();
-  const { hasRole } = useAuth();
+  const { isSuperAdmin, hasPermission } = useAuth();
   const { currentEstablishment, updateEstablishmentInList } = useEstablishmentStore();
   const [features, setFeatures] = useState<EstablishmentFeatures>(
     currentEstablishment?.features ?? DEFAULT_ESTABLISHMENT_FEATURES
@@ -55,7 +55,7 @@ export const EstablishmentFeaturesPage = () => {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Vérifier si l'utilisateur est Super Admin
-  const isSuperAdmin = hasRole('super_admin');
+  const canManageFeatures = isSuperAdmin() || hasPermission('manage_establishment_features');
 
   // Mettre à jour les features si l'établissement change
   useEffect(() => {
@@ -278,17 +278,23 @@ export const EstablishmentFeaturesPage = () => {
     return Icon ? <Icon size={20} /> : <AlertCircle size={20} />;
   };
 
-  // Guard: Super Admin only
-  if (!isSuperAdmin) {
+  // Guard: Permission check
+  if (!canManageFeatures) {
     return (
       <div className="container mx-auto max-w-4xl py-8">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             Vous n'avez pas les permissions nécessaires pour accéder à cette page. Seuls les Super
-            Admins peuvent gérer les fonctionnalités.
+            Admins et utilisateurs autorisés peuvent gérer les fonctionnalités.
           </AlertDescription>
         </Alert>
+        <div className="mt-4">
+          <Button onClick={() => navigate('/app/settings')} variant="outline">
+            <ArrowLeft size={16} className="mr-2" />
+            Retour aux paramètres
+          </Button>
+        </div>
       </div>
     );
   }

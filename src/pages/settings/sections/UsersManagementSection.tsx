@@ -13,6 +13,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useUsers } from '@/features/users/hooks/useUsers';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   Card,
   CardContent,
@@ -31,6 +32,7 @@ import {
   Shield,
   CheckCircle,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 import type { User as UserData } from '@/features/users/types/user.types';
 
@@ -41,6 +43,28 @@ import type { User as UserData } from '@/features/users/types/user.types';
 export const UsersManagementSection = () => {
   const navigate = useNavigate();
   const { users, isLoading } = useUsers();
+  const { hasPermission } = useAuth();
+
+  // Check if user has permission to manage users
+  const canViewUsers = hasPermission('view_users');
+  const canCreateUsers = hasPermission('create_users');
+
+  // If no permission to view users, show restricted access
+  if (!canViewUsers) {
+    return (
+      <Card className="border-none shadow-sm">
+        <CardContent className="py-12 text-center">
+          <div className="inline-flex p-4 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+            <Lock className="h-12 w-12 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-semibold mb-2">Accès restreint</h3>
+          <p className="text-muted-foreground">
+            Vous n'avez pas les permissions nécessaires pour gérer les utilisateurs
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-300">
@@ -51,29 +75,35 @@ export const UsersManagementSection = () => {
               <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 shadow-sm flex-shrink-0">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <CardTitle className="text-lg sm:text-2xl truncate">Gestion des utilisateurs</CardTitle>
+              <CardTitle className="text-lg sm:text-2xl truncate">
+                Gestion des utilisateurs
+              </CardTitle>
             </div>
             <CardDescription className="text-sm sm:text-base">
               Gérez les membres de votre équipe et leurs permissions
             </CardDescription>
           </div>
-          <Button
-            onClick={() => navigate('/app/users')}
-            className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 w-full sm:w-auto flex-shrink-0"
-            size="sm"
-          >
-            <Users size={16} className="sm:mr-2" />
-            <span className="hidden sm:inline">Voir tous</span>
-            <span className="sm:hidden">Tous les utilisateurs</span>
-            <ChevronRight size={16} className="ml-1" />
-          </Button>
+          {canCreateUsers && (
+            <Button
+              onClick={() => navigate('/app/users')}
+              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 w-full sm:w-auto flex-shrink-0"
+              size="sm"
+            >
+              <Users size={16} className="sm:mr-2" />
+              <span className="hidden sm:inline">Voir tous</span>
+              <span className="sm:hidden">Tous les utilisateurs</span>
+              <ChevronRight size={16} className="ml-1" />
+            </Button>
+          )}
         </div>
       </CardHeader>
       <CardContent className="px-3 sm:px-6 pb-4 sm:pb-6">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 sm:py-16">
             <Loader2 className="h-10 w-10 sm:h-12 sm:w-12 animate-spin text-purple-500 mb-3 sm:mb-4" />
-            <p className="text-sm sm:text-base text-muted-foreground">Chargement des utilisateurs...</p>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              Chargement des utilisateurs...
+            </p>
           </div>
         ) : users.length === 0 ? (
           <div className="text-center py-12 sm:py-16">
@@ -84,14 +114,16 @@ export const UsersManagementSection = () => {
             <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto px-4">
               Commencez par créer votre premier utilisateur pour collaborer avec votre équipe
             </p>
-            <Button
-              onClick={() => navigate('/app/users/create')}
-              size="lg"
-              className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 w-full sm:w-auto"
-            >
-              <Plus size={18} className="mr-2" />
-              Créer un utilisateur
-            </Button>
+            {canCreateUsers && (
+              <Button
+                onClick={() => navigate('/app/users/create')}
+                size="lg"
+                className="bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 w-full sm:w-auto"
+              >
+                <Plus size={18} className="mr-2" />
+                Créer un utilisateur
+              </Button>
+            )}
           </div>
         ) : (
           <div className="space-y-4 sm:space-y-6">
@@ -160,7 +192,9 @@ export const UsersManagementSection = () => {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold text-sm sm:text-base flex items-center gap-2 truncate">
-                          <span className="truncate">{user.firstName} {user.lastName}</span>
+                          <span className="truncate">
+                            {user.firstName} {user.lastName}
+                          </span>
                           {user.role === 'super_admin' && (
                             <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
                           )}

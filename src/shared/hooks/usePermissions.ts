@@ -2,62 +2,23 @@
  * usePermissions Hook
  *
  * Hook pour vérifier les permissions de l'utilisateur actuel
+ * Utilise maintenant le permissionService centralisé pour validation avancée
  */
 
 import { useMemo } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { ROLE_PERMISSIONS } from '@/shared/constants/permissions';
-// TODO: roleHasPermission and UserRole imported but unused
-// import { roleHasPermission } from '@/shared/constants/permissions';
-// import { UserRole } from '@/features/users/types/role.types';
 import { Permission } from '@/features/users/types/role.types';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 
 /**
  * Hook de gestion des permissions
+ *
+ * Ce hook est un wrapper autour de useAuth qui fournit des méthodes
+ * spécifiques pour vérifier les permissions dans différents contextes.
+ * Il utilise le permissionService via useAuth pour la validation.
  */
 export const usePermissions = () => {
-  const { user } = useAuth();
-
-  /**
-   * Vérifier si l'utilisateur a une permission
-   */
-  const hasPermission = useMemo(
-    () =>
-      (permission: Permission): boolean => {
-        if (!user) return false;
-
-        const userPermissions = ROLE_PERMISSIONS[user.role];
-        return userPermissions ? userPermissions.includes(permission) : false;
-      },
-    [user]
-  );
-
-  /**
-   * Vérifier si l'utilisateur a toutes les permissions d'une liste
-   */
-  const hasAllPermissions = useMemo(
-    () =>
-      (permissions: Permission[]): boolean => {
-        if (!user) return false;
-
-        return permissions.every(permission => hasPermission(permission));
-      },
-    [user, hasPermission]
-  );
-
-  /**
-   * Vérifier si l'utilisateur a au moins une permission d'une liste
-   */
-  const hasAnyPermission = useMemo(
-    () =>
-      (permissions: Permission[]): boolean => {
-        if (!user) return false;
-
-        return permissions.some(permission => hasPermission(permission));
-      },
-    [user, hasPermission]
-  );
+  const { user, hasPermission, hasAllPermissions, hasAnyPermission } = useAuth();
 
   // =========================================
   // Permissions INTERVENTIONS
