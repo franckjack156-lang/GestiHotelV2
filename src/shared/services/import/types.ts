@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * IMPORT SERVICE - TYPES
@@ -124,3 +123,6 @@ export interface ReferenceMappings {
   categories?: Map<string, string>;
   priorities?: Map<string, string>;
 }
+
+// Re-export schema types for convenience
+export type { InterventionImportRow, RoomImportRow } from './schemas';
