@@ -4,7 +4,6 @@
 
 import { describe, it, expect } from 'vitest';
 import { InterventionImportSchema, RoomImportSchema } from '../schemas';
-import { ZodError } from 'zod';
 
 describe('schemas', () => {
   describe('InterventionImportSchema', () => {
@@ -14,7 +13,7 @@ describe('schemas', () => {
 
     it('devrait valider une intervention avec champs obligatoires minimum', () => {
       const data = {
-        titre: 'Fuite d\'eau',
+        titre: "Fuite d'eau",
         statut: 'draft',
       };
 
@@ -22,7 +21,7 @@ describe('schemas', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.titre).toBe('Fuite d\'eau');
+        expect(result.data.titre).toBe("Fuite d'eau");
         expect(result.data.statut).toBe('draft');
         // Vérifier les defaults
         expect(result.data.description).toBe('');
@@ -431,7 +430,7 @@ describe('schemas', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.prix).toBe(120.50);
+        expect(result.data.prix).toBe(120.5);
         expect(typeof result.data.prix).toBe('number');
       }
     });
@@ -523,7 +522,7 @@ describe('schemas', () => {
         expect(result.data.nom).toBe('Suite Présidentielle');
         expect(result.data.type).toBe('suite');
         expect(result.data.capacite).toBe(4);
-        expect(result.data.prix).toBe(350.00);
+        expect(result.data.prix).toBe(350.0);
         expect(result.data.surface).toBe(45.5);
       }
     });

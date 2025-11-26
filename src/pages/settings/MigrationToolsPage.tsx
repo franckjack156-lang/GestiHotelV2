@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Migration Tools Page
  *
@@ -33,7 +34,6 @@ import {
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Badge } from '@/shared/components/ui/badge';
 import { Separator } from '@/shared/components/ui/separator';
-import { logger } from '@/core/utils/logger';
 
 export const MigrationToolsPage = () => {
   const { hasRole } = useAuth();

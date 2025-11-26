@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Notification Service
  *
@@ -24,7 +24,7 @@ import {
   QueryConstraint,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from '@/config/firebase';
+import { db } from '@/core/config/firebase';
 import { logger } from '@/core/utils/logger';
 import type {
   Notification,
@@ -44,10 +44,7 @@ class NotificationService {
   /**
    * Créer une notification
    */
-  async createNotification(
-    establishmentId: string,
-    data: CreateNotificationData
-  ): Promise<string> {
+  async createNotification(establishmentId: string, data: CreateNotificationData): Promise<string> {
     const notificationsRef = collection(db, this.COLLECTIONS.notifications);
 
     const notificationData: Omit<Notification, 'id'> = {
@@ -333,11 +330,7 @@ class NotificationService {
     userId: string,
     establishmentId: string
   ): Promise<NotificationPreferences | null> {
-    const preferencesRef = doc(
-      db,
-      this.COLLECTIONS.preferences,
-      `${userId}_${establishmentId}`
-    );
+    const preferencesRef = doc(db, this.COLLECTIONS.preferences, `${userId}_${establishmentId}`);
     const snapshot = await getDoc(preferencesRef);
 
     if (!snapshot.exists()) {
@@ -355,11 +348,7 @@ class NotificationService {
     establishmentId: string,
     preferences: Partial<NotificationPreferences>
   ): Promise<void> {
-    const preferencesRef = doc(
-      db,
-      this.COLLECTIONS.preferences,
-      `${userId}_${establishmentId}`
-    );
+    const preferencesRef = doc(db, this.COLLECTIONS.preferences, `${userId}_${establishmentId}`);
 
     await updateDoc(preferencesRef, {
       ...preferences,
@@ -370,15 +359,8 @@ class NotificationService {
   /**
    * Créer les préférences par défaut
    */
-  async createDefaultPreferences(
-    userId: string,
-    establishmentId: string
-  ): Promise<void> {
-    const preferencesRef = doc(
-      db,
-      this.COLLECTIONS.preferences,
-      `${userId}_${establishmentId}`
-    );
+  async createDefaultPreferences(userId: string, establishmentId: string): Promise<void> {
+    const preferencesRef = doc(db, this.COLLECTIONS.preferences, `${userId}_${establishmentId}`);
 
     const defaultPreferences: Omit<NotificationPreferences, 'updatedAt'> = {
       userId,
