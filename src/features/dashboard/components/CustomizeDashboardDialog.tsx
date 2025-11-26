@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
  * CustomizeDashboardDialog Component
  *
@@ -25,9 +25,33 @@ import {
 import { Switch } from '@/shared/components/ui/switch';
 import { Input } from '@/shared/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card';
-import type { DashboardPreferences, WidgetConfig, WidgetType, WidgetDataSource } from '../types/dashboard.types';
-import { Eye, EyeOff, Plus, Trash2, Download, Upload, GripVertical, Palette, Save, Check, Edit, Copy } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui/card';
+import type {
+  DashboardPreferences,
+  WidgetConfig,
+  WidgetType,
+  WidgetDataSource,
+} from '../types/dashboard.types';
+import {
+  Eye,
+  EyeOff,
+  Plus,
+  Trash2,
+  Download,
+  Upload,
+  GripVertical,
+  Palette,
+  Save,
+  Check,
+  Edit,
+  Copy,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColorEditor } from './ThemeColorEditor';
@@ -54,6 +78,13 @@ const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
   table: 'Tableau',
   calendar: 'Calendrier',
   list: 'Liste',
+  clock: 'Horloge',
+  quick_links: 'Liens rapides',
+  button_grid: 'Grille de boutons',
+  iframe: 'Page web',
+  custom_list: 'Liste personnalisée',
+  note: 'Note',
+  weather: 'Météo',
 };
 
 const DATA_SOURCE_LABELS: Record<WidgetDataSource, string> = {
@@ -72,6 +103,8 @@ const DATA_SOURCE_LABELS: Record<WidgetDataSource, string> = {
   rooms_status: 'Statut des chambres',
   rooms_by_type: 'Chambres par type',
   blockages_active: 'Blocages actifs',
+  custom: 'Personnalisé',
+  static: 'Statique',
 };
 
 const WIDGET_TYPE_OPTIONS: { value: WidgetType; label: string }[] = [
@@ -137,9 +170,9 @@ export const CustomizeDashboardDialog = ({
     try {
       await onUpdatePreferences(updates);
       toast.success('Préférences mises à jour');
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la mise à jour');
-      logger.error(error);
+      logger.error('Error updating preferences', error);
     } finally {
       setIsSaving(false);
     }
@@ -149,9 +182,9 @@ export const CustomizeDashboardDialog = ({
     try {
       await onUpdateWidget(widgetId, { visible });
       toast.success(visible ? 'Widget activé' : 'Widget masqué');
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la mise à jour');
-      logger.error(error);
+      logger.error('Error toggling widget', error);
     }
   };
 
@@ -161,9 +194,9 @@ export const CustomizeDashboardDialog = ({
     try {
       await onRemoveWidget(widgetId);
       toast.success('Widget supprimé');
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
-      logger.error(error);
+      logger.error('Error removing widget', error);
     }
   };
 
@@ -179,8 +212,8 @@ export const CustomizeDashboardDialog = ({
         type: newWidget.type,
         dataSource: newWidget.dataSource,
         visible: true,
-        position: { x: 0, y: preferences.widgets.length },
-        size: { width: 1, height: 1 },
+        position: { row: preferences.widgets.length, col: 0 },
+        size: 'medium',
         refreshInterval: 300,
       };
 
@@ -191,9 +224,9 @@ export const CustomizeDashboardDialog = ({
       toast.success('Widget ajouté');
       setShowAddWidget(false);
       setNewWidget({ title: '', type: 'stats_card', dataSource: 'interventions_by_status' });
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error("Erreur lors de l'ajout du widget");
-      logger.error(error);
+      logger.error('Error adding widget', error);
     }
   };
 
@@ -231,9 +264,9 @@ export const CustomizeDashboardDialog = ({
 
       await onUpdatePreferences(config.preferences);
       toast.success('Configuration importée');
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error("Erreur lors de l'import");
-      logger.error(error);
+      logger.error('Error importing config', error);
     }
 
     event.target.value = '';
@@ -248,8 +281,8 @@ export const CustomizeDashboardDialog = ({
     if (!draggedWidget || draggedWidget === targetWidgetId) return;
 
     const widgets = [...preferences.widgets];
-    const draggedIndex = widgets.findIndex((w) => w.id === draggedWidget);
-    const targetIndex = widgets.findIndex((w) => w.id === targetWidgetId);
+    const draggedIndex = widgets.findIndex(w => w.id === draggedWidget);
+    const targetIndex = widgets.findIndex(w => w.id === targetWidgetId);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
@@ -257,7 +290,7 @@ export const CustomizeDashboardDialog = ({
     widgets.splice(targetIndex, 0, removed);
 
     widgets.forEach((widget, index) => {
-      widget.position.y = index;
+      widget.position.row = index;
     });
 
     onUpdatePreferences({ widgets });
@@ -291,9 +324,9 @@ export const CustomizeDashboardDialog = ({
         toast.success(`Thème "${duplicated.name}" dupliqué`);
         handleEditTheme(duplicated);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la duplication');
-      logger.error(error);
+      logger.error('Error duplicating theme', error);
     }
   };
 
@@ -327,9 +360,9 @@ export const CustomizeDashboardDialog = ({
       }
       setIsCreatingTheme(false);
       setEditingTheme(null);
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la sauvegarde');
-      logger.error(error);
+      logger.error('Error saving theme', error);
     } finally {
       setIsSaving(false);
     }
@@ -354,9 +387,9 @@ export const CustomizeDashboardDialog = ({
       if (editingTheme?.id === themeId) {
         handleCancelThemeEdit();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
-      logger.error(error);
+      logger.error('Error deleting theme', error);
     }
   };
 
@@ -409,9 +442,7 @@ export const CustomizeDashboardDialog = ({
                     <Label>Nombre de colonnes</Label>
                     <Select
                       value={preferences.columns.toString()}
-                      onValueChange={(value) =>
-                        handleUpdatePreferences({ columns: parseInt(value) })
-                      }
+                      onValueChange={value => handleUpdatePreferences({ columns: parseInt(value) })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -451,15 +482,11 @@ export const CustomizeDashboardDialog = ({
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Actualisation automatique</Label>
-                    <p className="text-sm text-gray-500">
-                      Rafraîchir les données automatiquement
-                    </p>
+                    <p className="text-sm text-gray-500">Rafraîchir les données automatiquement</p>
                   </div>
                   <Switch
                     checked={preferences.autoRefresh}
-                    onCheckedChange={(checked) =>
-                      handleUpdatePreferences({ autoRefresh: checked })
-                    }
+                    onCheckedChange={checked => handleUpdatePreferences({ autoRefresh: checked })}
                   />
                 </div>
 
@@ -472,7 +499,7 @@ export const CustomizeDashboardDialog = ({
                       min={60}
                       max={3600}
                       value={preferences.refreshInterval}
-                      onChange={(e) =>
+                      onChange={e =>
                         handleUpdatePreferences({
                           refreshInterval: parseInt(e.target.value),
                         })
@@ -514,9 +541,7 @@ export const CustomizeDashboardDialog = ({
                         <Label>Titre du widget</Label>
                         <Input
                           value={newWidget.title}
-                          onChange={(e) =>
-                            setNewWidget({ ...newWidget, title: e.target.value })
-                          }
+                          onChange={e => setNewWidget({ ...newWidget, title: e.target.value })}
                           placeholder="Ex: Statistiques mensuelles"
                         />
                       </div>
@@ -533,7 +558,7 @@ export const CustomizeDashboardDialog = ({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {WIDGET_TYPE_OPTIONS.map((option) => (
+                              {WIDGET_TYPE_OPTIONS.map(option => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
@@ -553,7 +578,7 @@ export const CustomizeDashboardDialog = ({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {DATA_SOURCE_OPTIONS.map((option) => (
+                              {DATA_SOURCE_OPTIONS.map(option => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
@@ -567,11 +592,7 @@ export const CustomizeDashboardDialog = ({
                           <Save className="w-4 h-4 mr-2" />
                           Ajouter le widget
                         </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowAddWidget(false)}
-                          size="sm"
-                        >
+                        <Button variant="outline" onClick={() => setShowAddWidget(false)} size="sm">
                           Annuler
                         </Button>
                       </div>
@@ -586,15 +607,17 @@ export const CustomizeDashboardDialog = ({
                       Aucun widget. Cliquez sur "Ajouter" pour créer votre premier widget.
                     </p>
                   ) : (
-                    preferences.widgets.map((widget) => (
+                    preferences.widgets.map(widget => (
                       <div
                         key={widget.id}
                         draggable
                         onDragStart={() => handleDragStart(widget.id)}
-                        onDragOver={(e) => handleDragOver(e, widget.id)}
+                        onDragOver={e => handleDragOver(e, widget.id)}
                         onDragEnd={handleDragEnd}
                         className={`flex items-center gap-3 p-3 border rounded-lg cursor-move transition-all ${
-                          draggedWidget === widget.id ? 'opacity-50' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                          draggedWidget === widget.id
+                            ? 'opacity-50'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                       >
                         <GripVertical className="w-4 h-4 text-gray-400" />
@@ -665,8 +688,8 @@ export const CustomizeDashboardDialog = ({
                   </div>
                 </div>
                 <p className="text-sm text-gray-500">
-                  L'export permet de sauvegarder vos widgets et préférences. Vous pouvez
-                  ensuite les restaurer ou les partager avec d'autres utilisateurs.
+                  L'export permet de sauvegarder vos widgets et préférences. Vous pouvez ensuite les
+                  restaurer ou les partager avec d'autres utilisateurs.
                 </p>
               </CardContent>
             </Card>
@@ -709,7 +732,7 @@ export const CustomizeDashboardDialog = ({
                 <div>
                   <Label className="mb-3 block">Thèmes disponibles</Label>
                   <div className="grid grid-cols-2 gap-3">
-                    {availableThemes.map((theme) => (
+                    {availableThemes.map(theme => (
                       <button
                         key={theme.id}
                         onClick={async () => {
@@ -796,11 +819,11 @@ export const CustomizeDashboardDialog = ({
                   </div>
 
                   {/* Liste des thèmes personnalisés avec actions */}
-                  {availableThemes.filter((t) => t.isCustom).length > 0 && (
+                  {availableThemes.filter(t => t.isCustom).length > 0 && (
                     <div className="space-y-2 mb-4">
                       {availableThemes
-                        .filter((t) => t.isCustom)
-                        .map((theme) => (
+                        .filter(t => t.isCustom)
+                        .map(theme => (
                           <div
                             key={theme.id}
                             className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
@@ -854,9 +877,7 @@ export const CustomizeDashboardDialog = ({
                   <CardTitle>
                     {editingTheme ? `Modifier "${editingTheme.name}"` : 'Créer un nouveau thème'}
                   </CardTitle>
-                  <CardDescription>
-                    Personnalisez les couleurs de votre dashboard
-                  </CardDescription>
+                  <CardDescription>Personnalisez les couleurs de votre dashboard</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Nom et description du thème */}
@@ -865,7 +886,7 @@ export const CustomizeDashboardDialog = ({
                       <Label>Nom du thème</Label>
                       <Input
                         value={themeName}
-                        onChange={(e) => setThemeName(e.target.value)}
+                        onChange={e => setThemeName(e.target.value)}
                         placeholder="Ex: Mon thème personnalisé"
                       />
                     </div>
@@ -873,7 +894,7 @@ export const CustomizeDashboardDialog = ({
                       <Label>Description</Label>
                       <Input
                         value={themeDescription}
-                        onChange={(e) => setThemeDescription(e.target.value)}
+                        onChange={e => setThemeDescription(e.target.value)}
                         placeholder="Ex: Couleurs vives et modernes"
                       />
                     </div>
