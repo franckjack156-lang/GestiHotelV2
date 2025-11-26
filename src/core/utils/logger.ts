@@ -19,8 +19,9 @@ export enum LogLevel {
   ERROR = 'error',
 }
 
+// LogContext peut être un objet, une chaîne, unknown ou undefined pour flexibilité maximale
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LogContext = Record<string, any>;
+type LogContext = Record<string, any> | string | unknown;
 
 class Logger {
   private isDev = import.meta.env.DEV;
