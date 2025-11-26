@@ -86,7 +86,8 @@
       "Bash(python scripts/fix-logger-imports.py:*)",
       "Bash(node scripts/fix-logger-imports.js:*)",
       "Bash(node scripts/fix-logger-imports.cjs:*)",
-      "Bash(.gitignore)"
+      "Bash(.gitignore)",
+      "Bash(cut:*)"
     ],
     "deny": [],
     "ask": []

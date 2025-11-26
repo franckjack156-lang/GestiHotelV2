@@ -7,8 +7,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
 import { logger } from '@/core/utils/logger';
+import {
   initializePresence,
   subscribeToEstablishmentPresence,
   getUserPresenceStatus,

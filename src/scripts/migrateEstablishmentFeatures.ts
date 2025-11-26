@@ -13,8 +13,8 @@
 
 import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
-import {
 import { logger } from '@/core/utils/logger';
+import {
   DEFAULT_ESTABLISHMENT_FEATURES,
   FEATURES_CATALOG,
   type EstablishmentFeatures,
@@ -132,14 +132,15 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
           status: 'updated',
           message: 'Features mises à jour avec succès',
         });
-      } catch (error: any) {
-        logger.error(`   ❌ Erreur: ${error.message}`);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+        logger.error(`   ❌ Erreur: ${errorMessage}`);
         result.errors++;
         result.details.push({
           id: establishmentId,
           name: establishmentName,
           status: 'error',
-          message: error.message,
+          message: errorMessage,
         });
       }
     }
@@ -165,7 +166,7 @@ export async function migrateEstablishmentFeatures(): Promise<MigrationResult> {
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur fatale lors de la migration:', error);
     throw error;
   }
@@ -231,7 +232,7 @@ export async function previewMigration(): Promise<void> {
     logger.debug('\n' + '='.repeat(60));
     logger.debug('ℹ️  Pour exécuter la migration réelle, utilisez: migrateEstablishmentFeatures()');
     logger.debug('='.repeat(60) + '\n');
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur lors de la prévisualisation:', error);
     throw error;
   }
@@ -239,8 +240,18 @@ export async function previewMigration(): Promise<void> {
 
 // Exporter pour utilisation dans la console
 if (typeof window !== 'undefined') {
-  (window as any).migrateEstablishmentFeatures = migrateEstablishmentFeatures;
-  (window as any).previewMigration = previewMigration;
+  (
+    window as unknown as {
+      migrateEstablishmentFeatures: typeof migrateEstablishmentFeatures;
+      previewMigration: typeof previewMigration;
+    }
+  ).migrateEstablishmentFeatures = migrateEstablishmentFeatures;
+  (
+    window as unknown as {
+      migrateEstablishmentFeatures: typeof migrateEstablishmentFeatures;
+      previewMigration: typeof previewMigration;
+    }
+  ).previewMigration = previewMigration;
 
   logger.debug('✅ Scripts de migration chargés:');
   logger.debug('   • previewMigration() - Prévisualiser les changements');

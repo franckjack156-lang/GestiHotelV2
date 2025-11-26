@@ -9,9 +9,9 @@
 
 import { useState, useEffect } from 'react';
 import { X, Download, Share } from 'lucide-react';
+import { logger } from '@/core/utils/logger';
 import { Button } from '@/shared/components/ui/button';
 import {
-import { logger } from '@/core/utils/logger';
   Card,
   CardContent,
   CardDescription,
@@ -32,13 +32,15 @@ export const PWAInstallPrompt = () => {
 
   useEffect(() => {
     // Détecter iOS
-    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const ios =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+      !(window as unknown as { MSStream?: unknown }).MSStream;
     setIsIOS(ios);
 
     // Détecter si déjà installé
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsStandalone(standalone);
 
     // Écouter l'événement beforeinstallprompt (Chrome, Edge, etc.)

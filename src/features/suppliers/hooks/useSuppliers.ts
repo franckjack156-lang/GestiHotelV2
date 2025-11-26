@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { logger } from '@/core/utils/logger';
 import type {
   Supplier,
   CreateSupplierData,
@@ -16,7 +17,6 @@ import type {
   SupplierSortOptions,
 } from '../types/supplier.types';
 import {
-import { logger } from '@/core/utils/logger';
   getSuppliers as getSuppliersService,
   createSupplier as createSupplierService,
   updateSupplier as updateSupplierService,
@@ -167,6 +167,7 @@ export const useSuppliers = (
   // Charger au montage et quand les filtres changent
   useEffect(() => {
     loadSuppliers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [establishmentId, JSON.stringify(filters), JSON.stringify(sortOptions)]);
 
   return {

@@ -10,9 +10,20 @@ import { useEstablishmentStore } from '@/features/establishments/stores/establis
 import { updateEstablishment } from '@/features/establishments/services/establishmentService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
-import { Building2, Check, X, AlertCircle, Loader2, Save, AlertTriangle, ArrowLeft, Settings } from 'lucide-react';
+import {
+  Building2,
+  Check,
+  X,
+  AlertCircle,
+  Loader2,
+  Save,
+  AlertTriangle,
+  ArrowLeft,
+  Settings,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as LucideIcons from 'lucide-react';
+import { logger } from '@/core/utils/logger';
 import { Button } from '@/shared/components/ui/button';
 import {
   Card,
@@ -27,7 +38,6 @@ import { Badge } from '@/shared/components/ui/badge';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Separator } from '@/shared/components/ui/separator';
 import {
-import { logger } from '@/core/utils/logger';
   FEATURES_CATALOG,
   DEFAULT_ESTABLISHMENT_FEATURES,
   type FeatureMetadata,
@@ -65,6 +75,7 @@ export const EstablishmentFeaturesPage = () => {
 
     setFeatures(mergedFeatures);
     setHasChanges(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentEstablishment?.id]);
 
   // Grouper les features par catégorie
@@ -221,10 +232,10 @@ export const EstablishmentFeaturesPage = () => {
     setSaving(true);
     try {
       // Mettre à jour dans Firestore
-      await updateEstablishment(currentEstablishment.id, { features } as any);
+      await updateEstablishment(currentEstablishment.id, { features });
 
       // Mettre à jour le store local
-      updateEstablishmentInList(currentEstablishment.id, { features } as any);
+      updateEstablishmentInList(currentEstablishment.id, { features });
 
       toast.success('Fonctionnalités mises à jour avec succès');
       setHasChanges(false);
@@ -261,7 +272,9 @@ export const EstablishmentFeaturesPage = () => {
    * Obtenir le composant icône
    */
   const getIcon = (iconName: string) => {
-    const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[iconName];
+    const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[
+      iconName
+    ];
     return Icon ? <Icon size={20} /> : <AlertCircle size={20} />;
   };
 
@@ -345,9 +358,9 @@ export const EstablishmentFeaturesPage = () => {
                   <>
                     <Save className="mr-2 h-4 w-4" />
                     Enregistrer
-                </>
-              )}
-            </Button>
+                  </>
+                )}
+              </Button>
             </>
           )}
         </div>
