@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * DashboardGrid Component
  *
@@ -6,9 +6,15 @@
  */
 
 import { useMemo, useCallback } from 'react';
-import GridLayout, { Layout } from 'react-grid-layout';
+import GridLayout, { type Layout } from 'react-grid-layout';
 import { WidgetRenderer } from './WidgetRenderer';
-import type { WidgetConfig, InterventionStats, TimelineData, RoomStats, TechnicianPerformance } from '../types/dashboard.types';
+import type {
+  WidgetConfig,
+  InterventionStats,
+  TimelineData,
+  RoomStats,
+  TechnicianPerformance,
+} from '../types/dashboard.types';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -39,10 +45,10 @@ interface DashboardGridProps {
 
 // Conversion de WidgetSize vers dimensions de grille
 const WIDGET_SIZE_MAP = {
-  small: { w: 3, h: 4 },    // 1/4 de la largeur
-  medium: { w: 6, h: 4 },   // 1/2 de la largeur
-  large: { w: 9, h: 6 },    // 3/4 de la largeur
-  full: { w: 12, h: 8 },    // Pleine largeur
+  small: { w: 3, h: 4 }, // 1/4 de la largeur
+  medium: { w: 6, h: 4 }, // 1/2 de la largeur
+  large: { w: 9, h: 6 }, // 3/4 de la largeur
+  full: { w: 12, h: 8 }, // Pleine largeur
 };
 
 export const DashboardGrid = ({
@@ -57,13 +63,12 @@ export const DashboardGrid = ({
   onLayoutChange,
   isEditMode = false,
 }: DashboardGridProps) => {
-
   // Convertir les widgets en layout pour react-grid-layout
   const layout: Layout[] = useMemo(() => {
     let currentRow = 0;
     let currentCol = 0;
 
-    return widgets.map((widget) => {
+    return widgets.map(widget => {
       const size = WIDGET_SIZE_MAP[widget.size] || WIDGET_SIZE_MAP.medium;
 
       // Si le widget a déjà une position définie, l'utiliser
@@ -108,33 +113,36 @@ export const DashboardGrid = ({
   }, [widgets]);
 
   // Gérer les changements de layout (drag & drop ou resize)
-  const handleLayoutChange = useCallback((newLayout: Layout[]) => {
-    if (!onLayoutChange || !isEditMode) return;
+  const handleLayoutChange = useCallback(
+    (newLayout: Layout[]) => {
+      if (!onLayoutChange || !isEditMode) return;
 
-    // Convertir le layout en widgets mis à jour
-    const updatedWidgets = widgets.map(widget => {
-      const layoutItem = newLayout.find(l => l.i === widget.id);
-      if (!layoutItem) return widget;
+      // Convertir le layout en widgets mis à jour
+      const updatedWidgets = widgets.map(widget => {
+        const layoutItem = newLayout.find(l => l.i === widget.id);
+        if (!layoutItem) return widget;
 
-      // Déterminer la nouvelle taille basée sur les dimensions
-      let newSize: 'small' | 'medium' | 'large' | 'full' = 'medium';
-      if (layoutItem.w <= 3) newSize = 'small';
-      else if (layoutItem.w <= 6) newSize = 'medium';
-      else if (layoutItem.w <= 9) newSize = 'large';
-      else newSize = 'full';
+        // Déterminer la nouvelle taille basée sur les dimensions
+        let newSize: 'small' | 'medium' | 'large' | 'full' = 'medium';
+        if (layoutItem.w <= 3) newSize = 'small';
+        else if (layoutItem.w <= 6) newSize = 'medium';
+        else if (layoutItem.w <= 9) newSize = 'large';
+        else newSize = 'full';
 
-      return {
-        ...widget,
-        size: newSize,
-        position: {
-          row: layoutItem.y,
-          col: layoutItem.x,
-        },
-      };
-    });
+        return {
+          ...widget,
+          size: newSize,
+          position: {
+            row: layoutItem.y,
+            col: layoutItem.x,
+          },
+        };
+      });
 
-    onLayoutChange(updatedWidgets);
-  }, [widgets, onLayoutChange, isEditMode]);
+      onLayoutChange(updatedWidgets);
+    },
+    [widgets, onLayoutChange, isEditMode]
+  );
 
   return (
     <div className="dashboard-grid-container">

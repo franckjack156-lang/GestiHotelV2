@@ -94,7 +94,9 @@ export const createIntervention = async (
           const userData = userDoc.data();
           createdByName = userData.displayName || userData.email || 'Inconnu';
         }
-      } catch {}
+      } catch {
+        // Ignorer les erreurs de récupération du nom d'utilisateur
+      }
     }
 
     // Base data - only required fields
@@ -252,7 +254,7 @@ export const createIntervention = async (
     const createdDate = new Date();
     const customDueDate = data.dueDate;
 
-    logger.debug('🔍 DEBUG - Priority:', priority, 'SLA_TARGET:', SLA_TARGETS[priority]);
+    logger.debug('🔍 DEBUG - Priority calculation', { priority, slaTarget: SLA_TARGETS[priority] });
 
     const dueDate = calculateDueDate(createdDate, priority, customDueDate);
 
@@ -271,11 +273,11 @@ export const createIntervention = async (
     }
 
     // DEBUG: Vérifier qu'il n'y a pas de valeurs undefined
-    logger.debug('🔍 DEBUG - interventionData avant addDoc:', JSON.stringify(
-      Object.entries(interventionData).filter(([_, value]) => value === undefined),
-      null,
-      2
-    ));
+    logger.debug('🔍 DEBUG - interventionData avant addDoc:', {
+      undefinedFields: Object.entries(interventionData)
+        .filter(([, value]) => value === undefined)
+        .map(([key]) => key),
+    });
 
     const docRef = await addDoc(collectionRef, interventionData);
     logger.debug('✅ Intervention créée:', docRef.id);
@@ -306,7 +308,9 @@ export const createIntervention = async (
             establishmentId
           );
 
-          logger.debug(`✅ Blocage créé automatiquement: ${blockageId} pour chambre ${room.number}`);
+          logger.debug(
+            `✅ Blocage créé automatiquement: ${blockageId} pour chambre ${room.number}`
+          );
         } else {
           logger.warn(`⚠️ Chambre ${data.roomNumber} non trouvée pour bloquer`);
         }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * useNotifications Hook
  *
@@ -110,13 +109,7 @@ export const useNotifications = (
     try {
       await notificationService.markAsRead(notificationId);
       // Mise à jour locale
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId
-            ? { ...n, read: true }
-            : n
-        )
-      );
+      setNotifications(prev => prev.map(n => (n.id === notificationId ? { ...n, read: true } : n)));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       logger.error('Erreur markAsRead:', err);
@@ -147,11 +140,7 @@ export const useNotifications = (
       await notificationService.markAsClicked(notificationId);
       // Mise à jour locale
       setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId
-            ? { ...n, clicked: true }
-            : n
-        )
+        prev.map(n => (n.id === notificationId ? { ...n, clicked: true } : n))
       );
     } catch (err) {
       logger.error('Erreur markAsClicked:', err);
@@ -225,16 +214,18 @@ export const useNotifications = (
     const unsubscribe = notificationService.subscribeToNotifications(
       userId,
       establishmentId,
-      filters,
-      sortOptions,
-      options.limitCount,
-      notifications => {
+      (notifications: Notification[]) => {
         setNotifications(notifications);
         setIsLoading(false);
       },
-      error => {
-        setError(error.message);
-        setIsLoading(false);
+      {
+        filters,
+        sortOptions,
+        limitCount: options.limitCount,
+        onError: (error: Error) => {
+          setError(error.message);
+          setIsLoading(false);
+        },
       }
     );
 
@@ -252,11 +243,12 @@ export const useNotifications = (
     const unsubscribe = notificationService.subscribeToNotifications(
       userId,
       establishmentId,
-      { read: false },
-      { field: 'createdAt', order: 'desc' },
-      undefined,
-      notifications => {
+      (notifications: Notification[]) => {
         setUnreadCount(notifications.length);
+      },
+      {
+        filters: { read: false },
+        sortOptions: { field: 'createdAt', order: 'desc' },
       }
     );
 

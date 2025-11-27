@@ -374,7 +374,7 @@ export const MessagingExample: React.FC = () => {
   };
 
   const handleReaction = (messageId: string, emoji: string) => {
-    logger.debug('Adding reaction:', messageId, emoji);
+    logger.debug('Adding reaction:', { messageId, emoji });
     // Implémenter la logique de réaction
   };
 

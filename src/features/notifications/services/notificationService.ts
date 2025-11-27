@@ -134,12 +134,15 @@ class NotificationService {
   subscribeToNotifications(
     userId: string,
     establishmentId: string,
-    filters?: NotificationFilters,
-    sortOptions?: NotificationSortOptions,
-    limitCount?: number,
     onUpdate: (notifications: Notification[]) => void,
-    onError?: (error: Error) => void
+    options?: {
+      filters?: NotificationFilters;
+      sortOptions?: NotificationSortOptions;
+      limitCount?: number;
+      onError?: (error: Error) => void;
+    }
   ): () => void {
+    const { filters, sortOptions, limitCount, onError } = options || {};
     const constraints: QueryConstraint[] = [
       where('userId', '==', userId),
       where('establishmentId', '==', establishmentId),
