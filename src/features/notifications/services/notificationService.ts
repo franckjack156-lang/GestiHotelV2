@@ -47,7 +47,8 @@ class NotificationService {
   async createNotification(establishmentId: string, data: CreateNotificationData): Promise<string> {
     const notificationsRef = collection(db, this.COLLECTIONS.notifications);
 
-    const notificationData: Omit<Notification, 'id'> = {
+    // Note: serverTimestamp() returns FieldValue at write time, converted to Timestamp after
+    const notificationData = {
       establishmentId,
       userId: data.userId,
       type: data.type,

@@ -66,9 +66,7 @@ export const PieChart = ({
               innerRadius={innerRadius}
               outerRadius={innerRadius > 0 ? innerRadius + 60 : 80}
               fill="#8884d8"
-              label={(entry: Record<string, unknown>) =>
-                `${String(entry[nameKey])}: ${String(entry[dataKey])}`
-              }
+              label={(entry: any) => `${String(entry[nameKey])}: ${String(entry[dataKey])}`}
               labelLine={false}
             >
               {data.map((_entry, index) => (

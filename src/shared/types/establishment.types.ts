@@ -222,6 +222,7 @@ export interface UpdateEstablishmentData {
   primaryColor?: string;
   secondaryColor?: string;
   settings?: Partial<EstablishmentSettings>;
+  features?: Partial<EstablishmentFeatures>;
 }
 
 /**

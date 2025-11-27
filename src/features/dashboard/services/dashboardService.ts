@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Dashboard Service
  *
@@ -28,7 +29,18 @@ import type {
 import { DEFAULT_WIDGET_CONFIGS } from '../types/dashboard.types';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 import { InterventionStatus } from '@/shared/types/status.types';
-import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from 'date-fns';
+import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfQuarter,
+  endOfQuarter,
+  startOfYear,
+  endOfYear,
+} from 'date-fns';
 
 class DashboardService {
   private readonly COLLECTION = 'dashboardPreferences';
@@ -168,11 +180,7 @@ class DashboardService {
   /**
    * Supprimer un widget
    */
-  async removeWidget(
-    userId: string,
-    establishmentId: string,
-    widgetId: string
-  ): Promise<void> {
+  async removeWidget(userId: string, establishmentId: string, widgetId: string): Promise<void> {
     const preferences = await this.getPreferences(userId, establishmentId);
     if (!preferences) return;
 
@@ -212,7 +220,10 @@ class DashboardService {
       case 'today':
         return { from: startOfDay(now), to: endOfDay(now) };
       case 'week':
-        return { from: startOfWeek(now, { weekStartsOn: 1 }), to: endOfWeek(now, { weekStartsOn: 1 }) };
+        return {
+          from: startOfWeek(now, { weekStartsOn: 1 }),
+          to: endOfWeek(now, { weekStartsOn: 1 }),
+        };
       case 'month':
         return { from: startOfMonth(now), to: endOfMonth(now) };
       case 'quarter':
@@ -354,7 +365,12 @@ class DashboardService {
             ? intervention.dueDate.toDate()
             : new Date(intervention.dueDate);
 
-        if (dueDate < now && status !== InterventionStatus.COMPLETED && status !== InterventionStatus.VALIDATED && status !== InterventionStatus.CANCELLED) {
+        if (
+          dueDate < now &&
+          status !== InterventionStatus.COMPLETED &&
+          status !== InterventionStatus.VALIDATED &&
+          status !== InterventionStatus.CANCELLED
+        ) {
           stats.overdue++;
         }
       }
@@ -438,7 +454,7 @@ class DashboardService {
       dataByDate[dateKey].created++;
 
       const status = intervention.status || 'pending';
-      if (status === 'completed' || status === 'resolved') {
+      if (status === 'completed' || status === 'validated') {
         dataByDate[dateKey].completed++;
       } else if (status === 'in_progress') {
         dataByDate[dateKey].inProgress++;
@@ -516,9 +532,11 @@ class DashboardService {
     const techStats: Record<string, TechnicianPerformance> = {};
 
     interventions.forEach(intervention => {
-      const techIds = intervention.assignedToIds || (intervention.assignedTo ? [intervention.assignedTo] : []);
+      const techIds =
+        intervention.assignedToIds || (intervention.assignedTo ? [intervention.assignedTo] : []);
       const techNames =
-        intervention.assignedToNames || (intervention.assignedToName ? [intervention.assignedToName] : []);
+        intervention.assignedToNames ||
+        (intervention.assignedToName ? [intervention.assignedToName] : []);
 
       techIds.forEach((techId, index) => {
         const techName = techNames[index] || techId;
@@ -538,7 +556,7 @@ class DashboardService {
         techStats[techId].totalAssigned++;
 
         const status = intervention.status || 'pending';
-        if (status === 'completed' || status === 'resolved') {
+        if (status === 'completed' || status === 'validated') {
           techStats[techId].completed++;
         } else if (status === 'in_progress') {
           techStats[techId].inProgress++;
@@ -548,7 +566,8 @@ class DashboardService {
 
     // Calculer les moyennes
     Object.values(techStats).forEach(tech => {
-      tech.completionRate = tech.totalAssigned > 0 ? (tech.completed / tech.totalAssigned) * 100 : 0;
+      tech.completionRate =
+        tech.totalAssigned > 0 ? (tech.completed / tech.totalAssigned) * 100 : 0;
     });
 
     return Object.values(techStats).sort((a, b) => b.totalAssigned - a.totalAssigned);

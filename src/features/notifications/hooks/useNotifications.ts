@@ -33,7 +33,7 @@ export const useNotifications = (
   const { currentEstablishment } = useEstablishmentStore();
   const establishmentId =
     currentEstablishment?.id || user?.currentEstablishmentId || user?.establishmentIds?.[0];
-  const userId = user?.uid;
+  const userId = user?.id;
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);

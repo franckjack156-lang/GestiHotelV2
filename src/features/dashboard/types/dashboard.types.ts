@@ -86,24 +86,24 @@ export interface WidgetConfig {
   };
   // Configurations spécifiques par type de widget
   clockOptions?: {
-    format: '12h' | '24h' | 'analog';
+    format?: '12h' | '24h' | 'analog'; // Defaults to '24h'
     showSeconds?: boolean;
     showDate?: boolean;
     timezone?: string;
   };
   linksOptions?: {
-    links: Array<{
+    links?: Array<{
       id: string;
       label: string;
       url: string;
       icon?: string;
       color?: string;
       openInNewTab?: boolean;
-    }>;
+    }>; // Defaults to []
     columns?: number; // Nombre de colonnes pour afficher les liens
   };
   buttonsOptions?: {
-    buttons: Array<{
+    buttons?: Array<{
       id: string;
       label: string;
       action: 'navigate' | 'external_link' | 'custom';
@@ -111,26 +111,26 @@ export interface WidgetConfig {
       icon?: string;
       color?: string;
       variant?: 'default' | 'outline' | 'destructive';
-    }>;
+    }>; // Defaults to []
     columns?: number;
   };
   iframeOptions?: {
-    url: string;
+    url?: string; // Defaults to ''
     allowFullscreen?: boolean;
     allowScripts?: boolean;
   };
   customListOptions?: {
-    items: Array<{
+    items?: Array<{
       id: string;
       text: string;
       checked?: boolean;
       priority?: 'low' | 'medium' | 'high';
-    }>;
+    }>; // Defaults to []
     editable?: boolean;
     showCheckboxes?: boolean;
   };
   noteOptions?: {
-    content: string;
+    content?: string; // Defaults to ''
     backgroundColor?: string;
     textColor?: string;
     fontSize?: 'small' | 'medium' | 'large';
