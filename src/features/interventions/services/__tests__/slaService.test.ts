@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { InterventionPriority } from '@/shared/types/status.types';
 import {
   SLA_TARGETS,
   calculateDueDate,
@@ -55,7 +56,7 @@ describe('slaService', () => {
   describe('calculateDueDate', () => {
     it('devrait calculer la date limite pour priorité normale (8h)', () => {
       const createdAt = new Date('2025-01-15T10:00:00.000Z');
-      const dueDate = calculateDueDate(createdAt, 'normal');
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.NORMAL);
 
       const expectedDueDate = new Date('2025-01-15T18:00:00.000Z'); // +8h
       expect(dueDate.getTime()).toBe(expectedDueDate.getTime());
@@ -63,7 +64,7 @@ describe('slaService', () => {
 
     it('devrait calculer la date limite pour priorité critique (1h)', () => {
       const createdAt = new Date('2025-01-15T10:00:00.000Z');
-      const dueDate = calculateDueDate(createdAt, 'critical');
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.CRITICAL);
 
       const expectedDueDate = new Date('2025-01-15T11:00:00.000Z'); // +1h
       expect(dueDate.getTime()).toBe(expectedDueDate.getTime());
@@ -71,7 +72,7 @@ describe('slaService', () => {
 
     it('devrait calculer la date limite pour priorité urgente (2h)', () => {
       const createdAt = new Date('2025-01-15T10:00:00.000Z');
-      const dueDate = calculateDueDate(createdAt, 'urgent');
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.URGENT);
 
       const expectedDueDate = new Date('2025-01-15T12:00:00.000Z'); // +2h
       expect(dueDate.getTime()).toBe(expectedDueDate.getTime());
@@ -79,7 +80,7 @@ describe('slaService', () => {
 
     it('devrait calculer la date limite pour priorité haute (4h)', () => {
       const createdAt = new Date('2025-01-15T10:00:00.000Z');
-      const dueDate = calculateDueDate(createdAt, 'high');
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.HIGH);
 
       const expectedDueDate = new Date('2025-01-15T14:00:00.000Z'); // +4h
       expect(dueDate.getTime()).toBe(expectedDueDate.getTime());
@@ -87,7 +88,7 @@ describe('slaService', () => {
 
     it('devrait calculer la date limite pour priorité basse (24h)', () => {
       const createdAt = new Date('2025-01-15T10:00:00.000Z');
-      const dueDate = calculateDueDate(createdAt, 'low');
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.LOW);
 
       const expectedDueDate = new Date('2025-01-16T10:00:00.000Z'); // +24h
       expect(dueDate.getTime()).toBe(expectedDueDate.getTime());
@@ -97,7 +98,7 @@ describe('slaService', () => {
       const createdAt = new Date('2025-01-15T10:00:00.000Z');
       const customDueDate = new Date('2025-01-20T15:30:00.000Z');
 
-      const dueDate = calculateDueDate(createdAt, 'normal', customDueDate);
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.NORMAL, customDueDate);
 
       expect(dueDate.getTime()).toBe(customDueDate.getTime());
     });
@@ -107,7 +108,7 @@ describe('slaService', () => {
       const customDueDate = new Date('2025-01-16T10:00:00.000Z'); // 24h plus tard
 
       // Même avec priorité critical (1h), devrait utiliser la date personnalisée
-      const dueDate = calculateDueDate(createdAt, 'critical', customDueDate);
+      const dueDate = calculateDueDate(createdAt, InterventionPriority.CRITICAL, customDueDate);
 
       expect(dueDate.getTime()).toBe(customDueDate.getTime());
     });

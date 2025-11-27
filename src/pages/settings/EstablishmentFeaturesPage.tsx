@@ -9,6 +9,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
 import { updateEstablishment } from '@/features/establishments/services/establishmentService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Permission } from '@/features/users/types/role.types';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -55,7 +56,7 @@ export const EstablishmentFeaturesPage = () => {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Vérifier si l'utilisateur est Super Admin
-  const canManageFeatures = isSuperAdmin() || hasPermission('manage_establishment_features');
+  const canManageFeatures = isSuperAdmin() || hasPermission(Permission.SYSTEM_ADMIN);
 
   // Mettre à jour les features si l'établissement change
   useEffect(() => {

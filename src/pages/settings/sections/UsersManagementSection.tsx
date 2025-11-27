@@ -14,6 +14,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useUsers } from '@/features/users/hooks/useUsers';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Permission } from '@/features/users/types/role.types';
 import {
   Card,
   CardContent,
@@ -46,8 +47,8 @@ export const UsersManagementSection = () => {
   const { hasPermission } = useAuth();
 
   // Check if user has permission to manage users
-  const canViewUsers = hasPermission('view_users');
-  const canCreateUsers = hasPermission('create_users');
+  const canViewUsers = hasPermission(Permission.USERS_VIEW);
+  const canCreateUsers = hasPermission(Permission.USERS_CREATE);
 
   // If no permission to view users, show restricted access
   if (!canViewUsers) {
