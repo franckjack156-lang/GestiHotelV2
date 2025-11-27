@@ -19,9 +19,13 @@ export enum LogLevel {
   ERROR = 'error',
 }
 
-// LogContext peut être un objet, une chaîne, unknown ou undefined pour flexibilité maximale
+// LogContext accepte tout type pour flexibilité maximale
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LogContext = Record<string, any> | string | unknown;
+type LogContext = any;
+
+// Type strict pour les objets de contexte (utilisé internement)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LogContextObject = Record<string, any>;
 
 class Logger {
   private isDev = import.meta.env.DEV;
@@ -32,7 +36,7 @@ class Logger {
    */
   debug(message: string, context?: LogContext): void {
     if (this.isDev && !this.isTest) {
-      console.debug(`[DEBUG] ${this.formatMessage(message)}`, context || '');
+      console.debug(`[DEBUG] ${this.formatMessage(message)}`, context ?? '');
     }
   }
 
@@ -41,7 +45,7 @@ class Logger {
    */
   info(message: string, context?: LogContext): void {
     if (this.isDev && !this.isTest) {
-      console.info(`[INFO] ${this.formatMessage(message)}`, context || '');
+      console.info(`[INFO] ${this.formatMessage(message)}`, context ?? '');
     }
   }
 
@@ -50,13 +54,13 @@ class Logger {
    */
   warn(message: string, context?: LogContext): void {
     if (!this.isTest) {
-      console.warn(`[WARN] ${this.formatMessage(message)}`, context || '');
+      console.warn(`[WARN] ${this.formatMessage(message)}`, context ?? '');
 
       // Envoyer à Sentry en production
       if (!this.isDev) {
         Sentry.captureMessage(message, {
           level: 'warning',
-          contexts: { custom: context },
+          contexts: { custom: this.toContextObject(context) },
         });
       }
     }
@@ -64,20 +68,39 @@ class Logger {
 
   /**
    * Log d'erreur (toujours affiché + envoyé à Sentry)
+   * Supporte deux signatures:
+   * - error(message: string, error?: Error | unknown, context?: LogContext)
+   * - error(error: unknown) - raccourci pour logger une erreur directement
    */
-  error(message: string, error?: Error | unknown, context?: LogContext): void {
+  error(messageOrError: string | unknown, error?: Error | unknown, context?: LogContext): void {
     if (!this.isTest) {
-      console.error(`[ERROR] ${this.formatMessage(message)}`, error || '', context || '');
+      // Si le premier argument n'est pas une string, c'est une erreur directe
+      if (typeof messageOrError !== 'string') {
+        const err = messageOrError;
+        const errMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+        console.error(`[ERROR] ${this.formatMessage(errMessage)}`, err);
+
+        if (err instanceof Error) {
+          Sentry.captureException(err);
+        } else {
+          Sentry.captureMessage(errMessage, { level: 'error' });
+        }
+        return;
+      }
+
+      // Signature classique: message + error + context
+      const message = messageOrError;
+      console.error(`[ERROR] ${this.formatMessage(message)}`, error ?? '', context ?? '');
 
       // Toujours envoyer à Sentry
       if (error instanceof Error) {
         Sentry.captureException(error, {
-          contexts: { custom: { message, ...context } },
+          contexts: { custom: { message, ...this.toContextObject(context) } },
         });
       } else {
         Sentry.captureMessage(message, {
           level: 'error',
-          contexts: { custom: context },
+          contexts: { custom: this.toContextObject(context) },
         });
       }
     }
@@ -107,9 +130,22 @@ class Logger {
   }
 
   /**
+   * Convertit un contexte quelconque en objet pour Sentry
+   */
+  private toContextObject(context: LogContext): LogContextObject | undefined {
+    if (context === undefined || context === null) {
+      return undefined;
+    }
+    if (typeof context === 'object' && !Array.isArray(context)) {
+      return context as LogContextObject;
+    }
+    return { value: context };
+  }
+
+  /**
    * Créer un logger avec contexte pré-rempli
    */
-  withContext(baseContext: LogContext): Logger {
+  withContext(baseContext: LogContextObject): Logger {
     const contextLogger = new Logger();
 
     // Override des méthodes pour inclure le contexte de base
@@ -119,16 +155,16 @@ class Logger {
     const originalError = contextLogger.error.bind(contextLogger);
 
     contextLogger.debug = (message: string, context?: LogContext) =>
-      originalDebug(message, { ...baseContext, ...context });
+      originalDebug(message, { ...baseContext, ...this.toContextObject(context) });
 
     contextLogger.info = (message: string, context?: LogContext) =>
-      originalInfo(message, { ...baseContext, ...context });
+      originalInfo(message, { ...baseContext, ...this.toContextObject(context) });
 
     contextLogger.warn = (message: string, context?: LogContext) =>
-      originalWarn(message, { ...baseContext, ...context });
+      originalWarn(message, { ...baseContext, ...this.toContextObject(context) });
 
     contextLogger.error = (message: string, error?: Error | unknown, context?: LogContext) =>
-      originalError(message, error, { ...baseContext, ...context });
+      originalError(message, error, { ...baseContext, ...this.toContextObject(context) });
 
     return contextLogger;
   }
