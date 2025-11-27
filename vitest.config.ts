@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/tests/setup.ts',
     include: ['**/*.{test,spec}.{js,ts,jsx,tsx}'],
+    exclude: ['**/node_modules/**', '**/backups/**', '**/dist/**'],
     passWithNoTests: true,
     coverage: {
       provider: 'v8',
@@ -19,7 +20,7 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.config.*',
         '**/mockData/',
-        '**/__tests__/'
+        '**/__tests__/',
       ],
       include: ['src/**/*.{ts,tsx}'],
       all: true,
@@ -27,13 +28,13 @@ export default defineConfig({
         lines: 50,
         functions: 50,
         branches: 50,
-        statements: 50
-      }
-    }
+        statements: 50,
+      },
+    },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
-  }
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 });
