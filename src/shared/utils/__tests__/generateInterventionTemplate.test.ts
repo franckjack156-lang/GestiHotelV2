@@ -1,10 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests pour generateInterventionTemplate
  *
  * Module de génération de templates Excel pour l'import d'interventions
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  afterAll,
+  type MockInstance,
+} from 'vitest';
 import * as XLSX from 'xlsx';
 import {
   generateBlankTemplate,
@@ -109,7 +120,7 @@ describe('generateInterventionTemplate', () => {
         'Référence Externe',
       ];
 
-      expectedFields.forEach((field) => {
+      expectedFields.forEach(field => {
         expect(data[0]).toHaveProperty(field);
       });
     });
@@ -121,7 +132,7 @@ describe('generateInterventionTemplate', () => {
       const data = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
       const row = data[0];
-      Object.values(row).forEach((value) => {
+      Object.values(row).forEach(value => {
         expect(value).toBe('');
       });
     });
@@ -162,7 +173,7 @@ describe('generateInterventionTemplate', () => {
       expect(workbook.SheetNames).toContain('Instructions');
     });
 
-    it('devrait avoir 5 exemples d\'interventions', () => {
+    it("devrait avoir 5 exemples d'interventions", () => {
       const buffer = generateExampleTemplate();
       const workbook = XLSX.read(buffer, { type: 'array' });
       const sheet = workbook.Sheets['Interventions'];
@@ -189,7 +200,7 @@ describe('generateInterventionTemplate', () => {
       const sheet = workbook.Sheets['Interventions'];
       const data = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
-      const priorities = data.map((row) => row['Priorité ⚠️']);
+      const priorities = data.map(row => row['Priorité ⚠️']);
       expect(priorities).toContain('urgente');
       expect(priorities).toContain('basse');
       expect(priorities).toContain('haute');
@@ -202,7 +213,7 @@ describe('generateInterventionTemplate', () => {
       const sheet = workbook.Sheets['Interventions'];
       const data = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
-      const types = data.map((row) => row['Type ⚠️']);
+      const types = data.map(row => row['Type ⚠️']);
       expect(types).toContain('Plomberie');
       expect(types).toContain('Électricité');
       expect(types).toContain('Climatisation');
@@ -214,7 +225,7 @@ describe('generateInterventionTemplate', () => {
       const sheet = workbook.Sheets['Interventions'];
       const data = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
-      const urgentValues = data.map((row) => row['Urgent']);
+      const urgentValues = data.map(row => row['Urgent']);
       expect(urgentValues).toContain('oui');
       expect(urgentValues).toContain('non');
       expect(urgentValues).toContain('no'); // Variante anglaise
@@ -227,7 +238,7 @@ describe('generateInterventionTemplate', () => {
       const sheet = workbook.Sheets['Interventions'];
       const data = XLSX.utils.sheet_to_json<Record<string, string>>(sheet);
 
-      const bloquantValues = data.map((row) => row['Bloquant']);
+      const bloquantValues = data.map(row => row['Bloquant']);
       expect(bloquantValues).toContain('oui');
       expect(bloquantValues).toContain('non');
       expect(bloquantValues).toContain('yes'); // Variante anglaise
@@ -293,7 +304,7 @@ describe('generateInterventionTemplate', () => {
   // ==========================================================================
 
   describe('downloadBlankTemplate', () => {
-    let createElementSpy: ReturnType<typeof vi.spyOn>;
+    let createElementSpy: MockInstance<any>;
     let mockAnchor: HTMLAnchorElement;
 
     beforeEach(() => {
@@ -309,15 +320,11 @@ describe('generateInterventionTemplate', () => {
         click: vi.fn(),
       } as unknown as HTMLAnchorElement;
 
-      createElementSpy = vi
-        .spyOn(document, 'createElement')
-        .mockReturnValue(mockAnchor);
+      createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor);
 
       // Mock document.body
       vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockAnchor);
-      vi.spyOn(document.body, 'removeChild').mockImplementation(
-        () => mockAnchor
-      );
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockAnchor);
     });
 
     afterEach(() => {
@@ -334,10 +341,8 @@ describe('generateInterventionTemplate', () => {
       downloadBlankTemplate();
 
       expect(mockCreateObjectURL).toHaveBeenCalled();
-      const blob = mockCreateObjectURL.mock.calls[0][0] as Blob;
-      expect(blob.type).toBe(
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      );
+      const blob = (mockCreateObjectURL.mock.calls[0] as unknown[])?.[0] as Blob;
+      expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     });
 
     it('devrait définir le nom de fichier "template-interventions-vierge.xlsx"', () => {
@@ -346,7 +351,7 @@ describe('generateInterventionTemplate', () => {
       expect(mockAnchor.download).toBe('template-interventions-vierge.xlsx');
     });
 
-    it('devrait définir l\'URL du blob', () => {
+    it("devrait définir l'URL du blob", () => {
       downloadBlankTemplate();
 
       expect(mockAnchor.href).toBe('blob:mock-url');
@@ -358,7 +363,7 @@ describe('generateInterventionTemplate', () => {
       expect(mockAnchor.click).toHaveBeenCalled();
     });
 
-    it('devrait ajouter puis supprimer l\'élément du DOM', () => {
+    it("devrait ajouter puis supprimer l'élément du DOM", () => {
       const appendSpy = vi.spyOn(document.body, 'appendChild');
       const removeSpy = vi.spyOn(document.body, 'removeChild');
 
@@ -368,7 +373,7 @@ describe('generateInterventionTemplate', () => {
       expect(removeSpy).toHaveBeenCalledWith(mockAnchor);
     });
 
-    it('devrait révoquer l\'URL après téléchargement', () => {
+    it("devrait révoquer l'URL après téléchargement", () => {
       downloadBlankTemplate();
 
       expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
@@ -380,7 +385,7 @@ describe('generateInterventionTemplate', () => {
   // ==========================================================================
 
   describe('downloadExampleTemplate', () => {
-    let createElementSpy: ReturnType<typeof vi.spyOn>;
+    let createElementSpy: MockInstance<any>;
     let mockAnchor: HTMLAnchorElement;
 
     beforeEach(() => {
@@ -396,15 +401,11 @@ describe('generateInterventionTemplate', () => {
         click: vi.fn(),
       } as unknown as HTMLAnchorElement;
 
-      createElementSpy = vi
-        .spyOn(document, 'createElement')
-        .mockReturnValue(mockAnchor);
+      createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor);
 
       // Mock document.body
       vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockAnchor);
-      vi.spyOn(document.body, 'removeChild').mockImplementation(
-        () => mockAnchor
-      );
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockAnchor);
     });
 
     afterEach(() => {
@@ -421,10 +422,8 @@ describe('generateInterventionTemplate', () => {
       downloadExampleTemplate();
 
       expect(mockCreateObjectURL).toHaveBeenCalled();
-      const blob = mockCreateObjectURL.mock.calls[0][0] as Blob;
-      expect(blob.type).toBe(
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      );
+      const blob = (mockCreateObjectURL.mock.calls[0] as unknown[])?.[0] as Blob;
+      expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     });
 
     it('devrait définir le nom de fichier "template-interventions-exemples.xlsx"', () => {
@@ -433,7 +432,7 @@ describe('generateInterventionTemplate', () => {
       expect(mockAnchor.download).toBe('template-interventions-exemples.xlsx');
     });
 
-    it('devrait définir l\'URL du blob', () => {
+    it("devrait définir l'URL du blob", () => {
       downloadExampleTemplate();
 
       expect(mockAnchor.href).toBe('blob:mock-url-examples');
@@ -445,7 +444,7 @@ describe('generateInterventionTemplate', () => {
       expect(mockAnchor.click).toHaveBeenCalled();
     });
 
-    it('devrait ajouter puis supprimer l\'élément du DOM', () => {
+    it("devrait ajouter puis supprimer l'élément du DOM", () => {
       const appendSpy = vi.spyOn(document.body, 'appendChild');
       const removeSpy = vi.spyOn(document.body, 'removeChild');
 
@@ -455,7 +454,7 @@ describe('generateInterventionTemplate', () => {
       expect(removeSpy).toHaveBeenCalledWith(mockAnchor);
     });
 
-    it('devrait révoquer l\'URL après téléchargement', () => {
+    it("devrait révoquer l'URL après téléchargement", () => {
       downloadExampleTemplate();
 
       expect(mockRevokeObjectURL).toHaveBeenCalledWith('blob:mock-url-examples');
@@ -465,7 +464,7 @@ describe('generateInterventionTemplate', () => {
       downloadExampleTemplate();
 
       expect(mockCreateObjectURL).toHaveBeenCalled();
-      const blob = mockCreateObjectURL.mock.calls[0][0] as Blob;
+      const blob = (mockCreateObjectURL.mock.calls[0] as unknown[])?.[0] as Blob;
       expect(blob.size).toBeGreaterThan(0);
     });
   });

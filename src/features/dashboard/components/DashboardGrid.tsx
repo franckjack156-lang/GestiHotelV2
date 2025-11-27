@@ -8,22 +8,13 @@
 import { useMemo, useCallback } from 'react';
 import GridLayout, { type Layout } from 'react-grid-layout';
 import { WidgetRenderer } from './WidgetRenderer';
-import type {
-  WidgetConfig,
-  InterventionStats,
-  TimelineData,
-  RoomStats,
-  TechnicianPerformance,
-} from '../types/dashboard.types';
+import type { WidgetConfig, InterventionStats } from '../types/dashboard.types';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
 interface DashboardGridProps {
   widgets: WidgetConfig[];
   interventionStats?: InterventionStats | null;
-  timelineData?: TimelineData[];
-  roomStats?: RoomStats | null;
-  technicianPerformance?: TechnicianPerformance[];
   calculatedStats?: {
     total: number;
     pending: number;
@@ -54,9 +45,6 @@ const WIDGET_SIZE_MAP = {
 export const DashboardGrid = ({
   widgets,
   interventionStats,
-  timelineData,
-  roomStats,
-  technicianPerformance,
   calculatedStats,
   chartData,
   onNavigate,
@@ -172,9 +160,6 @@ export const DashboardGrid = ({
             <WidgetRenderer
               widget={widget}
               interventionStats={interventionStats}
-              timelineData={timelineData}
-              roomStats={roomStats}
-              technicianPerformance={technicianPerformance}
               calculatedStats={calculatedStats}
               chartData={chartData}
               onNavigate={onNavigate}

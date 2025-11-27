@@ -20,13 +20,13 @@ export type WidgetType =
   | 'table'
   | 'calendar'
   | 'list'
-  | 'clock'           // Horloge (analogique ou digitale)
-  | 'quick_links'     // Liens rapides cliquables
-  | 'button_grid'     // Grille de boutons d'action
-  | 'iframe'          // Iframe pour sites web
-  | 'custom_list'     // Liste personnalisée éditable
-  | 'note'            // Note/texte libre
-  | 'weather';        // Météo (si intégration API)
+  | 'clock' // Horloge (analogique ou digitale)
+  | 'quick_links' // Liens rapides cliquables
+  | 'button_grid' // Grille de boutons d'action
+  | 'iframe' // Iframe pour sites web
+  | 'custom_list' // Liste personnalisée éditable
+  | 'note' // Note/texte libre
+  | 'weather'; // Météo (si intégration API)
 
 export type WidgetSize = 'small' | 'medium' | 'large' | 'full';
 
@@ -45,9 +45,15 @@ export type WidgetDataSource =
   | 'upcoming_interventions'
   | 'rooms_status'
   | 'rooms_by_type'
+  | 'rooms_by_status'
   | 'blockages_active'
-  | 'custom'          // Données personnalisées
-  | 'static';         // Widget statique (horloge, liens, etc.)
+  | 'completion_rate'
+  | 'urgent_interventions'
+  | 'avg_response_time'
+  | 'status_distribution'
+  | 'technician_performance'
+  | 'custom' // Données personnalisées
+  | 'static'; // Widget statique (horloge, liens, etc.)
 
 // ============================================================================
 // WIDGET CONFIGURATION

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Tests pour le module reports
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type MockInstance } from 'vitest';
 import { generateErrorReport, downloadErrorReport } from '../reports';
 import type { ImportError } from '../types';
 
@@ -138,9 +139,9 @@ describe('reports', () => {
   });
 
   describe('downloadErrorReport', () => {
-    let createElementSpy: ReturnType<typeof vi.spyOn>;
-    let appendChildSpy: ReturnType<typeof vi.spyOn>;
-    let removeChildSpy: ReturnType<typeof vi.spyOn>;
+    let createElementSpy: MockInstance<any>;
+    let appendChildSpy: MockInstance<any>;
+    let removeChildSpy: MockInstance<any>;
     let mockAnchor: any;
 
     beforeEach(() => {
@@ -158,8 +159,12 @@ describe('reports', () => {
       createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockAnchor as any);
 
       // Mock DOM methods
-      appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockAnchor as any);
-      removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockAnchor as any);
+      appendChildSpy = vi
+        .spyOn(document.body, 'appendChild')
+        .mockImplementation(() => mockAnchor as any);
+      removeChildSpy = vi
+        .spyOn(document.body, 'removeChild')
+        .mockImplementation(() => mockAnchor as any);
     });
 
     afterEach(() => {
@@ -227,7 +232,7 @@ describe('reports', () => {
       expect(removeChildSpy).toHaveBeenCalled();
     });
 
-    it('devrait révoquer l\'URL du Blob après téléchargement', () => {
+    it("devrait révoquer l'URL du Blob après téléchargement", () => {
       const errors: ImportError[] = [{ row: 1, message: 'Erreur test' }];
 
       downloadErrorReport(errors);

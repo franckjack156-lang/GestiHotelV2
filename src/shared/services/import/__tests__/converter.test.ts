@@ -52,7 +52,7 @@ describe('converter', () => {
     it('devrait convertir les champs obligatoires de base', () => {
       const data: InterventionImportRow[] = [
         {
-          titre: 'Fuite d\'eau',
+          titre: "Fuite d'eau",
           statut: 'draft',
           description: 'Fuite importante',
           type: '',
@@ -76,15 +76,10 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result).toHaveLength(1);
-      expect(result[0].title).toBe('Fuite d\'eau');
+      expect(result[0].title).toBe("Fuite d'eau");
       expect(result[0].description).toBe('Fuite importante');
       expect(result[0].status).toBe('draft');
       expect(result[0].establishmentId).toBe(establishmentId);
@@ -117,12 +112,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].status).toBe('in_progress');
     });
@@ -154,12 +144,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].status).toBe('draft'); // "nouveau" normalisé vers "draft"
     });
@@ -195,12 +180,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].isUrgent).toBe(true);
       expect(result[0].priority).toBe('urgent');
@@ -233,12 +213,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].isUrgent).toBe(true);
     });
@@ -270,12 +245,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].priority).toBe('normal');
       expect(result[0].isUrgent).toBe(false);
@@ -285,7 +255,7 @@ describe('converter', () => {
     // TESTS - Parsing de nombres
     // ========================================================================
 
-    it('devrait parser l\'étage en nombre', () => {
+    it("devrait parser l'étage en nombre", () => {
       const data: InterventionImportRow[] = [
         {
           titre: 'Test',
@@ -312,12 +282,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].floor).toBe(3);
       expect(typeof result[0].floor).toBe('number');
@@ -350,12 +315,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].floor).toBeUndefined();
     });
@@ -387,12 +347,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].estimatedDuration).toBe(120);
     });
@@ -424,12 +379,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].estimatedDuration).toBeUndefined();
     });
@@ -465,12 +415,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].tags).toHaveLength(3);
       expect(result[0].tags![0].label).toBe('urgent');
@@ -505,12 +450,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].tags).toHaveLength(2);
     });
@@ -519,7 +459,7 @@ describe('converter', () => {
     // TESTS - Matching utilisateurs (créateur)
     // ========================================================================
 
-    it('devrait utiliser l\'utilisateur courant si aucun créateur spécifié', () => {
+    it("devrait utiliser l'utilisateur courant si aucun créateur spécifié", () => {
       const data: InterventionImportRow[] = [
         {
           titre: 'Test',
@@ -959,12 +899,7 @@ describe('converter', () => {
         },
       ];
 
-      const result = convertToInterventions(
-        data,
-        establishmentId,
-        currentUserId,
-        currentUserName
-      );
+      const result = convertToInterventions(data, establishmentId, currentUserId, currentUserName);
 
       expect(result[0].building).toBe('Tour Sud');
       expect(result[0].type).toBe('electricite');
@@ -980,6 +915,7 @@ describe('converter', () => {
       const data: RoomImportRow[] = [
         {
           numero: '101',
+          nom: 'Chambre 101',
           etage: '1',
           type: 'standard',
           capacite: 2,
@@ -1002,6 +938,7 @@ describe('converter', () => {
       const data: RoomImportRow[] = [
         {
           numero: '101',
+          nom: 'Chambre 101',
           etage: '1',
           type: 'standard',
           capacite: 2,
@@ -1023,6 +960,7 @@ describe('converter', () => {
       const data: RoomImportRow[] = [
         {
           numero: '101',
+          nom: 'Chambre 101',
           etage: 'RDC',
           type: 'standard',
           capacite: 2,
@@ -1041,6 +979,7 @@ describe('converter', () => {
       const data: RoomImportRow[] = [
         {
           numero: '101',
+          nom: 'Chambre 101',
           etage: '1',
           type: 'standard',
           capacite: 2,

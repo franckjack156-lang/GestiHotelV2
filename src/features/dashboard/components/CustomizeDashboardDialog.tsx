@@ -102,7 +102,13 @@ const DATA_SOURCE_LABELS: Record<WidgetDataSource, string> = {
   upcoming_interventions: 'Interventions à venir',
   rooms_status: 'Statut des chambres',
   rooms_by_type: 'Chambres par type',
+  rooms_by_status: 'Chambres par statut',
   blockages_active: 'Blocages actifs',
+  completion_rate: 'Taux de complétion',
+  urgent_interventions: 'Interventions urgentes',
+  avg_response_time: 'Temps de réponse moyen',
+  status_distribution: 'Distribution des statuts',
+  technician_performance: 'Performance techniciens',
   custom: 'Personnalisé',
   static: 'Statique',
 };

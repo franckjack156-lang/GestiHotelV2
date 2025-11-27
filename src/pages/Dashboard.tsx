@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * DASHBOARD PAGE - PERSONNALISABLE
@@ -27,7 +26,6 @@ import { DashboardGrid } from '@/features/dashboard/components/DashboardGrid';
 import { toast } from 'sonner';
 import { logger } from '@/core/utils/logger';
 
-
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -40,9 +38,6 @@ const DashboardPageComponent = () => {
   const {
     preferences,
     interventionStats,
-    timelineData,
-    roomStats,
-    technicianPerformance,
     isLoading: isDashboardLoading,
     updatePreferences,
     updateWidget,
@@ -73,11 +68,11 @@ const DashboardPageComponent = () => {
     if (!interventionStats) return null;
 
     return {
-      evolutionData: timelineData || [],
+      evolutionData: [],
       statusData: [],
       priorityData: [],
     };
-  }, [interventionStats, timelineData]);
+  }, [interventionStats]);
 
   const handleRefresh = () => {
     refreshAll();
@@ -118,12 +113,7 @@ const DashboardPageComponent = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            className="flex-shrink-0"
-          >
+          <Button variant="outline" size="sm" onClick={handleRefresh} className="flex-shrink-0">
             <RefreshCw size={16} className="sm:mr-2" />
             <span className="hidden sm:inline">Actualiser</span>
           </Button>
@@ -139,7 +129,11 @@ const DashboardPageComponent = () => {
           </Button>
 
           {hasFeature('interventionQuickCreate') && (
-            <Button onClick={() => navigate('/app/interventions/create')} className="flex-shrink-0" size="sm">
+            <Button
+              onClick={() => navigate('/app/interventions/create')}
+              className="flex-shrink-0"
+              size="sm"
+            >
               <Plus size={16} className="sm:mr-2" />
               <span className="hidden sm:inline">Nouvelle intervention</span>
             </Button>
@@ -154,11 +148,8 @@ const DashboardPageComponent = () => {
           <DashboardGrid
             widgets={visibleWidgets}
             interventionStats={interventionStats}
-            timelineData={timelineData}
-            roomStats={roomStats}
-            technicianPerformance={technicianPerformance}
-            calculatedStats={calculatedStats}
-            chartData={chartData}
+            calculatedStats={calculatedStats ?? undefined}
+            chartData={chartData ?? undefined}
             onNavigate={navigate}
             onLayoutChange={handleLayoutChange}
             isEditMode={false}
@@ -169,17 +160,12 @@ const DashboardPageComponent = () => {
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             Aucun widget configuré pour le moment
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditMode(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setIsEditMode(true)}>
             <Settings className="w-4 h-4 mr-2" />
             Configurer le dashboard
           </Button>
         </div>
       )}
-
 
       {/* Dialogue de personnalisation */}
       {preferences && (
