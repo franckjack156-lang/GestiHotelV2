@@ -25,8 +25,8 @@ export const usePermissions = () => {
   const hasPermission = (permission: Permission): boolean => {
     if (!user) return false;
 
-    // Super admin a toutes les permissions
-    if (user.role === UserRole.SUPER_ADMIN) return true;
+    // Editor et Super admin ont toutes les permissions
+    if (user.role === UserRole.EDITOR || user.role === UserRole.SUPER_ADMIN) return true;
 
     // Vérifier dans les permissions du rôle
     return userPermissions.includes(permission);
@@ -37,7 +37,7 @@ export const usePermissions = () => {
    */
   const hasAllPermissions = (permissions: Permission[]): boolean => {
     if (!user) return false;
-    if (user.role === UserRole.SUPER_ADMIN) return true;
+    if (user.role === UserRole.EDITOR || user.role === UserRole.SUPER_ADMIN) return true;
 
     return permissions.every(permission => userPermissions.includes(permission));
   };
@@ -47,7 +47,7 @@ export const usePermissions = () => {
    */
   const hasAnyPermission = (permissions: Permission[]): boolean => {
     if (!user) return false;
-    if (user.role === UserRole.SUPER_ADMIN) return true;
+    if (user.role === UserRole.EDITOR || user.role === UserRole.SUPER_ADMIN) return true;
 
     return permissions.some(permission => userPermissions.includes(permission));
   };
@@ -68,17 +68,24 @@ export const usePermissions = () => {
   };
 
   /**
-   * Vérifier si l'utilisateur est admin (super_admin ou admin)
+   * Vérifier si l'utilisateur est admin (editor, super_admin ou admin)
    */
   const isAdmin = (): boolean => {
-    return hasAnyRole([UserRole.SUPER_ADMIN, UserRole.ADMIN]);
+    return hasAnyRole([UserRole.EDITOR, UserRole.SUPER_ADMIN, UserRole.ADMIN]);
   };
 
   /**
-   * Vérifier si l'utilisateur est super admin
+   * Vérifier si l'utilisateur est super admin ou editor
    */
   const isSuperAdmin = (): boolean => {
-    return hasRole(UserRole.SUPER_ADMIN);
+    return hasAnyRole([UserRole.EDITOR, UserRole.SUPER_ADMIN]);
+  };
+
+  /**
+   * Vérifier si l'utilisateur est editor (plus haut privilège)
+   */
+  const isEditor = (): boolean => {
+    return hasRole(UserRole.EDITOR);
   };
 
   /**
@@ -87,8 +94,8 @@ export const usePermissions = () => {
   const canAccessEstablishment = (establishmentId: string): boolean => {
     if (!user) return false;
 
-    // Super admin peut accéder à tous les établissements
-    if (user.role === UserRole.SUPER_ADMIN) return true;
+    // Editor et Super admin peuvent accéder à tous les établissements
+    if (user.role === UserRole.EDITOR || user.role === UserRole.SUPER_ADMIN) return true;
 
     // Vérifier si l'utilisateur a accès à cet établissement
     return user.establishmentIds.includes(establishmentId);
@@ -154,6 +161,7 @@ export const usePermissions = () => {
     hasAnyRole,
     isAdmin,
     isSuperAdmin,
+    isEditor,
 
     // Établissements
     canAccessEstablishment,

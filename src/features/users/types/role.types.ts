@@ -12,6 +12,7 @@
 
 /**
  * Rôles utilisateur dans l'application
+ * - EDITOR: Éditeur - Développeur/propriétaire de l'app, accès total + support externe
  * - SUPER_ADMIN: Super Admin - Accès total, gestion multi-établissements
  * - ADMIN: Admin - Gestion complète d'un établissement
  * - MANAGER: Manager - Gestion quotidienne, création interventions, assignation
@@ -20,6 +21,7 @@
  * - VIEWER: Viewer - Lecture seule
  */
 export enum UserRole {
+  EDITOR = 'editor',
   SUPER_ADMIN = 'super_admin',
   ADMIN = 'admin',
   MANAGER = 'manager',
@@ -32,6 +34,7 @@ export enum UserRole {
  * Labels pour les rôles (affichage UI)
  */
 export const ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.EDITOR]: 'Éditeur',
   [UserRole.SUPER_ADMIN]: 'Super Administrateur',
   [UserRole.ADMIN]: 'Administrateur',
   [UserRole.MANAGER]: 'Manager',
@@ -44,6 +47,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
  * Descriptions des rôles
  */
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  [UserRole.EDITOR]: 'Développeur/propriétaire - Accès total + gestion du support externe',
   [UserRole.SUPER_ADMIN]: 'Accès complet à tous les établissements et toutes les fonctionnalités',
   [UserRole.ADMIN]: "Gestion complète de l'établissement, utilisateurs et paramètres",
   [UserRole.MANAGER]: 'Gestion des interventions, assignations et chambres',
@@ -56,6 +60,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
  * Couleurs pour les badges de rôles
  */
 export const ROLE_COLORS: Record<UserRole, string> = {
+  [UserRole.EDITOR]: 'indigo',
   [UserRole.SUPER_ADMIN]: 'purple',
   [UserRole.ADMIN]: 'red',
   [UserRole.MANAGER]: 'blue',
@@ -154,6 +159,9 @@ export enum Permission {
  * Permissions par rôle
  */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  // EDITOR - Toutes les permissions (comme super admin mais pour le dev)
+  [UserRole.EDITOR]: Object.values(Permission),
+
   // SUPER ADMIN - Toutes les permissions
   [UserRole.SUPER_ADMIN]: Object.values(Permission),
 
@@ -376,23 +384,31 @@ export function getRolePermissions(role: UserRole): Permission[] {
 }
 
 /**
- * Vérifier si un rôle est admin (ADMIN ou SUPER_ADMIN)
+ * Vérifier si un rôle est admin (ADMIN, SUPER_ADMIN ou EDITOR)
  */
 export function isAdminRole(role: UserRole): boolean {
-  return role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN;
+  return role === UserRole.ADMIN || role === UserRole.SUPER_ADMIN || role === UserRole.EDITOR;
 }
 
 /**
- * Vérifier si un rôle est super admin
+ * Vérifier si un rôle est super admin ou editor
  */
 export function isSuperAdminRole(role: UserRole): boolean {
-  return role === UserRole.SUPER_ADMIN;
+  return role === UserRole.SUPER_ADMIN || role === UserRole.EDITOR;
+}
+
+/**
+ * Vérifier si un rôle est editor
+ */
+export function isEditorRole(role: UserRole): boolean {
+  return role === UserRole.EDITOR;
 }
 
 /**
  * Obtenir la hiérarchie des rôles (du plus élevé au plus bas)
  */
 export const ROLE_HIERARCHY: UserRole[] = [
+  UserRole.EDITOR,
   UserRole.SUPER_ADMIN,
   UserRole.ADMIN,
   UserRole.MANAGER,

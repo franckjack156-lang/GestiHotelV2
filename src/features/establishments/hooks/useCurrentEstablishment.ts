@@ -41,7 +41,7 @@ export const useCurrentEstablishment = () => {
    * Vérifier si l'utilisateur a accès à plusieurs établissements
    */
   const hasMultipleEstablishments = (): boolean => {
-    if (user?.role === 'super_admin') {
+    if (user?.role === 'editor' || user?.role === 'super_admin') {
       return true;
     }
 
@@ -65,7 +65,7 @@ export const useCurrentEstablishment = () => {
         throw new Error('Utilisateur non connecté');
       }
 
-      if (user.role !== 'super_admin' && !user.establishmentIds?.includes(establishmentId)) {
+      if (user.role !== 'editor' && user.role !== 'super_admin' && !user.establishmentIds?.includes(establishmentId)) {
         throw new Error("Vous n'avez pas accès à cet établissement");
       }
 

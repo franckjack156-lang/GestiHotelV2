@@ -36,19 +36,26 @@ service cloud.firestore {
     }
 
     /**
-     * Vérifier si l'utilisateur est admin ou super_admin
+     * Vérifier si l'utilisateur est admin, super_admin ou editor
      * Gère le cas où le document utilisateur n'existe pas encore
      */
     function isAdmin() {
-      return isAuthenticated() && userExists() && getUserRole() in ['admin', 'super_admin'];
+      return isAuthenticated() && userExists() && getUserRole() in ['admin', 'super_admin', 'editor'];
     }
 
     /**
-     * Vérifier si l'utilisateur est super_admin
+     * Vérifier si l'utilisateur est super_admin ou editor
      * Gère le cas où le document utilisateur n'existe pas encore
      */
     function isSuperAdmin() {
-      return isAuthenticated() && userExists() && getUserRole() == 'super_admin';
+      return isAuthenticated() && userExists() && getUserRole() in ['super_admin', 'editor'];
+    }
+
+    /**
+     * Vérifier si l'utilisateur est editor (développeur)
+     */
+    function isEditor() {
+      return isAuthenticated() && userExists() && getUserRole() == 'editor';
     }
     
     // ============================================================================
@@ -218,6 +225,60 @@ service cloud.firestore {
         allow read: if isAuthenticated();
         allow create: if isAdmin();
         allow update: if isAuthenticated();
+        allow delete: if isAdmin();
+      }
+
+      // ============================================
+      // INTEGRATIONS - Scheduled Exports
+      // ============================================
+      match /scheduledExports/{exportId} {
+        allow read: if isAuthenticated();
+        allow create: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
+      }
+
+      // ============================================
+      // INTEGRATIONS - Calendar Integrations
+      // ============================================
+      match /calendarIntegrations/{integrationId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated() && (
+          resource.data.userId == request.auth.uid || isAdmin()
+        );
+        allow delete: if isAuthenticated() && (
+          resource.data.userId == request.auth.uid || isAdmin()
+        );
+      }
+
+      // ============================================
+      // INTEGRATIONS - Webhooks
+      // ============================================
+      match /webhooks/{webhookId} {
+        allow read: if isAuthenticated();
+        allow create: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
+      }
+
+      // ============================================
+      // INTEGRATIONS - Report Configs
+      // ============================================
+      match /reportConfigs/{configId} {
+        allow read: if isAuthenticated();
+        allow create: if isAdmin();
+        allow update: if isAdmin();
+        allow delete: if isAdmin();
+      }
+
+      // ============================================
+      // INTEGRATIONS - Generated Reports
+      // ============================================
+      match /generatedReports/{reportId} {
+        allow read: if isAuthenticated();
+        allow create: if isAdmin();
+        allow update: if false; // Les rapports générés ne doivent pas être modifiés
         allow delete: if isAdmin();
       }
     }
@@ -448,6 +509,61 @@ service cloud.firestore {
       allow delete: if isAuthenticated() &&
         isOwner(userId) &&
         resource.data.userId == request.auth.uid;
+    }
+
+    // ============================================================================
+    // SUPPORT REQUESTS COLLECTION
+    // ============================================================================
+
+    match /supportRequests/{requestId} {
+      // Lecture :
+      // - Editor peut tout voir (tous les tickets)
+      // - Super_admin peut voir les tickets internes de son établissement
+      // - Les utilisateurs peuvent voir leurs propres demandes
+      allow read: if isAuthenticated() && (
+        isEditor() ||
+        (isSuperAdmin() && resource.data.destination == 'internal') ||
+        resource.data.userId == request.auth.uid
+      );
+
+      // Création : Tout utilisateur authentifié peut créer une demande de support
+      allow create: if isAuthenticated();
+
+      // Mise à jour :
+      // - Editor peut tout modifier
+      // - Super_admin peut modifier les tickets internes
+      // - L'auteur peut mettre à jour son propre ticket (ex: updatedAt via réponse)
+      allow update: if isAuthenticated() && (
+        isEditor() ||
+        (isSuperAdmin() && resource.data.destination == 'internal') ||
+        resource.data.userId == request.auth.uid
+      );
+
+      // Suppression : Seul l'editor peut supprimer
+      allow delete: if isEditor();
+
+      // Sous-collection des réponses
+      match /responses/{responseId} {
+        // Lecture : L'auteur du ticket, les super admins (internes) ou l'editor
+        allow read: if isAuthenticated() && (
+          isEditor() ||
+          (isSuperAdmin() && get(/databases/$(database)/documents/supportRequests/$(requestId)).data.destination == 'internal') ||
+          get(/databases/$(database)/documents/supportRequests/$(requestId)).data.userId == request.auth.uid
+        );
+
+        // Création : L'auteur du ticket, les super admins (internes) ou l'editor
+        allow create: if isAuthenticated() && (
+          isEditor() ||
+          (isSuperAdmin() && get(/databases/$(database)/documents/supportRequests/$(requestId)).data.destination == 'internal') ||
+          get(/databases/$(database)/documents/supportRequests/$(requestId)).data.userId == request.auth.uid
+        );
+
+        // Mise à jour et suppression : Editor ou super admin (pour internes)
+        allow update, delete: if isAuthenticated() && (
+          isEditor() ||
+          (isSuperAdmin() && get(/databases/$(database)/documents/supportRequests/$(requestId)).data.destination == 'internal')
+        );
+      }
     }
 
     // ============================================================================

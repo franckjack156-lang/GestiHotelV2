@@ -33,6 +33,7 @@ import {
 } from '@/shared/components/ui/card';
 import { toast } from 'sonner';
 import type { User as UserData } from '@/features/users/types/user.types';
+import userService from '@/features/users/services/userService';
 
 // ============================================================================
 // TYPES
@@ -75,17 +76,39 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
     formState: { isDirty },
   } = form;
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: ProfileFormData) => {
+    if (!user?.id) {
+      toast.error('Utilisateur non connecté');
+      return;
+    }
+
     setIsUpdating(true);
     try {
-      // TODO: Implement profile update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await userService.updateUser(user.id, {
+        firstName: data.firstName || undefined,
+        lastName: data.lastName || undefined,
+        phoneNumber: data.phoneNumber || undefined,
+        jobTitle: data.jobTitle || undefined,
+        department: data.department || undefined,
+      });
+
+      // Mettre à jour displayName si changé
+      if (data.displayName && data.displayName !== user.displayName) {
+        await userService.updateUser(user.id, {
+          firstName: data.displayName.split(' ')[0] || data.firstName,
+          lastName: data.displayName.split(' ').slice(1).join(' ') || data.lastName,
+        });
+      }
+
       toast.success('Profil mis à jour avec succès', {
         description: 'Vos informations ont été enregistrées',
       });
-    } catch {
+
+      // Réinitialiser le formulaire avec les nouvelles valeurs
+      form.reset(data);
+    } catch (error) {
       toast.error('Erreur lors de la mise à jour', {
-        description: 'Veuillez réessayer',
+        description: error instanceof Error ? error.message : 'Veuillez réessayer',
       });
     } finally {
       setIsUpdating(false);
@@ -179,7 +202,7 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
                   id="lastName"
                   {...register('lastName')}
                   placeholder="Votre nom"
-                  className="transition-all duration-200 focus:ring-2 focus:ring-2 focus:ring-blue-500/20"
+                  className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                 />
               </div>
             </div>

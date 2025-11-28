@@ -154,8 +154,9 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         // Notifier le parent
         onPhotoChange(result.url);
         toast.success('Photo de profil mise à jour');
-      } catch (error: any) {
-        toast.error(error.message || "Erreur lors de l'upload");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Erreur lors de l'upload";
+        toast.error(message);
         setPreviewURL(null);
       } finally {
         setIsUploading(false);

@@ -7,6 +7,7 @@ import { ThemeProvider } from '@/shared/contexts/ThemeContext';
 import { initSentry } from '@/core/config/sentry';
 import { initGA4 } from '@/core/config/analytics';
 import { initPerformanceMonitoring } from '@/core/utils/performanceMonitoring';
+import { Toaster } from 'sonner';
 import '@/styles/globals.css';
 import '@/shared/i18n/config'; // Initialiser i18n
 
@@ -26,6 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ErrorBoundary>
         <AuthProvider>
           <App />
+          <Toaster richColors position="top-right" />
         </AuthProvider>
       </ErrorBoundary>
     </ThemeProvider>

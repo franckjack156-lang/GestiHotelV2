@@ -1,9 +1,10 @@
 /**
  * PriorityPlanningStep Component
  *
- * Étape 3 : Priorité et planification
+ * Étape 3 : Priorité et planification avec support de la récurrence
  */
 
+import { useState } from 'react';
 import { Label } from '@/shared/components/ui/label';
 import { Input } from '@/shared/components/ui/input';
 import {
@@ -17,11 +18,14 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Calendar } from '@/shared/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Button } from '@/shared/components/ui/button';
-import { Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, AlertCircle, Repeat, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { InterventionPriority, PRIORITY_LABELS } from '@/shared/types/status.types';
 import type { WizardData } from '@/features/interventions/hooks/useInterventionWizard';
+import type { RecurrenceConfig } from '@/features/interventions/types/intervention.types';
+import { RecurrenceDialog } from '../../RecurrenceDialog';
+import { formatRecurrenceDescription } from '@/features/interventions/utils/recurrence.utils';
 
 interface PriorityPlanningStepProps {
   data: WizardData;
@@ -29,8 +33,31 @@ interface PriorityPlanningStepProps {
 }
 
 export const PriorityPlanningStep = ({ data, onUpdate }: PriorityPlanningStepProps) => {
-  const handleChange = (field: keyof WizardData, value: any) => {
+  const [showRecurrenceDialog, setShowRecurrenceDialog] = useState(false);
+
+  const handleChange = (field: keyof WizardData, value: unknown) => {
     onUpdate({ [field]: value });
+  };
+
+  const handleRecurrenceSave = (config: RecurrenceConfig | null) => {
+    if (config) {
+      onUpdate({
+        isRecurring: true,
+        recurrenceConfig: config,
+      });
+    } else {
+      onUpdate({
+        isRecurring: false,
+        recurrenceConfig: null,
+      });
+    }
+  };
+
+  const handleRemoveRecurrence = () => {
+    onUpdate({
+      isRecurring: false,
+      recurrenceConfig: null,
+    });
   };
 
   return (
@@ -187,6 +214,61 @@ export const PriorityPlanningStep = ({ data, onUpdate }: PriorityPlanningStepPro
         )}
       </div>
 
+      {/* Récurrence */}
+      <div className="space-y-2">
+        <Label>Récurrence (optionnel)</Label>
+        {data.isRecurring && data.recurrenceConfig ? (
+          <div className="p-4 border border-indigo-200 dark:border-indigo-800 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Repeat className="h-5 w-5 text-indigo-600 dark:text-indigo-400 mt-0.5" />
+                <div>
+                  <p className="font-medium text-indigo-900 dark:text-indigo-300">
+                    Intervention récurrente
+                  </p>
+                  <p className="text-sm text-indigo-700 dark:text-indigo-400 mt-1">
+                    {formatRecurrenceDescription(data.recurrenceConfig)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowRecurrenceDialog(true)}
+                  className="text-indigo-600 dark:text-indigo-400"
+                >
+                  Modifier
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleRemoveRecurrence}
+                  className="text-gray-500 hover:text-red-500"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => setShowRecurrenceDialog(true)}
+            className="w-full justify-start"
+            disabled={!data.scheduledAt}
+          >
+            <Repeat className="mr-2 h-4 w-4" />
+            Configurer une récurrence
+          </Button>
+        )}
+        {!data.scheduledAt && (
+          <p className="text-xs text-gray-500">
+            Veuillez d'abord sélectionner une date de début pour configurer la récurrence
+          </p>
+        )}
+      </div>
+
       {/* Durée estimée */}
       <div className="space-y-2">
         <Label htmlFor="estimatedDuration">Durée estimée (optionnel)</Label>
@@ -240,6 +322,13 @@ export const PriorityPlanningStep = ({ data, onUpdate }: PriorityPlanningStepPro
                 {format(data.scheduledAt, "dd MMMM yyyy 'à' HH:mm", { locale: fr })}
               </p>
             )}
+            {data.isRecurring && data.recurrenceConfig && (
+              <p className="flex items-center gap-1">
+                <Repeat className="h-3 w-3" />
+                <span className="font-medium">Récurrence:</span>{' '}
+                {formatRecurrenceDescription(data.recurrenceConfig)}
+              </p>
+            )}
             {data.estimatedDuration && (
               <p>
                 <span className="font-medium">Durée estimée:</span>{' '}
@@ -272,6 +361,14 @@ export const PriorityPlanningStep = ({ data, onUpdate }: PriorityPlanningStepPro
           </li>
         </ul>
       </div>
+
+      {/* Dialog de récurrence */}
+      <RecurrenceDialog
+        open={showRecurrenceDialog}
+        onOpenChange={setShowRecurrenceDialog}
+        onSave={handleRecurrenceSave}
+        initialConfig={data.recurrenceConfig}
+      />
     </div>
   );
 };

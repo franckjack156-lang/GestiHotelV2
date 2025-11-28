@@ -89,8 +89,8 @@ export const useAuthStore = create<AuthState>()(
           const { user } = get();
           if (!user) return false;
 
-          // Super admin a toutes les permissions
-          if (user.role === 'super_admin') return true;
+          // Editor et Super admin ont toutes les permissions
+          if (user.role === 'editor' || user.role === 'super_admin') return true;
 
           // Récupérer les permissions du rôle de l'utilisateur
           const rolePermissions = ROLE_PERMISSIONS[user.role as UserRole];
@@ -105,8 +105,8 @@ export const useAuthStore = create<AuthState>()(
           const { user } = get();
           if (!user) return false;
 
-          // Super admin peut accéder à tous les établissements
-          if (user.role === 'super_admin') return true;
+          // Editor et Super admin peuvent accéder à tous les établissements
+          if (user.role === 'editor' || user.role === 'super_admin') return true;
 
           // Vérifier si l'utilisateur a accès à cet établissement
           return user.establishmentIds.includes(establishmentId);

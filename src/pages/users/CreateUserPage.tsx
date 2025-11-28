@@ -2,8 +2,6 @@
  * CreateUserPage - Création utilisateur
  */
 
-// TODO: React imported but unused
-// import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -12,6 +10,7 @@ import { useUserActions } from '@/features/users/hooks/useUsers';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import type { CreateUserData, UpdateUserData } from '@/features/users/types/user.types';
 
 export const CreateUserPage = () => {
   const navigate = useNavigate();
@@ -21,8 +20,14 @@ export const CreateUserPage = () => {
   /**
    * Gérer la soumission
    */
-  const handleSubmit = async (data: any) => {
-    const userId = await createUser(data);
+  const handleSubmit = async (data: CreateUserData | UpdateUserData) => {
+    // En mode création, les champs email et password sont obligatoires
+    if (!('email' in data) || !('password' in data)) {
+      toast.error('Email et mot de passe requis');
+      return;
+    }
+
+    const userId = await createUser(data as CreateUserData);
 
     if (userId) {
       toast.success('Utilisateur créé avec succès');

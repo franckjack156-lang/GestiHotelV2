@@ -25,6 +25,7 @@ import {
   Search,
   X,
   Filter,
+  Repeat,
 } from 'lucide-react';
 import {
   DndContext,
@@ -154,7 +155,12 @@ const DraggableIntervention = ({ intervention, onClick }: DraggableInterventionP
 
           {/* Contenu compact */}
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-medium truncate leading-tight">{intervention.title}</div>
+            <div className="flex items-center gap-1 text-xs font-medium truncate leading-tight">
+              {intervention.isRecurring && (
+                <Repeat size={10} className="flex-shrink-0 opacity-80" />
+              )}
+              <span className="truncate">{intervention.title}</span>
+            </div>
             <div className="flex items-center gap-1.5 mt-0.5 text-[10px] opacity-90">
               {intervention.scheduledAt && (
                 <span>{format(intervention.scheduledAt.toDate(), 'HH:mm', { locale: fr })}</span>
@@ -226,6 +232,13 @@ const DraggableIntervention = ({ intervention, onClick }: DraggableInterventionP
                 <span className="capitalize">Statut: {intervention.status}</span>
               </div>
             )}
+
+            {intervention.isRecurring && (
+              <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                <Repeat size={12} />
+                <span>Intervention récurrente</span>
+              </div>
+            )}
           </div>
         </div>
       </TooltipContent>
@@ -264,9 +277,12 @@ const DroppableMonthDay = ({ day, interventions, onInterventionClick }: Droppabl
           <div
             key={intervention.id}
             onClick={() => onInterventionClick(intervention.id)}
-            className="text-xs p-1 bg-indigo-100 dark:bg-indigo-900 rounded cursor-pointer hover:bg-indigo-200 dark:hover:bg-indigo-800 truncate"
+            className="text-xs p-1 bg-indigo-100 dark:bg-indigo-900 rounded cursor-pointer hover:bg-indigo-200 dark:hover:bg-indigo-800 truncate flex items-center gap-1"
           >
-            {intervention.title}
+            {intervention.isRecurring && (
+              <Repeat size={10} className="flex-shrink-0 text-indigo-600 dark:text-indigo-400" />
+            )}
+            <span className="truncate">{intervention.title}</span>
           </div>
         ))}
         {interventions.length > 3 && (
@@ -1141,6 +1157,12 @@ export const PlanningPage = () => {
                   {activeIntervention.scheduledAt &&
                     format(activeIntervention.scheduledAt.toDate(), 'HH:mm', { locale: fr })}
                 </span>
+                {activeIntervention.isRecurring && (
+                  <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                    <Repeat size={10} />
+                    Récurrente
+                  </Badge>
+                )}
               </div>
               <h4 className="font-medium">{activeIntervention.title}</h4>
             </div>

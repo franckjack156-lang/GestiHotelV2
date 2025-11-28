@@ -196,7 +196,7 @@ export const UsersManagementSection = () => {
                           <span className="truncate">
                             {user.firstName} {user.lastName}
                           </span>
-                          {user.role === 'super_admin' && (
+                          {(user.role === 'editor' || user.role === 'super_admin') && (
                             <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 flex-shrink-0" />
                           )}
                         </div>
@@ -212,9 +212,11 @@ export const UsersManagementSection = () => {
                           'px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-full whitespace-nowrap',
                           user.role === 'admin' &&
                             'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300',
+                          user.role === 'editor' &&
+                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300',
                           user.role === 'super_admin' &&
                             'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
-                          !['admin', 'super_admin'].includes(user.role) &&
+                          !['admin', 'super_admin', 'editor'].includes(user.role) &&
                             'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
                         )}
                       >

@@ -81,10 +81,10 @@ const InterventionCardComponent = ({
 
   // Permissions - memoized
   const canEdit = useMemo(
-    () => user?.role === 'admin' || user?.id === createdBy,
+    () => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin' || user?.id === createdBy,
     [user?.role, user?.id, createdBy]
   );
-  const canDelete = useMemo(() => user?.role === 'admin', [user?.role]);
+  const canDelete = useMemo(() => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin', [user?.role]);
   const isAssigned = useMemo(() => user?.id === assignedTo, [user?.id, assignedTo]);
 
   // Formater la date - memoized

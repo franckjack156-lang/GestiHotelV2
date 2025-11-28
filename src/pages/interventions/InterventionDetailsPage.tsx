@@ -98,14 +98,14 @@ export const InterventionDetailsPage = () => {
   // PERMISSIONS
   // ============================================================================
   const canEdit =
-    user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
-  const canDelete = user?.role === 'admin' || user?.role === 'super_admin';
+    user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
+  const canDelete = user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
   const canStart =
     intervention.status === 'pending' && (user?.id === intervention.assignedTo || canEdit);
   const canComplete =
     intervention.status === 'in_progress' && (user?.id === intervention.assignedTo || canEdit);
   const canValidate =
-    intervention.status === 'completed' && (user?.role === 'admin' || user?.role === 'super_admin');
+    intervention.status === 'completed' && (user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin');
 
   // ============================================================================
   // ACTIONS

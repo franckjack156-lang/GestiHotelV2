@@ -41,8 +41,8 @@ export const MigrationToolsPage = () => {
   const [isPreviewing, setIsPreviewing] = useState(false);
   const [migrationResult, setMigrationResult] = useState<any>(null);
 
-  // Guard: Super Admin only
-  const isSuperAdmin = hasRole('super_admin');
+  // Guard: Editor and Super Admin only
+  const isSuperAdmin = hasRole('editor') || hasRole('super_admin');
 
   const handlePreview = async () => {
     setIsPreviewing(true);

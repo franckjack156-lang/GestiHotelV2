@@ -21,6 +21,15 @@ import {
   updateIntervention,
   deleteIntervention,
 } from '@/features/interventions/services/interventionService';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '@/core/config/firebase';
 import { toast } from 'sonner';
 import { logger } from '@/core/utils/logger';
 
@@ -155,8 +164,64 @@ export class OfflineSyncManager {
    * Synchroniser une chambre
    */
   private async syncRoom(sync: PendingSync): Promise<void> {
-    // TODO: Implémenter la synchronisation des chambres
-    logger.debug('Sync room:', sync);
+    const { operation, data, documentId } = sync;
+    const ROOMS_COLLECTION = 'rooms';
+
+    switch (operation) {
+      case 'create': {
+        // Préparer les données pour la création
+        const roomData: Record<string, unknown> = {
+          ...data,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        };
+
+        // Supprimer les champs undefined
+        Object.keys(roomData).forEach(key => {
+          if (roomData[key] === undefined) {
+            delete roomData[key];
+          }
+        });
+
+        await addDoc(collection(db, ROOMS_COLLECTION), roomData);
+        logger.info('Room created via offline sync', { documentId });
+        break;
+      }
+
+      case 'update': {
+        const roomRef = doc(db, ROOMS_COLLECTION, documentId);
+
+        // Préparer les données pour la mise à jour
+        const updateData: Record<string, unknown> = {
+          ...data,
+          updatedAt: serverTimestamp(),
+        };
+
+        // Supprimer les champs undefined et les champs système
+        delete updateData.establishmentId;
+        delete updateData.createdAt;
+        delete updateData.createdBy;
+        Object.keys(updateData).forEach(key => {
+          if (updateData[key] === undefined) {
+            delete updateData[key];
+          }
+        });
+
+        await updateDoc(roomRef, updateData);
+        logger.info('Room updated via offline sync', { documentId });
+        break;
+      }
+
+      case 'delete': {
+        const roomRef = doc(db, ROOMS_COLLECTION, documentId);
+        await deleteDoc(roomRef);
+        logger.info('Room deleted via offline sync', { documentId });
+        break;
+      }
+
+      default:
+        throw new Error(`Unknown operation for rooms: ${operation}`);
+    }
   }
 
   /**

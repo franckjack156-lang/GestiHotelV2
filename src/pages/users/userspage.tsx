@@ -2,12 +2,11 @@
  * UsersPage - Liste des utilisateurs
  */
 
-// TODO: React imported but unused
-// import React, { useState } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/shared/components/ui/button';
 import { useUsers, useUserActions } from '@/features/users/hooks/useUsers';
+import type { User } from '@/features/users/types/user.types';
 
 // Composants
 import {
@@ -37,7 +36,7 @@ export const UsersPage = () => {
 
   const { deleteUser, toggleActive, isDeleting } = useUserActions();
 
-  const [userToDelete, setUserToDelete] = useState<any>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   /**
    * Gérer la suppression
@@ -57,7 +56,7 @@ export const UsersPage = () => {
   /**
    * Gérer toggle active
    */
-  const handleToggleActive = async (user: any) => {
+  const handleToggleActive = async (user: User) => {
     const success = await toggleActive(user.id, !user.isActive);
     if (success) {
       toast.success(user.isActive ? 'Utilisateur désactivé' : 'Utilisateur activé');

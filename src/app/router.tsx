@@ -113,9 +113,15 @@ const EstablishmentSettingsPage = lazy(() =>
 const MigrationToolsPage = lazy(() =>
   import('@/pages/settings/MigrationToolsPage').then(m => ({ default: m.MigrationToolsPage }))
 );
+const IntegrationsPage = lazy(() =>
+  import('@/pages/settings/IntegrationsPage').then(m => ({ default: m.IntegrationsPage }))
+);
 
 const DiagnosticPage = lazy(() =>
   import('@/pages/DiagnosticPage').then(m => ({ default: m.DiagnosticPage }))
+);
+const DocumentationPage = lazy(() =>
+  import('@/pages/DocumentationPage').then(m => ({ default: m.DocumentationPage }))
 );
 const NotFoundPage = lazy(() =>
   import('@/pages/NotFound').then(m => ({ default: m.NotFoundPage }))
@@ -330,6 +336,10 @@ export const router = createBrowserRouter([
         path: 'settings/migration',
         element: withSuspense(MigrationToolsPage),
       },
+      {
+        path: 'settings/integrations',
+        element: withSuspense(IntegrationsPage),
+      },
 
       // ----------------------------------------------------------------------------
       // 🔍 DIAGNOSTIC
@@ -345,6 +355,14 @@ export const router = createBrowserRouter([
       {
         path: 'trash',
         element: <TrashPage />,
+      },
+
+      // ----------------------------------------------------------------------------
+      // 📚 DOCUMENTATION
+      // ----------------------------------------------------------------------------
+      {
+        path: 'documentation',
+        element: withSuspense(DocumentationPage),
       },
     ],
   },

@@ -2,16 +2,20 @@
  * InterventionWizard Component
  *
  * Formulaire multi-étapes pour créer une intervention
+ * Supporte les interventions récurrentes
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, Loader2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2, X, Repeat } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
 import { useInterventionWizard } from '@/features/interventions/hooks/useInterventionWizard';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
+import { useAuthStore } from '@/features/auth/stores/authStore';
+import { createRecurringInterventions } from '@/features/interventions/services/recurrenceService';
+import { toast } from 'sonner';
 
 // Import des étapes
 import { BasicInfoStep } from './steps/BasicInfoStep';
@@ -30,6 +34,7 @@ interface InterventionWizardProps {
 export const InterventionWizard = ({ onCancel, onSuccess }: InterventionWizardProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuthStore();
 
   const {
     currentStep,
@@ -51,6 +56,8 @@ export const InterventionWizard = ({ onCancel, onSuccess }: InterventionWizardPr
   } = useInterventionWizard();
 
   const { createIntervention, actionError } = useInterventionActions();
+  const establishmentId = user?.currentEstablishmentId || user?.establishmentIds?.[0];
+  const userId = user?.id || '';
 
   /**
    * Gérer le passage à l'étape suivante
@@ -82,15 +89,41 @@ export const InterventionWizard = ({ onCancel, onSuccess }: InterventionWizardPr
 
     try {
       const data = getInterventionData();
-      const interventionId = await createIntervention(data);
 
-      if (interventionId) {
+      // Vérifier si c'est une intervention récurrente
+      if (wizardData.isRecurring && wizardData.recurrenceConfig && wizardData.scheduledAt) {
+        if (!establishmentId || !userId) {
+          toast.error('Utilisateur ou établissement non défini');
+          return;
+        }
+
+        // Créer les interventions récurrentes
+        const result = await createRecurringInterventions(
+          establishmentId,
+          userId,
+          data,
+          wizardData.recurrenceConfig,
+          wizardData.scheduledAt
+        );
+
+        toast.success(`${result.count} interventions récurrentes créées`);
         resetWizard();
-        onSuccess?.(interventionId);
-        navigate(`/interventions/${interventionId}`);
+        onSuccess?.(result.interventionIds[0]);
+        navigate('/app/planning');
+      } else {
+        // Créer une intervention simple
+        const interventionId = await createIntervention(data);
+
+        if (interventionId) {
+          toast.success('Intervention créée avec succès');
+          resetWizard();
+          onSuccess?.(interventionId);
+          navigate(`/app/interventions/${interventionId}`);
+        }
       }
     } catch (error) {
       logger.error('Erreur lors de la création:', error);
+      toast.error('Erreur lors de la création de l\'intervention');
     } finally {
       setIsSubmitting(false);
     }
@@ -244,8 +277,19 @@ export const InterventionWizard = ({ onCancel, onSuccess }: InterventionWizardPr
           </Button>
         ) : (
           <Button onClick={handleSubmit} disabled={!canGoNext || isSubmitting}>
-            {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            {isSubmitting ? 'Création...' : "Créer l'intervention"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Création...
+              </>
+            ) : wizardData.isRecurring ? (
+              <>
+                <Repeat className="h-4 w-4 mr-2" />
+                Créer les interventions récurrentes
+              </>
+            ) : (
+              "Créer l'intervention"
+            )}
           </Button>
         )}
       </div>

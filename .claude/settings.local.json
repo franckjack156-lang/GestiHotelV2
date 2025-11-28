@@ -96,7 +96,9 @@
       "Bash(xargs ls:*)",
       "Bash(npm run type-check:*)",
       "Bash(npm run lint)",
-      "Bash(timeout 60 npx tsc:*)"
+      "Bash(timeout 60 npx tsc:*)",
+      "Bash(dir:*)",
+      "Bash(timeout 90 npx tsc:*)"
     ],
     "deny": [],
     "ask": []

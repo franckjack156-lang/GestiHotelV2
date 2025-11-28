@@ -327,7 +327,7 @@ export const createIntervention = async (
         const usersQuery = query(
           collection(db, 'users'),
           where('establishmentIds', 'array-contains', establishmentId),
-          where('role', 'in', ['admin', 'super_admin'])
+          where('role', 'in', ['admin', 'super_admin', 'editor'])
         );
         const usersSnapshot = await getDocs(usersQuery);
         const adminIds = usersSnapshot.docs.map(doc => doc.id);

@@ -10,7 +10,8 @@
     "notifications": "Notifications",
     "messaging": "Messaging",
     "trash": "Trash",
-    "settings": "Settings"
+    "settings": "Settings",
+    "adminSupport": "Support Tickets"
   },
   "header": {
     "search": "Search...",

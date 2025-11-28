@@ -120,12 +120,20 @@ export const EstablishmentFeaturesPage = () => {
       description: 'Suivi du temps, facturation et rapports financiers',
     },
     analytics: {
-      label: 'Analytique',
-      description: 'Tableaux de bord, rapports et statistiques',
+      label: 'Analytique et Dashboard',
+      description: 'Tableaux de bord, widgets personnalisables et statistiques',
     },
     rooms: {
       label: 'Chambres',
       description: 'Gestion des chambres et espaces',
+    },
+    users: {
+      label: 'Utilisateurs',
+      description: 'Gestion des utilisateurs et des rôles',
+    },
+    system: {
+      label: 'Système',
+      description: 'Fonctionnalités système et utilitaires',
     },
     integrations: {
       label: 'Intégrations',

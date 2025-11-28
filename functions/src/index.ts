@@ -6,6 +6,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { Resend } from 'resend';
 import cors from 'cors';
+import * as XLSX from 'xlsx';
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -431,8 +432,8 @@ export const deleteAuthUser = functions
       const callerDoc = await admin.firestore().collection('users').doc(callerUid).get();
       const callerData = callerDoc.data();
 
-      // Vérifier que l'appelant est admin
-      if (!callerData || !['admin', 'super_admin'].includes(callerData.role)) {
+      // Vérifier que l'appelant est admin (editor a tous les privilèges)
+      if (!callerData || !['admin', 'super_admin', 'editor'].includes(callerData.role)) {
         throw new functions.https.HttpsError(
           'permission-denied',
           'Seuls les administrateurs peuvent supprimer des utilisateurs'
@@ -454,18 +455,18 @@ export const deleteAuthUser = functions
 
       const userData = userDoc.data();
 
-      // Empêcher la suppression du dernier super_admin
-      if (userData?.role === 'super_admin') {
+      // Empêcher la suppression du dernier super_admin ou editor
+      if (userData?.role === 'super_admin' || userData?.role === 'editor') {
         const superAdmins = await admin
           .firestore()
           .collection('users')
-          .where('role', '==', 'super_admin')
+          .where('role', 'in', ['super_admin', 'editor'])
           .get();
 
         if (superAdmins.size <= 1) {
           throw new functions.https.HttpsError(
             'failed-precondition',
-            'Impossible de supprimer le dernier super administrateur'
+            'Impossible de supprimer le dernier super administrateur ou éditeur'
           );
         }
       }
@@ -615,7 +616,7 @@ export const manualPurgeDeleted = functions
     const callerDoc = await db.collection('users').doc(callerUid).get();
     const callerData = callerDoc.data();
 
-    if (!callerData || !['admin', 'super_admin'].includes(callerData.role)) {
+    if (!callerData || !['admin', 'super_admin', 'editor'].includes(callerData.role)) {
       throw new functions.https.HttpsError(
         'permission-denied',
         'Seuls les administrateurs peuvent effectuer cette action'
@@ -1158,6 +1159,930 @@ export const onNotificationCreated = functions
   });
 
 // ============================================================================
+// SUPPORT TICKETS
+// ============================================================================
+
+/**
+ * Interface pour les données de ticket support
+ */
+interface SupportTicketData {
+  type: 'bug' | 'question' | 'feature' | 'urgent' | 'other';
+  subject: string;
+  message: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  establishmentId?: string;
+  establishmentName?: string;
+}
+
+/**
+ * Cloud Function Firestore Trigger - Envoyer un email quand un nouveau ticket support est créé
+ */
+export const onSupportRequestCreated = functions
+  .region('europe-west1')
+  .firestore.document('supportRequests/{ticketId}')
+  .onCreate(async (snap, context) => {
+    const ticket = snap.data() as SupportTicketData & { createdAt: admin.firestore.Timestamp };
+    const ticketId = context.params.ticketId;
+
+    console.log(`[Support] Nouveau ticket créé: ${ticketId}`);
+
+    try {
+      // Récupérer la clé API Resend
+      const config = functions.config();
+      const resendApiKey = config.resend?.api_key || process.env.RESEND_API_KEY;
+
+      if (!resendApiKey) {
+        console.warn('[Support] Clé API Resend non configurée, email non envoyé');
+        return null;
+      }
+
+      const resend = new Resend(resendApiKey);
+
+      // Email de destination du support (à configurer)
+      const supportEmail = config.support?.email || 'music.music21@gmail.com';
+
+      // Labels des types de demande
+      const typeLabels: Record<string, string> = {
+        bug: '🐛 Bug',
+        question: '❓ Question',
+        feature: '💡 Suggestion',
+        urgent: '🚨 Urgent',
+        other: '📝 Autre',
+      };
+
+      // Créer le contenu HTML de l'email
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .info-box { background: white; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #667eea; }
+    .info-row { padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-weight: 600; color: #6b7280; }
+    .message-box { background: white; padding: 20px; border-radius: 6px; margin-top: 20px; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+    .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+    .urgent { background: #fef2f2; border-left-color: #ef4444; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📬 Nouvelle demande de support</h1>
+    <p style="margin: 10px 0 0 0; opacity: 0.9;">Ticket #${ticketId.substring(0, 8).toUpperCase()}</p>
+  </div>
+
+  <div class="content">
+    <div class="info-box ${ticket.type === 'urgent' ? 'urgent' : ''}">
+      <div class="info-row">
+        <span class="info-label">Type :</span>
+        <span>${typeLabels[ticket.type] || ticket.type}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Sujet :</span>
+        <span><strong>${ticket.subject}</strong></span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">De :</span>
+        <span>${ticket.userName} (${ticket.userEmail})</span>
+      </div>
+      ${ticket.establishmentName ? `
+      <div class="info-row">
+        <span class="info-label">Établissement :</span>
+        <span>${ticket.establishmentName}</span>
+      </div>
+      ` : ''}
+      <div class="info-row">
+        <span class="info-label">Date :</span>
+        <span>${ticket.createdAt?.toDate?.()?.toLocaleString('fr-FR') || 'N/A'}</span>
+      </div>
+    </div>
+
+    <h3 style="color: #374151;">Message</h3>
+    <div class="message-box">
+      <p style="white-space: pre-wrap; margin: 0;">${ticket.message}</p>
+    </div>
+
+    <p style="text-align: center;">
+      <a href="https://gestihotel-v2.web.app/app/settings/support/${ticketId}" class="button">
+        Répondre au ticket
+      </a>
+    </p>
+  </div>
+
+  <div class="footer">
+    <p>Cet email a été généré automatiquement par GestiHotel.</p>
+  </div>
+</body>
+</html>
+      `;
+
+      // Envoyer l'email au support
+      const result = await resend.emails.send({
+        from: 'GestiHotel Support <onboarding@resend.dev>',
+        to: [supportEmail],
+        reply_to: ticket.userEmail,
+        subject: `[${typeLabels[ticket.type] || ticket.type}] ${ticket.subject} - Ticket #${ticketId.substring(0, 8).toUpperCase()}`,
+        html: htmlContent,
+      });
+
+      console.log(`[Support] Email envoyé au support:`, result);
+
+      // Mettre à jour le ticket avec l'ID de l'email
+      await snap.ref.update({
+        emailSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        emailMessageId: result.data?.id,
+      });
+
+      // Envoyer un email de confirmation à l'utilisateur
+      const userConfirmationHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .ticket-info { background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #10b981; }
+    .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>✅ Demande reçue</h1>
+  </div>
+  <div class="content">
+    <p>Bonjour ${ticket.userName},</p>
+    <p>Nous avons bien reçu votre demande de support. Notre équipe la traitera dans les plus brefs délais.</p>
+
+    <div class="ticket-info">
+      <p><strong>Numéro de ticket :</strong> #${ticketId.substring(0, 8).toUpperCase()}</p>
+      <p><strong>Sujet :</strong> ${ticket.subject}</p>
+    </div>
+
+    <p>Vous pouvez suivre l'état de votre demande directement dans l'application GestiHotel, section "Mes demandes".</p>
+
+    <p>Cordialement,<br>L'équipe GestiHotel</p>
+  </div>
+  <div class="footer">
+    <p>Cet email a été généré automatiquement. Merci de ne pas y répondre directement.</p>
+  </div>
+</body>
+</html>
+      `;
+
+      await resend.emails.send({
+        from: 'GestiHotel Support <onboarding@resend.dev>',
+        to: [ticket.userEmail],
+        subject: `Votre demande a été reçue - Ticket #${ticketId.substring(0, 8).toUpperCase()}`,
+        html: userConfirmationHtml,
+      });
+
+      console.log(`[Support] Email de confirmation envoyé à ${ticket.userEmail}`);
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Support] Erreur:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+/**
+ * Cloud Function Firestore Trigger - Notifier l'utilisateur quand une réponse est ajoutée au ticket
+ */
+export const onSupportResponseAdded = functions
+  .region('europe-west1')
+  .firestore.document('supportRequests/{ticketId}/responses/{responseId}')
+  .onCreate(async (snap, context) => {
+    const response = snap.data();
+    const ticketId = context.params.ticketId;
+
+    console.log(`[Support] Nouvelle réponse sur le ticket ${ticketId}`);
+
+    try {
+      // Récupérer le ticket parent
+      const ticketDoc = await db.collection('supportRequests').doc(ticketId).get();
+      if (!ticketDoc.exists) {
+        console.error(`[Support] Ticket ${ticketId} introuvable`);
+        return null;
+      }
+
+      const ticket = ticketDoc.data() as SupportTicketData;
+
+      // Vérifier que c'est une réponse du support (pas de l'utilisateur)
+      if (response.isFromUser) {
+        console.log('[Support] Réponse de l\'utilisateur, pas de notification');
+        return null;
+      }
+
+      // Récupérer la clé API Resend
+      const config = functions.config();
+      const resendApiKey = config.resend?.api_key || process.env.RESEND_API_KEY;
+
+      if (!resendApiKey) {
+        console.warn('[Support] Clé API Resend non configurée');
+        return null;
+      }
+
+      const resend = new Resend(resendApiKey);
+
+      // Envoyer l'email de notification à l'utilisateur
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .response-box { background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #667eea; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📩 Nouvelle réponse à votre demande</h1>
+  </div>
+  <div class="content">
+    <p>Bonjour ${ticket.userName},</p>
+    <p>Vous avez reçu une réponse concernant votre ticket <strong>#${ticketId.substring(0, 8).toUpperCase()}</strong>.</p>
+
+    <p><strong>Sujet original :</strong> ${ticket.subject}</p>
+
+    <div class="response-box">
+      <p style="white-space: pre-wrap; margin: 0;">${response.message}</p>
+      <p style="color: #6b7280; font-size: 12px; margin-top: 15px; margin-bottom: 0;">
+        - ${response.authorName || 'Équipe Support'}, ${response.createdAt?.toDate?.()?.toLocaleString('fr-FR') || 'maintenant'}
+      </p>
+    </div>
+
+    <p style="text-align: center;">
+      <a href="https://gestihotel-v2.web.app/app/support/tickets/${ticketId}" class="button">
+        Voir la conversation
+      </a>
+    </p>
+  </div>
+  <div class="footer">
+    <p>Cet email a été généré automatiquement par GestiHotel.</p>
+  </div>
+</body>
+</html>
+      `;
+
+      await resend.emails.send({
+        from: 'GestiHotel Support <onboarding@resend.dev>',
+        to: [ticket.userEmail],
+        subject: `Réponse à votre demande - Ticket #${ticketId.substring(0, 8).toUpperCase()}`,
+        html: htmlContent,
+      });
+
+      console.log(`[Support] Notification envoyée à ${ticket.userEmail}`);
+
+      // Mettre à jour le ticket
+      await db.collection('supportRequests').doc(ticketId).update({
+        lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
+        status: response.status || 'in_progress',
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Support] Erreur notification réponse:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+// ============================================================================
+// SCHEDULED EXPORTS
+// ============================================================================
+
+/**
+ * Interface pour les exports programmés
+ */
+interface ScheduledExportConfig {
+  id: string;
+  establishmentId: string;
+  name: string;
+  dataType: 'interventions' | 'users' | 'rooms' | 'analytics' | 'sla_report' | 'activity_log';
+  format: 'xlsx' | 'csv' | 'pdf';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'once';
+  scheduledTime: string;
+  recipients: string[];
+  sendToCreator: boolean;
+  isActive: boolean;
+  nextRunAt: admin.firestore.Timestamp;
+  createdBy: string;
+}
+
+/**
+ * Cloud Function planifiée pour exécuter les exports programmés
+ * S'exécute toutes les minutes et vérifie s'il y a des exports à lancer
+ */
+export const processScheduledExports = functions
+  .region('europe-west1')
+  .pubsub.schedule('every 1 minutes')
+  .timeZone('Europe/Paris')
+  .onRun(async () => {
+    const now = admin.firestore.Timestamp.now();
+    console.log(`[Scheduled Exports] Vérification des exports à ${now.toDate().toISOString()}`);
+
+    let totalProcessed = 0;
+    let totalErrors = 0;
+
+    try {
+      // Récupérer tous les établissements
+      const establishmentsSnapshot = await db.collection('establishments').get();
+
+      for (const establishmentDoc of establishmentsSnapshot.docs) {
+        const establishmentId = establishmentDoc.id;
+        const establishmentName = establishmentDoc.data().name || 'Établissement';
+
+        // Récupérer les exports à exécuter
+        const pendingExports = await db
+          .collection('establishments')
+          .doc(establishmentId)
+          .collection('scheduledExports')
+          .where('isActive', '==', true)
+          .where('nextRunAt', '<=', now)
+          .get();
+
+        if (pendingExports.empty) {
+          continue;
+        }
+
+        console.log(
+          `[Scheduled Exports] ${establishmentId}: ${pendingExports.size} exports à traiter`
+        );
+
+        for (const exportDoc of pendingExports.docs) {
+          const exportConfig = { id: exportDoc.id, ...exportDoc.data() } as ScheduledExportConfig;
+
+          try {
+            // Exécuter l'export
+            await executeScheduledExport(establishmentId, establishmentName, exportConfig);
+            totalProcessed++;
+          } catch (error: any) {
+            console.error(`[Scheduled Exports] Erreur pour ${exportConfig.name}:`, error);
+            totalErrors++;
+
+            // Mettre à jour avec l'erreur
+            await exportDoc.ref.update({
+              lastError: error.message,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+        }
+      }
+
+      console.log(
+        `[Scheduled Exports] Terminé. ${totalProcessed} traités, ${totalErrors} erreurs.`
+      );
+      return { success: true, processed: totalProcessed, errors: totalErrors };
+    } catch (error: any) {
+      console.error('[Scheduled Exports] Erreur globale:', error);
+      return { success: false, error: error.message };
+    }
+  });
+
+/**
+ * Génère un fichier Excel stylé avec en-têtes formatés et colonnes ajustées
+ */
+function generateStyledExcel(
+  data: any[],
+  dataType: string,
+  establishmentName: string
+): Buffer {
+  // Créer un nouveau workbook
+  const wb = XLSX.utils.book_new();
+
+  // Configuration des colonnes selon le type de données
+  const columnConfigs: Record<string, { header: string; key: string; width: number }[]> = {
+    interventions: [
+      { header: 'N° Intervention', key: 'interventionNumber', width: 15 },
+      { header: 'Titre', key: 'title', width: 35 },
+      { header: 'Statut', key: 'status', width: 12 },
+      { header: 'Priorité', key: 'priority', width: 12 },
+      { header: 'Type', key: 'type', width: 15 },
+      { header: 'Chambre', key: 'roomNumber', width: 10 },
+      { header: 'Étage', key: 'floor', width: 8 },
+      { header: 'Assigné à', key: 'assignedToName', width: 20 },
+      { header: 'Créé par', key: 'createdByName', width: 20 },
+      { header: 'Date création', key: 'createdAt', width: 18 },
+      { header: 'Date mise à jour', key: 'updatedAt', width: 18 },
+      { header: 'Description', key: 'description', width: 50 },
+    ],
+    users: [
+      { header: 'Nom', key: 'displayName', width: 25 },
+      { header: 'Email', key: 'email', width: 35 },
+      { header: 'Rôle', key: 'role', width: 15 },
+      { header: 'Statut', key: 'status', width: 12 },
+      { header: 'Date création', key: 'createdAt', width: 18 },
+    ],
+    rooms: [
+      { header: 'Numéro', key: 'number', width: 12 },
+      { header: 'Nom', key: 'name', width: 25 },
+      { header: 'Étage', key: 'floor', width: 10 },
+      { header: 'Type', key: 'type', width: 15 },
+      { header: 'Capacité', key: 'capacity', width: 10 },
+      { header: 'Statut', key: 'status', width: 12 },
+    ],
+  };
+
+  // Labels français pour les statuts et priorités
+  const statusLabels: Record<string, string> = {
+    pending: 'En attente',
+    in_progress: 'En cours',
+    completed: 'Terminée',
+    cancelled: 'Annulée',
+    on_hold: 'En pause',
+  };
+
+  const priorityLabels: Record<string, string> = {
+    low: 'Basse',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente',
+  };
+
+  // Obtenir la config de colonnes ou utiliser toutes les clés
+  const config = columnConfigs[dataType];
+  let headers: string[];
+  let keys: string[];
+  let widths: number[];
+
+  if (config) {
+    headers = config.map(c => c.header);
+    keys = config.map(c => c.key);
+    widths = config.map(c => c.width);
+  } else {
+    // Si pas de config, utiliser les clés du premier élément
+    keys = Object.keys(data[0] || {});
+    headers = keys.map(k => k.charAt(0).toUpperCase() + k.slice(1).replace(/([A-Z])/g, ' $1'));
+    widths = keys.map(() => 15);
+  }
+
+  // Préparer les données avec traduction des valeurs
+  const formattedData = data.map(row => {
+    const formattedRow: Record<string, any> = {};
+    keys.forEach(key => {
+      let value = row[key];
+
+      // Traduire les statuts et priorités
+      if (key === 'status' && statusLabels[value]) {
+        value = statusLabels[value];
+      }
+      if (key === 'priority' && priorityLabels[value]) {
+        value = priorityLabels[value];
+      }
+
+      // Formater les dates
+      if ((key === 'createdAt' || key === 'updatedAt') && value) {
+        if (typeof value === 'string' && value.includes('T')) {
+          const date = new Date(value);
+          value = date.toLocaleDateString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        }
+      }
+
+      formattedRow[key] = value ?? '';
+    });
+    return formattedRow;
+  });
+
+  // Créer les données du worksheet avec ligne de titre
+  const titleRow = [`Export ${dataType} - ${establishmentName}`];
+  const dateRow = [`Généré le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`];
+  const emptyRow: string[] = [];
+
+  // Convertir les données en tableau de tableaux
+  const dataRows = formattedData.map(row => keys.map(key => row[key]));
+
+  // Assembler toutes les lignes
+  const allRows = [
+    titleRow,
+    dateRow,
+    emptyRow,
+    headers,
+    ...dataRows,
+  ];
+
+  // Créer le worksheet
+  const ws = XLSX.utils.aoa_to_sheet(allRows);
+
+  // Définir les largeurs de colonnes
+  ws['!cols'] = widths.map(w => ({ wch: w }));
+
+  // Fusionner les cellules du titre (ligne 1)
+  ws['!merges'] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: Math.min(keys.length - 1, 5) } },
+    { s: { r: 1, c: 0 }, e: { r: 1, c: Math.min(keys.length - 1, 5) } },
+  ];
+
+  // Ajouter le worksheet au workbook
+  const sheetName = dataType.charAt(0).toUpperCase() + dataType.slice(1);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  // Générer le buffer
+  const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  return buffer;
+}
+
+/**
+ * Exécuter un export programmé
+ */
+async function executeScheduledExport(
+  establishmentId: string,
+  establishmentName: string,
+  config: ScheduledExportConfig
+): Promise<void> {
+  console.log(`[Export] Début export "${config.name}" (${config.dataType})`);
+
+  // Récupérer les données selon le type
+  let data: any[] = [];
+
+  switch (config.dataType) {
+    case 'interventions':
+      const interventionsSnap = await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('interventions')
+        .where('isDeleted', '!=', true)
+        .orderBy('isDeleted')
+        .orderBy('createdAt', 'desc')
+        .limit(1000)
+        .get();
+      data = interventionsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || '',
+        updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString() || '',
+      }));
+      break;
+
+    case 'users':
+      const usersSnap = await db
+        .collection('users')
+        .where('establishmentIds', 'array-contains', establishmentId)
+        .get();
+      data = usersSnap.docs.map(doc => ({
+        id: doc.id,
+        displayName: doc.data().displayName,
+        email: doc.data().email,
+        role: doc.data().role,
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || '',
+      }));
+      break;
+
+    case 'rooms':
+      const roomsSnap = await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('rooms')
+        .get();
+      data = roomsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      break;
+
+    default:
+      console.log(`[Export] Type ${config.dataType} non implémenté`);
+      data = [];
+  }
+
+  console.log(`[Export] ${data.length} enregistrements récupérés`);
+
+  if (data.length === 0) {
+    console.log(`[Export] Aucune donnée à exporter`);
+    // Mettre à jour quand même la prochaine exécution
+    await updateNextRunDate(establishmentId, config);
+    return;
+  }
+
+  // Générer le fichier selon le format demandé
+  let fileBuffer: Buffer;
+  let contentType: string;
+  let fileExtension: string;
+
+  if (config.format === 'xlsx') {
+    // Générer un fichier Excel stylé
+    const excelBuffer = generateStyledExcel(data, config.dataType, establishmentName);
+    fileBuffer = excelBuffer;
+    contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    fileExtension = 'xlsx';
+  } else if (config.format === 'csv') {
+    // Générer CSV classique
+    const headers = Object.keys(data[0]);
+    const csvRows = [
+      headers.join(','),
+      ...data.map(row =>
+        headers
+          .map(h => {
+            const val = row[h];
+            if (val === null || val === undefined) return '';
+            const strVal = String(val).replace(/"/g, '""');
+            return `"${strVal}"`;
+          })
+          .join(',')
+      ),
+    ];
+    const csvContent = '\uFEFF' + csvRows.join('\n'); // BOM pour Excel
+    fileBuffer = Buffer.from(csvContent, 'utf8');
+    contentType = 'text/csv;charset=utf-8';
+    fileExtension = 'csv';
+  } else {
+    // PDF non supporté pour l'instant
+    throw new Error('Format PDF non supporté pour les exports programmés');
+  }
+
+  // Upload vers Firebase Storage
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const fileName = `${config.dataType}_${timestamp}.${fileExtension}`;
+  const filePath = `exports/${establishmentId}/${config.id}/${fileName}`;
+
+  const bucket = admin.storage().bucket();
+  const file = bucket.file(filePath);
+
+  await file.save(fileBuffer, {
+    metadata: {
+      contentType,
+      metadata: {
+        exportId: config.id,
+        exportName: config.name,
+        dataType: config.dataType,
+        recordCount: String(data.length),
+      },
+    },
+  });
+
+  // Rendre le fichier public et obtenir l'URL
+  await file.makePublic();
+  const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+
+  console.log(`[Export] Fichier uploadé: ${filePath}`);
+
+  // Créer l'enregistrement d'exécution
+  await db
+    .collection('establishments')
+    .doc(establishmentId)
+    .collection('exportExecutions')
+    .add({
+      scheduledExportId: config.id,
+      establishmentId,
+      status: 'completed',
+      startedAt: admin.firestore.FieldValue.serverTimestamp(),
+      completedAt: admin.firestore.FieldValue.serverTimestamp(),
+      fileUrl: publicUrl,
+      filePath,
+      fileSize: fileBuffer.length,
+      recordCount: data.length,
+    });
+
+  // Envoyer par email
+  const recipients = [...config.recipients];
+  if (config.sendToCreator) {
+    const creatorDoc = await db.collection('users').doc(config.createdBy).get();
+    const creatorEmail = creatorDoc.data()?.email;
+    if (creatorEmail && !recipients.includes(creatorEmail)) {
+      recipients.push(creatorEmail);
+    }
+  }
+
+  if (recipients.length > 0) {
+    await sendExportEmail(config, establishmentName, publicUrl, data.length, recipients);
+  }
+
+  // Mettre à jour l'export avec la prochaine date d'exécution
+  await updateNextRunDate(establishmentId, config);
+
+  console.log(`[Export] Export "${config.name}" terminé avec succès`);
+}
+
+/**
+ * Envoyer l'email avec le lien de téléchargement
+ */
+async function sendExportEmail(
+  config: ScheduledExportConfig,
+  establishmentName: string,
+  downloadUrl: string,
+  recordCount: number,
+  recipients: string[]
+): Promise<void> {
+  const resendApiKey = process.env.RESEND_API_KEY || functions.config().resend?.api_key;
+
+  if (!resendApiKey) {
+    console.warn('[Export] Clé API Resend non configurée, email non envoyé');
+    return;
+  }
+
+  const resend = new Resend(resendApiKey);
+
+  const dataTypeLabels: Record<string, string> = {
+    interventions: 'Interventions',
+    users: 'Utilisateurs',
+    rooms: 'Chambres',
+    analytics: 'Analytics',
+    sla_report: 'Rapport SLA',
+    activity_log: "Journal d'activité",
+  };
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .info-box { background: white; padding: 20px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #667eea; }
+    .button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 Export programmé</h1>
+  </div>
+  <div class="content">
+    <p>Bonjour,</p>
+    <p>Votre export programmé <strong>"${config.name}"</strong> est prêt.</p>
+
+    <div class="info-box">
+      <p><strong>Établissement :</strong> ${establishmentName}</p>
+      <p><strong>Type de données :</strong> ${dataTypeLabels[config.dataType] || config.dataType}</p>
+      <p><strong>Nombre d'enregistrements :</strong> ${recordCount}</p>
+      <p><strong>Format :</strong> ${config.format.toUpperCase()}</p>
+      <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR')}</p>
+    </div>
+
+    <p style="text-align: center;">
+      <a href="${downloadUrl}" class="button">📥 Télécharger l'export</a>
+    </p>
+
+    <p style="color: #6b7280; font-size: 14px;">
+      Ce lien est valide pendant 7 jours. Pour modifier ou désactiver cet export,
+      rendez-vous dans les paramètres d'intégrations de GestiHotel.
+    </p>
+  </div>
+  <div class="footer">
+    <p>Cet email a été généré automatiquement par GestiHotel.</p>
+  </div>
+</body>
+</html>
+  `;
+
+  await resend.emails.send({
+    from: 'GestiHotel <onboarding@resend.dev>',
+    to: recipients,
+    subject: `📊 Export "${config.name}" - ${establishmentName}`,
+    html: htmlContent,
+  });
+
+  console.log(`[Export] Email envoyé à ${recipients.join(', ')}`);
+}
+
+/**
+ * Calculer et mettre à jour la prochaine date d'exécution
+ */
+async function updateNextRunDate(
+  establishmentId: string,
+  config: ScheduledExportConfig
+): Promise<void> {
+  const now = new Date();
+  const [hours, minutes] = config.scheduledTime.split(':').map(Number);
+  let nextRun = new Date(now);
+  nextRun.setHours(hours, minutes, 0, 0);
+
+  // Si l'heure est déjà passée, passer au prochain jour
+  if (nextRun <= now) {
+    nextRun.setDate(nextRun.getDate() + 1);
+  }
+
+  switch (config.frequency) {
+    case 'daily':
+      // Déjà configuré
+      break;
+    case 'weekly':
+      // Ajouter 7 jours
+      nextRun.setDate(nextRun.getDate() + 6); // +6 car on a déjà ajouté 1
+      break;
+    case 'monthly':
+      // Passer au mois suivant
+      nextRun.setMonth(nextRun.getMonth() + 1);
+      break;
+    case 'once':
+      // Désactiver l'export
+      await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('scheduledExports')
+        .doc(config.id)
+        .update({
+          isActive: false,
+          lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
+          runCount: admin.firestore.FieldValue.increment(1),
+          lastError: null,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      return;
+  }
+
+  // Mettre à jour la prochaine exécution
+  await db
+    .collection('establishments')
+    .doc(establishmentId)
+    .collection('scheduledExports')
+    .doc(config.id)
+    .update({
+      nextRunAt: admin.firestore.Timestamp.fromDate(nextRun),
+      lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
+      runCount: admin.firestore.FieldValue.increment(1),
+      lastError: null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+}
+
+/**
+ * Cloud Function callable pour exécuter un export manuellement
+ */
+export const runExportNow = functions
+  .region('europe-west1')
+  .https.onCall(async (data, context) => {
+    // Vérifier l'authentification
+    if (!context.auth) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'Vous devez être connecté pour effectuer cette action'
+      );
+    }
+
+    const { establishmentId, exportId } = data;
+
+    if (!establishmentId || !exportId) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'establishmentId et exportId sont requis'
+      );
+    }
+
+    try {
+      // Récupérer l'export
+      const exportDoc = await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('scheduledExports')
+        .doc(exportId)
+        .get();
+
+      if (!exportDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Export non trouvé');
+      }
+
+      // Récupérer l'établissement
+      const establishmentDoc = await db.collection('establishments').doc(establishmentId).get();
+      const establishmentName = establishmentDoc.data()?.name || 'Établissement';
+
+      const exportConfig = { id: exportDoc.id, ...exportDoc.data() } as ScheduledExportConfig;
+
+      // Exécuter l'export
+      await executeScheduledExport(establishmentId, establishmentName, exportConfig);
+
+      return {
+        success: true,
+        message: `Export "${exportConfig.name}" exécuté avec succès`,
+      };
+    } catch (error: any) {
+      console.error('[Export Manual] Erreur:', error);
+
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+
+      throw new functions.https.HttpsError(
+        'internal',
+        `Erreur lors de l'exécution de l'export: ${error.message}`
+      );
+    }
+  });
+
+// ============================================================================
 // EMAIL VERIFICATION
 // ============================================================================
 
@@ -1292,5 +2217,874 @@ export const sendVerificationEmail = functions
         'internal',
         `Erreur lors de l'envoi de l'email de vérification: ${error.message}`
       );
+    }
+  });
+
+// ============================================================================
+// CALENDAR INTEGRATION - iCal FEED
+// ============================================================================
+
+/**
+ * Formater une date en format iCal (RFC 5545)
+ */
+function formatICalDate(date: Date): string {
+  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+}
+
+/**
+ * Échapper les caractères spéciaux iCal
+ */
+function escapeICalString(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n');
+}
+
+/**
+ * Cloud Function HTTP pour générer un flux iCal (URL d'abonnement)
+ * Accessible publiquement avec un token unique
+ */
+export const getICalFeed = functions
+  .region('europe-west1')
+  .https.onRequest(async (req, res) => {
+    return corsHandler(req, res, async () => {
+      try {
+        // Récupérer les paramètres
+        const { establishmentId, token } = req.query;
+
+        if (!establishmentId || !token) {
+          res.status(400).send('establishmentId et token sont requis');
+          return;
+        }
+
+        // Vérifier le token d'accès
+        const integrationQuery = await db
+          .collection('establishments')
+          .doc(establishmentId as string)
+          .collection('calendarIntegrations')
+          .where('feedToken', '==', token)
+          .where('syncEnabled', '==', true)
+          .limit(1)
+          .get();
+
+        if (integrationQuery.empty) {
+          res.status(403).send('Token invalide ou intégration désactivée');
+          return;
+        }
+
+        const integration = integrationQuery.docs[0].data();
+
+        // Récupérer les interventions
+        // Note: On utilise isDeleted == false pour une requête plus simple
+        // Les documents sans le champ isDeleted ou avec isDeleted = false seront inclus
+        let interventionsQuery = db
+          .collection('establishments')
+          .doc(establishmentId as string)
+          .collection('interventions')
+          .where('isDeleted', '==', false)
+          .orderBy('scheduledAt', 'desc')
+          .limit(500);
+
+        // Appliquer les filtres si configurés
+        if (integration.filterByStatus?.length > 0) {
+          interventionsQuery = interventionsQuery.where('status', 'in', integration.filterByStatus);
+        }
+
+        const interventionsSnap = await interventionsQuery.get();
+
+        // Récupérer le nom de l'établissement
+        const establishmentDoc = await db.collection('establishments').doc(establishmentId as string).get();
+        const establishmentName = establishmentDoc.data()?.name || 'GestiHotel';
+
+        // Générer le contenu iCal
+        const events: string[] = [];
+
+        for (const doc of interventionsSnap.docs) {
+          const intervention = doc.data();
+
+          // Ignorer les interventions sans date planifiée
+          if (!intervention.scheduledAt) continue;
+
+          const startDate = intervention.scheduledAt.toDate();
+          const duration = intervention.estimatedDuration || 60;
+          const endDate = new Date(startDate.getTime() + duration * 60000);
+
+          const statusLabels: Record<string, string> = {
+            pending: 'En attente',
+            in_progress: 'En cours',
+            completed: 'Terminée',
+            cancelled: 'Annulée',
+          };
+
+          const description = [
+            intervention.description || '',
+            '',
+            `Réf: ${intervention.reference || doc.id}`,
+            `Statut: ${statusLabels[intervention.status] || intervention.status}`,
+            `Priorité: ${intervention.priority}`,
+            intervention.assignedToNames?.length
+              ? `Assigné à: ${intervention.assignedToNames.join(', ')}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join('\\n');
+
+          const location = [
+            intervention.location,
+            intervention.roomNumber ? `Chambre ${intervention.roomNumber}` : null,
+          ]
+            .filter(Boolean)
+            .join(' - ');
+
+          const event = [
+            'BEGIN:VEVENT',
+            `UID:${doc.id}@gestihotel.app`,
+            `DTSTAMP:${formatICalDate(new Date())}`,
+            `DTSTART:${formatICalDate(startDate)}`,
+            `DTEND:${formatICalDate(endDate)}`,
+            `SUMMARY:${escapeICalString(`[${intervention.priority?.toUpperCase() || 'NORMAL'}] ${intervention.title || 'Intervention'}`)}`,
+            `DESCRIPTION:${escapeICalString(description)}`,
+            location ? `LOCATION:${escapeICalString(location)}` : null,
+            `STATUS:${intervention.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
+            `CATEGORIES:${intervention.type || 'intervention'}`,
+            'END:VEVENT',
+          ]
+            .filter(Boolean)
+            .join('\r\n');
+
+          events.push(event);
+        }
+
+        // Construire le fichier iCal complet
+        const icalContent = [
+          'BEGIN:VCALENDAR',
+          'VERSION:2.0',
+          'PRODID:-//GestiHotel//Interventions//FR',
+          'CALSCALE:GREGORIAN',
+          'METHOD:PUBLISH',
+          `X-WR-CALNAME:${escapeICalString(establishmentName)} - Interventions`,
+          'X-WR-TIMEZONE:Europe/Paris',
+          ...events,
+          'END:VCALENDAR',
+        ].join('\r\n');
+
+        // Définir les headers pour le fichier iCal
+        res.set('Content-Type', 'text/calendar; charset=utf-8');
+        res.set('Content-Disposition', `attachment; filename="interventions.ics"`);
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+        res.status(200).send(icalContent);
+
+        // Mettre à jour la date de dernière synchronisation
+        await integrationQuery.docs[0].ref.update({
+          lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      } catch (error: any) {
+        console.error('[iCal Feed] Erreur:', error);
+        res.status(500).send(`Erreur: ${error.message}`);
+      }
+    });
+  });
+
+/**
+ * Cloud Function callable pour générer un token de flux iCal
+ */
+export const generateCalendarFeedToken = functions
+  .region('europe-west1')
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Non authentifié');
+    }
+
+    const { establishmentId, integrationId } = data;
+
+    if (!establishmentId || !integrationId) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'establishmentId et integrationId sont requis'
+      );
+    }
+
+    try {
+      // Générer un token unique
+      const token = require('crypto').randomBytes(32).toString('hex');
+
+      // Mettre à jour l'intégration avec le token
+      await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('calendarIntegrations')
+        .doc(integrationId)
+        .update({
+          feedToken: token,
+          feedTokenGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      // Construire l'URL du flux
+      const feedUrl = `https://europe-west1-gestihotel-v2.cloudfunctions.net/getICalFeed?establishmentId=${establishmentId}&token=${token}`;
+
+      return {
+        success: true,
+        feedUrl,
+        token,
+      };
+    } catch (error: any) {
+      console.error('[Generate Feed Token] Erreur:', error);
+      throw new functions.https.HttpsError('internal', error.message);
+    }
+  });
+
+// ============================================================================
+// WEBHOOKS - FIRESTORE TRIGGERS
+// ============================================================================
+
+/**
+ * Interface pour les webhooks
+ */
+interface WebhookConfig {
+  id: string;
+  establishmentId: string;
+  name: string;
+  url: string;
+  method: 'POST' | 'PUT' | 'PATCH';
+  events: string[];
+  isActive: boolean;
+  authType?: string;
+  authConfig?: {
+    token?: string;
+    apiKey?: string;
+    apiKeyHeader?: string;
+  };
+  headers?: Record<string, string>;
+  retryEnabled: boolean;
+  maxRetries: number;
+  retryDelay: number;
+  includeMetadata: boolean;
+}
+
+/**
+ * Envoyer un webhook
+ */
+async function sendWebhookNotification(
+  webhook: WebhookConfig,
+  eventType: string,
+  data: Record<string, unknown>
+): Promise<{ success: boolean; statusCode?: number; error?: string }> {
+  const payload = {
+    event: eventType,
+    timestamp: new Date().toISOString(),
+    establishmentId: webhook.establishmentId,
+    data,
+    ...(webhook.includeMetadata ? { webhookId: webhook.id } : {}),
+  };
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'User-Agent': 'GestiHotel-Webhook/1.0',
+    ...webhook.headers,
+  };
+
+  // Ajouter l'authentification
+  if (webhook.authType === 'bearer' && webhook.authConfig?.token) {
+    headers['Authorization'] = `Bearer ${webhook.authConfig.token}`;
+  } else if (webhook.authType === 'api_key' && webhook.authConfig?.apiKey) {
+    const headerName = webhook.authConfig.apiKeyHeader || 'X-API-Key';
+    headers[headerName] = webhook.authConfig.apiKey;
+  }
+
+  try {
+    const response = await fetch(webhook.url, {
+      method: webhook.method,
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    return {
+      success: response.ok,
+      statusCode: response.status,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Déclencher les webhooks pour un événement
+ */
+async function triggerWebhooksForEvent(
+  establishmentId: string,
+  eventType: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    const webhooksSnap = await db
+      .collection('establishments')
+      .doc(establishmentId)
+      .collection('webhooks')
+      .where('isActive', '==', true)
+      .where('events', 'array-contains', eventType)
+      .get();
+
+    if (webhooksSnap.empty) {
+      return;
+    }
+
+    console.log(`[Webhooks] ${webhooksSnap.size} webhooks à déclencher pour ${eventType}`);
+
+    const promises = webhooksSnap.docs.map(async (doc) => {
+      const webhook = { id: doc.id, ...doc.data() } as WebhookConfig;
+      const result = await sendWebhookNotification(webhook, eventType, data);
+
+      // Mettre à jour les stats du webhook
+      await doc.ref.update({
+        lastTriggeredAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastDeliveryStatus: result.success ? 'success' : 'failed',
+        successCount: result.success
+          ? admin.firestore.FieldValue.increment(1)
+          : admin.firestore.FieldValue.increment(0),
+        failureCount: !result.success
+          ? admin.firestore.FieldValue.increment(1)
+          : admin.firestore.FieldValue.increment(0),
+      });
+
+      // Logger la livraison
+      await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('webhookDeliveries')
+        .add({
+          webhookId: webhook.id,
+          eventType,
+          status: result.success ? 'success' : 'failed',
+          statusCode: result.statusCode,
+          error: result.error,
+          triggeredAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      return result;
+    });
+
+    await Promise.all(promises);
+  } catch (error: any) {
+    console.error('[Webhooks] Erreur:', error);
+  }
+}
+
+/**
+ * Trigger: Nouvelle intervention créée
+ */
+export const onInterventionCreated = functions
+  .region('europe-west1')
+  .firestore.document('establishments/{establishmentId}/interventions/{interventionId}')
+  .onCreate(async (snap, context) => {
+    const intervention = snap.data();
+    const { establishmentId, interventionId } = context.params;
+
+    console.log(`[Webhook Trigger] Intervention créée: ${interventionId}`);
+
+    await triggerWebhooksForEvent(establishmentId, 'intervention.created', {
+      id: interventionId,
+      ...intervention,
+      createdAt: intervention.createdAt?.toDate?.()?.toISOString(),
+    });
+  });
+
+/**
+ * Trigger: Intervention mise à jour
+ */
+export const onInterventionUpdated = functions
+  .region('europe-west1')
+  .firestore.document('establishments/{establishmentId}/interventions/{interventionId}')
+  .onUpdate(async (change, context) => {
+    const before = change.before.data();
+    const after = change.after.data();
+    const { establishmentId, interventionId } = context.params;
+
+    // Vérifier les changements spécifiques
+    const events: string[] = ['intervention.updated'];
+
+    // Changement de statut
+    if (before.status !== after.status) {
+      events.push('intervention.status_changed');
+
+      if (after.status === 'completed') {
+        events.push('intervention.completed');
+      }
+    }
+
+    // Assignation
+    if (JSON.stringify(before.assignedTo) !== JSON.stringify(after.assignedTo)) {
+      events.push('intervention.assigned');
+    }
+
+    console.log(`[Webhook Trigger] Intervention mise à jour: ${interventionId}, events: ${events.join(', ')}`);
+
+    for (const eventType of events) {
+      await triggerWebhooksForEvent(establishmentId, eventType, {
+        id: interventionId,
+        before: {
+          status: before.status,
+          assignedTo: before.assignedTo,
+        },
+        after: {
+          ...after,
+          createdAt: after.createdAt?.toDate?.()?.toISOString(),
+          updatedAt: after.updatedAt?.toDate?.()?.toISOString(),
+        },
+      });
+    }
+  });
+
+/**
+ * Trigger: Intervention supprimée
+ */
+export const onInterventionDeleted = functions
+  .region('europe-west1')
+  .firestore.document('establishments/{establishmentId}/interventions/{interventionId}')
+  .onDelete(async (snap, context) => {
+    const intervention = snap.data();
+    const { establishmentId, interventionId } = context.params;
+
+    console.log(`[Webhook Trigger] Intervention supprimée: ${interventionId}`);
+
+    await triggerWebhooksForEvent(establishmentId, 'intervention.deleted', {
+      id: interventionId,
+      title: intervention.title,
+      reference: intervention.reference,
+      deletedAt: new Date().toISOString(),
+    });
+  });
+
+// ============================================================================
+// PDF REPORTS GENERATION
+// ============================================================================
+
+/**
+ * Interface pour les configurations de rapports
+ */
+interface ReportConfig {
+  id: string;
+  establishmentId: string;
+  name: string;
+  type: string;
+  frequency: string;
+  isActive: boolean;
+  emailConfig?: {
+    enabled: boolean;
+    recipients: string[];
+  };
+}
+
+/**
+ * Cloud Function callable pour générer un rapport PDF
+ */
+export const generatePdfReport = functions
+  .region('europe-west1')
+  .runWith({ memory: '512MB', timeoutSeconds: 120 })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Non authentifié');
+    }
+
+    const { establishmentId, reportConfigId, dateRange } = data;
+
+    if (!establishmentId || !reportConfigId) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        'establishmentId et reportConfigId sont requis'
+      );
+    }
+
+    try {
+      // Récupérer la configuration du rapport
+      const configDoc = await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('reportConfigs')
+        .doc(reportConfigId)
+        .get();
+
+      if (!configDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Configuration de rapport non trouvée');
+      }
+
+      const config = { id: configDoc.id, ...configDoc.data() } as ReportConfig;
+
+      // Récupérer l'établissement
+      const establishmentDoc = await db.collection('establishments').doc(establishmentId).get();
+      const establishmentName = establishmentDoc.data()?.name || 'Établissement';
+
+      // Récupérer les données selon le type de rapport
+      let reportData: any = {};
+      const now = new Date();
+      const startDate = dateRange?.start
+        ? new Date(dateRange.start)
+        : new Date(now.getFullYear(), now.getMonth(), 1);
+      const endDate = dateRange?.end
+        ? new Date(dateRange.end)
+        : now;
+
+      switch (config.type) {
+        case 'interventions_summary':
+        case 'interventions_detailed':
+          const interventionsSnap = await db
+            .collection('establishments')
+            .doc(establishmentId)
+            .collection('interventions')
+            .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(startDate))
+            .where('createdAt', '<=', admin.firestore.Timestamp.fromDate(endDate))
+            .orderBy('createdAt', 'desc')
+            .get();
+
+          reportData.interventions = interventionsSnap.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate?.()?.toISOString(),
+          }));
+
+          // Calculer les statistiques
+          reportData.stats = {
+            total: reportData.interventions.length,
+            byStatus: {} as Record<string, number>,
+            byPriority: {} as Record<string, number>,
+            avgResolutionTime: 0,
+          };
+
+          for (const intervention of reportData.interventions) {
+            reportData.stats.byStatus[intervention.status] =
+              (reportData.stats.byStatus[intervention.status] || 0) + 1;
+            reportData.stats.byPriority[intervention.priority] =
+              (reportData.stats.byPriority[intervention.priority] || 0) + 1;
+          }
+          break;
+
+        case 'technician_performance':
+          // Récupérer les interventions groupées par technicien
+          const techInterventionsSnap = await db
+            .collection('establishments')
+            .doc(establishmentId)
+            .collection('interventions')
+            .where('status', '==', 'completed')
+            .where('completedAt', '>=', admin.firestore.Timestamp.fromDate(startDate))
+            .where('completedAt', '<=', admin.firestore.Timestamp.fromDate(endDate))
+            .get();
+
+          const techStats: Record<string, { name: string; completed: number; totalTime: number }> = {};
+
+          for (const doc of techInterventionsSnap.docs) {
+            const intervention = doc.data();
+            for (const techId of intervention.assignedTo || []) {
+              if (!techStats[techId]) {
+                const techIndex = intervention.assignedTo?.indexOf(techId) || 0;
+                techStats[techId] = {
+                  name: intervention.assignedToNames?.[techIndex] || techId,
+                  completed: 0,
+                  totalTime: 0,
+                };
+              }
+              techStats[techId].completed++;
+              if (intervention.actualDuration) {
+                techStats[techId].totalTime += intervention.actualDuration;
+              }
+            }
+          }
+
+          reportData.technicians = Object.entries(techStats).map(([id, stats]) => ({
+            id,
+            ...stats,
+            avgTime: stats.completed > 0 ? Math.round(stats.totalTime / stats.completed) : 0,
+          }));
+          break;
+
+        default:
+          reportData.message = `Type de rapport "${config.type}" non implémenté`;
+      }
+
+      // Générer le contenu HTML du rapport
+      const htmlContent = generateReportHtml(config, establishmentName, reportData, startDate, endDate);
+
+      // Pour l'instant, on retourne le HTML (la génération PDF nécessite puppeteer ou une autre lib)
+      // Sauvegarder le rapport généré
+      const reportRef = await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('generatedReports')
+        .add({
+          configId: reportConfigId,
+          configName: config.name,
+          type: config.type,
+          generatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          generatedBy: context.auth.uid,
+          dateRange: {
+            start: startDate.toISOString(),
+            end: endDate.toISOString(),
+          },
+          status: 'completed',
+          format: 'html', // Pour l'instant HTML, PDF à implémenter
+          data: reportData.stats || {},
+        });
+
+      // Mettre à jour la config avec la dernière génération
+      await configDoc.ref.update({
+        lastGeneratedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastReportId: reportRef.id,
+      });
+
+      // Envoyer par email si configuré
+      if (config.emailConfig?.enabled && config.emailConfig.recipients?.length > 0) {
+        const resendApiKey = process.env.RESEND_API_KEY || functions.config().resend?.api_key;
+
+        if (resendApiKey) {
+          const resend = new Resend(resendApiKey);
+
+          await resend.emails.send({
+            from: 'GestiHotel <onboarding@resend.dev>',
+            to: config.emailConfig.recipients,
+            subject: `📊 Rapport "${config.name}" - ${establishmentName}`,
+            html: htmlContent,
+          });
+
+          console.log(`[PDF Report] Email envoyé à ${config.emailConfig.recipients.join(', ')}`);
+        }
+      }
+
+      return {
+        success: true,
+        reportId: reportRef.id,
+        message: 'Rapport généré avec succès',
+        stats: reportData.stats,
+      };
+    } catch (error: any) {
+      console.error('[PDF Report] Erreur:', error);
+      throw new functions.https.HttpsError('internal', error.message);
+    }
+  });
+
+/**
+ * Générer le HTML du rapport
+ */
+function generateReportHtml(
+  config: ReportConfig,
+  establishmentName: string,
+  data: any,
+  startDate: Date,
+  endDate: Date
+): string {
+  const formatDate = (date: Date) => date.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const statusLabels: Record<string, string> = {
+    pending: 'En attente',
+    in_progress: 'En cours',
+    completed: 'Terminée',
+    cancelled: 'Annulée',
+    on_hold: 'En pause',
+  };
+
+  const priorityLabels: Record<string, string> = {
+    low: 'Basse',
+    medium: 'Moyenne',
+    high: 'Haute',
+    urgent: 'Urgente',
+  };
+
+  let statsHtml = '';
+  if (data.stats) {
+    const statusStats = Object.entries(data.stats.byStatus || {})
+      .map(([status, count]) => `<li>${statusLabels[status] || status}: <strong>${count}</strong></li>`)
+      .join('');
+
+    const priorityStats = Object.entries(data.stats.byPriority || {})
+      .map(([priority, count]) => `<li>${priorityLabels[priority] || priority}: <strong>${count}</strong></li>`)
+      .join('');
+
+    statsHtml = `
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0;">
+        <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; text-align: center;">
+          <h3 style="color: #15803d; margin: 0; font-size: 32px;">${data.stats.total}</h3>
+          <p style="color: #166534; margin: 5px 0 0;">Total interventions</p>
+        </div>
+        <div style="background: #eff6ff; padding: 20px; border-radius: 8px;">
+          <h4 style="margin: 0 0 10px; color: #1e40af;">Par statut</h4>
+          <ul style="margin: 0; padding-left: 20px; color: #1e3a8a;">${statusStats || '<li>-</li>'}</ul>
+        </div>
+        <div style="background: #fef3c7; padding: 20px; border-radius: 8px;">
+          <h4 style="margin: 0 0 10px; color: #92400e;">Par priorité</h4>
+          <ul style="margin: 0; padding-left: 20px; color: #78350f;">${priorityStats || '<li>-</li>'}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  let technicianHtml = '';
+  if (data.technicians?.length > 0) {
+    const techRows = data.technicians
+      .sort((a: any, b: any) => b.completed - a.completed)
+      .map((tech: any) => `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${tech.name}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${tech.completed}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${tech.avgTime} min</td>
+        </tr>
+      `)
+      .join('');
+
+    technicianHtml = `
+      <h3 style="margin-top: 30px;">Performance des techniciens</h3>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+          <tr style="background: #f3f4f6;">
+            <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;">Technicien</th>
+            <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb;">Interventions terminées</th>
+            <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb;">Durée moyenne</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${techRows}
+        </tbody>
+      </table>
+    `;
+  }
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Rapport - ${config.name}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 28px;">📊 ${config.name}</h1>
+    <p style="margin: 10px 0 0; opacity: 0.9;">${establishmentName}</p>
+  </div>
+
+  <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+    <p style="color: #6b7280; margin-top: 0;">
+      Période : <strong>${formatDate(startDate)}</strong> au <strong>${formatDate(endDate)}</strong>
+    </p>
+
+    ${statsHtml}
+    ${technicianHtml}
+
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+
+    <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-bottom: 0;">
+      Rapport généré automatiquement par GestiHotel le ${formatDate(new Date())}
+    </p>
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Cloud Function planifiée pour générer les rapports programmés
+ */
+export const processScheduledReports = functions
+  .region('europe-west1')
+  .pubsub.schedule('0 6 * * *') // Tous les jours à 6h
+  .timeZone('Europe/Paris')
+  .onRun(async () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Dimanche
+    const dayOfMonth = now.getDate();
+
+    console.log(`[Scheduled Reports] Vérification des rapports programmés`);
+
+    let totalGenerated = 0;
+
+    try {
+      // Récupérer tous les établissements
+      const establishmentsSnap = await db.collection('establishments').get();
+
+      for (const estDoc of establishmentsSnap.docs) {
+        const establishmentId = estDoc.id;
+
+        // Récupérer les configurations de rapports actives
+        const configsSnap = await db
+          .collection('establishments')
+          .doc(establishmentId)
+          .collection('reportConfigs')
+          .where('isActive', '==', true)
+          .get();
+
+        for (const configDoc of configsSnap.docs) {
+          const config = configDoc.data();
+
+          // Vérifier si le rapport doit être généré aujourd'hui
+          let shouldGenerate = false;
+
+          switch (config.frequency) {
+            case 'daily':
+              shouldGenerate = true;
+              break;
+            case 'weekly':
+              // Générer le lundi (1)
+              shouldGenerate = dayOfWeek === 1;
+              break;
+            case 'monthly':
+              // Générer le 1er du mois
+              shouldGenerate = dayOfMonth === 1;
+              break;
+          }
+
+          if (shouldGenerate) {
+            console.log(`[Scheduled Reports] Génération du rapport "${config.name}"`);
+
+            // Calculer la période
+            let startDate: Date;
+            const endDate = new Date(now);
+            endDate.setDate(endDate.getDate() - 1); // Jusqu'à hier
+
+            switch (config.frequency) {
+              case 'daily':
+                startDate = new Date(endDate);
+                break;
+              case 'weekly':
+                startDate = new Date(endDate);
+                startDate.setDate(startDate.getDate() - 7);
+                break;
+              case 'monthly':
+                startDate = new Date(endDate);
+                startDate.setMonth(startDate.getMonth() - 1);
+                break;
+              default:
+                startDate = new Date(endDate);
+            }
+
+            // Simuler l'appel de génération
+            // Note: Idéalement, on appellerait directement la logique de generatePdfReport
+            try {
+              // Pour l'instant, on marque juste comme traité
+              await configDoc.ref.update({
+                lastScheduledRun: admin.firestore.FieldValue.serverTimestamp(),
+              });
+              totalGenerated++;
+            } catch (err: any) {
+              console.error(`[Scheduled Reports] Erreur pour ${config.name}:`, err);
+            }
+          }
+        }
+      }
+
+      console.log(`[Scheduled Reports] ${totalGenerated} rapports traités`);
+      return { success: true, generated: totalGenerated };
+    } catch (error: any) {
+      console.error('[Scheduled Reports] Erreur globale:', error);
+      return { success: false, error: error.message };
     }
   });

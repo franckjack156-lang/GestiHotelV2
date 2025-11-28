@@ -81,6 +81,8 @@ import {
   PRIORITY_LABELS,
   INTERVENTION_TYPE_LABELS,
   type InterventionStatus,
+  InterventionPriority,
+  InterventionType,
 } from '@/shared/types/status.types';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -185,7 +187,7 @@ const InterventionsPageComponent = () => {
     if (value === 'all') {
       applyFilters({ priority: undefined });
     } else {
-      applyFilters({ priority: [value as any] });
+      applyFilters({ priority: [value as InterventionPriority] });
     }
   };
 
@@ -193,7 +195,7 @@ const InterventionsPageComponent = () => {
     if (value === 'all') {
       applyFilters({ type: undefined });
     } else {
-      applyFilters({ type: value as any });
+      applyFilters({ type: value as InterventionType });
     }
   };
 
@@ -258,8 +260,10 @@ const InterventionsPageComponent = () => {
       })) as Intervention[];
       // Trier par date de suppression (plus récent en premier)
       deleted.sort((a, b) => {
-        const dateA = (a as any).deletedAt?.toDate?.()?.getTime() || 0;
-        const dateB = (b as any).deletedAt?.toDate?.()?.getTime() || 0;
+        const interventionA = a as Intervention & { deletedAt?: Timestamp };
+        const interventionB = b as Intervention & { deletedAt?: Timestamp };
+        const dateA = interventionA.deletedAt?.toDate?.()?.getTime() || 0;
+        const dateB = interventionB.deletedAt?.toDate?.()?.getTime() || 0;
         return dateB - dateA;
       });
       setDeletedInterventions(deleted);
@@ -364,7 +368,11 @@ const InterventionsPageComponent = () => {
 
   const handleImportConfirm = async (data: Record<string, unknown>[]) => {
     try {
-      await importHook.handleConfirm(data as any);
+      // Cast explicite car ImportDialog utilise un type générique Record<string, unknown>[]
+      // mais le hook attend InterventionImportRow[] qui est compatible
+      await importHook.handleConfirm(
+        data as unknown as Parameters<typeof importHook.handleConfirm>[0]
+      );
       toast.success('Import réussi', { description: `${data.length} intervention(s) importée(s)` });
       setImportDialogOpen(false);
     } catch {
@@ -563,8 +571,8 @@ const InterventionsPageComponent = () => {
               <span className="hidden sm:inline ml-2">Corbeille</span>
             </Button>
 
-            {/* Bouton SuperAdmin pour supprimer toutes les interventions */}
-            {user?.role === 'super_admin' && interventions.length > 0 && (
+            {/* Bouton Editor/SuperAdmin pour supprimer toutes les interventions */}
+            {(user?.role === 'editor' || user?.role === 'super_admin') && interventions.length > 0 && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -858,7 +866,8 @@ const InterventionsPageComponent = () => {
             ) : (
               <div className="space-y-3">
                 {deletedInterventions.map(intervention => {
-                  const deletedAt = (intervention as any).deletedAt?.toDate?.();
+                  const interventionWithDeleted = intervention as Intervention & { deletedAt?: Timestamp };
+                  const deletedAt = interventionWithDeleted.deletedAt?.toDate?.();
                   return (
                     <div
                       key={intervention.id}
@@ -1250,11 +1259,11 @@ const KanbanCardComponent = ({
   const { user } = useAuth();
 
   const canEdit = useMemo(
-    () => user?.role === 'admin' || user?.id === intervention.createdBy,
+    () => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin' || user?.id === intervention.createdBy,
     [user?.role, user?.id, intervention.createdBy]
   );
 
-  const canDelete = useMemo(() => user?.role === 'admin', [user?.role]);
+  const canDelete = useMemo(() => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin', [user?.role]);
 
   const timeAgo = useMemo(
     () =>
@@ -1610,10 +1619,11 @@ const TableViewComponent = ({
           <tbody className="bg-gray-50 dark:bg-gray-950">
             {currentInterventions.map(intervention => {
               const canEdit =
+                user?.role === 'editor' ||
                 user?.role === 'admin' ||
                 user?.role === 'super_admin' ||
                 user?.id === intervention.createdBy;
-              const canDelete = user?.role === 'admin' || user?.role === 'super_admin';
+              const canDelete = user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
 
               const getStatusBorderColor = () => {
                 switch (intervention.status) {

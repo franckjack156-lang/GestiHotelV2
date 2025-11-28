@@ -52,6 +52,7 @@ export interface ChatWindowProps {
   onLoadMore: () => void;
   hasMore: boolean;
   isLoading?: boolean;
+  isSending?: boolean;
   typingUsers?: { userId: string; userName: string }[];
   onReaction?: (messageId: string, emoji: string) => void;
   onRemoveReaction?: (messageId: string) => void;
@@ -457,6 +458,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onLoadMore,
   hasMore,
   isLoading = false,
+  isSending = false,
   typingUsers = [],
   onReaction,
   onRemoveReaction,
@@ -683,6 +685,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         currentUserId={currentUserId}
         onTypingStart={onTypingStart}
         onTypingStop={onTypingStop}
+        disabled={isSending}
       />
     </div>
   );

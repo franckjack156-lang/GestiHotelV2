@@ -9,15 +9,12 @@ import {
   doc,
   addDoc,
   updateDoc,
-  // deleteDoc, // TODO: Imported but unused
   query,
   where,
   orderBy,
   getDocs,
   onSnapshot,
   serverTimestamp,
-  // Timestamp, // TODO: Imported but unused
-  // getDoc, // TODO: Imported but unused
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import type {
@@ -75,16 +72,6 @@ export const createComment = async (
     // Envoyer des notifications aux personnes mentionnées
     if (data.mentions && data.mentions.length > 0) {
       try {
-        // Récupérer le titre de l'intervention
-        // TODO: interventionDoc unused
-        // const interventionDoc = await getDoc(
-        //   doc(db, 'establishments', establishmentId, 'interventions', interventionId)
-        // );
-        // TODO: interventionTitle is computed but never used
-        // const interventionTitle = interventionDoc.exists()
-        //   ? interventionDoc.data().title
-        //   : 'Intervention';
-
         // Envoyer une notification à chaque personne mentionnée (sauf l'auteur)
         for (const mentionedUserId of data.mentions) {
           if (mentionedUserId !== userId) {

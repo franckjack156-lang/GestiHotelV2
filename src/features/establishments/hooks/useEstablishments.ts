@@ -48,8 +48,8 @@ export const useEstablishments = () => {
 
       let fetchedEstablishments;
 
-      // SuperAdmin: Charger TOUS les établissements
-      if (user.role === 'super_admin') {
+      // Editor et SuperAdmin: Charger TOUS les établissements
+      if (user.role === 'editor' || user.role === 'super_admin') {
         fetchedEstablishments = await establishmentService.getEstablishments(filters);
       }
       // Autres rôles: Charger uniquement les établissements autorisés
@@ -194,7 +194,7 @@ export const useEstablishments = () => {
           throw new Error('Utilisateur non connecté');
         }
 
-        if (user.role !== 'super_admin' && !user.establishmentIds.includes(establishmentId)) {
+        if (user.role !== 'editor' && user.role !== 'super_admin' && !user.establishmentIds.includes(establishmentId)) {
           throw new Error("Vous n'avez pas accès à cet établissement");
         }
 

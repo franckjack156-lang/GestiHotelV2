@@ -121,8 +121,8 @@ export const CommentsTab = ({ interventionId }: CommentsTabProps) => {
                 </Label>
               </div>
 
-              {/* TODO: Bouton pièces jointes */}
-              <Button variant="outline" size="sm" disabled>
+              {/* Pièces jointes - fonctionnalité à venir */}
+              <Button variant="outline" size="sm" disabled title="Bientôt disponible">
                 <Paperclip className="h-4 w-4 mr-2" />
                 Joindre un fichier
               </Button>

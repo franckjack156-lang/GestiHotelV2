@@ -19,11 +19,13 @@ import {
   FileText,
   Package,
   Warehouse,
+  Ticket,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { useMemo } from 'react';
 import { useFeatureFlags } from '@/shared/hooks/useFeatureFlag';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
 
 interface SidebarProps {
@@ -38,12 +40,17 @@ interface NavItem {
   icon: React.ElementType;
   requiredFeature?: keyof EstablishmentFeatures;
   alwaysVisible?: boolean;
+  superAdminOnly?: boolean;
+  editorOnly?: boolean;
 }
 
 export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) => {
   const location = useLocation();
   const { t } = useTranslation();
   const { currentEstablishment } = useEstablishments();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'editor';
+  const isEditor = user?.role === 'editor';
 
   // Récupérer les features actives
   const features = useFeatureFlags([
@@ -121,18 +128,28 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
       icon: Settings,
       alwaysVisible: true,
     },
+    {
+      translationKey: 'adminSupport',
+      href: '/app/admin/support',
+      icon: Ticket,
+      superAdminOnly: true,
+    },
   ];
 
   /**
-   * Filtrer selon features activées
+   * Filtrer selon features activées et rôle utilisateur
    */
   const navItems = useMemo(() => {
     return allNavItems.filter(item => {
+      // Items editor uniquement
+      if (item.editorOnly) return isEditor;
+      // Items super admin uniquement (inclut editor)
+      if (item.superAdminOnly) return isSuperAdmin;
       if (item.alwaysVisible) return true;
       if (!item.requiredFeature) return true;
       return features[item.requiredFeature] === true;
     });
-  }, [features]);
+  }, [features, isSuperAdmin, isEditor]);
 
   /**
    * Vérifier si un lien est actif

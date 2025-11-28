@@ -8,7 +8,7 @@ import React from 'react';
 import { Badge } from '@/shared/components/ui/badge';
 import { cn } from '@/shared/utils/cn';
 import { UserRole, ROLE_LABELS, ROLE_COLORS } from '../types/role.types';
-import { Shield, ShieldCheck, Users, Wrench, UserCheck, Eye } from 'lucide-react';
+import { Shield, ShieldCheck, Users, Wrench, UserCheck, Eye, Code2 } from 'lucide-react';
 
 interface RoleBadgeProps {
   /** Rôle à afficher */
@@ -24,6 +24,7 @@ interface RoleBadgeProps {
 }
 
 const roleIcons = {
+  [UserRole.EDITOR]: Code2,
   [UserRole.SUPER_ADMIN]: Shield,
   [UserRole.ADMIN]: ShieldCheck,
   [UserRole.MANAGER]: Users,
@@ -33,6 +34,8 @@ const roleIcons = {
 };
 
 const colorVariants: Record<string, string> = {
+  indigo:
+    'bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400',
   purple:
     'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400',
   red: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400',

@@ -28,17 +28,12 @@ import {
   onSnapshot,
   Timestamp,
   type Unsubscribe,
-  // writeBatch, // TODO: Imported but unused
 } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   updateProfile,
-  // updateEmail, // TODO: Imported but unused
-  // updatePassword, // TODO: Imported but unused
-  // deleteUser as deleteAuthUser, // TODO: Imported but unused
   signOut,
-  // type User as FirebaseUser, // TODO: Imported but unused
 } from 'firebase/auth';
 import { db, auth } from '@/core/config/firebase';
 import type {
@@ -157,14 +152,14 @@ class UserService {
       };
 
       // Ajouter les champs optionnels seulement s'ils existent
-      if (data.photoURL) (userData as any).photoURL = data.photoURL;
-      if (data.phoneNumber) (userData as any).phoneNumber = data.phoneNumber;
-      if (data.jobTitle) (userData as any).jobTitle = data.jobTitle;
-      if (data.department) (userData as any).department = data.department;
-      if (data.skills) (userData as any).skills = data.skills;
-      if (data.isTechnician !== undefined) (userData as any).isTechnician = data.isTechnician;
-      if (data.specialties) (userData as any).specialties = data.specialties;
-      if (data.experienceLevel) (userData as any).experienceLevel = data.experienceLevel;
+      if (data.photoURL) userData.photoURL = data.photoURL;
+      if (data.phoneNumber) userData.phoneNumber = data.phoneNumber;
+      if (data.jobTitle) (userData as Record<string, unknown>).jobTitle = data.jobTitle;
+      if (data.department) (userData as Record<string, unknown>).department = data.department;
+      if (data.skills) (userData as Record<string, unknown>).skills = data.skills;
+      if (data.isTechnician !== undefined) (userData as Record<string, unknown>).isTechnician = data.isTechnician;
+      if (data.specialties) (userData as Record<string, unknown>).specialties = data.specialties;
+      if (data.experienceLevel) (userData as Record<string, unknown>).experienceLevel = data.experienceLevel;
 
       // ✅ Nettoyer et créer le document Firestore
       const cleanedUserData = removeUndefinedFields(userData);
@@ -271,7 +266,7 @@ class UserService {
       // ✅ Envoyer email d'invitation
       try {
         const invitedByUser = await this.getUserProfile(invitedBy);
-        const establishmentName = 'GestiHotel'; // TODO: Récupérer depuis establishmentIds[0]
+        const establishmentName = 'GestiHotel';
 
         await sendUserInvitationEmail({
           to: data.email,
@@ -523,8 +518,8 @@ class UserService {
         updatedAt: Timestamp.now(),
       };
 
-      // Copier les champs fournis (utiliser any pour les champs optionnels étendus)
-      const updates = updateData as any;
+      // Copier les champs fournis
+      const updates = updateData as Record<string, unknown>;
       if (data.firstName !== undefined) updateData.firstName = data.firstName;
       if (data.lastName !== undefined) updateData.lastName = data.lastName;
       if (data.role !== undefined) updateData.role = data.role;
@@ -569,8 +564,8 @@ class UserService {
         updatedAt: Timestamp.now(),
       };
 
-      // Copier les champs fournis (utiliser any pour les champs optionnels étendus)
-      const updates = updateData as any;
+      // Copier les champs fournis
+      const updates = updateData as Record<string, unknown>;
       if (data.displayName !== undefined) {
         updateData.displayName = data.displayName;
         // Extraire firstName et lastName

@@ -32,8 +32,9 @@ export const EditUserPage: React.FC = () => {
       await updateUser(id, data);
       toast.success('Utilisateur modifié avec succès !');
       navigate(`/app/users/${id}`);
-    } catch (error: any) {
-      toast.error(error.message || 'Erreur lors de la modification');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erreur lors de la modification';
+      toast.error(message);
     }
   };
 

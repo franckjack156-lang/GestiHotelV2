@@ -18,14 +18,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Separator } from '@/shared/components/ui/separator';
 import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
 import { DynamicListMultiSelect } from '@/shared/components/forms/DynamicListMultiSelect';
 import { UserRole, ROLE_LABELS, ROLE_DESCRIPTIONS } from '../types/role.types';
 import type { User, UserProfile, CreateUserData, UpdateUserData } from '../types/user.types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Shield, AlertTriangle } from 'lucide-react';
 import { AvatarUpload } from './AvatarUpload';
+import { toast } from 'sonner';
+
+// Mot de passe pour accéder au rôle éditeur (hash simple - en production, utiliser une solution plus sécurisée)
+const EDITOR_PASSWORD = 'GestiHotel2024!';
 
 // ============================================================================
 // SCHEMA VALIDATION
@@ -83,6 +95,13 @@ const UserFormComponent: React.FC<UserFormProps> = ({
   // État pour l'URL de la photo (gérée par AvatarUpload)
   const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
 
+  // État pour le dialogue de mot de passe éditeur
+  const [showEditorPasswordDialog, setShowEditorPasswordDialog] = useState(false);
+  const [editorPassword, setEditorPassword] = useState('');
+  const [editorPasswordError, setEditorPasswordError] = useState('');
+  const [pendingRole, setPendingRole] = useState<UserRole | null>(null);
+  const [isEditorUnlocked, setIsEditorUnlocked] = useState(user?.role === UserRole.EDITOR);
+
   const {
     register,
     handleSubmit,
@@ -129,6 +148,49 @@ const UserFormComponent: React.FC<UserFormProps> = ({
     },
     [setValue]
   );
+
+  // Handler pour le changement de rôle avec vérification du mot de passe pour editor
+  const handleRoleChange = useCallback(
+    (value: string) => {
+      const newRole = value as UserRole;
+
+      // Si on veut passer en editor et qu'on n'a pas encore déverrouillé
+      if (newRole === UserRole.EDITOR && !isEditorUnlocked) {
+        setPendingRole(newRole);
+        setEditorPassword('');
+        setEditorPasswordError('');
+        setShowEditorPasswordDialog(true);
+        return;
+      }
+
+      // Sinon, on change directement le rôle
+      setValue('role', newRole);
+    },
+    [isEditorUnlocked, setValue]
+  );
+
+  // Valider le mot de passe éditeur
+  const handleEditorPasswordValidate = useCallback(() => {
+    if (editorPassword === EDITOR_PASSWORD) {
+      setIsEditorUnlocked(true);
+      setShowEditorPasswordDialog(false);
+      if (pendingRole) {
+        setValue('role', pendingRole);
+        setPendingRole(null);
+      }
+      toast.success('Rôle éditeur déverrouillé');
+    } else {
+      setEditorPasswordError('Mot de passe incorrect');
+    }
+  }, [editorPassword, pendingRole, setValue]);
+
+  // Annuler le dialogue de mot de passe
+  const handleEditorPasswordCancel = useCallback(() => {
+    setShowEditorPasswordDialog(false);
+    setEditorPassword('');
+    setEditorPasswordError('');
+    setPendingRole(null);
+  }, []);
 
   /**
    * Gérer la soumission - memoized
@@ -307,7 +369,7 @@ const UserFormComponent: React.FC<UserFormProps> = ({
           <Label htmlFor="role">
             Rôle <span className="text-red-500">*</span>
           </Label>
-          <Select value={selectedRole} onValueChange={value => setValue('role', value as UserRole)}>
+          <Select value={selectedRole} onValueChange={handleRoleChange}>
             <SelectTrigger>
               <SelectValue placeholder="Sélectionner un rôle" />
             </SelectTrigger>
@@ -315,7 +377,13 @@ const UserFormComponent: React.FC<UserFormProps> = ({
               {Object.values(UserRole).map(role => (
                 <SelectItem key={role} value={role}>
                   <div className="flex flex-col items-start">
-                    <span className="font-medium">{ROLE_LABELS[role]}</span>
+                    <span className="font-medium flex items-center gap-1">
+                      {role === UserRole.EDITOR && <Shield className="h-3 w-3 text-indigo-600" />}
+                      {ROLE_LABELS[role]}
+                      {role === UserRole.EDITOR && (
+                        <span className="text-[10px] text-indigo-600 ml-1">(protégé)</span>
+                      )}
+                    </span>
                     <span className="text-xs text-gray-500">{ROLE_DESCRIPTIONS[role]}</span>
                   </div>
                 </SelectItem>
@@ -441,6 +509,68 @@ const UserFormComponent: React.FC<UserFormProps> = ({
           {isEditMode ? 'Mettre à jour' : "Créer l'utilisateur"}
         </Button>
       </div>
+
+      {/* Dialog de mot de passe pour le rôle éditeur */}
+      <Dialog open={showEditorPasswordDialog} onOpenChange={setShowEditorPasswordDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-indigo-600" />
+              Accès protégé
+            </DialogTitle>
+            <DialogDescription>
+              Le rôle <strong>Éditeur</strong> donne un accès complet à l'application, incluant
+              la gestion du support technique externe. Veuillez entrer le mot de passe pour
+              déverrouiller ce rôle.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="h-5 w-5 text-amber-600 flex-shrink-0" />
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Ce rôle est réservé au développeur/propriétaire de l'application.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="editorPassword">Mot de passe</Label>
+              <Input
+                id="editorPassword"
+                type="password"
+                value={editorPassword}
+                onChange={e => {
+                  setEditorPassword(e.target.value);
+                  setEditorPasswordError('');
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleEditorPasswordValidate();
+                  }
+                }}
+                placeholder="Entrez le mot de passe éditeur"
+                className={editorPasswordError ? 'border-red-500' : ''}
+                autoFocus
+              />
+              {editorPasswordError && (
+                <p className="text-sm text-red-500 mt-1">{editorPasswordError}</p>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={handleEditorPasswordCancel}>
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={handleEditorPasswordValidate}
+              disabled={!editorPassword}
+            >
+              <Shield className="mr-2 h-4 w-4" />
+              Déverrouiller
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 };

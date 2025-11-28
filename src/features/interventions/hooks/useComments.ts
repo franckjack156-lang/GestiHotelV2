@@ -180,7 +180,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       if (!user) return false;
       // L'auteur ou un admin peut supprimer
       if (comment.contentType === 'system') return false;
-      return comment.authorId === user.id || user.role === 'super_admin' || user.role === 'admin';
+      return comment.authorId === user.id || user.role === 'editor' || user.role === 'super_admin' || user.role === 'admin';
     },
     [user]
   );

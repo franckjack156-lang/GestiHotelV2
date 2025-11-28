@@ -26,9 +26,6 @@
  * Destination: src/shared/types/reference-lists.types.ts
  */
 
-// TODO: Timestamp imported but unused
-// import { Timestamp } from 'firebase/firestore';
-
 // ============================================================================
 // CORE TYPES
 // ============================================================================

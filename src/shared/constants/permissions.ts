@@ -13,6 +13,64 @@ import { UserRole, Permission } from '@/features/users/types/role.types';
  */
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   /**
+   * EDITOR - Développeur/Propriétaire - Accès total + support externe
+   */
+  [UserRole.EDITOR]: [
+    // Interventions
+    Permission.INTERVENTIONS_VIEW,
+    Permission.INTERVENTIONS_CREATE,
+    Permission.INTERVENTIONS_EDIT,
+    Permission.INTERVENTIONS_DELETE,
+    Permission.INTERVENTIONS_ASSIGN,
+    Permission.INTERVENTIONS_CLOSE,
+    Permission.INTERVENTIONS_EXPORT,
+
+    // Établissements
+    Permission.ESTABLISHMENTS_VIEW,
+    Permission.ESTABLISHMENTS_CREATE,
+    Permission.ESTABLISHMENTS_EDIT,
+    Permission.ESTABLISHMENTS_DELETE,
+    Permission.ESTABLISHMENTS_SWITCH,
+
+    // Utilisateurs
+    Permission.USERS_VIEW,
+    Permission.USERS_CREATE,
+    Permission.USERS_EDIT,
+    Permission.USERS_DELETE,
+    Permission.USERS_MANAGE_ROLES,
+
+    // Chambres
+    Permission.ROOMS_VIEW,
+    Permission.ROOMS_CREATE,
+    Permission.ROOMS_EDIT,
+    Permission.ROOMS_DELETE,
+    Permission.ROOMS_BLOCK,
+
+    // Analytics
+    Permission.ANALYTICS_VIEW,
+    Permission.ANALYTICS_EXPORT,
+    Permission.ANALYTICS_ADVANCED,
+
+    // Planning
+    Permission.PLANNING_VIEW,
+    Permission.PLANNING_EDIT,
+
+    // Templates
+    Permission.TEMPLATES_VIEW,
+    Permission.TEMPLATES_CREATE,
+    Permission.TEMPLATES_EDIT,
+    Permission.TEMPLATES_DELETE,
+
+    // Notifications
+    Permission.NOTIFICATIONS_VIEW,
+    Permission.NOTIFICATIONS_MANAGE,
+
+    // Paramètres
+    Permission.SETTINGS_VIEW,
+    Permission.SETTINGS_EDIT,
+  ],
+
+  /**
    * SUPER_ADMIN - Accès complet à tout
    */
   [UserRole.SUPER_ADMIN]: [
@@ -274,6 +332,7 @@ export const getRolePermissions = (role: UserRole): Permission[] => {
  * Labels des rôles (pour affichage)
  */
 export const ROLE_LABELS: Record<UserRole, string> = {
+  [UserRole.EDITOR]: 'Éditeur',
   [UserRole.SUPER_ADMIN]: 'Super Administrateur',
   [UserRole.ADMIN]: 'Administrateur',
   [UserRole.MANAGER]: 'Manager',
@@ -286,6 +345,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
  * Descriptions des rôles
  */
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  [UserRole.EDITOR]: 'Développeur/Propriétaire - Accès total + support technique externe',
   [UserRole.SUPER_ADMIN]: 'Accès complet à tous les établissements et toutes les fonctionnalités',
   [UserRole.ADMIN]: 'Administration complète de son établissement',
   [UserRole.MANAGER]: 'Gestion des interventions et supervision',

@@ -64,8 +64,10 @@ service firebase.storage {
      */
     function hasAccessToEstablishment(establishmentId) {
       let userData = firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+      let role = getUserRole();
       // Utiliser hasAny() pour vérifier si establishmentId est dans le tableau
-      return getUserRole() == 'super_admin' ||
+      // Editor et super_admin ont accès à tous les établissements
+      return role == 'editor' || role == 'super_admin' ||
              (userData.establishmentIds != null && userData.establishmentIds.hasAny([establishmentId]));
     }
     
@@ -133,12 +135,12 @@ service firebase.storage {
       // Modification : non autorisée (upload de nouvelles versions seulement)
       allow update: if false;
       
-      // Suppression : utilisateur avec accès à l'établissement et rôle admin/manager
-      allow delete: if isAuthenticated() && 
+      // Suppression : utilisateur avec accès à l'établissement et rôle editor/admin/manager
+      allow delete: if isAuthenticated() &&
                        hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+                       (getUserRole() in ['editor', 'super_admin', 'admin', 'manager']);
     }
-    
+
     // ============================================
     // SIGNATURES ÉLECTRONIQUES
     // Path: /establishments/{establishmentId}/interventions/{interventionId}/signatures/{signatureId}
@@ -158,12 +160,12 @@ service firebase.storage {
       // Modification : non autorisée
       allow update: if false;
       
-      // Suppression : seulement admin/super_admin
-      allow delete: if isAuthenticated() && 
+      // Suppression : seulement editor/admin/super_admin
+      allow delete: if isAuthenticated() &&
                        hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin']);
+                       (getUserRole() in ['editor', 'super_admin', 'admin']);
     }
-    
+
     // ============================================
     // DOCUMENTS D'INTERVENTIONS
     // Path: /establishments/{establishmentId}/interventions/{interventionId}/documents/{documentId}
@@ -183,12 +185,12 @@ service firebase.storage {
       // Modification : non autorisée
       allow update: if false;
       
-      // Suppression : admin/manager
-      allow delete: if isAuthenticated() && 
+      // Suppression : editor/admin/manager
+      allow delete: if isAuthenticated() &&
                        hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+                       (getUserRole() in ['editor', 'super_admin', 'admin', 'manager']);
     }
-    
+
     // ============================================
     // PHOTOS DE PROFIL UTILISATEURS
     // Path: /users/{userId}/profile/{photoId}
@@ -243,20 +245,34 @@ service firebase.storage {
     // EXPORTS (PDF, Excel)
     // Path: /establishments/{establishmentId}/exports/{exportId}
     // ============================================
-    
+
     match /establishments/{establishmentId}/exports/{exportId} {
       // Lecture : utilisateur avec accès (pour télécharger les exports générés)
-      allow read: if isAuthenticated() && 
+      allow read: if isAuthenticated() &&
                      hasAccessToEstablishment(establishmentId);
-      
+
       // Upload : via Cloud Functions uniquement (exports générés)
       allow create: if false;
-      
+
       // Modification : non autorisée
       allow update: if false;
-      
+
       // Suppression : auto-cleanup via Cloud Functions après 24h
       allow delete: if false;
+    }
+
+    // ============================================
+    // EXPORTS PROGRAMMÉS (générés par Cloud Functions)
+    // Path: /exports/{establishmentId}/{exportConfigId}/{fileName}
+    // Ces fichiers sont rendus publics par la Cloud Function
+    // ============================================
+
+    match /exports/{establishmentId}/{exportConfigId}/{fileName} {
+      // Lecture : publique (les fichiers sont rendus publics par la Cloud Function)
+      allow read: if true;
+
+      // Écriture : via Cloud Functions uniquement
+      allow create, update, delete: if false;
     }
     
     // ============================================
@@ -269,22 +285,22 @@ service firebase.storage {
       allow read: if isAuthenticated() && 
                      hasAccessToEstablishment(establishmentId);
       
-      // Upload : admin/manager, documents autorisés, max 5MB
-      allow create: if isAuthenticated() && 
+      // Upload : editor/admin/manager, documents autorisés, max 5MB
+      allow create: if isAuthenticated() &&
                        hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin', 'manager']) &&
+                       (getUserRole() in ['editor', 'super_admin', 'admin', 'manager']) &&
                        isAllowedDocument() &&
                        request.resource.size <= 5 * 1024 * 1024;
-      
-      // Modification : admin/manager
-      allow update: if isAuthenticated() && 
+
+      // Modification : editor/admin/manager
+      allow update: if isAuthenticated() &&
                        hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin', 'manager']);
-      
-      // Suppression : admin/manager
-      allow delete: if isAuthenticated() && 
+                       (getUserRole() in ['editor', 'super_admin', 'admin', 'manager']);
+
+      // Suppression : editor/admin/manager
+      allow delete: if isAuthenticated() &&
                        hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin', 'manager']);
+                       (getUserRole() in ['editor', 'super_admin', 'admin', 'manager']);
     }
     
     // ============================================

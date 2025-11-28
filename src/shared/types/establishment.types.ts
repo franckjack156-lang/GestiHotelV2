@@ -63,8 +63,9 @@ export interface EstablishmentFeatures {
   invoicing: FeatureConfig;
   financialReports: FeatureConfig;
 
-  // Analytique
+  // Analytique et Dashboard
   dashboard: FeatureConfig;
+  dashboardWidgets: FeatureConfig;
   customReports: FeatureConfig;
   advancedStatistics: FeatureConfig;
   dataExport: FeatureConfig;
@@ -72,6 +73,12 @@ export interface EstablishmentFeatures {
   // Chambres et espaces
   rooms: FeatureConfig;
   roomsQRCode: FeatureConfig;
+
+  // Utilisateurs
+  users: FeatureConfig;
+
+  // Corbeille et restauration
+  trash: FeatureConfig;
 
   // Intégrations
   apiAccess: FeatureConfig;
@@ -283,7 +290,7 @@ export const DEFAULT_ESTABLISHMENT_FEATURES: EstablishmentFeatures = {
   // Communication
   comments: { enabled: true },
   emailNotifications: { enabled: true },
-  pushNotifications: { enabled: false },
+  pushNotifications: { enabled: true },
   internalChat: { enabled: false },
 
   // Médias
@@ -303,8 +310,9 @@ export const DEFAULT_ESTABLISHMENT_FEATURES: EstablishmentFeatures = {
   invoicing: { enabled: false },
   financialReports: { enabled: false },
 
-  // Analytique
+  // Analytique et Dashboard
   dashboard: { enabled: true },
+  dashboardWidgets: { enabled: true },
   customReports: { enabled: false },
   advancedStatistics: { enabled: false },
   dataExport: { enabled: true },
@@ -312,6 +320,12 @@ export const DEFAULT_ESTABLISHMENT_FEATURES: EstablishmentFeatures = {
   // Chambres et espaces
   rooms: { enabled: true },
   roomsQRCode: { enabled: false },
+
+  // Utilisateurs
+  users: { enabled: true },
+
+  // Corbeille et restauration
+  trash: { enabled: true },
 
   // Intégrations
   apiAccess: { enabled: false },
@@ -336,6 +350,8 @@ export interface FeatureMetadata {
     | 'time'
     | 'analytics'
     | 'rooms'
+    | 'users'
+    | 'system'
     | 'integrations';
   isRequired?: boolean; // Fonctionnalité indispensable (ne peut pas être désactivée)
   requiresConfig?: boolean;
@@ -395,7 +411,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'FileText',
     category: 'interventions',
     dependsOn: ['interventions'],
-    badge: 'coming-soon',
+    badge: 'beta',
   },
   {
     key: 'interventionImportExport',
@@ -444,19 +460,17 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
   {
     key: 'pushNotifications',
     label: 'Notifications push',
-    description: 'Notifications mobiles en temps réel',
+    description: 'Centre de notifications et alertes en temps réel',
     icon: 'BellRing',
     category: 'communication',
-    requiresConfig: true,
-    badge: 'coming-soon',
   },
   {
     key: 'internalChat',
-    label: 'Chat interne',
-    description: 'Messagerie instantanée entre techniciens',
+    label: 'Messagerie interne',
+    description: 'Messagerie instantanée entre utilisateurs',
     icon: 'MessagesSquare',
     category: 'communication',
-    badge: 'coming-soon',
+    badge: 'beta',
   },
 
   // ==================================================
@@ -486,7 +500,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'PenTool',
     category: 'media',
     dependsOn: ['interventions'],
-    badge: 'premium',
+    badge: 'coming-soon',
   },
 
   // ==================================================
@@ -507,7 +521,6 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'Send',
     category: 'parts',
     dependsOn: ['parts'],
-    badge: 'new',
   },
   {
     key: 'inventory',
@@ -516,7 +529,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'Database',
     category: 'parts',
     dependsOn: ['parts'],
-    badge: 'coming-soon',
+    badge: 'beta',
   },
   {
     key: 'suppliers',
@@ -525,7 +538,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'Truck',
     category: 'parts',
     dependsOn: ['parts'],
-    badge: 'coming-soon',
+    badge: 'beta',
   },
 
   // ==================================================
@@ -554,7 +567,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'FileText',
     category: 'time',
     dependsOn: ['timeTracking'],
-    badge: 'premium',
+    badge: 'coming-soon',
   },
   {
     key: 'financialReports',
@@ -563,11 +576,11 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'DollarSign',
     category: 'time',
     dependsOn: ['invoicing'],
-    badge: 'premium',
+    badge: 'coming-soon',
   },
 
   // ==================================================
-  // ANALYTIQUE
+  // ANALYTIQUE ET DASHBOARD
   // ==================================================
   {
     key: 'dashboard',
@@ -575,6 +588,15 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     description: "Vue d'ensemble et statistiques de base",
     icon: 'BarChart3',
     category: 'analytics',
+    isRequired: true,
+  },
+  {
+    key: 'dashboardWidgets',
+    label: 'Widgets personnalisables',
+    description: 'Ajout et personnalisation de widgets sur le tableau de bord',
+    icon: 'LayoutGrid',
+    category: 'analytics',
+    dependsOn: ['dashboard'],
   },
   {
     key: 'customReports',
@@ -583,7 +605,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'FileBarChart',
     category: 'analytics',
     dependsOn: ['dashboard'],
-    badge: 'premium',
+    badge: 'coming-soon',
   },
   {
     key: 'advancedStatistics',
@@ -592,7 +614,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'TrendingUp',
     category: 'analytics',
     dependsOn: ['dashboard'],
-    badge: 'premium',
+    badge: 'coming-soon',
   },
   {
     key: 'dataExport',
@@ -619,7 +641,30 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     icon: 'QrCode',
     category: 'rooms',
     dependsOn: ['rooms'],
-    badge: 'coming-soon',
+    badge: 'beta',
+  },
+
+  // ==================================================
+  // UTILISATEURS
+  // ==================================================
+  {
+    key: 'users',
+    label: 'Gestion des utilisateurs',
+    description: 'CRUD des utilisateurs et attribution des rôles',
+    icon: 'Users',
+    category: 'users',
+    isRequired: true,
+  },
+
+  // ==================================================
+  // SYSTÈME
+  // ==================================================
+  {
+    key: 'trash',
+    label: 'Corbeille',
+    description: 'Récupération des éléments supprimés',
+    icon: 'Trash2',
+    category: 'system',
   },
 
   // ==================================================
@@ -631,7 +676,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     description: 'API REST pour intégrations externes',
     icon: 'Code',
     category: 'integrations',
-    badge: 'premium',
+    badge: 'coming-soon',
   },
   {
     key: 'webhooks',
@@ -639,7 +684,7 @@ export const FEATURES_CATALOG: FeatureMetadata[] = [
     description: 'Notifications automatiques vers systèmes tiers',
     icon: 'Webhook',
     category: 'integrations',
-    badge: 'premium',
+    badge: 'coming-soon',
   },
   {
     key: 'thirdPartyIntegrations',
@@ -661,8 +706,10 @@ export const FEATURE_CATEGORY_LABELS: Record<FeatureMetadata['category'], string
   media: 'Médias',
   parts: 'Pièces et stocks',
   time: 'Temps et facturation',
-  analytics: 'Analytique',
+  analytics: 'Analytique et Dashboard',
   rooms: 'Chambres',
+  users: 'Utilisateurs',
+  system: 'Système',
   integrations: 'Intégrations',
 };
 

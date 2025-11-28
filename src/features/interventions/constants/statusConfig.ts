@@ -9,8 +9,6 @@
  * - Labels et descriptions
  */
 
-// import { InterventionStatus } from '@/shared/types/status.types'; // TODO: Imported but unused - may be needed for type definitions
-
 export type StatusValue =
   | 'pending'
   | 'assigned'

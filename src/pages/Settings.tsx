@@ -57,8 +57,8 @@ export const SettingsPage = () => {
   const [activeTab, setActiveTab] = useState('profile');
 
   // Vérifier si l'utilisateur est admin
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-  const isSuperAdmin = user?.role === 'super_admin';
+  const isAdmin = user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
+  const isSuperAdmin = user?.role === 'editor' || user?.role === 'super_admin';
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-6 sm:pb-12">

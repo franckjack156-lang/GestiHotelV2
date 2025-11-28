@@ -24,7 +24,7 @@ export const DetailsTab = ({ intervention }: DetailsTabProps) => {
 
   // Permissions
   const canEdit =
-    user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
+    user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
   const isTechnician = user?.id === intervention.assignedTo || user?.role === 'technician';
   const canStartWork = intervention.status === 'pending' || intervention.status === 'assigned';
   const canPause = intervention.status === 'in_progress';

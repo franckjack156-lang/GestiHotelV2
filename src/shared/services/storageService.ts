@@ -21,6 +21,11 @@ import { logger } from '@/core/utils/logger';
 // TYPES
 // =============================================================================
 
+/** Interface pour les erreurs Firebase Storage */
+interface StorageError extends Error {
+  code?: string;
+}
+
 export interface UploadResult {
   url: string;
   path: string;
@@ -208,9 +213,10 @@ class StorageService {
       const storageRef = ref(storage, path);
       await deleteObject(storageRef);
       logger.info('Photo de profil supprimée', { path });
-    } catch (error: any) {
+    } catch (error) {
       // Ignorer l'erreur si le fichier n'existe pas
-      if (error.code === 'storage/object-not-found') {
+      const storageError = error as StorageError;
+      if (storageError.code === 'storage/object-not-found') {
         logger.warn('Photo de profil déjà supprimée ou inexistante', { path });
         return;
       }
@@ -299,8 +305,9 @@ class StorageService {
       const storageRef = ref(storage, path);
       await deleteObject(storageRef);
       logger.info("Logo d'établissement supprimé", { path });
-    } catch (error: any) {
-      if (error.code === 'storage/object-not-found') {
+    } catch (error) {
+      const storageError = error as StorageError;
+      if (storageError.code === 'storage/object-not-found') {
         logger.warn('Logo déjà supprimé ou inexistant', { path });
         return;
       }

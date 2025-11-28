@@ -62,7 +62,7 @@ export const MessagingPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isNewConversationOpen, setIsNewConversationOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // const [isSendingMessage, setIsSendingMessage] = useState(false); // TODO: Utiliser pour afficher un loader lors de l'envoi
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
@@ -135,7 +135,7 @@ export const MessagingPage = () => {
   const handleSendMessage = async (data: SendMessageData) => {
     if (!selectedConversationId || !userId) return;
 
-    // setIsSendingMessage(true); // TODO: Uncomment when using loader
+    setIsSendingMessage(true);
 
     try {
       await sendMessage(
@@ -147,7 +147,7 @@ export const MessagingPage = () => {
     } catch {
       toast.error("Erreur lors de l'envoi du message");
     } finally {
-      // setIsSendingMessage(false); // TODO: Uncomment when using loader
+      setIsSendingMessage(false);
     }
   };
 
@@ -353,6 +353,7 @@ export const MessagingPage = () => {
               onLoadMore={handleLoadMore}
               hasMore={hasMoreMessages}
               isLoading={isLoadingMore}
+              isSending={isSendingMessage}
               onReaction={handleReaction}
               onRemoveReaction={handleRemoveReaction}
               onTypingStart={handleTypingStart}

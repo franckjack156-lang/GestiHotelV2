@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { CreateInterventionData } from '../types/intervention.types';
+import type { CreateInterventionData, RecurrenceConfig } from '../types/intervention.types';
 import { InterventionPriority } from '@/shared/types/status.types';
 
 export interface WizardStep {
@@ -60,6 +60,10 @@ export interface WizardData extends Partial<CreateInterventionData> {
   isBlocking?: boolean;
   estimatedDuration?: number;
   photos?: File[];
+
+  // Récurrence
+  isRecurring?: boolean;
+  recurrenceConfig?: RecurrenceConfig | null;
 
   // Note: Les autres propriétés (priority, assignedTo, scheduledAt, internalNotes, etc.)
   // sont héritées de Partial<CreateInterventionData> avec leur type correct

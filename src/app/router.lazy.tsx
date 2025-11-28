@@ -137,10 +137,36 @@ const MigrationToolsPage = lazy(() =>
     default: module.MigrationToolsPage,
   }))
 );
+const IntegrationsPage = lazy(() =>
+  import('@/pages/settings/IntegrationsPage').then(module => ({
+    default: module.IntegrationsPage,
+  }))
+);
 
 // Diagnostic
 const DiagnosticPage = lazy(() =>
   import('@/pages/DiagnosticPage').then(module => ({ default: module.DiagnosticPage }))
+);
+
+// Documentation
+const DocumentationPage = lazy(() =>
+  import('@/pages/DocumentationPage').then(module => ({ default: module.DocumentationPage }))
+);
+
+// Support
+const MyTicketsPage = lazy(() =>
+  import('@/pages/support/MyTicketsPage').then(module => ({ default: module.MyTicketsPage }))
+);
+const TicketDetailPage = lazy(() =>
+  import('@/pages/support/TicketDetailPage').then(module => ({ default: module.TicketDetailPage }))
+);
+const AdminTicketsPage = lazy(() =>
+  import('@/pages/support/AdminTicketsPage').then(module => ({ default: module.AdminTicketsPage }))
+);
+const AdminTicketDetailPage = lazy(() =>
+  import('@/pages/support/AdminTicketDetailPage').then(module => ({
+    default: module.AdminTicketDetailPage,
+  }))
 );
 
 // Templates
@@ -360,11 +386,51 @@ export const router = createBrowserRouter([
         path: 'settings/migration',
         element: withSuspense(MigrationToolsPage),
       },
+      {
+        path: 'settings/integrations',
+        element: withSuspense(IntegrationsPage),
+      },
 
       // Diagnostic
       {
         path: 'diagnostic',
         element: withSuspense(DiagnosticPage),
+      },
+
+      // Documentation
+      {
+        path: 'documentation',
+        element: withSuspense(DocumentationPage),
+      },
+
+      // Support (Mes demandes)
+      {
+        path: 'support',
+        children: [
+          {
+            index: true,
+            element: withSuspense(MyTicketsPage),
+          },
+          {
+            path: ':id',
+            element: withSuspense(TicketDetailPage),
+          },
+        ],
+      },
+
+      // Admin Support (Gestion des tickets)
+      {
+        path: 'admin/support',
+        children: [
+          {
+            index: true,
+            element: withSuspense(AdminTicketsPage),
+          },
+          {
+            path: ':id',
+            element: withSuspense(AdminTicketDetailPage),
+          },
+        ],
       },
 
       // Templates

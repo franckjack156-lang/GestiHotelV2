@@ -25,6 +25,7 @@ import {
   Zap,
   ArrowLeft,
   ImageIcon,
+  Link2,
 } from 'lucide-react';
 import { LogoUpload } from '@/features/establishments/components/LogoUpload';
 import { LogoWideUpload } from '@/features/establishments/components/LogoWideUpload';
@@ -62,8 +63,8 @@ export const EstablishmentSettingsPage = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [savingLogo, setSavingLogo] = useState(false);
 
-  // Vérifier si l'utilisateur est Admin ou Super Admin
-  const isAdmin = hasRole('admin') || hasRole('super_admin');
+  // Vérifier si l'utilisateur est Admin, Super Admin ou Editor
+  const isAdmin = hasRole('editor') || hasRole('admin') || hasRole('super_admin');
 
   // Sync settings when establishment changes
   useEffect(() => {
@@ -242,6 +243,14 @@ export const EstablishmentSettingsPage = () => {
           >
             <Zap size={16} className="mr-2" />
             Fonctionnalités
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/app/settings/integrations')}
+            className="hover:bg-violet-50 dark:hover:bg-violet-950/20"
+          >
+            <Link2 size={16} className="mr-2" />
+            Intégrations
           </Button>
           {hasChanges && (
             <>

@@ -201,7 +201,7 @@ export const useUsers = () => {
       setError(null);
 
       const users =
-        user?.role === 'super_admin'
+        user?.role === 'editor' || user?.role === 'super_admin'
           ? await userService.getAllUsers(filters, sortOptions)
           : await userService.getUsersByEstablishment(establishmentId, filters, sortOptions);
 
