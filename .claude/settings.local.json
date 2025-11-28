@@ -98,7 +98,9 @@
       "Bash(npm run lint)",
       "Bash(timeout 60 npx tsc:*)",
       "Bash(dir:*)",
-      "Bash(timeout 90 npx tsc:*)"
+      "Bash(timeout 90 npx tsc:*)",
+      "Bash(git push:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []
