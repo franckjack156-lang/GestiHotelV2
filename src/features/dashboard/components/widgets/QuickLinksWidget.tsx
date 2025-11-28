@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 /**
  * QuickLinksWidget Component
  *
- * Widget avec des liens cliquables personnalisables
+ * Widget avec des liens cliquables personnalisables - Responsive
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
@@ -24,11 +23,7 @@ interface QuickLinksWidgetProps {
   columns?: number;
 }
 
-export const QuickLinksWidget = ({
-  title,
-  links = [],
-  columns = 2,
-}: QuickLinksWidgetProps) => {
+export const QuickLinksWidget = ({ title, links = [], columns = 2 }: QuickLinksWidgetProps) => {
   const handleLinkClick = (link: Link) => {
     if (link.openInNewTab !== false) {
       window.open(link.url, '_blank', 'noopener,noreferrer');
@@ -53,14 +48,14 @@ export const QuickLinksWidget = ({
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <LinkIcon size={20} />
-          {title}
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-2 flex-shrink-0">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <LinkIcon size={18} className="flex-shrink-0" />
+          <span className="truncate">{title}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 min-h-0 overflow-auto">
         {links.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
             <p className="text-sm">Aucun lien configuré</p>
@@ -72,15 +67,16 @@ export const QuickLinksWidget = ({
               gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
             }}
           >
-            {links.map((link) => (
+            {links.map(link => (
               <Button
                 key={link.id}
                 variant="outline"
-                className="h-auto py-3 px-4 justify-start items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="h-auto py-2 px-3 justify-start items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 overflow-hidden"
                 onClick={() => handleLinkClick(link)}
+                title={link.label}
               >
-                <ExternalLink size={18} className={getIconColor(link.color)} />
-                <span className="text-sm truncate">{link.label}</span>
+                <ExternalLink size={16} className={`flex-shrink-0 ${getIconColor(link.color)}`} />
+                <span className="text-xs sm:text-sm truncate">{link.label}</span>
               </Button>
             ))}
           </div>

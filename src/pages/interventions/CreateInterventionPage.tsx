@@ -287,14 +287,23 @@ export const CreateInterventionPage = () => {
   // Soumettre le formulaire
   const onSubmit = async (data: FormData) => {
     try {
+      // Mapper assignedTo (tableau du formulaire) vers assignedToIds (attendu par le service)
+      const { assignedTo, ...restData } = data;
+
+      // Construire les données de l'intervention
       const interventionData: CreateInterventionData = {
-        ...data,
+        ...restData,
         type: data.type as InterventionType,
         category: data.category as InterventionCategory,
         priority: data.priority as InterventionPriority,
         ...(data.scheduledAt && { scheduledAt: data.scheduledAt }),
         ...(hasFeature('photos') && selectedFiles.length > 0 && { photos: selectedFiles }),
       } as any;
+
+      // Ajouter explicitement assignedToIds si des techniciens sont sélectionnés
+      if (assignedTo && Array.isArray(assignedTo) && assignedTo.length > 0) {
+        interventionData.assignedToIds = assignedTo;
+      }
 
       const id = await createIntervention(interventionData);
 
@@ -885,7 +894,10 @@ export const CreateInterventionPage = () => {
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                <Label
+                  htmlFor="title"
+                  className="text-base font-semibold text-gray-900 dark:text-gray-100"
+                >
                   Titre de l'intervention *
                 </Label>
                 <Input
@@ -1040,7 +1052,10 @@ export const CreateInterventionPage = () => {
             {/* Chambre - Conditionnelle */}
             {watch('location')?.toLowerCase() === 'chambre' && (
               <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-950/20 rounded-lg border border-indigo-200 dark:border-indigo-800">
-                <Label htmlFor="roomNumber" className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                <Label
+                  htmlFor="roomNumber"
+                  className="text-sm font-medium text-indigo-900 dark:text-indigo-100"
+                >
                   Numéro de chambre
                 </Label>
                 <RoomAutocomplete

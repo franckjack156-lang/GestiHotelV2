@@ -40,7 +40,6 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       }
     },
     [key]
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   );
 
   return [storedValue, setValue] as const;

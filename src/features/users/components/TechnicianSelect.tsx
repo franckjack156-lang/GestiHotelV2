@@ -26,7 +26,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
-} from '@/components/ui/command';
+} from '@/shared/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import { Loader2, AlertCircle, Check, ChevronsUpDown, X } from 'lucide-react';

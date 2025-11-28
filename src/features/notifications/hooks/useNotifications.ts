@@ -2,19 +2,19 @@
  * useNotifications Hook
  *
  * Hook pour gérer les notifications avec temps réel
+ * Utilise le service unifié de notifications
  */
 
 import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useEstablishmentStore } from '@/features/establishments/stores/establishmentStore';
-import notificationService from '../services/notificationService';
+import notificationService, {
+  type Notification,
+  type NotificationFilters,
+  type NotificationSortOptions,
+  type NotificationStats,
+} from '@/shared/services/notificationService';
 import { logger } from '@/core/utils/logger';
-import type {
-  Notification,
-  NotificationFilters,
-  NotificationSortOptions,
-  NotificationStats,
-} from '../types/notification.types';
 
 interface UseNotificationsOptions {
   autoLoad?: boolean;
@@ -56,7 +56,7 @@ export const useNotifications = (
     setError(null);
 
     try {
-      const data = await notificationService.getNotifications(
+      const data = await notificationService.getUserNotifications(
         userId,
         establishmentId,
         filters,
@@ -140,8 +140,9 @@ export const useNotifications = (
       await notificationService.markAsClicked(notificationId);
       // Mise à jour locale
       setNotifications(prev =>
-        prev.map(n => (n.id === notificationId ? { ...n, clicked: true } : n))
+        prev.map(n => (n.id === notificationId ? { ...n, clicked: true, read: true } : n))
       );
+      setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       logger.error('Erreur markAsClicked:', err);
     }
@@ -150,15 +151,22 @@ export const useNotifications = (
   /**
    * Supprimer une notification
    */
-  const deleteNotification = useCallback(async (notificationId: string) => {
-    try {
-      await notificationService.deleteNotification(notificationId);
-      // Mise à jour locale
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-    } catch (err) {
-      logger.error('Erreur deleteNotification:', err);
-    }
-  }, []);
+  const deleteNotification = useCallback(
+    async (notificationId: string) => {
+      try {
+        const notification = notifications.find(n => n.id === notificationId);
+        await notificationService.deleteNotification(notificationId);
+        // Mise à jour locale
+        setNotifications(prev => prev.filter(n => n.id !== notificationId));
+        if (notification && !notification.read) {
+          setUnreadCount(prev => Math.max(0, prev - 1));
+        }
+      } catch (err) {
+        logger.error('Erreur deleteNotification:', err);
+      }
+    },
+    [notifications]
+  );
 
   /**
    * Supprimer toutes les notifications lues
@@ -192,8 +200,8 @@ export const useNotifications = (
   /**
    * Changer le tri
    */
-  const changeSort = useCallback((options: NotificationSortOptions) => {
-    setSortOptions(options);
+  const changeSort = useCallback((newOptions: NotificationSortOptions) => {
+    setSortOptions(newOptions);
   }, []);
 
   /**
@@ -206,59 +214,31 @@ export const useNotifications = (
   }, [loadNotifications, loadUnreadCount, loadStats]);
 
   /**
-   * Temps réel
+   * Temps réel - Notifications principales
    */
   useEffect(() => {
-    if (!options.realTime || !userId || !establishmentId) return;
+    if (!options.realTime || !userId) return;
+
+    setIsLoading(true);
 
     const unsubscribe = notificationService.subscribeToNotifications(
       userId,
-      establishmentId,
-      (notifications: Notification[]) => {
-        setNotifications(notifications);
+      (notifs: Notification[]) => {
+        setNotifications(notifs);
+        setUnreadCount(notifs.filter(n => !n.read).length);
         setIsLoading(false);
       },
-      {
-        filters,
-        sortOptions,
-        limitCount: options.limitCount,
-        onError: (error: Error) => {
-          setError(error.message);
-          setIsLoading(false);
-        },
-      }
+      options.limitCount || 50,
+      establishmentId
     );
 
     return () => {
       unsubscribe();
     };
-  }, [userId, establishmentId, filters, sortOptions, options.realTime, options.limitCount]);
+  }, [userId, establishmentId, options.realTime, options.limitCount]);
 
   /**
-   * Charger le compteur non lues en temps réel
-   */
-  useEffect(() => {
-    if (!userId || !establishmentId) return;
-
-    const unsubscribe = notificationService.subscribeToNotifications(
-      userId,
-      establishmentId,
-      (notifications: Notification[]) => {
-        setUnreadCount(notifications.length);
-      },
-      {
-        filters: { read: false },
-        sortOptions: { field: 'createdAt', order: 'desc' },
-      }
-    );
-
-    return () => {
-      unsubscribe();
-    };
-  }, [userId, establishmentId]);
-
-  /**
-   * Auto-chargement
+   * Auto-chargement (si pas de temps réel)
    */
   useEffect(() => {
     if (options.autoLoad && !options.realTime && userId && establishmentId) {
@@ -302,3 +282,5 @@ export const useNotifications = (
     hasUnread: unreadCount > 0,
   };
 };
+
+export default useNotifications;

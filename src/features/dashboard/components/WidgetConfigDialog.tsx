@@ -5,11 +5,23 @@
  */
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/shared/components/ui/dialog';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Switch } from '@/shared/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
@@ -25,21 +37,18 @@ interface WidgetConfigDialogProps {
   widget?: WidgetConfig; // Pour éditer un widget existant
 }
 
-export const WidgetConfigDialog = ({
-  open,
-  onClose,
-  onSave,
-  widget,
-}: WidgetConfigDialogProps) => {
+export const WidgetConfigDialog = ({ open, onClose, onSave, widget }: WidgetConfigDialogProps) => {
   const isEditing = !!widget;
 
-  const [config, setConfig] = useState<Partial<WidgetConfig>>(widget || {
-    title: '',
-    type: 'clock',
-    dataSource: 'static',
-    size: 'medium',
-    visible: true,
-  });
+  const [config, setConfig] = useState<Partial<WidgetConfig>>(
+    widget || {
+      title: '',
+      type: 'clock',
+      dataSource: 'static',
+      size: 'medium',
+      visible: true,
+    }
+  );
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -94,7 +103,7 @@ export const WidgetConfigDialog = ({
               <Label>Afficher les secondes</Label>
               <Switch
                 checked={config.clockOptions?.showSeconds !== false}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   setConfig({
                     ...config,
                     clockOptions: { ...config.clockOptions, showSeconds: checked },
@@ -107,7 +116,7 @@ export const WidgetConfigDialog = ({
               <Label>Afficher la date</Label>
               <Switch
                 checked={config.clockOptions?.showDate !== false}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   setConfig({
                     ...config,
                     clockOptions: { ...config.clockOptions, showDate: checked },
@@ -125,7 +134,7 @@ export const WidgetConfigDialog = ({
               <Label>Nombre de colonnes</Label>
               <Select
                 value={String(config.linksOptions?.columns || 2)}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setConfig({
                     ...config,
                     linksOptions: { ...config.linksOptions, columns: parseInt(value) },
@@ -177,7 +186,7 @@ export const WidgetConfigDialog = ({
                     <Input
                       placeholder="Label"
                       value={link.label}
-                      onChange={(e) => {
+                      onChange={e => {
                         const newLinks = [...(config.linksOptions?.links || [])];
                         newLinks[index] = { ...link, label: e.target.value };
                         setConfig({
@@ -189,7 +198,7 @@ export const WidgetConfigDialog = ({
                     <Input
                       placeholder="URL"
                       value={link.url}
-                      onChange={(e) => {
+                      onChange={e => {
                         const newLinks = [...(config.linksOptions?.links || [])];
                         newLinks[index] = { ...link, url: e.target.value };
                         setConfig({
@@ -202,7 +211,9 @@ export const WidgetConfigDialog = ({
                       size="sm"
                       variant="ghost"
                       onClick={() => {
-                        const newLinks = (config.linksOptions?.links || []).filter((_, i) => i !== index);
+                        const newLinks = (config.linksOptions?.links || []).filter(
+                          (_, i) => i !== index
+                        );
                         setConfig({
                           ...config,
                           linksOptions: { ...config.linksOptions, links: newLinks },
@@ -226,7 +237,7 @@ export const WidgetConfigDialog = ({
               <Textarea
                 placeholder="Votre note ici..."
                 value={config.noteOptions?.content || ''}
-                onChange={(e) =>
+                onChange={e =>
                   setConfig({
                     ...config,
                     noteOptions: { ...config.noteOptions, content: e.target.value },
@@ -240,10 +251,14 @@ export const WidgetConfigDialog = ({
               <Label>Couleur de fond</Label>
               <Select
                 value={config.noteOptions?.backgroundColor || 'yellow'}
-                onValueChange={(value) =>
+                onValueChange={value =>
                   setConfig({
                     ...config,
-                    noteOptions: { ...config.noteOptions, backgroundColor: value, textColor: value },
+                    noteOptions: {
+                      ...config.noteOptions,
+                      backgroundColor: value,
+                      textColor: value,
+                    },
                   })
                 }
               >
@@ -293,7 +308,7 @@ export const WidgetConfigDialog = ({
               <Input
                 placeholder="https://example.com"
                 value={config.iframeOptions?.url || ''}
-                onChange={(e) =>
+                onChange={e =>
                   setConfig({
                     ...config,
                     iframeOptions: { ...config.iframeOptions, url: e.target.value },
@@ -306,7 +321,7 @@ export const WidgetConfigDialog = ({
               <Label>Autoriser le plein écran</Label>
               <Switch
                 checked={config.iframeOptions?.allowFullscreen || false}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   setConfig({
                     ...config,
                     iframeOptions: { ...config.iframeOptions, allowFullscreen: checked },
@@ -319,13 +334,110 @@ export const WidgetConfigDialog = ({
               <Label>Autoriser les scripts (⚠️ Risque sécurité)</Label>
               <Switch
                 checked={config.iframeOptions?.allowScripts || false}
-                onCheckedChange={(checked) =>
+                onCheckedChange={checked =>
                   setConfig({
                     ...config,
                     iframeOptions: { ...config.iframeOptions, allowScripts: checked },
                   })
                 }
               />
+            </div>
+          </div>
+        );
+
+      case 'weather':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nom de la ville</Label>
+              <Input
+                placeholder="Paris, France"
+                value={config.weatherOptions?.location || ''}
+                onChange={e =>
+                  setConfig({
+                    ...config,
+                    weatherOptions: { ...config.weatherOptions, location: e.target.value },
+                  })
+                }
+              />
+              <p className="text-xs text-gray-500">Nom affiché sur le widget</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Latitude</Label>
+                <Input
+                  type="number"
+                  step="0.0001"
+                  placeholder="48.8566"
+                  value={config.weatherOptions?.latitude || ''}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      weatherOptions: {
+                        ...config.weatherOptions,
+                        latitude: e.target.value ? parseFloat(e.target.value) : undefined,
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Longitude</Label>
+                <Input
+                  type="number"
+                  step="0.0001"
+                  placeholder="2.3522"
+                  value={config.weatherOptions?.longitude || ''}
+                  onChange={e =>
+                    setConfig({
+                      ...config,
+                      weatherOptions: {
+                        ...config.weatherOptions,
+                        longitude: e.target.value ? parseFloat(e.target.value) : undefined,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Trouvez les coordonnées sur Google Maps (clic droit sur un lieu)
+            </p>
+
+            <div className="flex items-center justify-between">
+              <Label>Afficher les prévisions sur 5 jours</Label>
+              <Switch
+                checked={config.weatherOptions?.showForecast !== false}
+                onCheckedChange={checked =>
+                  setConfig({
+                    ...config,
+                    weatherOptions: { ...config.weatherOptions, showForecast: checked },
+                  })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Intervalle de rafraîchissement</Label>
+              <Select
+                value={String(config.weatherOptions?.refreshInterval || 30)}
+                onValueChange={value =>
+                  setConfig({
+                    ...config,
+                    weatherOptions: { ...config.weatherOptions, refreshInterval: parseInt(value) },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="60">1 heure</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         );
@@ -343,9 +455,7 @@ export const WidgetConfigDialog = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? 'Modifier le widget' : 'Ajouter un widget'}
-          </DialogTitle>
+          <DialogTitle>{isEditing ? 'Modifier le widget' : 'Ajouter un widget'}</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="general" className="w-full">
@@ -360,7 +470,7 @@ export const WidgetConfigDialog = ({
               <Input
                 placeholder="Mon widget"
                 value={config.title || ''}
-                onChange={(e) => setConfig({ ...config, title: e.target.value })}
+                onChange={e => setConfig({ ...config, title: e.target.value })}
               />
             </div>
 
@@ -368,15 +478,14 @@ export const WidgetConfigDialog = ({
               <Label>Type de widget</Label>
               <Select
                 value={config.type}
-                onValueChange={(value: WidgetType) =>
-                  setConfig({ ...config, type: value })
-                }
+                onValueChange={(value: WidgetType) => setConfig({ ...config, type: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="clock">Horloge</SelectItem>
+                  <SelectItem value="weather">Météo</SelectItem>
                   <SelectItem value="quick_links">Liens rapides</SelectItem>
                   <SelectItem value="button_grid">Grille de boutons</SelectItem>
                   <SelectItem value="note">Note</SelectItem>
@@ -390,9 +499,7 @@ export const WidgetConfigDialog = ({
               <Label>Taille</Label>
               <Select
                 value={config.size}
-                onValueChange={(value: WidgetSize) =>
-                  setConfig({ ...config, size: value })
-                }
+                onValueChange={(value: WidgetSize) => setConfig({ ...config, size: value })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -404,6 +511,19 @@ export const WidgetConfigDialog = ({
                   <SelectItem value="full">Pleine largeur</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div className="space-y-1">
+                <Label>Afficher sur mobile</Label>
+                <p className="text-xs text-gray-500">
+                  Par défaut, seuls les petits widgets s'affichent sur mobile
+                </p>
+              </div>
+              <Switch
+                checked={config.showOnMobile ?? config.size === 'small'}
+                onCheckedChange={checked => setConfig({ ...config, showOnMobile: checked })}
+              />
             </div>
           </TabsContent>
 

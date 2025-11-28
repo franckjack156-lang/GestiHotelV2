@@ -29,6 +29,7 @@ import {
   notifyInterventionAssigned,
   notifyInterventionUrgent,
   notifyStatusChanged,
+  notifyInterventionCompleted,
 } from '@/shared/services/notificationService';
 import { calculateDueDate, SLA_TARGETS } from './slaService';
 import {
@@ -149,9 +150,16 @@ export const createIntervention = async (
       interventionData.building = data.building;
     }
     // Gestion de l'assignation (support multi-techniciens + rétrocompatibilité)
-    if (data.assignedToIds && data.assignedToIds.length > 0) {
+    // S'assurer que assignedToIds est un tableau plat de strings
+    const createFlattenedAssignedToIds = data.assignedToIds
+      ? (Array.isArray(data.assignedToIds) ? data.assignedToIds : [data.assignedToIds])
+          .flat()
+          .filter((id): id is string => typeof id === 'string')
+      : [];
+
+    if (createFlattenedAssignedToIds.length > 0) {
       // Nouveau format: plusieurs techniciens
-      interventionData.assignedToIds = data.assignedToIds;
+      interventionData.assignedToIds = createFlattenedAssignedToIds;
 
       // Utiliser assignedAt fourni (import historique) ou serverTimestamp()
       interventionData.assignedAt = data.assignedAt
@@ -161,15 +169,18 @@ export const createIntervention = async (
         : serverTimestamp();
 
       // Utiliser assignedToNames fourni (import historique) ou récupérer depuis la base
-      if (data.assignedToNames && data.assignedToNames.length === data.assignedToIds.length) {
+      if (
+        data.assignedToNames &&
+        data.assignedToNames.length === createFlattenedAssignedToIds.length
+      ) {
         interventionData.assignedToNames = data.assignedToNames;
         interventionData.assignedToName = data.assignedToNames.join(', '); // Legacy
-        interventionData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
+        interventionData.assignedTo = createFlattenedAssignedToIds[0]; // Legacy (premier technicien)
       } else {
         // Récupérer les noms des techniciens depuis Firestore
         try {
           const techNames: string[] = [];
-          for (const techId of data.assignedToIds) {
+          for (const techId of createFlattenedAssignedToIds) {
             const techDoc = await getDoc(doc(db, 'users', techId));
             if (techDoc.exists()) {
               const techData = techDoc.data();
@@ -180,21 +191,19 @@ export const createIntervention = async (
           }
           interventionData.assignedToNames = techNames;
           interventionData.assignedToName = techNames.join(', '); // Legacy
-          interventionData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
+          interventionData.assignedTo = createFlattenedAssignedToIds[0]; // Legacy (premier technicien)
         } catch (error) {
           logger.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
-          interventionData.assignedToNames = data.assignedToIds.map(() => 'Inconnu');
+          interventionData.assignedToNames = createFlattenedAssignedToIds.map(() => 'Inconnu');
           interventionData.assignedToName = 'Inconnu';
-          interventionData.assignedTo = data.assignedToIds[0];
+          interventionData.assignedTo = createFlattenedAssignedToIds[0];
         }
       }
-    } else if (data.assignedTo) {
-      // Legacy format: un seul technicien
-      const assignedToIds = Array.isArray(data.assignedTo) ? data.assignedTo : [data.assignedTo];
-
+    } else if (data.assignedTo && typeof data.assignedTo === 'string') {
+      // Legacy format: un seul technicien (s'assurer que c'est une string)
       // Stocker dans les deux formats pour compatibilité
-      interventionData.assignedTo = assignedToIds[0];
-      interventionData.assignedToIds = assignedToIds;
+      interventionData.assignedTo = data.assignedTo;
+      interventionData.assignedToIds = [data.assignedTo];
 
       // Utiliser assignedAt fourni (import historique) ou serverTimestamp()
       interventionData.assignedAt = data.assignedAt
@@ -208,20 +217,18 @@ export const createIntervention = async (
         interventionData.assignedToName = data.assignedToName;
         interventionData.assignedToNames = [data.assignedToName];
       } else {
-        // Récupérer les noms depuis Firestore
+        // Récupérer le nom depuis Firestore pour le legacy format (un seul technicien)
         try {
-          const techNames: string[] = [];
-          for (const techId of assignedToIds) {
-            const techDoc = await getDoc(doc(db, 'users', techId));
-            if (techDoc.exists()) {
-              const techData = techDoc.data();
-              techNames.push(techData.displayName || techData.email || 'Inconnu');
-            } else {
-              techNames.push('Inconnu');
-            }
+          const techDoc = await getDoc(doc(db, 'users', data.assignedTo));
+          if (techDoc.exists()) {
+            const techData = techDoc.data();
+            const techName = techData.displayName || techData.email || 'Inconnu';
+            interventionData.assignedToName = techName;
+            interventionData.assignedToNames = [techName];
+          } else {
+            interventionData.assignedToName = 'Inconnu';
+            interventionData.assignedToNames = ['Inconnu'];
           }
-          interventionData.assignedToNames = techNames;
-          interventionData.assignedToName = techNames.join(', ');
         } catch (error) {
           logger.warn('⚠️ Impossible de récupérer le nom du technicien:', error);
           interventionData.assignedToNames = ['Inconnu'];
@@ -267,17 +274,10 @@ export const createIntervention = async (
     interventionData.slaStatus = 'on_track';
 
     // Si l'intervention est assignée à la création, marquer la première réponse
-    if (data.assignedTo) {
+    if (data.assignedTo || createFlattenedAssignedToIds.length > 0) {
       interventionData.firstResponseAt = serverTimestamp();
       interventionData.responseTime = 0; // Assignation immédiate
     }
-
-    // DEBUG: Vérifier qu'il n'y a pas de valeurs undefined
-    logger.debug('🔍 DEBUG - interventionData avant addDoc:', {
-      undefinedFields: Object.entries(interventionData)
-        .filter(([, value]) => value === undefined)
-        .map(([key]) => key),
-    });
 
     const docRef = await addDoc(collectionRef, interventionData);
     logger.debug('✅ Intervention créée:', docRef.id);
@@ -346,6 +346,29 @@ export const createIntervention = async (
       }
     }
 
+    // Notifier les techniciens assignés lors de la création
+    // Utiliser createFlattenedAssignedToIds (tableau plat de strings) pour éviter les problèmes de nested arrays
+    if (createFlattenedAssignedToIds.length > 0) {
+      try {
+        const creatorName = data.createdByName || 'Un utilisateur';
+        for (const technicianId of createFlattenedAssignedToIds) {
+          // Ne pas notifier si c'est le créateur lui-même qui s'est assigné
+          if (technicianId !== userId) {
+            await notifyInterventionAssigned(
+              technicianId,
+              establishmentId,
+              docRef.id,
+              data.title,
+              creatorName
+            );
+          }
+        }
+        logger.debug("✅ Notifications d'assignation envoyées");
+      } catch (error) {
+        logger.warn("⚠️ Impossible d'envoyer les notifications d'assignation:", error);
+      }
+    }
+
     return docRef.id;
   } catch (error) {
     logger.error('❌ Erreur création intervention:', error);
@@ -395,15 +418,21 @@ export const updateIntervention = async (
     if (data.building !== undefined) updateData.building = data.building;
 
     // Gestion de l'assignation (support multi-techniciens)
-    if (data.assignedToIds !== undefined && data.assignedToIds.length > 0) {
+    // S'assurer que assignedToIds est un tableau plat de strings
+    const flattenedAssignedToIds =
+      data.assignedToIds !== undefined
+        ? data.assignedToIds.flat().filter((id): id is string => typeof id === 'string')
+        : [];
+
+    if (flattenedAssignedToIds.length > 0) {
       // Nouveau format: plusieurs techniciens
-      updateData.assignedToIds = data.assignedToIds;
-      updateData.assignedTo = data.assignedToIds[0]; // Legacy (premier technicien)
+      updateData.assignedToIds = flattenedAssignedToIds;
+      updateData.assignedTo = flattenedAssignedToIds[0]; // Legacy (premier technicien)
 
       // Récupérer les noms des techniciens
       try {
         const techNames: string[] = [];
-        for (const techId of data.assignedToIds) {
+        for (const techId of flattenedAssignedToIds) {
           const techDoc = await getDoc(doc(db, 'users', techId));
           if (techDoc.exists()) {
             const techData = techDoc.data();
@@ -416,11 +445,11 @@ export const updateIntervention = async (
         updateData.assignedToName = techNames.join(', '); // Legacy
       } catch (error) {
         logger.warn('⚠️ Impossible de récupérer les noms des techniciens:', error);
-        updateData.assignedToNames = data.assignedToIds.map(() => 'Inconnu');
+        updateData.assignedToNames = flattenedAssignedToIds.map(() => 'Inconnu');
         updateData.assignedToName = 'Inconnu';
       }
-    } else if (data.assignedTo !== undefined) {
-      // Legacy format: un seul technicien
+    } else if (data.assignedTo !== undefined && typeof data.assignedTo === 'string') {
+      // Legacy format: un seul technicien (s'assurer que c'est une string)
       updateData.assignedTo = data.assignedTo;
       updateData.assignedToIds = [data.assignedTo];
 
@@ -556,6 +585,37 @@ export const changeStatus = async (
           logger.warn('⚠️ Erreur résolution blocage automatique:', error);
           // Ne pas bloquer la complétion de l'intervention si la résolution échoue
         }
+      }
+
+      // ========================================================================
+      // NOTIFICATION DE COMPLÉTION - Notifier le créateur
+      // ========================================================================
+      try {
+        // Notifier le créateur si différent de l'utilisateur qui complète
+        if (interventionData.createdBy && interventionData.createdBy !== userId) {
+          // Récupérer le nom de l'utilisateur qui complète
+          let completedByName = 'Utilisateur';
+          try {
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              completedByName = userData.displayName || userData.email || 'Utilisateur';
+            }
+          } catch {
+            // Ignorer
+          }
+
+          await notifyInterventionCompleted(
+            interventionData.createdBy,
+            establishmentId,
+            interventionId,
+            interventionTitle,
+            completedByName
+          );
+          logger.debug('✅ Notification de complétion envoyée au créateur');
+        }
+      } catch (error) {
+        logger.warn("⚠️ Impossible d'envoyer la notification de complétion:", error);
       }
     }
 

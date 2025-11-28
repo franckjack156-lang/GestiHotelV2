@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 import notificationService from '@/shared/services/notificationService';
 
 /**
@@ -14,6 +15,7 @@ import notificationService from '@/shared/services/notificationService';
  */
 export const useUnreadNotifications = () => {
   const { user } = useAuth();
+  const { currentEstablishment } = useCurrentEstablishment();
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -28,15 +30,17 @@ export const useUnreadNotifications = () => {
     const unsubscribe = notificationService.subscribeToNotifications(
       user.id,
       notifications => {
-        const count = notifications.filter(n => !n.isRead).length;
+        // Utiliser le champ 'read' (pas 'isRead')
+        const count = notifications.filter(n => !n.read).length;
         setUnreadCount(count);
         setIsLoading(false);
       },
-      50 // Limiter à 50 notifications pour la performance
+      50, // Limiter à 50 notifications pour la performance
+      currentEstablishment?.id
     );
 
     return () => unsubscribe();
-  }, [user?.id]);
+  }, [user?.id, currentEstablishment?.id]);
 
   return { unreadCount, isLoading };
 };

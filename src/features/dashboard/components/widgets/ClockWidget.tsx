@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 /**
  * ClockWidget Component
  *
- * Widget horloge avec plusieurs formats d'affichage
+ * Widget horloge avec plusieurs formats d'affichage - Responsive
  */
 
 import { useState, useEffect } from 'react';
@@ -27,9 +26,12 @@ export const ClockWidget = ({
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, showSeconds ? 1000 : 60000);
+    const timer = setInterval(
+      () => {
+        setCurrentTime(new Date());
+      },
+      showSeconds ? 1000 : 60000
+    );
 
     return () => clearInterval(timer);
   }, [showSeconds]);
@@ -46,12 +48,12 @@ export const ClockWidget = ({
     return new Intl.DateTimeFormat('fr-FR', options).format(currentTime);
   };
 
-  const formatDate = () => {
+  // Formatage court pour petits widgets
+  const formatDateShort = () => {
     const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
+      weekday: 'short',
       day: 'numeric',
+      month: 'short',
       ...(timezone && { timeZone: timezone }),
     };
 
@@ -59,28 +61,25 @@ export const ClockWidget = ({
   };
 
   if (format === 'analog') {
-    // Horloge analogique
     const hours = currentTime.getHours() % 12;
     const minutes = currentTime.getMinutes();
     const seconds = currentTime.getSeconds();
 
-    const hourAngle = (hours * 30) + (minutes * 0.5);
+    const hourAngle = hours * 30 + minutes * 0.5;
     const minuteAngle = minutes * 6;
     const secondAngle = seconds * 6;
 
     return (
-      <Card className="h-full flex flex-col">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Clock size={20} />
-            {title}
+      <Card className="h-full flex flex-col overflow-hidden">
+        <CardHeader className="pb-1 flex-shrink-0">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <Clock size={16} className="flex-shrink-0" />
+            <span className="truncate">{title}</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex flex-col items-center justify-center">
-          <div className="relative w-48 h-48">
-            {/* Cercle horloge */}
+        <CardContent className="flex-1 min-h-0 flex flex-col items-center justify-center p-2">
+          <div className="relative w-full max-w-[140px] aspect-square">
             <svg viewBox="0 0 200 200" className="w-full h-full">
-              {/* Fond */}
               <circle
                 cx="100"
                 cy="100"
@@ -91,7 +90,6 @@ export const ClockWidget = ({
                 className="text-gray-300 dark:text-gray-700"
               />
 
-              {/* Marques d'heures */}
               {Array.from({ length: 12 }).map((_, i) => {
                 const angle = (i * 30 - 90) * (Math.PI / 180);
                 const x1 = 100 + 85 * Math.cos(angle);
@@ -113,7 +111,6 @@ export const ClockWidget = ({
                 );
               })}
 
-              {/* Aiguille des heures */}
               <line
                 x1="100"
                 y1="100"
@@ -125,7 +122,6 @@ export const ClockWidget = ({
                 className="text-gray-700 dark:text-gray-300"
               />
 
-              {/* Aiguille des minutes */}
               <line
                 x1="100"
                 y1="100"
@@ -137,7 +133,6 @@ export const ClockWidget = ({
                 className="text-gray-800 dark:text-gray-200"
               />
 
-              {/* Aiguille des secondes */}
               {showSeconds && (
                 <line
                   x1="100"
@@ -151,14 +146,19 @@ export const ClockWidget = ({
                 />
               )}
 
-              {/* Centre */}
-              <circle cx="100" cy="100" r="5" fill="currentColor" className="text-gray-800 dark:text-gray-200" />
+              <circle
+                cx="100"
+                cy="100"
+                r="5"
+                fill="currentColor"
+                className="text-gray-800 dark:text-gray-200"
+              />
             </svg>
           </div>
 
           {showDate && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center capitalize">
-              {formatDate()}
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center capitalize truncate w-full">
+              {formatDateShort()}
             </p>
           )}
         </CardContent>
@@ -168,21 +168,21 @@ export const ClockWidget = ({
 
   // Horloge numérique
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock size={20} />
-          {title}
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-1 flex-shrink-0">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <Clock size={16} className="flex-shrink-0" />
+          <span className="truncate">{title}</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col items-center justify-center">
-        <div className="text-6xl font-bold text-gray-900 dark:text-white font-mono tabular-nums">
+      <CardContent className="flex-1 min-h-0 flex flex-col items-center justify-center p-2">
+        <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white font-mono tabular-nums">
           {formatTime()}
         </div>
 
         {showDate && (
-          <p className="text-lg text-gray-600 dark:text-gray-400 mt-4 text-center capitalize">
-            {formatDate()}
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-2 text-center capitalize truncate w-full">
+            {formatDateShort()}
           </p>
         )}
       </CardContent>

@@ -11,6 +11,7 @@ import {
   getDocs,
   addDoc,
   updateDoc,
+  deleteField,
   query,
   where,
   orderBy,
@@ -282,9 +283,31 @@ export const updateEstablishment = async (
 ): Promise<void> => {
   try {
     const updateData: Record<string, unknown> = {
-      ...data,
       updatedAt: serverTimestamp(),
     };
+
+    // Parcourir les données et gérer les valeurs undefined
+    // Pour les champs optionnels (logos, etc.), undefined signifie supprimer le champ
+    const fieldsToDelete = [
+      'logoUrl',
+      'logoWideUrl',
+      'primaryColor',
+      'secondaryColor',
+      'website',
+      'description',
+    ];
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined) {
+        // Si le champ fait partie des champs supprimables, utiliser deleteField()
+        if (fieldsToDelete.includes(key)) {
+          updateData[key] = deleteField();
+        }
+        // Sinon, ignorer les undefined (ne pas les envoyer à Firestore)
+      } else {
+        updateData[key] = value;
+      }
+    }
 
     await updateDoc(doc(db, ESTABLISHMENTS_COLLECTION, establishmentId), updateData);
   } catch (error) {

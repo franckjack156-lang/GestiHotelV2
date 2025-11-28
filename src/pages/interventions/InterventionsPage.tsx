@@ -8,7 +8,7 @@
  * - Table: Tableau compact et élégant avec couleurs de statut
  */
 
-import { useState, memo, useCallback, useMemo } from 'react';
+import { useState, memo, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -35,6 +35,8 @@ import {
   ArrowDown,
   ChevronLeft,
   ChevronRight,
+  RotateCcw,
+  Loader2,
 } from 'lucide-react';
 import { ReferenceDisplay } from '@/shared/components/ReferenceDisplay';
 import { Button } from '@/shared/components/ui/button';
@@ -81,6 +83,17 @@ import {
   type InterventionStatus,
 } from '@/shared/types/status.types';
 import { format, formatDistanceToNow } from 'date-fns';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+} from 'firebase/firestore';
+import { db } from '@/core/config/firebase';
 import { fr } from 'date-fns/locale';
 import { ImportDialog } from '@/shared/components/import/ImportDialog';
 import { useImportInterventions } from '@/shared/hooks/useImport';
@@ -92,6 +105,13 @@ import type { Intervention } from '@/features/interventions/types/intervention.t
 import { cn } from '@/shared/lib/utils';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
 
 const InterventionsPageComponent = () => {
   const navigate = useNavigate();
@@ -126,6 +146,10 @@ const InterventionsPageComponent = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [activeIntervention, setActiveIntervention] = useState<Intervention | null>(null);
   const [showCompletedInKanban, setShowCompletedInKanban] = useState(false);
+  const [trashDialogOpen, setTrashDialogOpen] = useState(false);
+  const [deletedInterventions, setDeletedInterventions] = useState<Intervention[]>([]);
+  const [loadingTrash, setLoadingTrash] = useState(false);
+  const [trashActionLoading, setTrashActionLoading] = useState<string | null>(null);
 
   const { deleteIntervention, isDeleting, updateIntervention } = useInterventionActions();
   const importHook = useImportInterventions(
@@ -220,6 +244,124 @@ const InterventionsPageComponent = () => {
 
   const handleRefresh = () => window.location.reload();
 
+  // === FONCTIONS CORBEILLE ===
+  const loadDeletedInterventions = useCallback(async () => {
+    if (!establishmentId) return;
+    setLoadingTrash(true);
+    try {
+      const interventionsRef = collection(db, 'establishments', establishmentId, 'interventions');
+      const q = query(interventionsRef, where('isDeleted', '==', true));
+      const snapshot = await getDocs(q);
+      const deleted = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Intervention[];
+      // Trier par date de suppression (plus récent en premier)
+      deleted.sort((a, b) => {
+        const dateA = (a as any).deletedAt?.toDate?.()?.getTime() || 0;
+        const dateB = (b as any).deletedAt?.toDate?.()?.getTime() || 0;
+        return dateB - dateA;
+      });
+      setDeletedInterventions(deleted);
+    } catch (error) {
+      toast.error('Erreur lors du chargement de la corbeille');
+    } finally {
+      setLoadingTrash(false);
+    }
+  }, [establishmentId]);
+
+  const handleRestoreIntervention = async (interventionId: string) => {
+    if (!establishmentId) return;
+    setTrashActionLoading(interventionId);
+    try {
+      const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
+      await updateDoc(docRef, {
+        isDeleted: false,
+        deletedAt: null,
+        deletedBy: null,
+        restoredAt: Timestamp.now(),
+        restoredBy: user?.id || 'unknown',
+      });
+      toast.success('Intervention restaurée');
+      await loadDeletedInterventions();
+      handleRefresh(); // Rafraîchir la liste principale
+    } catch (error) {
+      toast.error('Erreur lors de la restauration');
+    } finally {
+      setTrashActionLoading(null);
+    }
+  };
+
+  const handlePermanentDelete = async (interventionId: string) => {
+    if (!establishmentId) return;
+    if (!confirm('Supprimer définitivement cette intervention ? Cette action est irréversible.')) {
+      return;
+    }
+    setTrashActionLoading(interventionId);
+    try {
+      const docRef = doc(db, 'establishments', establishmentId, 'interventions', interventionId);
+      await deleteDoc(docRef);
+      toast.success('Intervention supprimée définitivement');
+      await loadDeletedInterventions();
+    } catch (error) {
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setTrashActionLoading(null);
+    }
+  };
+
+  const handleEmptyTrash = async () => {
+    if (!establishmentId) return;
+    if (deletedInterventions.length === 0) return;
+    if (
+      !confirm(
+        `Vider la corbeille ? Cette action supprimera définitivement ${deletedInterventions.length} intervention(s). Cette action est irréversible.`
+      )
+    ) {
+      return;
+    }
+    setTrashActionLoading('all');
+    try {
+      const toastId = toast.loading(
+        `Suppression de ${deletedInterventions.length} intervention(s)...`
+      );
+
+      // Supprimer par lots de 10
+      const batchSize = 10;
+      for (let i = 0; i < deletedInterventions.length; i += batchSize) {
+        const batch = deletedInterventions.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(intervention => {
+            const docRef = doc(
+              db,
+              'establishments',
+              establishmentId,
+              'interventions',
+              intervention.id
+            );
+            return deleteDoc(docRef);
+          })
+        );
+      }
+
+      toast.success(`${deletedInterventions.length} intervention(s) supprimée(s) définitivement`, {
+        id: toastId,
+      });
+      await loadDeletedInterventions();
+    } catch (error) {
+      toast.error('Erreur lors du vidage de la corbeille');
+    } finally {
+      setTrashActionLoading(null);
+    }
+  };
+
+  // Charger les interventions supprimées quand le dialog s'ouvre
+  useEffect(() => {
+    if (trashDialogOpen) {
+      loadDeletedInterventions();
+    }
+  }, [trashDialogOpen, loadDeletedInterventions]);
+
   const handleImportConfirm = async (data: Record<string, unknown>[]) => {
     try {
       await importHook.handleConfirm(data as any);
@@ -296,7 +438,8 @@ const InterventionsPageComponent = () => {
     });
   }, [interventions, searchQuery]);
 
-  const hasActiveFilters = filters.status || filters.priority || filters.type || filters.search || searchQuery;
+  const hasActiveFilters =
+    filters.status || filters.priority || filters.type || filters.search || searchQuery;
 
   // Grouper par statut pour le Kanban
   const kanbanColumns = {
@@ -306,8 +449,12 @@ const InterventionsPageComponent = () => {
     in_progress: filteredInterventions.filter(i => i.status === 'in_progress'),
     on_hold: filteredInterventions.filter(i => i.status === 'on_hold'),
     // Les interventions terminées ne sont affichées que si l'option est activée
-    completed: showCompletedInKanban ? filteredInterventions.filter(i => i.status === 'completed') : [],
-    validated: showCompletedInKanban ? filteredInterventions.filter(i => i.status === 'validated') : [],
+    completed: showCompletedInKanban
+      ? filteredInterventions.filter(i => i.status === 'completed')
+      : [],
+    validated: showCompletedInKanban
+      ? filteredInterventions.filter(i => i.status === 'validated')
+      : [],
     cancelled: filteredInterventions.filter(i => i.status === 'cancelled'),
   };
 
@@ -363,7 +510,9 @@ const InterventionsPageComponent = () => {
       {/* Header moderne */}
       <div className="flex flex-col gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Interventions</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            Interventions
+          </h1>
           <p className="mt-1 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             Gérez et suivez toutes vos interventions
           </p>
@@ -392,9 +541,26 @@ const InterventionsPageComponent = () => {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading} className="flex-1 sm:flex-initial">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              className="flex-1 sm:flex-initial"
+            >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline ml-2">Actualiser</span>
+            </Button>
+
+            {/* Bouton Corbeille */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTrashDialogOpen(true)}
+              className="flex-1 sm:flex-initial"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Corbeille</span>
             </Button>
 
             {/* Bouton SuperAdmin pour supprimer toutes les interventions */}
@@ -412,11 +578,20 @@ const InterventionsPageComponent = () => {
 
             {canCreateInterventions && (
               <>
-                <Button variant="outline" size="sm" onClick={() => setImportDialogOpen(true)} className="flex-1 sm:flex-initial">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setImportDialogOpen(true)}
+                  className="flex-1 sm:flex-initial"
+                >
                   <Upload className="h-4 w-4" />
                   <span className="hidden sm:inline ml-2">Importer</span>
                 </Button>
-                <Button size="sm" onClick={handleCreateIntervention} className="flex-1 sm:flex-initial">
+                <Button
+                  size="sm"
+                  onClick={handleCreateIntervention}
+                  className="flex-1 sm:flex-initial"
+                >
                   <Plus className="h-4 w-4 sm:mr-2" />
                   <span className="hidden xs:inline">Nouvelle</span>
                 </Button>
@@ -657,6 +832,111 @@ const InterventionsPageComponent = () => {
         />
       )}
 
+      {/* Dialog Corbeille */}
+      <Dialog open={trashDialogOpen} onOpenChange={setTrashDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              Corbeille ({deletedInterventions.length})
+            </DialogTitle>
+            <DialogDescription>
+              Les interventions supprimées sont conservées 30 jours avant suppression automatique
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto min-h-0">
+            {loadingTrash ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            ) : deletedInterventions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Trash2 className="h-12 w-12 text-gray-300 mb-4" />
+                <p className="text-gray-500">La corbeille est vide</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {deletedInterventions.map(intervention => {
+                  const deletedAt = (intervention as any).deletedAt?.toDate?.();
+                  return (
+                    <div
+                      key={intervention.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border"
+                    >
+                      <div className="flex-1 min-w-0 mr-4">
+                        <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                          {intervention.title}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Supprimé{' '}
+                          {deletedAt
+                            ? formatDistanceToNow(deletedAt, { addSuffix: true, locale: fr })
+                            : 'récemment'}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleRestoreIntervention(intervention.id)}
+                          disabled={trashActionLoading === intervention.id}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          {trashActionLoading === intervention.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <RotateCcw className="h-4 w-4" />
+                          )}
+                          <span className="hidden sm:inline ml-1">Restaurer</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handlePermanentDelete(intervention.id)}
+                          disabled={trashActionLoading === intervention.id}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          {trashActionLoading === intervention.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                          <span className="hidden sm:inline ml-1">Supprimer</span>
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-between pt-4 border-t">
+            {deletedInterventions.length > 0 ? (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleEmptyTrash}
+                disabled={trashActionLoading === 'all'}
+              >
+                {trashActionLoading === 'all' ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Trash2 className="h-4 w-4 mr-2" />
+                )}
+                Vider la corbeille
+              </Button>
+            ) : (
+              <div />
+            )}
+            <Button variant="outline" onClick={() => setTrashDialogOpen(false)}>
+              Fermer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog d'import */}
       <ImportDialog
         open={importDialogOpen}
@@ -779,26 +1059,24 @@ const KanbanViewComponent = ({
 
   return (
     <div className={gridClass}>
-      {visibleColumns.map(
-        ([status, config]) => {
-          const items = columns[status as InterventionStatus] || [];
+      {visibleColumns.map(([status, config]) => {
+        const items = columns[status as InterventionStatus] || [];
 
-          return (
-            <DroppableColumn key={status} id={status} config={config} items={items}>
-              {items.map(intervention => (
-                <DraggableCard
-                  key={intervention.id}
-                  intervention={intervention}
-                  onClick={() => onInterventionClick(intervention.id)}
-                  onEdit={e => onEdit(intervention.id, e)}
-                  onDelete={e => onDelete(intervention.id, e)}
-                  statusColor={config.color}
-                />
-              ))}
-            </DroppableColumn>
-          );
-        }
-      )}
+        return (
+          <DroppableColumn key={status} id={status} config={config} items={items}>
+            {items.map(intervention => (
+              <DraggableCard
+                key={intervention.id}
+                intervention={intervention}
+                onClick={() => onInterventionClick(intervention.id)}
+                onEdit={e => onEdit(intervention.id, e)}
+                onDelete={e => onDelete(intervention.id, e)}
+                statusColor={config.color}
+              />
+            ))}
+          </DroppableColumn>
+        );
+      })}
     </div>
   );
 };
@@ -1123,9 +1401,7 @@ const KanbanCardComponent = ({
           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800">
             <Clock className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />
           </div>
-          <span className="text-gray-500 dark:text-gray-400">
-            {timeAgo}
-          </span>
+          <span className="text-gray-500 dark:text-gray-400">{timeAgo}</span>
         </div>
       </div>
     </Card>
@@ -1164,17 +1440,20 @@ const TableViewComponent = ({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Fonction de tri
-  const handleSort = useCallback((field: SortField) => {
-    if (sortField === field) {
-      // Si on clique sur la même colonne, inverser la direction
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Nouvelle colonne, ordre croissant par défaut (sauf pour la date)
-      setSortField(field);
-      setSortDirection(field === 'date' ? 'desc' : 'asc');
-    }
-    setCurrentPage(1); // Retour à la première page après tri
-  }, [sortField]);
+  const handleSort = useCallback(
+    (field: SortField) => {
+      if (sortField === field) {
+        // Si on clique sur la même colonne, inverser la direction
+        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+      } else {
+        // Nouvelle colonne, ordre croissant par défaut (sauf pour la date)
+        setSortField(field);
+        setSortDirection(field === 'date' ? 'desc' : 'asc');
+      }
+      setCurrentPage(1); // Retour à la première page après tri
+    },
+    [sortField]
+  );
 
   // Trier les interventions
   const sortedInterventions = useMemo(() => {
@@ -1186,7 +1465,10 @@ const TableViewComponent = ({
           comparison = a.title.localeCompare(b.title, 'fr');
           break;
         case 'status':
-          comparison = (STATUS_LABELS[a.status] || '').localeCompare(STATUS_LABELS[b.status] || '', 'fr');
+          comparison = (STATUS_LABELS[a.status] || '').localeCompare(
+            STATUS_LABELS[b.status] || '',
+            'fr'
+          );
           break;
         case 'priority':
           const priorityOrder: Record<string, number> = {
@@ -1194,12 +1476,15 @@ const TableViewComponent = ({
             urgent: 4,
             high: 3,
             normal: 2,
-            low: 1
+            low: 1,
           };
           comparison = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
           break;
         case 'type':
-          comparison = (INTERVENTION_TYPE_LABELS[a.type] || '').localeCompare(INTERVENTION_TYPE_LABELS[b.type] || '', 'fr');
+          comparison = (INTERVENTION_TYPE_LABELS[a.type] || '').localeCompare(
+            INTERVENTION_TYPE_LABELS[b.type] || '',
+            'fr'
+          );
           break;
         case 'location':
           const locationA = a.roomNumber || a.location || a.building || '';
@@ -1243,22 +1528,22 @@ const TableViewComponent = ({
     return (
       <th
         className={cn(
-          "px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all",
-          "hover:bg-white/50 dark:hover:bg-gray-700/50",
-          isActive
-            ? "text-blue-700 dark:text-blue-400"
-            : "text-gray-600 dark:text-gray-400"
+          'px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all',
+          'hover:bg-white/50 dark:hover:bg-gray-700/50',
+          isActive ? 'text-blue-700 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
         )}
         onClick={() => handleSort(field)}
       >
         <div className="flex items-center gap-2 group">
           <span>{children}</span>
-          <Icon className={cn(
-            "h-3.5 w-3.5 transition-all",
-            isActive
-              ? "text-blue-600 dark:text-blue-400 opacity-100"
-              : "text-gray-400 opacity-0 group-hover:opacity-50"
-          )} />
+          <Icon
+            className={cn(
+              'h-3.5 w-3.5 transition-all',
+              isActive
+                ? 'text-blue-600 dark:text-blue-400 opacity-100'
+                : 'text-gray-400 opacity-0 group-hover:opacity-50'
+            )}
+          />
         </div>
       </th>
     );
@@ -1272,31 +1557,46 @@ const TableViewComponent = ({
             <tr>
               <SortableHeader field="title">Intervention</SortableHeader>
               <SortableHeader field="status">Statut</SortableHeader>
-              <th className="hidden md:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('priority')}>
+              <th
+                className="hidden md:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                onClick={() => handleSort('priority')}
+              >
                 <div className="flex items-center gap-2 group">
                   <span>Priorité</span>
                   <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
                 </div>
               </th>
-              <th className="hidden lg:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('type')}>
+              <th
+                className="hidden lg:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                onClick={() => handleSort('type')}
+              >
                 <div className="flex items-center gap-2 group">
                   <span>Type</span>
                   <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
                 </div>
               </th>
-              <th className="hidden sm:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('location')}>
+              <th
+                className="hidden sm:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                onClick={() => handleSort('location')}
+              >
                 <div className="flex items-center gap-2 group">
                   <span>Localisation</span>
                   <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
                 </div>
               </th>
-              <th className="hidden xl:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('assignedTo')}>
+              <th
+                className="hidden xl:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                onClick={() => handleSort('assignedTo')}
+              >
                 <div className="flex items-center gap-2 group">
                   <span>Assigné à</span>
                   <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
                 </div>
               </th>
-              <th className="hidden lg:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400" onClick={() => handleSort('date')}>
+              <th
+                className="hidden lg:table-cell px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer select-none transition-all hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400"
+                onClick={() => handleSort('date')}
+              >
                 <div className="flex items-center gap-2 group">
                   <span>Date</span>
                   <ArrowUpDown className="h-3.5 w-3.5 transition-all text-gray-400 opacity-0 group-hover:opacity-50" />
@@ -1484,7 +1784,9 @@ const TableViewComponent = ({
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
             <span className="text-gray-900 dark:text-white">{startIndex + 1}</span>
             {' - '}
-            <span className="text-gray-900 dark:text-white">{Math.min(endIndex, sortedInterventions.length)}</span>
+            <span className="text-gray-900 dark:text-white">
+              {Math.min(endIndex, sortedInterventions.length)}
+            </span>
             {' sur '}
             <span className="text-gray-900 dark:text-white">{sortedInterventions.length}</span>
             {' intervention'}
@@ -1516,8 +1818,8 @@ const TableViewComponent = ({
                       size="sm"
                       onClick={() => setCurrentPage(page)}
                       className={cn(
-                        "min-w-[36px] h-9",
-                        currentPage === page && "bg-blue-600 hover:bg-blue-700 text-white"
+                        'min-w-[36px] h-9',
+                        currentPage === page && 'bg-blue-600 hover:bg-blue-700 text-white'
                       )}
                     >
                       {page}

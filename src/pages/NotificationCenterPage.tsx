@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-import type { Notification, NotificationType } from '@/features/notifications/types/notification.types';
+import type { Notification, NotificationType } from '@/shared/services/notificationService';
 import { formatDistanceToNow, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -31,10 +31,14 @@ const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   intervention_completed: 'Intervention terminée',
   intervention_comment: 'Nouveau commentaire',
   intervention_overdue: 'Intervention en retard',
+  intervention_urgent: 'Intervention urgente',
   sla_at_risk: 'SLA à risque',
   sla_breached: 'SLA dépassé',
   message_received: 'Nouveau message',
   mention: 'Mention',
+  room_blocked: 'Chambre bloquée',
+  room_unblocked: 'Chambre débloquée',
+  validation_required: 'Validation requise',
   system: 'Système',
   other: 'Autre',
 };
@@ -92,9 +96,8 @@ export const NotificationCenterPage = () => {
     notifications.forEach(notif => {
       if (!notif.createdAt) return;
 
-      const date = notif.createdAt instanceof Timestamp
-        ? notif.createdAt.toDate()
-        : new Date(notif.createdAt);
+      const date =
+        notif.createdAt instanceof Timestamp ? notif.createdAt.toDate() : new Date(notif.createdAt);
 
       if (isToday(date)) {
         groups.today.push(notif);
@@ -241,9 +244,7 @@ export const NotificationCenterPage = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Taux de lecture</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {stats.readRate.toFixed(0)}%
-                  </p>
+                  <p className="text-2xl font-bold text-green-600">{stats.readRate.toFixed(0)}%</p>
                 </div>
                 <CheckCheck className="text-green-400 w-8 h-8" />
               </div>
@@ -304,12 +305,8 @@ export const NotificationCenterPage = () => {
         <Card>
           <CardContent className="p-12 text-center">
             <Bell className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Aucune notification
-            </h3>
-            <p className="text-gray-600">
-              Vous n'avez aucune notification pour le moment
-            </p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune notification</h3>
+            <p className="text-gray-600">Vous n'avez aucune notification pour le moment</p>
           </CardContent>
         </Card>
       ) : (
@@ -325,7 +322,7 @@ export const NotificationCenterPage = () => {
                     notification={notification}
                     onClick={() => handleNotificationClick(notification)}
                     onMarkAsRead={() => markAsRead(notification.id)}
-                    onDelete={(e) => handleDelete(notification.id, e)}
+                    onDelete={e => handleDelete(notification.id, e)}
                   />
                 ))}
               </div>
@@ -343,7 +340,7 @@ export const NotificationCenterPage = () => {
                     notification={notification}
                     onClick={() => handleNotificationClick(notification)}
                     onMarkAsRead={() => markAsRead(notification.id)}
-                    onDelete={(e) => handleDelete(notification.id, e)}
+                    onDelete={e => handleDelete(notification.id, e)}
                   />
                 ))}
               </div>
@@ -361,7 +358,7 @@ export const NotificationCenterPage = () => {
                     notification={notification}
                     onClick={() => handleNotificationClick(notification)}
                     onMarkAsRead={() => markAsRead(notification.id)}
-                    onDelete={(e) => handleDelete(notification.id, e)}
+                    onDelete={e => handleDelete(notification.id, e)}
                   />
                 ))}
               </div>
@@ -387,9 +384,10 @@ const NotificationItem = ({
   onMarkAsRead,
   onDelete,
 }: NotificationItemProps) => {
-  const createdDate = notification.createdAt instanceof Timestamp
-    ? notification.createdAt.toDate()
-    : new Date(notification.createdAt);
+  const createdDate =
+    notification.createdAt instanceof Timestamp
+      ? notification.createdAt.toDate()
+      : new Date(notification.createdAt);
 
   return (
     <Card
@@ -439,12 +437,7 @@ const NotificationItem = ({
                 <Check className="w-4 h-4" />
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              title="Supprimer"
-            >
+            <Button variant="ghost" size="sm" onClick={onDelete} title="Supprimer">
               <Trash2 className="w-4 h-4 text-red-500" />
             </Button>
           </div>

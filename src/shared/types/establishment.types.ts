@@ -102,7 +102,8 @@ export interface Establishment extends TimestampedDocument {
   totalFloors?: number;
 
   // Logo et branding
-  logoUrl?: string;
+  logoUrl?: string; // Logo carré (pour header, sélecteur)
+  logoWideUrl?: string; // Logo rectangulaire/horizontal (pour sidebar)
   primaryColor?: string;
   secondaryColor?: string;
 
@@ -219,6 +220,7 @@ export interface UpdateEstablishmentData {
   totalRooms?: number;
   totalFloors?: number;
   logoUrl?: string;
+  logoWideUrl?: string;
   primaryColor?: string;
   secondaryColor?: string;
   settings?: Partial<EstablishmentSettings>;

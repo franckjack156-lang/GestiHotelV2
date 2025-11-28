@@ -212,6 +212,14 @@ service cloud.firestore {
         allow update: if isAuthenticated();
         allow delete: if isAdmin();
       }
+
+      // Rooms subcollection (chambres de l'établissement)
+      match /rooms/{roomId} {
+        allow read: if isAuthenticated();
+        allow create: if isAdmin();
+        allow update: if isAuthenticated();
+        allow delete: if isAdmin();
+      }
     }
 
     // ============================================================================
@@ -284,12 +292,38 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       // Users can only read their own notifications
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      // Only system/admins can create notifications
-      allow create: if isAdmin();
+      // Authenticated users can create notifications (for assignment notifications, etc.)
+      allow create: if isAuthenticated();
       // Users can update their own notifications (mark as read)
       allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      // Only admins can delete notifications
-      allow delete: if isAdmin();
+      // Users can delete their own notifications, admins can delete any
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ============================================================================
+    // NOTIFICATION PREFERENCES COLLECTION
+    // ============================================================================
+
+    match /notificationPreferences/{preferenceId} {
+      // Format du preferenceId: userId_establishmentId
+      // Lecture : L'utilisateur peut lire ses propres préférences
+      allow read: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*');
+
+      // Création : L'utilisateur peut créer ses propres préférences
+      allow create: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*') &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Mise à jour : L'utilisateur peut mettre à jour ses propres préférences
+      allow update: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*');
+
+      // Suppression : L'utilisateur peut supprimer ses propres préférences
+      allow delete: if isAuthenticated() &&
+        preferenceId.matches(request.auth.uid + '_.*');
     }
 
     // ============================================================================

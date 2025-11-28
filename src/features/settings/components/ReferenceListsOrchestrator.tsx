@@ -18,7 +18,6 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
 import { Button } from '@/shared/components/ui/button';
 import {
   Card,
@@ -32,9 +31,6 @@ import { Alert, AlertDescription } from '@/shared/components/ui/alert';
 import {
   Copy,
   Download,
-  // Upload, // TODO: Imported but unused
-  Settings,
-  BarChart3,
   FileText,
   AlertCircle,
   CheckCircle2,
@@ -52,11 +48,11 @@ import {
 import { toast } from 'sonner';
 
 // Composants existants
-import { ReferenceListsManager } from './ReferenceListsManager';
+import { ReferenceListsManagerV2 } from './ReferenceListsManagerV2';
 import { DuplicateListsDialog } from './DuplicateListsDialog';
 
 // Hooks
-import { useAllReferenceLists, useImportExport, useReferenceListsDebug } from '@/shared/hooks/useReferenceLists';
+import { useAllReferenceLists, useImportExport } from '@/shared/hooks/useReferenceLists';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
@@ -89,7 +85,6 @@ export const ReferenceListsOrchestrator: React.FC = () => {
     autoLoad: true,
   });
   const { exportToExcel } = useImportExport();
-  const { logSummary, logCompact } = useReferenceListsDebug();
 
   // États
   const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
@@ -246,212 +241,83 @@ export const ReferenceListsOrchestrator: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* ========================================================================
-          MODERN HEADER WITH GRADIENT
-          ======================================================================== */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-violet-500 to-purple-600 p-8 shadow-lg">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,transparent,black)]" />
-        <div className="relative">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2.5 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <FileText className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-3xl font-bold text-white">Listes de Référence</h1>
-              </div>
-              <p className="text-blue-100 text-base max-w-2xl">
-                Gérez les listes déroulantes pour {currentEstablishment.name}
-              </p>
-            </div>
-
-            {/* Actions Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border-white/30 text-white shadow-lg"
-                  disabled={isLoading}
-                >
-                  <MoreVertical className="h-4 w-4 mr-2" />
-                  Actions
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuItem
-                  onClick={e => {
-                    logger.debug('🟡 DropdownMenuItem onClick déclenché', e);
-                    handleSyncMissingLists();
-                  }}
-                  disabled={isSyncing || isLoading}
-                >
-                  {isSyncing ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Synchronisation...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Synchroniser les listes
-                    </>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleExportAll} disabled={isExporting || isLoading}>
-                  {isExporting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Export...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-4 w-4" />
-                      Exporter en Excel
-                    </>
-                  )}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsTemplateDialogOpen(true)}
-                  disabled={isLoading}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Appliquer un template
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setIsDuplicateDialogOpen(true)}
-                  disabled={isLoading || !establishments || establishments.length < 2}
-                >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Dupliquer vers...
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => {
-                    logCompact();
-                    toast.success('Log compact affiché dans la console');
-                  }}
-                  disabled={isLoading}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Log compact (console)
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    logSummary();
-                    toast.success('Log détaillé affiché dans la console');
-                  }}
-                  disabled={isLoading}
-                >
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Log détaillé (console)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Compact Stats Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-blue-100">Listes</span>
-                <Sparkles className="h-3.5 w-3.5 text-blue-200" />
-              </div>
-              <div className="text-2xl font-bold text-white">{stats.totalLists}</div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-blue-100">Items</span>
-                <BarChart3 className="h-3.5 w-3.5 text-blue-200" />
-              </div>
-              <div className="text-2xl font-bold text-white">{stats.totalItems}</div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-blue-100">Actifs</span>
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-300" />
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-white">{stats.activeItems}</span>
-                <Badge
-                  variant="secondary"
-                  className="text-xs bg-white/20 text-white border-white/30"
-                >
-                  {stats.totalItems > 0
-                    ? Math.round((stats.activeItems / stats.totalItems) * 100)
-                    : 0}
-                  %
-                </Badge>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-blue-100">Modifié</span>
-                <Settings className="h-3.5 w-3.5 text-blue-200" />
-              </div>
-              <div className="text-lg font-bold text-white">
-                {stats.lastModified
-                  ? new Date(stats.lastModified).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: 'short',
-                    })
-                  : 'N/A'}
-              </div>
-            </div>
-          </div>
+    <div className="space-y-4">
+      {/* Header compact avec actions */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Listes de Référence</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            {stats.totalLists} listes · {stats.activeItems}/{stats.totalItems} items actifs
+          </p>
         </div>
+
+        {/* Actions Dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" disabled={isLoading}>
+              <MoreVertical className="h-4 w-4 mr-2" />
+              Actions
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              onClick={e => {
+                logger.debug('🟡 DropdownMenuItem onClick déclenché', e);
+                handleSyncMissingLists();
+              }}
+              disabled={isSyncing || isLoading}
+            >
+              {isSyncing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Synchronisation...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Synchroniser les listes
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleExportAll} disabled={isExporting || isLoading}>
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Export...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exporter en Excel
+                </>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsTemplateDialogOpen(true)} disabled={isLoading}>
+              <FileText className="mr-2 h-4 w-4" />
+              Appliquer un template
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setIsDuplicateDialogOpen(true)}
+              disabled={isLoading || !establishments || establishments.length < 2}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Dupliquer vers...
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* ========================================================================
-          TABS PRINCIPALES
-          ======================================================================== */}
-      <Tabs defaultValue="manage" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="manage">
-            <Settings className="mr-2 h-4 w-4" />
-            Gérer
-          </TabsTrigger>
-          <TabsTrigger value="analytics">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Statistiques
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Tab Gestion */}
-        <TabsContent value="manage" className="space-y-4">
-          {error ? (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          ) : (
-            <ReferenceListsManager />
-          )}
-        </TabsContent>
-
-        {/* Tab Analytics */}
-        <TabsContent value="analytics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Utilisation des Listes</CardTitle>
-              <CardDescription>
-                Statistiques d'utilisation des items dans l'application
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Fonctionnalité disponible prochainement...
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {/* Contenu principal */}
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : (
+        <ReferenceListsManagerV2 />
+      )}
 
       {/* ========================================================================
           DIALOGS

@@ -24,6 +24,7 @@ import {
   Power,
   PowerOff,
   Mail,
+  MailCheck,
   Phone,
   Briefcase,
   Calendar,
@@ -32,10 +33,13 @@ import {
   Wrench,
   CheckCircle2,
   XCircle,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/core/config/firebase';
 
 export const UserDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +51,35 @@ export const UserDetailsPage = () => {
   const user = userData as UserProfile | undefined;
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isSendingVerification, setIsSendingVerification] = useState(false);
+
+  /**
+   * Envoyer un email de vérification
+   */
+  const handleSendVerificationEmail = async () => {
+    if (!user?.id) return;
+
+    setIsSendingVerification(true);
+    try {
+      const sendVerificationEmailFn = httpsCallable<
+        { userId: string },
+        { success: boolean; message: string; verificationLink?: string }
+      >(functions, 'sendVerificationEmail');
+
+      const result = await sendVerificationEmailFn({ userId: user.id });
+
+      if (result.data.success) {
+        toast.success(result.data.message);
+      } else {
+        toast.error(result.data.message || "Erreur lors de l'envoi");
+      }
+    } catch (error: any) {
+      const errorMessage = error.message || "Erreur lors de l'envoi de l'email de vérification";
+      toast.error(errorMessage);
+    } finally {
+      setIsSendingVerification(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="text-center py-12">Chargement...</div>;
@@ -321,7 +354,7 @@ export const UserDetailsPage = () => {
 
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Statut du compte</p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <StatusBadge status={user.isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE} />
                   {user.emailVerified ? (
                     <Badge variant="outline" className="text-green-600 border-green-600">
@@ -329,10 +362,31 @@ export const UserDetailsPage = () => {
                       Email vérifié
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-orange-600 border-orange-600">
-                      <XCircle className="h-3 w-3 mr-1" />
-                      Email non vérifié
-                    </Badge>
+                    <>
+                      <Badge variant="outline" className="text-orange-600 border-orange-600">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Email non vérifié
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleSendVerificationEmail}
+                        disabled={isSendingVerification}
+                        className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                      >
+                        {isSendingVerification ? (
+                          <>
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            Envoi...
+                          </>
+                        ) : (
+                          <>
+                            <MailCheck className="h-3 w-3 mr-1" />
+                            Envoyer email de vérification
+                          </>
+                        )}
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>

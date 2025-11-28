@@ -62,14 +62,38 @@ const initAuthListener = () => {
           // Track login
           trackUserLogin(userData.role);
 
-          // Mettre à jour lastLoginAt
+          // Mettre à jour lastLoginAt et synchroniser emailVerified depuis Firebase Auth
           try {
-            await updateDoc(doc(db, 'users', firebaseUser.uid), {
+            const updateData: Record<string, unknown> = {
               lastLoginAt: Timestamp.now(),
-            });
+            };
+
+            // Debug: afficher les états actuels
+            console.log(
+              '🔍 [AuthProvider] Firebase Auth emailVerified:',
+              firebaseUser.emailVerified
+            );
+            console.log(
+              '🔍 [AuthProvider] Firestore userData.emailVerified:',
+              userData.emailVerified
+            );
+
+            // Synchroniser emailVerified de Firebase Auth vers Firestore
+            // Si Firebase Auth indique que l'email est vérifié mais pas Firestore, on met à jour
+            if (firebaseUser.emailVerified && !userData.emailVerified) {
+              console.log('✅ [AuthProvider] Synchronisation emailVerified: true');
+              updateData.emailVerified = true;
+              // Mettre à jour le store également
+              useAuthStore.getState().updateUser({ emailVerified: true });
+              logger.info('Email verified status synchronized from Firebase Auth');
+            }
+
+            await updateDoc(doc(db, 'users', firebaseUser.uid), updateData);
+            console.log('✅ [AuthProvider] Firestore mis à jour avec:', updateData);
           } catch (updateError) {
             // Ne pas bloquer la connexion si la mise à jour échoue
-            logger.error('Failed to update lastLoginAt:', updateError);
+            console.error('❌ [AuthProvider] Erreur mise à jour:', updateError);
+            logger.error('Failed to update user data:', updateError);
           }
         } else {
           setUser(null);

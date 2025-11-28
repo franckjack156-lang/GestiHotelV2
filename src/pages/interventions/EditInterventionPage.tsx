@@ -146,7 +146,8 @@ export const EditInterventionPage = () => {
         roomNumber: data.roomNumber,
         floor: data.floor ? parseInt(data.floor) : undefined,
         building: data.building,
-        assignedTo: data.assignedTo,
+        // Mapper assignedTo (tableau du formulaire) vers assignedToIds (attendu par le service)
+        ...(data.assignedTo && data.assignedTo.length > 0 && { assignedToIds: data.assignedTo }),
         internalNotes: data.internalNotes,
         resolutionNotes: data.resolutionNotes,
       };

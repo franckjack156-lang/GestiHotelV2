@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * CustomizeDashboardDialog Component
  *
@@ -109,6 +109,14 @@ const DATA_SOURCE_LABELS: Record<WidgetDataSource, string> = {
   avg_response_time: 'Temps de réponse moyen',
   status_distribution: 'Distribution des statuts',
   technician_performance: 'Performance techniciens',
+  // Nouveaux widgets
+  resolution_rate: 'Taux de résolution',
+  location_stats: 'Stats par localisation',
+  interventions_by_floor: 'Interventions par étage',
+  interventions_by_building: 'Interventions par bâtiment',
+  pending_validation: 'En attente de validation',
+  problematic_rooms: 'Chambres problématiques',
+  today_scheduled: "Planifiées aujourd'hui",
   custom: 'Personnalisé',
   static: 'Statique',
 };

@@ -4,10 +4,12 @@
     "interventions": "Interventions",
     "templates": "Templates",
     "suppliers": "Suppliers",
+    "inventory": "Inventory",
     "rooms": "Rooms",
     "planning": "Planning",
     "notifications": "Notifications",
     "messaging": "Messaging",
+    "trash": "Trash",
     "settings": "Settings"
   },
   "header": {

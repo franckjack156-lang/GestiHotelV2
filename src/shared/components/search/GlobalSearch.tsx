@@ -27,7 +27,7 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from '@/components/ui/command';
+} from '@/shared/components/ui/command';
 import { useInterventions } from '@/features/interventions/hooks/useInterventions';
 import { useUsers } from '@/features/users/hooks/useUsers';
 import { useRooms } from '@/features/rooms/hooks/useRooms';
@@ -137,7 +137,7 @@ export const GlobalSearch = () => {
   const interventionResults: SearchResult[] = useMemo(() => {
     if (!interventions) return [];
 
-    return interventions.slice(0, 5).map((intervention) => ({
+    return interventions.slice(0, 5).map(intervention => ({
       id: intervention.id,
       title: intervention.title,
       subtitle: `#${intervention.reference || intervention.id.slice(0, 8)} • ${intervention.status}`,
@@ -153,7 +153,7 @@ export const GlobalSearch = () => {
   const userResults: SearchResult[] = useMemo(() => {
     if (!users) return [];
 
-    return users.slice(0, 5).map((user) => ({
+    return users.slice(0, 5).map(user => ({
       id: user.id,
       title: user.displayName || user.email,
       subtitle: user.role,
@@ -169,7 +169,7 @@ export const GlobalSearch = () => {
   const roomResults: SearchResult[] = useMemo(() => {
     if (!rooms) return [];
 
-    return rooms.slice(0, 5).map((room) => ({
+    return rooms.slice(0, 5).map(room => ({
       id: room.id,
       title: `Chambre ${room.number}`,
       subtitle: `${room.type} • Étage ${room.floor}`,
@@ -195,19 +195,19 @@ export const GlobalSearch = () => {
     const lowerQuery = query.toLowerCase();
 
     return {
-      pages: PAGES.filter((page) => page.title.toLowerCase().includes(lowerQuery)),
+      pages: PAGES.filter(page => page.title.toLowerCase().includes(lowerQuery)),
       interventions: interventionResults.filter(
-        (result) =>
+        result =>
           result.title.toLowerCase().includes(lowerQuery) ||
           result.subtitle?.toLowerCase().includes(lowerQuery)
       ),
       users: userResults.filter(
-        (result) =>
+        result =>
           result.title.toLowerCase().includes(lowerQuery) ||
           result.subtitle?.toLowerCase().includes(lowerQuery)
       ),
       rooms: roomResults.filter(
-        (result) =>
+        result =>
           result.title.toLowerCase().includes(lowerQuery) ||
           result.subtitle?.toLowerCase().includes(lowerQuery)
       ),
@@ -237,7 +237,7 @@ export const GlobalSearch = () => {
         {filteredResults.pages.length > 0 && (
           <>
             <CommandGroup heading="Pages">
-              {filteredResults.pages.map((page) => (
+              {filteredResults.pages.map(page => (
                 <CommandItem key={page.id} onSelect={() => handleSelect(page.url)}>
                   {page.icon}
                   <span className="ml-2">{page.title}</span>
@@ -252,7 +252,7 @@ export const GlobalSearch = () => {
         {filteredResults.interventions.length > 0 && (
           <>
             <CommandGroup heading="Interventions">
-              {filteredResults.interventions.map((result) => (
+              {filteredResults.interventions.map(result => (
                 <CommandItem key={result.id} onSelect={() => handleSelect(result.url)}>
                   {result.icon}
                   <div className="ml-2 flex flex-col">
@@ -272,7 +272,7 @@ export const GlobalSearch = () => {
         {filteredResults.users.length > 0 && (
           <>
             <CommandGroup heading="Utilisateurs">
-              {filteredResults.users.map((result) => (
+              {filteredResults.users.map(result => (
                 <CommandItem key={result.id} onSelect={() => handleSelect(result.url)}>
                   {result.icon}
                   <div className="ml-2 flex flex-col">
@@ -291,7 +291,7 @@ export const GlobalSearch = () => {
         {/* Chambres */}
         {filteredResults.rooms.length > 0 && (
           <CommandGroup heading="Chambres">
-            {filteredResults.rooms.map((result) => (
+            {filteredResults.rooms.map(result => (
               <CommandItem key={result.id} onSelect={() => handleSelect(result.url)}>
                 {result.icon}
                 <div className="ml-2 flex flex-col">

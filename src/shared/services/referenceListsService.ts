@@ -199,18 +199,21 @@ export const getAllLists = async (
       lastModified: data.lastModified?.toDate
         ? data.lastModified.toDate()
         : data.lastModified || new Date(),
-      lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
-        acc[key] = {
-          ...config,
-          items: (config.items || []).map((item: any) => ({
-            ...item,
-            createdAt: item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt,
-            updatedAt: item.updatedAt?.toDate ? item.updatedAt.toDate() : item.updatedAt,
-            lastUsed: item.lastUsed?.toDate ? item.lastUsed.toDate() : item.lastUsed,
-          })),
-        };
-        return acc;
-      }, {} as Record<string, ListConfig>),
+      lists: Object.entries(data.lists || {}).reduce(
+        (acc, [key, config]: [string, any]) => {
+          acc[key] = {
+            ...config,
+            items: (config.items || []).map((item: any) => ({
+              ...item,
+              createdAt: item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt,
+              updatedAt: item.updatedAt?.toDate ? item.updatedAt.toDate() : item.updatedAt,
+              lastUsed: item.lastUsed?.toDate ? item.lastUsed.toDate() : item.lastUsed,
+            })),
+          };
+          return acc;
+        },
+        {} as Record<string, ListConfig>
+      ),
     } as EstablishmentReferenceLists;
   } catch (error) {
     logger.error('❌ Erreur chargement listes:', error);
@@ -332,7 +335,7 @@ export const deleteList = async (
       throw new Error('Impossible de supprimer une liste système');
     }
 
-    const { [listKey]: removed, ...remainingLists } = allLists.lists;
+    const { [listKey]: _removed, ...remainingLists } = allLists.lists;
 
     const docRef = getListsDocPath(establishmentId);
     await updateDoc(docRef, {
@@ -987,20 +990,24 @@ export const validateItem = (item: Partial<ReferenceItem>, listKey?: ListKey): V
   const minLength = allowShortValues ? 1 : rules.value.minLength;
 
   // Pattern de validation personnalisé pour les étages (accepte les négatifs)
-  const pattern = listKey === 'floors'
-    ? /^-?[a-z0-9_]+$/  // Accepte le tiret au début pour les sous-sols
-    : rules.value.pattern;
+  const pattern =
+    listKey === 'floors'
+      ? /^-?[a-z0-9_]+$/ // Accepte le tiret au début pour les sous-sols
+      : rules.value.pattern;
 
   // Valeur
   if (item.value) {
     if (!pattern.test(item.value)) {
-      const message = listKey === 'floors'
-        ? 'La valeur doit contenir uniquement minuscules, chiffres, underscore et tiret (pour les sous-sols)'
-        : 'La valeur doit contenir uniquement minuscules, chiffres et underscore';
+      const message =
+        listKey === 'floors'
+          ? 'La valeur doit contenir uniquement minuscules, chiffres, underscore et tiret (pour les sous-sols)'
+          : 'La valeur doit contenir uniquement minuscules, chiffres et underscore';
       errors.push(message);
     }
     if (item.value.length < minLength) {
-      errors.push(`La valeur doit contenir au moins ${minLength} caractère${minLength > 1 ? 's' : ''}`);
+      errors.push(
+        `La valeur doit contenir au moins ${minLength} caractère${minLength > 1 ? 's' : ''}`
+      );
     }
     if (item.value.length > rules.value.maxLength) {
       errors.push(`La valeur doit contenir au maximum ${rules.value.maxLength} caractères`);
@@ -1018,7 +1025,9 @@ export const validateItem = (item: Partial<ReferenceItem>, listKey?: ListKey): V
   }
   if (item.label) {
     if (item.label.length < minLength) {
-      errors.push(`Le label doit contenir au moins ${minLength} caractère${minLength > 1 ? 's' : ''}`);
+      errors.push(
+        `Le label doit contenir au moins ${minLength} caractère${minLength > 1 ? 's' : ''}`
+      );
     }
     if (item.label.length > rules.label.maxLength) {
       errors.push(`Le label doit contenir au maximum ${rules.label.maxLength} caractères`);
@@ -1280,7 +1289,9 @@ export const logListsSummary = async (establishmentId: string): Promise<void> =>
 
       logger.debug(`${index + 1}. ${list.name} (${listKey})`);
       logger.debug(`   ${badges.join(' ')}`);
-      logger.debug(`   📊 Items: ${itemCount} total | ${activeCount} actifs | ${inactiveCount} inactifs`);
+      logger.debug(
+        `   📊 Items: ${itemCount} total | ${activeCount} actifs | ${inactiveCount} inactifs`
+      );
 
       if (list.description) {
         logger.debug(`   📄 Description: ${list.description}`);
@@ -1337,7 +1348,9 @@ export const logListsCompact = async (establishmentId: string): Promise<void> =>
       if (list.isSystem) badges.push('🔒');
       if (list.allowCustom) badges.push('✏️');
       if (list.items.length === 0) badges.push('📭');
-      logger.debug(`   ${index + 1}. ${key.padEnd(30)} (${list.items.length} items) ${badges.join(' ')}`);
+      logger.debug(
+        `   ${index + 1}. ${key.padEnd(30)} (${list.items.length} items) ${badges.join(' ')}`
+      );
     });
     logger.debug('');
   } catch (error) {

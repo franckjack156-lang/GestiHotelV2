@@ -4,10 +4,12 @@
     "interventions": "Intervenciones",
     "templates": "Plantillas",
     "suppliers": "Proveedores",
+    "inventory": "Inventario",
     "rooms": "Habitaciones",
     "planning": "Planificación",
     "notifications": "Notificaciones",
     "messaging": "Mensajería",
+    "trash": "Papelera",
     "settings": "Configuración"
   },
   "header": {

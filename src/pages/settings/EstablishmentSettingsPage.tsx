@@ -7,7 +7,7 @@
  * Accessible aux admins et super admins
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
@@ -24,7 +24,10 @@ import {
   ShoppingCart,
   Zap,
   ArrowLeft,
+  ImageIcon,
 } from 'lucide-react';
+import { LogoUpload } from '@/features/establishments/components/LogoUpload';
+import { LogoWideUpload } from '@/features/establishments/components/LogoWideUpload';
 import { Button } from '@/shared/components/ui/button';
 import {
   Card,
@@ -57,6 +60,7 @@ export const EstablishmentSettingsPage = () => {
   );
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [savingLogo, setSavingLogo] = useState(false);
 
   // Vérifier si l'utilisateur est Admin ou Super Admin
   const isAdmin = hasRole('admin') || hasRole('super_admin');
@@ -114,6 +118,54 @@ export const EstablishmentSettingsPage = () => {
     setSettings(currentEstablishment?.settings ?? null);
     setHasChanges(false);
   };
+
+  /**
+   * Handle logo change - saves immediately (logo carré)
+   */
+  const handleLogoChange = useCallback(
+    async (url: string | null) => {
+      if (!currentEstablishment) return;
+
+      setSavingLogo(true);
+      try {
+        await updateEstablishment(currentEstablishment.id, { logoUrl: url || undefined });
+        toast.success(url ? 'Logo carré mis à jour avec succès' : 'Logo carré supprimé');
+      } catch (error: unknown) {
+        logger.error('Error updating logo:', error);
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        toast.error('Erreur lors de la mise à jour du logo', {
+          description: message,
+        });
+      } finally {
+        setSavingLogo(false);
+      }
+    },
+    [currentEstablishment, updateEstablishment]
+  );
+
+  /**
+   * Handle logo wide change - saves immediately (logo rectangulaire)
+   */
+  const handleLogoWideChange = useCallback(
+    async (url: string | null) => {
+      if (!currentEstablishment) return;
+
+      setSavingLogo(true);
+      try {
+        await updateEstablishment(currentEstablishment.id, { logoWideUrl: url || undefined });
+        toast.success(url ? 'Logo horizontal mis à jour avec succès' : 'Logo horizontal supprimé');
+      } catch (error: unknown) {
+        logger.error('Error updating logo wide:', error);
+        const message = error instanceof Error ? error.message : 'Erreur inconnue';
+        toast.error('Erreur lors de la mise à jour du logo', {
+          description: message,
+        });
+      } finally {
+        setSavingLogo(false);
+      }
+    },
+    [currentEstablishment, updateEstablishment]
+  );
 
   // Guard: Admin only
   if (!isAdmin) {
@@ -200,15 +252,15 @@ export const EstablishmentSettingsPage = () => {
                 {saving ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Enregistrement...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Enregistrer
-                </>
-              )}
-            </Button>
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Enregistrer
+                  </>
+                )}
+              </Button>
             </>
           )}
         </div>
@@ -222,6 +274,71 @@ export const EstablishmentSettingsPage = () => {
           utilisateurs.
         </AlertDescription>
       </Alert>
+
+      {/* Logo et identité visuelle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            Logo et identité visuelle
+          </CardTitle>
+          <CardDescription>
+            Les logos de votre établissement apparaîtront dans l'interface et les documents
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Logo carré */}
+          <div>
+            <h4 className="text-sm font-semibold mb-3">Logo carré (header)</h4>
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              <LogoUpload
+                establishmentId={currentEstablishment.id}
+                currentLogoUrl={currentEstablishment.logoUrl}
+                establishmentName={currentEstablishment.name}
+                onLogoChange={handleLogoChange}
+                disabled={savingLogo}
+              />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Ce logo s'affiche dans le sélecteur d'établissement (header) et les documents.
+                </p>
+                <ul className="text-xs text-gray-400 dark:text-gray-500 space-y-1 list-disc list-inside">
+                  <li>Format carré (1:1) recommandé</li>
+                  <li>512x512 pixels minimum</li>
+                  <li>JPG, PNG, GIF, WebP (max 5 Mo)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Logo rectangulaire */}
+          <div>
+            <h4 className="text-sm font-semibold mb-3">Logo horizontal (sidebar)</h4>
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              <LogoWideUpload
+                establishmentId={currentEstablishment.id}
+                currentLogoUrl={currentEstablishment.logoWideUrl}
+                establishmentName={currentEstablishment.name}
+                onLogoChange={handleLogoWideChange}
+                disabled={savingLogo}
+              />
+              <div className="flex-1 space-y-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Ce logo s'affiche en bas de la sidebar, en pleine largeur.
+                </p>
+                <ul className="text-xs text-gray-400 dark:text-gray-500 space-y-1 list-disc list-inside">
+                  <li>Format horizontal (ex: 4:1) recommandé</li>
+                  <li>800x200 pixels recommandé</li>
+                  <li>JPG, PNG, GIF, WebP (max 5 Mo)</li>
+                  <li>Fond transparent recommandé</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Email Configuration */}
       <Card>

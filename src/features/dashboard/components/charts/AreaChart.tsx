@@ -1,11 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * AreaChart Component
  *
  * Graphique en aire avec Recharts
  */
 
-import { AreaChart as RechartsAreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart as RechartsAreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import { SafeResponsiveContainer } from './SafeResponsiveContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 
 interface AreaChartProps {
@@ -40,15 +49,15 @@ export const AreaChart = ({
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={height}>
+      <CardContent className="flex-1 min-h-0 pb-4">
+        <SafeResponsiveContainer minHeight={height}>
           <RechartsAreaChart data={data}>
             {showGrid && <CartesianGrid strokeDasharray="3 3" />}
             <XAxis dataKey={xAxisKey} />
             <YAxis />
             {showTooltip && <Tooltip />}
             {showLegend && <Legend />}
-            {areas.map((area) => (
+            {areas.map(area => (
               <Area
                 key={area.dataKey}
                 type="monotone"
@@ -61,7 +70,7 @@ export const AreaChart = ({
               />
             ))}
           </RechartsAreaChart>
-        </ResponsiveContainer>
+        </SafeResponsiveContainer>
       </CardContent>
     </Card>
   );

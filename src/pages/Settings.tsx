@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * SETTINGS PAGE - MODERN UI/UX
@@ -76,7 +75,9 @@ export const SettingsPage = () => {
           </div>
         </div>
         <p className="text-xs sm:text-sm md:text-base text-muted-foreground ml-8 sm:ml-14">
-          <span className="hidden sm:inline">Personnalisez votre expérience et gérez vos préférences</span>
+          <span className="hidden sm:inline">
+            Personnalisez votre expérience et gérez vos préférences
+          </span>
           <span className="sm:hidden">Gérez vos préférences</span>
         </p>
       </div>
@@ -98,7 +99,9 @@ export const SettingsPage = () => {
                 className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
               >
                 <Bell size={16} className="sm:w-4 sm:h-4" />
-                <span className="font-medium text-xs sm:text-sm hidden xs:inline">Notifications</span>
+                <span className="font-medium text-xs sm:text-sm hidden xs:inline">
+                  Notifications
+                </span>
                 <span className="font-medium text-xs xs:hidden">Notifs</span>
               </TabsTrigger>
               <TabsTrigger
@@ -122,7 +125,9 @@ export const SettingsPage = () => {
                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
                 >
                   <Users size={16} className="sm:w-4 sm:h-4" />
-                  <span className="font-medium text-xs sm:text-sm hidden xs:inline">Utilisateurs</span>
+                  <span className="font-medium text-xs sm:text-sm hidden xs:inline">
+                    Utilisateurs
+                  </span>
                   <span className="font-medium text-xs xs:hidden">Users</span>
                 </TabsTrigger>
               )}
@@ -132,7 +137,9 @@ export const SettingsPage = () => {
                   className="data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md sm:rounded-lg px-2 sm:px-4 py-1.5 sm:py-2.5 gap-1 sm:gap-2 whitespace-nowrap"
                 >
                   <Building2 size={16} className="sm:w-4 sm:h-4" />
-                  <span className="font-medium text-xs sm:text-sm hidden xs:inline">Établissements</span>
+                  <span className="font-medium text-xs sm:text-sm hidden xs:inline">
+                    Établissements
+                  </span>
                   <span className="font-medium text-xs xs:hidden">Étabs</span>
                 </TabsTrigger>
               )}

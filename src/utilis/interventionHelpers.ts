@@ -206,7 +206,7 @@ export const sortInterventions = (
         aValue = a[field]?.toDate().getTime() || 0;
         bValue = b[field]?.toDate().getTime() || 0;
         break;
-      case 'priority':
+      case 'priority': {
         const priorityValues = {
           low: 1,
           normal: 2,
@@ -217,17 +217,21 @@ export const sortInterventions = (
         aValue = priorityValues[a.priority];
         bValue = priorityValues[b.priority];
         break;
+      }
       case 'title':
         aValue = a.title.toLowerCase();
         bValue = b.title.toLowerCase();
         break;
-      default:
-        {
-          const defaultValue = a[field as keyof Intervention];
-          aValue = typeof defaultValue === 'string' || typeof defaultValue === 'number' ? defaultValue : '';
-          const defaultValueB = b[field as keyof Intervention];
-          bValue = typeof defaultValueB === 'string' || typeof defaultValueB === 'number' ? defaultValueB : '';
-        }
+      default: {
+        const defaultValue = a[field as keyof Intervention];
+        aValue =
+          typeof defaultValue === 'string' || typeof defaultValue === 'number' ? defaultValue : '';
+        const defaultValueB = b[field as keyof Intervention];
+        bValue =
+          typeof defaultValueB === 'string' || typeof defaultValueB === 'number'
+            ? defaultValueB
+            : '';
+      }
     }
 
     if (aValue < bValue) return order === 'asc' ? -1 : 1;
@@ -253,14 +257,20 @@ export const generateExportFileName = (
 /**
  * Valider les données d'intervention avant création
  */
-export const validateInterventionData = (data: Record<string, unknown>): { valid: boolean; errors: string[] } => {
+export const validateInterventionData = (
+  data: Record<string, unknown>
+): { valid: boolean; errors: string[] } => {
   const errors: string[] = [];
 
   if (!data.title || typeof data.title !== 'string' || data.title.trim().length < 3) {
     errors.push('Le titre doit contenir au moins 3 caractères');
   }
 
-  if (!data.description || typeof data.description !== 'string' || data.description.trim().length < 10) {
+  if (
+    !data.description ||
+    typeof data.description !== 'string' ||
+    data.description.trim().length < 10
+  ) {
     errors.push('La description doit contenir au moins 10 caractères');
   }
 

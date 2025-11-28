@@ -22,7 +22,7 @@ import { Button } from '@/shared/components/ui/button';
 import { LoadingSkeleton } from '@/shared/components/ui-extended';
 import { CustomizeDashboardDialog } from '@/features/dashboard/components/CustomizeDashboardDialog';
 import { DashboardEditMode } from '@/features/dashboard/components/DashboardEditMode';
-import { DashboardGrid } from '@/features/dashboard/components/DashboardGrid';
+import { SimpleDashboardGrid } from '@/features/dashboard/components/SimpleDashboardGrid';
 import { toast } from 'sonner';
 import { logger } from '@/core/utils/logger';
 
@@ -38,6 +38,16 @@ const DashboardPageComponent = () => {
   const {
     preferences,
     interventionStats,
+    timelineData,
+    roomStats,
+    technicianPerformance,
+    recentInterventions,
+    overdueInterventions,
+    pendingValidationInterventions,
+    resolutionRate,
+    locationStats,
+    problematicRooms,
+    todayScheduled,
     isLoading: isDashboardLoading,
     updatePreferences,
     updateWidget,
@@ -67,12 +77,66 @@ const DashboardPageComponent = () => {
   const chartData = useMemo(() => {
     if (!interventionStats) return null;
 
-    return {
-      evolutionData: [],
-      statusData: [],
-      priorityData: [],
+    // Transformer les données de status pour le graphique
+    const statusLabels: Record<string, string> = {
+      pending: 'En attente',
+      in_progress: 'En cours',
+      completed: 'Terminées',
+      validated: 'Validées',
+      cancelled: 'Annulées',
     };
-  }, [interventionStats]);
+
+    const statusColors: Record<string, string> = {
+      pending: '#fbbf24', // yellow
+      in_progress: '#3b82f6', // blue
+      completed: '#10b981', // green
+      validated: '#8b5cf6', // purple
+      cancelled: '#ef4444', // red
+    };
+
+    const statusData = Object.entries(interventionStats.byStatus).map(([status, count]) => ({
+      name: statusLabels[status] || status,
+      value: count,
+      color: statusColors[status] || '#6b7280',
+    }));
+
+    // Transformer les données de priorité pour le graphique
+    const priorityLabels: Record<string, string> = {
+      low: 'Basse',
+      normal: 'Normale',
+      high: 'Haute',
+      urgent: 'Urgente',
+    };
+
+    const priorityColors: Record<string, string> = {
+      low: '#10b981', // green
+      normal: '#3b82f6', // blue
+      high: '#f59e0b', // orange
+      urgent: '#ef4444', // red
+    };
+
+    const priorityData = Object.entries(interventionStats.byPriority).map(([priority, count]) => ({
+      name: priorityLabels[priority] || priority,
+      value: count,
+      color: priorityColors[priority] || '#6b7280',
+    }));
+
+    // Utiliser timelineData si disponible pour l'évolution
+    const evolutionData =
+      timelineData?.map(item => ({
+        date: item.date,
+        total: item.created + item.completed + item.inProgress,
+        completed: item.completed,
+        pending: item.created,
+        inProgress: item.inProgress,
+      })) || [];
+
+    return {
+      evolutionData,
+      statusData,
+      priorityData,
+    };
+  }, [interventionStats, timelineData]);
 
   const handleRefresh = () => {
     refreshAll();
@@ -143,18 +207,25 @@ const DashboardPageComponent = () => {
 
       {/* Widgets dynamiques du dashboard */}
       {preferences && visibleWidgets.length > 0 ? (
-        <div className="space-y-4">
-          {/* DashboardGrid avec drag & drop et resize */}
-          <DashboardGrid
-            widgets={visibleWidgets}
-            interventionStats={interventionStats}
-            calculatedStats={calculatedStats ?? undefined}
-            chartData={chartData ?? undefined}
-            onNavigate={navigate}
-            onLayoutChange={handleLayoutChange}
-            isEditMode={false}
-          />
-        </div>
+        <SimpleDashboardGrid
+          widgets={visibleWidgets}
+          interventionStats={interventionStats}
+          timelineData={timelineData}
+          roomStats={roomStats}
+          technicianPerformance={technicianPerformance}
+          recentInterventions={recentInterventions}
+          overdueInterventions={overdueInterventions}
+          pendingValidationInterventions={pendingValidationInterventions}
+          resolutionRate={resolutionRate}
+          locationStats={locationStats}
+          problematicRooms={problematicRooms}
+          todayScheduled={todayScheduled}
+          calculatedStats={calculatedStats ?? undefined}
+          chartData={chartData ?? undefined}
+          onNavigate={navigate}
+          onLayoutChange={handleLayoutChange}
+          isEditMode={false}
+        />
       ) : (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <p className="text-gray-600 dark:text-gray-400 mb-4">

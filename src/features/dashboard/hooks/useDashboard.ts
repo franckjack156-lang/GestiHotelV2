@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * useDashboard Hook
  *
@@ -18,6 +18,7 @@ import type {
   RoomStats,
   TechnicianPerformance,
 } from '../types/dashboard.types';
+import type { Intervention } from '@/features/interventions/types/intervention.types';
 
 export const useDashboard = () => {
   const { user } = useAuthStore();
@@ -32,6 +33,24 @@ export const useDashboard = () => {
   const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
   const [roomStats, setRoomStats] = useState<RoomStats | null>(null);
   const [technicianPerformance, setTechnicianPerformance] = useState<TechnicianPerformance[]>([]);
+  const [recentInterventions, setRecentInterventions] = useState<Intervention[]>([]);
+  const [overdueInterventions, setOverdueInterventions] = useState<Intervention[]>([]);
+  const [pendingValidationInterventions, setPendingValidationInterventions] = useState<
+    Intervention[]
+  >([]);
+  const [resolutionRate, setResolutionRate] = useState<{
+    created: number;
+    completed: number;
+    rate: number;
+  } | null>(null);
+  const [locationStats, setLocationStats] = useState<{
+    byFloor: Record<string, number>;
+    byBuilding: Record<string, number>;
+  } | null>(null);
+  const [problematicRooms, setProblematicRooms] = useState<
+    { roomNumber: string; count: number; lastIntervention: Date | null }[]
+  >([]);
+  const [todayScheduled, setTodayScheduled] = useState<Intervention[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,11 +80,13 @@ export const useDashboard = () => {
    */
   const loadInterventionStats = useCallback(
     async (
-      dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom' = 'month',
+      dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom' | 'all' = 'all',
       customDateFrom?: Date,
       customDateTo?: Date
     ) => {
-      if (!establishmentId) return;
+      if (!establishmentId) {
+        return;
+      }
 
       setIsLoading(true);
       setError(null);
@@ -92,7 +113,7 @@ export const useDashboard = () => {
    * Charger les données de timeline
    */
   const loadTimelineData = useCallback(
-    async (dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' = 'month') => {
+    async (dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all' = 'all') => {
       if (!establishmentId) return;
 
       try {
@@ -123,7 +144,7 @@ export const useDashboard = () => {
    * Charger les performances des techniciens
    */
   const loadTechnicianPerformance = useCallback(
-    async (dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' = 'month') => {
+    async (dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all' = 'all') => {
       if (!establishmentId) return;
 
       try {
@@ -140,12 +161,112 @@ export const useDashboard = () => {
   );
 
   /**
+   * Charger les interventions récentes
+   */
+  const loadRecentInterventions = useCallback(async () => {
+    if (!establishmentId) return;
+
+    try {
+      const interventions = await dashboardService.getRecentInterventions(establishmentId, 10);
+      setRecentInterventions(interventions);
+    } catch (err) {
+      logger.error('Erreur loadRecentInterventions:', err);
+    }
+  }, [establishmentId]);
+
+  /**
+   * Charger les interventions en retard
+   */
+  const loadOverdueInterventions = useCallback(async () => {
+    if (!establishmentId) return;
+
+    try {
+      const interventions = await dashboardService.getOverdueInterventions(establishmentId);
+      setOverdueInterventions(interventions);
+    } catch (err) {
+      logger.error('Erreur loadOverdueInterventions:', err);
+    }
+  }, [establishmentId]);
+
+  /**
+   * Charger les interventions en attente de validation
+   */
+  const loadPendingValidationInterventions = useCallback(async () => {
+    if (!establishmentId) return;
+
+    try {
+      const interventions =
+        await dashboardService.getPendingValidationInterventions(establishmentId);
+      setPendingValidationInterventions(interventions);
+    } catch (err) {
+      logger.error('Erreur loadPendingValidationInterventions:', err);
+    }
+  }, [establishmentId]);
+
+  /**
+   * Charger le taux de résolution
+   */
+  const loadResolutionRate = useCallback(
+    async (period: 'today' | 'week' | 'month' = 'week') => {
+      if (!establishmentId) return;
+
+      try {
+        const rate = await dashboardService.getResolutionRate(establishmentId, period);
+        setResolutionRate(rate);
+      } catch (err) {
+        logger.error('Erreur loadResolutionRate:', err);
+      }
+    },
+    [establishmentId]
+  );
+
+  /**
+   * Charger les statistiques par localisation
+   */
+  const loadLocationStats = useCallback(async () => {
+    if (!establishmentId) return;
+
+    try {
+      const stats = await dashboardService.getInterventionsByLocation(establishmentId);
+      setLocationStats(stats);
+    } catch (err) {
+      logger.error('Erreur loadLocationStats:', err);
+    }
+  }, [establishmentId]);
+
+  /**
+   * Charger les chambres problématiques
+   */
+  const loadProblematicRooms = useCallback(async () => {
+    if (!establishmentId) return;
+
+    try {
+      const rooms = await dashboardService.getProblematicRooms(establishmentId, 5);
+      setProblematicRooms(rooms);
+    } catch (err) {
+      logger.error('Erreur loadProblematicRooms:', err);
+    }
+  }, [establishmentId]);
+
+  /**
+   * Charger les interventions planifiées aujourd'hui
+   */
+  const loadTodayScheduled = useCallback(async () => {
+    if (!establishmentId) return;
+
+    try {
+      const interventions = await dashboardService.getTodayScheduledInterventions(establishmentId);
+      setTodayScheduled(interventions);
+    } catch (err) {
+      logger.error('Erreur loadTodayScheduled:', err);
+    }
+  }, [establishmentId]);
+
+  /**
    * Mettre à jour les préférences
    */
   const updatePreferences = useCallback(
-    async (
-      updates: Partial<Omit<DashboardPreferences, 'id' | 'userId' | 'establishmentId'>>
-    ) => {
+    async (updates: Partial<Omit<DashboardPreferences, 'id' | 'userId' | 'establishmentId'>>) => {
       if (!userId || !establishmentId || !preferences) return;
 
       try {
@@ -189,7 +310,13 @@ export const useDashboard = () => {
         });
 
         // Mise à jour dans Firestore en arrière-plan avec les widgets déjà mis à jour
-        await dashboardService.updateWidget(userId, establishmentId, widgetId, updates, updatedWidgets);
+        await dashboardService.updateWidget(
+          userId,
+          establishmentId,
+          widgetId,
+          updates,
+          updatedWidgets
+        );
       } catch (err) {
         logger.error('Erreur updateWidget:', err);
         // En cas d'erreur, recharger les préférences depuis Firestore
@@ -267,16 +394,37 @@ export const useDashboard = () => {
 
   /**
    * Rafraîchir toutes les données
+   * Charge toutes les interventions (pas de filtre de date)
    */
   const refreshAll = useCallback(() => {
     if (!preferences) return;
 
-    const dateRange = preferences.defaultDateRange;
-    loadInterventionStats(dateRange);
-    loadTimelineData(dateRange);
+    // Charger toutes les données
+    loadInterventionStats('all');
+    loadTimelineData('all');
     loadRoomStats();
-    loadTechnicianPerformance(dateRange);
-  }, [preferences, loadInterventionStats, loadTimelineData, loadRoomStats, loadTechnicianPerformance]);
+    loadTechnicianPerformance('all');
+    loadRecentInterventions();
+    loadOverdueInterventions();
+    loadPendingValidationInterventions();
+    loadResolutionRate('week');
+    loadLocationStats();
+    loadProblematicRooms();
+    loadTodayScheduled();
+  }, [
+    preferences,
+    loadInterventionStats,
+    loadTimelineData,
+    loadRoomStats,
+    loadTechnicianPerformance,
+    loadRecentInterventions,
+    loadOverdueInterventions,
+    loadPendingValidationInterventions,
+    loadResolutionRate,
+    loadLocationStats,
+    loadProblematicRooms,
+    loadTodayScheduled,
+  ]);
 
   /**
    * Charger les données initiales
@@ -287,16 +435,27 @@ export const useDashboard = () => {
 
   /**
    * Charger les statistiques quand les préférences sont prêtes (une seule fois)
+   * Par défaut, charge TOUTES les données (pas de filtre de date)
    */
   useEffect(() => {
     if (preferences && establishmentId) {
-      const dateRange = preferences.defaultDateRange;
-      loadInterventionStats(dateRange);
-      loadTimelineData(dateRange);
+      // Charger toutes les interventions par défaut pour les stats globales
+      loadInterventionStats('all');
+      // Pour la timeline, utiliser 'all' qui prend les 90 derniers jours
+      loadTimelineData('all');
       loadRoomStats();
-      loadTechnicianPerformance(dateRange);
+      // Charger toutes les performances techniciens
+      loadTechnicianPerformance('all');
+      // Charger les interventions récentes et en retard
+      loadRecentInterventions();
+      loadOverdueInterventions();
+      // Charger les nouvelles données
+      loadPendingValidationInterventions();
+      loadResolutionRate('week');
+      loadLocationStats();
+      loadProblematicRooms();
+      loadTodayScheduled();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preferences?.id, establishmentId]); // Ne se déclenche que quand les préférences changent vraiment (via leur ID)
 
   /**
@@ -319,6 +478,13 @@ export const useDashboard = () => {
     timelineData,
     roomStats,
     technicianPerformance,
+    recentInterventions,
+    overdueInterventions,
+    pendingValidationInterventions,
+    resolutionRate,
+    locationStats,
+    problematicRooms,
+    todayScheduled,
     isLoading,
     error,
 
@@ -334,6 +500,13 @@ export const useDashboard = () => {
     loadTimelineData,
     loadRoomStats,
     loadTechnicianPerformance,
+    loadRecentInterventions,
+    loadOverdueInterventions,
+    loadPendingValidationInterventions,
+    loadResolutionRate,
+    loadLocationStats,
+    loadProblematicRooms,
+    loadTodayScheduled,
     refreshAll,
 
     // Utilitaires

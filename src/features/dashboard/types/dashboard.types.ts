@@ -30,6 +30,8 @@ export type WidgetType =
 
 export type WidgetSize = 'small' | 'medium' | 'large' | 'full';
 
+export type WidgetHeight = 'normal' | 'tall' | 'extra-tall';
+
 export type WidgetDataSource =
   | 'interventions_by_status'
   | 'interventions_by_priority'
@@ -52,6 +54,14 @@ export type WidgetDataSource =
   | 'avg_response_time'
   | 'status_distribution'
   | 'technician_performance'
+  // Nouveaux widgets
+  | 'resolution_rate' // Taux de résolution (complétées / créées)
+  | 'location_stats' // Stats par localisation (étage/bâtiment)
+  | 'interventions_by_floor' // Interventions par étage
+  | 'interventions_by_building' // Interventions par bâtiment
+  | 'pending_validation' // Interventions en attente de validation
+  | 'problematic_rooms' // Chambres avec le plus d'interventions
+  | 'today_scheduled' // Interventions planifiées aujourd'hui
   | 'custom' // Données personnalisées
   | 'static'; // Widget statique (horloge, liens, etc.)
 
@@ -65,8 +75,10 @@ export interface WidgetConfig {
   dataSource: WidgetDataSource;
   title: string;
   size: WidgetSize;
+  height?: WidgetHeight; // Hauteur du widget (normal = 1 ligne, tall = 2 lignes, extra-tall = 3 lignes)
   position: { row: number; col: number };
   visible: boolean;
+  showOnMobile?: boolean; // Afficher ce widget sur mobile (défaut: true pour small, false pour autres)
   refreshInterval?: number; // en secondes
   filters?: {
     dateRange?: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
@@ -134,6 +146,13 @@ export interface WidgetConfig {
     backgroundColor?: string;
     textColor?: string;
     fontSize?: 'small' | 'medium' | 'large';
+  };
+  weatherOptions?: {
+    location?: string; // Nom de la ville à afficher (ex: "Paris, France")
+    latitude?: number; // Latitude (ex: 48.8566 pour Paris)
+    longitude?: number; // Longitude (ex: 2.3522 pour Paris)
+    showForecast?: boolean; // Afficher les prévisions sur 5 jours
+    refreshInterval?: number; // Intervalle de rafraîchissement en minutes
   };
 }
 
@@ -327,6 +346,133 @@ export const DEFAULT_WIDGET_CONFIGS: Omit<WidgetConfig, 'id'>[] = [
     size: 'medium',
     position: { row: 3, col: 2 },
     visible: true,
+  },
+  // Nouveaux widgets
+  {
+    type: 'stats_card',
+    dataSource: 'resolution_rate',
+    title: 'Taux de résolution',
+    size: 'small',
+    position: { row: 4, col: 0 },
+    visible: true,
+  },
+  {
+    type: 'bar_chart',
+    dataSource: 'interventions_by_floor',
+    title: 'Interventions par étage',
+    size: 'medium',
+    position: { row: 4, col: 1 },
+    visible: true,
+    chartOptions: {
+      showLegend: false,
+      showGrid: false,
+      showValues: true,
+    },
+  },
+  {
+    type: 'bar_chart',
+    dataSource: 'interventions_by_building',
+    title: 'Interventions par bâtiment',
+    size: 'medium',
+    position: { row: 4, col: 3 },
+    visible: false,
+    chartOptions: {
+      showLegend: false,
+      showGrid: false,
+      showValues: true,
+    },
+  },
+  {
+    type: 'list',
+    dataSource: 'pending_validation',
+    title: 'En attente de validation',
+    size: 'medium',
+    position: { row: 5, col: 0 },
+    visible: true,
+  },
+  {
+    type: 'list',
+    dataSource: 'problematic_rooms',
+    title: 'Top 5 chambres problématiques',
+    size: 'medium',
+    position: { row: 5, col: 2 },
+    visible: true,
+  },
+  {
+    type: 'list',
+    dataSource: 'today_scheduled',
+    title: "Planifiées aujourd'hui",
+    size: 'medium',
+    position: { row: 6, col: 0 },
+    visible: true,
+  },
+  {
+    type: 'weather',
+    dataSource: 'static',
+    title: 'Météo locale',
+    size: 'small',
+    position: { row: 6, col: 2 },
+    visible: false,
+    weatherOptions: {
+      location: 'Paris, France',
+      latitude: 48.8566,
+      longitude: 2.3522,
+      showForecast: true,
+      refreshInterval: 30,
+    },
+  },
+  {
+    type: 'note',
+    dataSource: 'static',
+    title: 'Notes épinglées',
+    size: 'medium',
+    position: { row: 6, col: 3 },
+    visible: false,
+    noteOptions: {
+      content: '',
+      fontSize: 'medium',
+    },
+  },
+  {
+    type: 'quick_links',
+    dataSource: 'static',
+    title: 'Raccourcis rapides',
+    size: 'medium',
+    position: { row: 7, col: 0 },
+    visible: false,
+    linksOptions: {
+      links: [
+        {
+          id: 'link_1',
+          label: 'Nouvelle intervention',
+          url: '/app/interventions/create',
+          icon: 'Plus',
+          color: 'blue',
+        },
+        {
+          id: 'link_2',
+          label: 'Voir planning',
+          url: '/app/planning',
+          icon: 'Calendar',
+          color: 'green',
+        },
+        {
+          id: 'link_3',
+          label: 'Gérer les chambres',
+          url: '/app/rooms',
+          icon: 'DoorOpen',
+          color: 'purple',
+        },
+        {
+          id: 'link_4',
+          label: 'Rapports',
+          url: '/app/reports',
+          icon: 'BarChart',
+          color: 'orange',
+        },
+      ],
+      columns: 2,
+    },
   },
 ];
 

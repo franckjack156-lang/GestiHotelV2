@@ -8,6 +8,7 @@
 
 // Composants de base
 export { UserAvatar } from './UserAvatar';
+export { AvatarUpload } from './AvatarUpload';
 export { RoleBadge } from './RoleBadge';
 export { StatusBadge } from './StatusBadge';
 

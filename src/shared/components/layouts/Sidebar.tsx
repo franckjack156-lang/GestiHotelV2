@@ -23,6 +23,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import { useMemo } from 'react';
 import { useFeatureFlags } from '@/shared/hooks/useFeatureFlag';
+import { useEstablishments } from '@/features/establishments/hooks/useEstablishments';
 import type { EstablishmentFeatures } from '@/shared/types/establishment.types';
 
 interface SidebarProps {
@@ -42,6 +43,7 @@ interface NavItem {
 export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) => {
   const location = useLocation();
   const { t } = useTranslation();
+  const { currentEstablishment } = useEstablishments();
 
   // Récupérer les features actives
   const features = useFeatureFlags([
@@ -166,7 +168,10 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
         <div className="flex h-full flex-col">
           {/* Logo mobile - Plus grand et avec padding adaptatif */}
           <div className="flex h-14 sm:h-16 items-center gap-2 border-b px-4 sm:px-6 lg:hidden dark:border-gray-700">
-            <Building2 className="h-6 w-6 flex-shrink-0" style={{ color: 'hsl(var(--theme-primary))' }} />
+            <Building2
+              className="h-6 w-6 flex-shrink-0"
+              style={{ color: 'hsl(var(--theme-primary))' }}
+            />
             {!isCollapsed && (
               <span className="font-bold text-gray-900 dark:text-white text-lg">GestiHôtel</span>
             )}
@@ -209,9 +214,45 @@ export const Sidebar = ({ isOpen, isCollapsed = false, onClose }: SidebarProps) 
             })}
           </nav>
 
-          {/* Footer - Responsive */}
+          {/* Footer - Logo établissement horizontal */}
           {!isCollapsed && (
             <div className="border-t p-3 sm:p-4 dark:border-gray-700">
+              {/* Logo horizontal de l'établissement (ou fallback sur logo carré + nom) */}
+              {currentEstablishment && (
+                <div className="mb-3">
+                  {currentEstablishment.logoWideUrl ? (
+                    // Logo horizontal en pleine largeur
+                    <img
+                      src={currentEstablishment.logoWideUrl}
+                      alt={currentEstablishment.name}
+                      className="w-full h-auto max-h-12 object-contain"
+                    />
+                  ) : currentEstablishment.logoUrl ? (
+                    // Fallback: logo carré + nom
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={currentEstablishment.logoUrl}
+                        alt={currentEstablishment.name}
+                        className="h-10 w-10 rounded-lg object-contain bg-gray-100 dark:bg-gray-700 p-1"
+                      />
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                        {currentEstablishment.name}
+                      </p>
+                    </div>
+                  ) : (
+                    // Fallback: icône + nom
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate flex-1 min-w-0">
+                        {currentEstablishment.name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Version et copyright */}
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 <p className="font-medium truncate">{t('footer.version')}</p>
                 <p className="mt-1 truncate">{t('footer.copyright')}</p>

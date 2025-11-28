@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * Tests pour referenceListsService
  *
@@ -279,7 +278,17 @@ describe('referenceListsService', () => {
     // ========================================================================
 
     it('devrait accepter les couleurs autorisées', () => {
-      const allowedColors = ['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'purple', 'pink'];
+      const allowedColors = [
+        'gray',
+        'red',
+        'orange',
+        'yellow',
+        'green',
+        'blue',
+        'indigo',
+        'purple',
+        'pink',
+      ];
 
       allowedColors.forEach(color => {
         const item: Partial<ReferenceItem> = {
@@ -363,7 +372,7 @@ describe('referenceListsService', () => {
       const result = validateItem(item);
 
       expect(result.isValid).toBe(true);
-      expect(result.warnings[0]).toContain('n\'existe pas dans Lucide');
+      expect(result.warnings[0]).toContain("n'existe pas dans Lucide");
     });
 
     it('devrait accepter une icône Lucide valide', () => {
@@ -578,9 +587,30 @@ describe('referenceListsService', () => {
             types: {
               name: 'Types',
               items: [
-                { id: '1', value: 'plomb', label: 'Plomberie', order: 0, isActive: true, usageCount: 0 },
-                { id: '2', value: 'elec', label: 'Électricité', order: 1, isActive: false, usageCount: 0 },
-                { id: '3', value: 'chauf', label: 'Chauffage', order: 2, isActive: true, usageCount: 0 },
+                {
+                  id: '1',
+                  value: 'plomb',
+                  label: 'Plomberie',
+                  order: 0,
+                  isActive: true,
+                  usageCount: 0,
+                },
+                {
+                  id: '2',
+                  value: 'elec',
+                  label: 'Électricité',
+                  order: 1,
+                  isActive: false,
+                  usageCount: 0,
+                },
+                {
+                  id: '3',
+                  value: 'chauf',
+                  label: 'Chauffage',
+                  order: 2,
+                  isActive: true,
+                  usageCount: 0,
+                },
               ],
             },
           },

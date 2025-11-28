@@ -3,14 +3,12 @@
 
 // Déclaration pour le module virtual de vite-plugin-pwa
 declare module 'virtual:pwa-register/react' {
-  import type { Ref } from 'react';
-
   export interface RegisterSWOptions {
     immediate?: boolean;
     onNeedRefresh?: () => void;
     onOfflineReady?: () => void;
     onRegistered?: (registration: ServiceWorkerRegistration | undefined) => void;
-    onRegisterError?: (error: any) => void;
+    onRegisterError?: (error: Error) => void;
   }
 
   export function useRegisterSW(options?: RegisterSWOptions): {

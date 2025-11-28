@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * IMPORT SERVICE - IMPORTER
@@ -8,7 +7,13 @@
  */
 
 import { z } from 'zod';
-import type { ImportResult, ImportOptions, ImportError, ImportWarning, ExistingLists } from './types';
+import type {
+  ImportResult,
+  ImportOptions,
+  ImportError,
+  ImportWarning,
+  ExistingLists,
+} from './types';
 import type { InterventionImportRow, RoomImportRow } from './schemas';
 import { InterventionImportSchema, RoomImportSchema } from './schemas';
 import { parseExcelFile, normalizeObject, normalizeStatus } from './parser';

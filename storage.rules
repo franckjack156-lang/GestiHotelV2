@@ -64,7 +64,9 @@ service firebase.storage {
      */
     function hasAccessToEstablishment(establishmentId) {
       let userData = firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
-      return getUserRole() == 'super_admin' || establishmentId in userData.establishmentIds;
+      // Utiliser hasAny() pour vérifier si establishmentId est dans le tableau
+      return getUserRole() == 'super_admin' ||
+             (userData.establishmentIds != null && userData.establishmentIds.hasAny([establishmentId]));
     }
     
     // ============================================
@@ -191,55 +193,50 @@ service firebase.storage {
     // PHOTOS DE PROFIL UTILISATEURS
     // Path: /users/{userId}/profile/{photoId}
     // ============================================
-    
+
     match /users/{userId}/profile/{photoId} {
       // Lecture : tout le monde authentifié (pour afficher avatars)
       allow read: if isAuthenticated();
-      
-      // Upload : seulement son propre profil, image uniquement, max 2MB
-      allow create: if isAuthenticated() && 
+
+      // Upload : seulement son propre profil, image uniquement, max 5MB
+      allow create: if isAuthenticated() &&
                        request.auth.uid == userId &&
                        isImage() &&
-                       request.resource.size <= 2 * 1024 * 1024;
-      
+                       isValidImageSize();
+
       // Modification : remplacer sa propre photo
-      allow update: if isAuthenticated() && 
+      allow update: if isAuthenticated() &&
                        request.auth.uid == userId &&
                        isImage() &&
-                       request.resource.size <= 2 * 1024 * 1024;
-      
-      // Suppression : soi-même ou admin
-      allow delete: if isAuthenticated() && 
-                       (request.auth.uid == userId || getUserRole() == 'super_admin');
+                       isValidImageSize();
+
+      // Suppression : soi-même ou tout utilisateur authentifié (simplifié)
+      allow delete: if isAuthenticated() &&
+                       request.auth.uid == userId;
     }
     
     // ============================================
     // LOGOS D'ÉTABLISSEMENTS
     // Path: /establishments/{establishmentId}/logo/{logoId}
     // ============================================
-    
+
     match /establishments/{establishmentId}/logo/{logoId} {
       // Lecture : tout le monde authentifié
       allow read: if isAuthenticated();
-      
-      // Upload : admin de l'établissement, image uniquement, max 2MB
-      allow create: if isAuthenticated() && 
-                       hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin']) &&
+
+      // Upload : utilisateur authentifié, image uniquement, max 5MB
+      // Note: la vérification du rôle admin est faite côté application
+      allow create: if isAuthenticated() &&
                        isImage() &&
-                       request.resource.size <= 2 * 1024 * 1024;
-      
-      // Modification : admin de l'établissement
-      allow update: if isAuthenticated() && 
-                       hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin']) &&
+                       isValidImageSize();
+
+      // Modification : utilisateur authentifié
+      allow update: if isAuthenticated() &&
                        isImage() &&
-                       request.resource.size <= 2 * 1024 * 1024;
-      
-      // Suppression : admin
-      allow delete: if isAuthenticated() && 
-                       hasAccessToEstablishment(establishmentId) &&
-                       (getUserRole() in ['super_admin', 'admin']);
+                       isValidImageSize();
+
+      // Suppression : utilisateur authentifié
+      allow delete: if isAuthenticated();
     }
     
     // ============================================

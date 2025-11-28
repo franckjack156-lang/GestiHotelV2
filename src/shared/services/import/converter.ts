@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * IMPORT SERVICE - CONVERTER
@@ -155,9 +154,9 @@ export const convertToInterventions = (
       description: row.description,
       status: normalizeStatus(row.statut || 'nouveau') as InterventionStatus,
 
-      type: (row.type && row.type.trim()
-        ? mappedType || row.type
-        : undefined) as InterventionType | undefined,
+      type: (row.type && row.type.trim() ? mappedType || row.type : undefined) as
+        | InterventionType
+        | undefined,
       category: (row.categorie && row.categorie.trim()
         ? mappedCategory || row.categorie
         : undefined) as InterventionCategory | undefined,

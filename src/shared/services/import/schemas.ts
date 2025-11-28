@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
 /**
  * ============================================================================
  * IMPORT SERVICE - SCHEMAS

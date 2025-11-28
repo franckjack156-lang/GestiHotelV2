@@ -276,13 +276,13 @@ export const MessagingPage = () => {
   // Vérifier si la fonctionnalité de messagerie est activée
   if (!hasFeature('internalChat')) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)] p-4">
         <div className="text-center max-w-md">
           <div className="mb-4 flex justify-center">
-            <Lock className="h-16 w-16 text-muted-foreground" />
+            <Lock className="h-12 w-12 sm:h-16 sm:w-16 text-muted-foreground" />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Messagerie Désactivée</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">Messagerie Désactivée</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             La fonctionnalité de messagerie interne n'est pas activée pour cet établissement.
             Contactez un administrateur pour l'activer.
           </p>
@@ -293,7 +293,7 @@ export const MessagingPage = () => {
 
   if (!userId || !currentEstablishment) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -302,7 +302,9 @@ export const MessagingPage = () => {
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900">
       {/* Sidebar - Liste des conversations - Cachée sur mobile si conversation sélectionnée */}
-      <div className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r bg-white dark:bg-gray-950 flex-col`}>
+      <div
+        className={`${selectedConversationId ? 'hidden md:flex' : 'flex'} w-full md:w-80 border-r bg-white dark:bg-gray-950 flex-col`}
+      >
         <ConversationList
           conversations={conversations}
           selectedId={selectedConversationId || undefined}
@@ -314,7 +316,9 @@ export const MessagingPage = () => {
       </div>
 
       {/* Zone de chat principale - Cachée sur mobile si pas de conversation sélectionnée */}
-      <div className={`${selectedConversationId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-white dark:bg-gray-950`}>
+      <div
+        className={`${selectedConversationId ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-white dark:bg-gray-950`}
+      >
         {selectedConversation ? (
           <div className="flex flex-col h-full">
             {/* Bouton retour mobile */}
@@ -325,8 +329,18 @@ export const MessagingPage = () => {
                 onClick={() => setSelectedConversationId(null)}
                 className="gap-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m15 18-6-6 6-6"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m15 18-6-6 6-6" />
                 </svg>
                 Conversations
               </Button>

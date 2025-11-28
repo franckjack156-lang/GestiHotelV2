@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Notification Types
  *
@@ -18,10 +18,14 @@ export type NotificationType =
   | 'intervention_completed'
   | 'intervention_comment'
   | 'intervention_overdue'
+  | 'intervention_urgent'
   | 'sla_at_risk'
   | 'sla_breached'
   | 'message_received'
   | 'mention'
+  | 'room_blocked'
+  | 'room_unblocked'
+  | 'validation_required'
   | 'system'
   | 'other';
 
@@ -46,7 +50,8 @@ export interface Notification extends TimestampedDocument {
   // Contenu
   type: NotificationType;
   title: string;
-  body: string;
+  body?: string; // Peut être undefined, utiliser message à la place
+  message?: string; // Alias principal pour le contenu
   icon?: string;
   image?: string;
 
@@ -57,7 +62,7 @@ export interface Notification extends TimestampedDocument {
   // État
   read: boolean;
   readAt?: Timestamp;
-  clicked: boolean;
+  clicked?: boolean;
   clickedAt?: Timestamp;
 
   // Action
@@ -126,10 +131,12 @@ export interface NotificationPreferences {
   interventionCompleted: boolean;
   interventionComment: boolean;
   interventionOverdue: boolean;
+  interventionUrgent: boolean;
   slaAtRisk: boolean;
   slaBreached: boolean;
   messageReceived: boolean;
   mention: boolean;
+  roomBlocked: boolean;
   system: boolean;
 
   // Périodes de silence (Do Not Disturb)

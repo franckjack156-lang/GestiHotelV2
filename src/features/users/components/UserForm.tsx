@@ -4,7 +4,7 @@
  * ============================================================================
  */
 
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,8 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select';
-// TODO: Textarea imported but unused
-// import { Textarea } from '@/shared/components/ui/textarea';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { Separator } from '@/shared/components/ui/separator';
 import { DynamicListSelect } from '@/shared/components/forms/DynamicListSelect';
@@ -27,6 +25,7 @@ import { DynamicListMultiSelect } from '@/shared/components/forms/DynamicListMul
 import { UserRole, ROLE_LABELS, ROLE_DESCRIPTIONS } from '../types/role.types';
 import type { User, UserProfile, CreateUserData, UpdateUserData } from '../types/user.types';
 import { Loader2 } from 'lucide-react';
+import { AvatarUpload } from './AvatarUpload';
 
 // ============================================================================
 // SCHEMA VALIDATION
@@ -46,10 +45,10 @@ const userSchema = z.object({
   phoneNumber: z.string().optional(),
   jobTitle: z.string().optional(),
   department: z.string().optional(),
-  skills: z.array(z.string()).optional(), // Tableau de compétences
-  specialties: z.array(z.string()).optional(), // Tableau de spécialités
+  skills: z.array(z.string()).optional(),
+  specialties: z.array(z.string()).optional(),
   experienceLevel: z.enum(['junior', 'intermediate', 'senior', 'expert']).optional(),
-  photoURL: z.string().url('URL invalide').optional().or(z.literal('')),
+  photoURL: z.string().nullable().optional(),
   sendInvitation: z.boolean().optional(),
 });
 
@@ -81,6 +80,9 @@ const UserFormComponent: React.FC<UserFormProps> = ({
 }) => {
   const isEditMode = !!user;
 
+  // État pour l'URL de la photo (gérée par AvatarUpload)
+  const [photoURL, setPhotoURL] = useState<string | null>(user?.photoURL || null);
+
   const {
     register,
     handleSubmit,
@@ -102,7 +104,7 @@ const UserFormComponent: React.FC<UserFormProps> = ({
           skills: (user as UserProfile).skills || [],
           specialties: (user as UserProfile).specialties || [],
           experienceLevel: (user as UserProfile).experienceLevel || undefined,
-          photoURL: user.photoURL || '',
+          photoURL: user.photoURL || null,
         }
       : {
           role: UserRole.TECHNICIAN,
@@ -110,12 +112,23 @@ const UserFormComponent: React.FC<UserFormProps> = ({
           sendInvitation: true,
           skills: [],
           specialties: [],
+          photoURL: null,
         },
   });
 
   const selectedRole = watch('role');
-
   const isTechnician = watch('isTechnician');
+  const firstName = watch('firstName');
+  const lastName = watch('lastName');
+
+  // Handler pour le changement de photo
+  const handlePhotoChange = useCallback(
+    (url: string | null) => {
+      setPhotoURL(url);
+      setValue('photoURL', url);
+    },
+    [setValue]
+  );
 
   /**
    * Gérer la soumission - memoized
@@ -178,6 +191,28 @@ const UserFormComponent: React.FC<UserFormProps> = ({
       {/* Informations personnelles */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Informations personnelles</h3>
+
+        {/* Photo de profil - en haut du formulaire */}
+        {isEditMode && user?.id && (
+          <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <AvatarUpload
+              userId={user.id}
+              currentPhotoURL={photoURL}
+              displayName={`${firstName || ''} ${lastName || ''}`}
+              onPhotoChange={handlePhotoChange}
+              size="lg"
+              disabled={isSubmitting}
+            />
+            <div className="text-center sm:text-left">
+              <p className="text-sm font-medium">Photo de profil</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Cliquez sur l'avatar pour modifier la photo.
+                <br />
+                Formats acceptés: JPG, PNG, GIF, WebP (max 5MB)
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Prénom */}
@@ -249,32 +284,15 @@ const UserFormComponent: React.FC<UserFormProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Téléphone */}
-          <div>
-            <Label htmlFor="phoneNumber">Téléphone</Label>
-            <Input
-              id="phoneNumber"
-              type="tel"
-              {...register('phoneNumber')}
-              placeholder="+33 6 12 34 56 78"
-            />
-          </div>
-
-          {/* Photo URL */}
-          <div>
-            <Label htmlFor="photoURL">URL Photo de profil</Label>
-            <Input
-              id="photoURL"
-              type="url"
-              {...register('photoURL')}
-              placeholder="https://..."
-              className={errors.photoURL ? 'border-red-500' : ''}
-            />
-            {errors.photoURL && (
-              <p className="text-sm text-red-500 mt-1">{errors.photoURL.message}</p>
-            )}
-          </div>
+        {/* Téléphone */}
+        <div>
+          <Label htmlFor="phoneNumber">Téléphone</Label>
+          <Input
+            id="phoneNumber"
+            type="tel"
+            {...register('phoneNumber')}
+            placeholder="+33 6 12 34 56 78"
+          />
         </div>
       </div>
 

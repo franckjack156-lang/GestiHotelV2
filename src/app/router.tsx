@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, react-refresh/only-export-components, @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Router Configuration - VERSION OPTIMISÉE avec Lazy Loading
  *
@@ -37,34 +37,89 @@ import { ResetPasswordPage } from '@/pages/ResetPassword';
 // Dashboard (chargé immédiatement car première page après login)
 import { DashboardPage } from '@/pages/Dashboard';
 
+// TrashPage - Import direct pour éviter problèmes de lazy loading
+import { TrashPage } from '@/pages/TrashPage';
+
 // Lazy-loaded pages - Utilisation de named exports
-const InterventionsPage = lazy(() => import('@/pages/interventions/InterventionsPage').then(m => ({ default: m.InterventionsPage })));
-const CreateInterventionPage = lazy(() => import('@/pages/interventions/CreateInterventionPage').then(m => ({ default: m.CreateInterventionPage })));
-const InterventionDetailsPage = lazy(() => import('@/pages/interventions/InterventionDetailsPage').then(m => ({ default: m.InterventionDetailsPage })));
-const EditInterventionPage = lazy(() => import('@/pages/interventions/EditInterventionPage').then(m => ({ default: m.EditInterventionPage })));
+const InterventionsPage = lazy(() =>
+  import('@/pages/interventions/InterventionsPage').then(m => ({ default: m.InterventionsPage }))
+);
+const CreateInterventionPage = lazy(() =>
+  import('@/pages/interventions/CreateInterventionPage').then(m => ({
+    default: m.CreateInterventionPage,
+  }))
+);
+const InterventionDetailsPage = lazy(() =>
+  import('@/pages/interventions/InterventionDetailsPage').then(m => ({
+    default: m.InterventionDetailsPage,
+  }))
+);
+const EditInterventionPage = lazy(() =>
+  import('@/pages/interventions/EditInterventionPage').then(m => ({
+    default: m.EditInterventionPage,
+  }))
+);
 
-const UsersPage = lazy(() => import('@/pages/users/UsersPage').then(m => ({ default: m.UsersPage })));
-const CreateUserPage = lazy(() => import('@/pages/users/CreateUserPage').then(m => ({ default: m.CreateUserPage })));
-const UserDetailsPage = lazy(() => import('@/pages/users/UserDetailsPage').then(m => ({ default: m.UserDetailsPage })));
-const UserProfilePage = lazy(() => import('@/pages/users/UserProfilePage').then(m => ({ default: m.UserProfilePage })));
-const EditUserPage = lazy(() => import('@/pages/users/EditUserPage').then(m => ({ default: m.EditUserPage })));
+const UsersPage = lazy(() =>
+  import('@/pages/users/UsersPage').then(m => ({ default: m.UsersPage }))
+);
+const CreateUserPage = lazy(() =>
+  import('@/pages/users/CreateUserPage').then(m => ({ default: m.CreateUserPage }))
+);
+const UserDetailsPage = lazy(() =>
+  import('@/pages/users/UserDetailsPage').then(m => ({ default: m.UserDetailsPage }))
+);
+const UserProfilePage = lazy(() =>
+  import('@/pages/users/UserProfilePage').then(m => ({ default: m.UserProfilePage }))
+);
+const EditUserPage = lazy(() =>
+  import('@/pages/users/EditUserPage').then(m => ({ default: m.EditUserPage }))
+);
 
-const RoomsListPage = lazy(() => import('@/pages/rooms/RoomsPages').then(m => ({ default: m.RoomsListPage })));
-const CreateRoomPage = lazy(() => import('@/pages/rooms/RoomsPages').then(m => ({ default: m.CreateRoomPage })));
-const RoomDetailPage = lazy(() => import('@/pages/rooms/RoomDetailPage').then(m => ({ default: m.RoomDetailPage })));
-const EditRoomPage = lazy(() => import('@/pages/rooms/EditRoomPage').then(m => ({ default: m.EditRoomPage })));
+const RoomsListPage = lazy(() =>
+  import('@/pages/rooms/RoomsPages').then(m => ({ default: m.RoomsListPage }))
+);
+const CreateRoomPage = lazy(() =>
+  import('@/pages/rooms/RoomsPages').then(m => ({ default: m.CreateRoomPage }))
+);
+const RoomDetailPage = lazy(() =>
+  import('@/pages/rooms/RoomDetailPage').then(m => ({ default: m.RoomDetailPage }))
+);
+const EditRoomPage = lazy(() =>
+  import('@/pages/rooms/EditRoomPage').then(m => ({ default: m.EditRoomPage }))
+);
 
 const PlanningPage = lazy(() => import('@/pages/PlanningPage').then(m => ({ default: m.default })));
-const NotificationCenterPage = lazy(() => import('@/pages/NotificationCenterPage').then(m => ({ default: m.NotificationCenterPage })));
-const MessagingPage = lazy(() => import('@/pages/MessagingPage').then(m => ({ default: m.MessagingPage })));
+const NotificationCenterPage = lazy(() =>
+  import('@/pages/NotificationCenterPage').then(m => ({ default: m.NotificationCenterPage }))
+);
+const MessagingPage = lazy(() =>
+  import('@/pages/MessagingPage').then(m => ({ default: m.MessagingPage }))
+);
 
-const SettingsPage = lazy(() => import('@/pages/Settings').then(m => ({ default: m.SettingsPage })));
-const EstablishmentFeaturesPage = lazy(() => import('@/pages/settings/EstablishmentFeaturesPage').then(m => ({ default: m.EstablishmentFeaturesPage })));
-const EstablishmentSettingsPage = lazy(() => import('@/pages/settings/EstablishmentSettingsPage').then(m => ({ default: m.EstablishmentSettingsPage })));
-const MigrationToolsPage = lazy(() => import('@/pages/settings/MigrationToolsPage').then(m => ({ default: m.MigrationToolsPage })));
+const SettingsPage = lazy(() =>
+  import('@/pages/Settings').then(m => ({ default: m.SettingsPage }))
+);
+const EstablishmentFeaturesPage = lazy(() =>
+  import('@/pages/settings/EstablishmentFeaturesPage').then(m => ({
+    default: m.EstablishmentFeaturesPage,
+  }))
+);
+const EstablishmentSettingsPage = lazy(() =>
+  import('@/pages/settings/EstablishmentSettingsPage').then(m => ({
+    default: m.EstablishmentSettingsPage,
+  }))
+);
+const MigrationToolsPage = lazy(() =>
+  import('@/pages/settings/MigrationToolsPage').then(m => ({ default: m.MigrationToolsPage }))
+);
 
-const DiagnosticPage = lazy(() => import('@/pages/DiagnosticPage').then(m => ({ default: m.DiagnosticPage })));
-const NotFoundPage = lazy(() => import('@/pages/NotFound').then(m => ({ default: m.NotFoundPage })));
+const DiagnosticPage = lazy(() =>
+  import('@/pages/DiagnosticPage').then(m => ({ default: m.DiagnosticPage }))
+);
+const NotFoundPage = lazy(() =>
+  import('@/pages/NotFound').then(m => ({ default: m.NotFoundPage }))
+);
 
 /**
  * Configuration des routes
@@ -142,9 +197,7 @@ export const router = createBrowserRouter([
           {
             index: true,
             element: (
-              <FeatureGuard feature="interventions">
-                {withSuspense(InterventionsPage)}
-              </FeatureGuard>
+              <FeatureGuard feature="interventions">{withSuspense(InterventionsPage)}</FeatureGuard>
             ),
           },
           {
@@ -211,35 +264,19 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: (
-              <FeatureGuard feature="rooms">
-                {withSuspense(RoomsListPage)}
-              </FeatureGuard>
-            ),
+            element: <FeatureGuard feature="rooms">{withSuspense(RoomsListPage)}</FeatureGuard>,
           },
           {
             path: 'create',
-            element: (
-              <FeatureGuard feature="rooms">
-                {withSuspense(CreateRoomPage)}
-              </FeatureGuard>
-            ),
+            element: <FeatureGuard feature="rooms">{withSuspense(CreateRoomPage)}</FeatureGuard>,
           },
           {
             path: ':roomId',
-            element: (
-              <FeatureGuard feature="rooms">
-                {withSuspense(RoomDetailPage)}
-              </FeatureGuard>
-            ),
+            element: <FeatureGuard feature="rooms">{withSuspense(RoomDetailPage)}</FeatureGuard>,
           },
           {
             path: ':roomId/edit',
-            element: (
-              <FeatureGuard feature="rooms">
-                {withSuspense(EditRoomPage)}
-              </FeatureGuard>
-            ),
+            element: <FeatureGuard feature="rooms">{withSuspense(EditRoomPage)}</FeatureGuard>,
           },
         ],
       },
@@ -250,9 +287,7 @@ export const router = createBrowserRouter([
       {
         path: 'planning',
         element: (
-          <FeatureGuard feature="interventionPlanning">
-            {withSuspense(PlanningPage)}
-          </FeatureGuard>
+          <FeatureGuard feature="interventionPlanning">{withSuspense(PlanningPage)}</FeatureGuard>
         ),
       },
 
@@ -273,11 +308,7 @@ export const router = createBrowserRouter([
       // ----------------------------------------------------------------------------
       {
         path: 'messaging',
-        element: (
-          <FeatureGuard feature="internalChat">
-            {withSuspense(MessagingPage)}
-          </FeatureGuard>
-        ),
+        element: <FeatureGuard feature="internalChat">{withSuspense(MessagingPage)}</FeatureGuard>,
       },
 
       // ----------------------------------------------------------------------------
@@ -306,6 +337,14 @@ export const router = createBrowserRouter([
       {
         path: 'diagnostic',
         element: withSuspense(DiagnosticPage),
+      },
+
+      // ----------------------------------------------------------------------------
+      // 🗑️ CORBEILLE (Trash)
+      // ----------------------------------------------------------------------------
+      {
+        path: 'trash',
+        element: <TrashPage />,
       },
     ],
   },

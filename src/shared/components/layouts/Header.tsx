@@ -53,7 +53,7 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-4 border-b bg-white px-3 sm:px-4 md:px-6 dark:bg-gray-800 dark:border-gray-700">
+    <header className="sticky top-0 z-10 flex h-14 sm:h-16 items-center gap-2 sm:gap-3 border-b bg-white px-3 sm:px-4 md:px-6 dark:bg-gray-800 dark:border-gray-700">
       {/* Bouton menu mobile */}
       <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden flex-shrink-0">
         <Menu className="h-5 w-5" />
@@ -61,35 +61,41 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
 
       {/* Logo */}
       <Link to="/app/dashboard" className="flex items-center gap-2 flex-shrink-0">
-        <Building2 className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: 'hsl(var(--theme-primary))' }} />
-        <span className="hidden font-bold text-gray-900 dark:text-white sm:inline-block">
+        <Building2
+          className="h-5 w-5 sm:h-6 sm:w-6"
+          style={{ color: 'hsl(var(--theme-primary))' }}
+        />
+        <span className="hidden font-bold text-gray-900 dark:text-white md:inline-block">
           GestiHôtel
         </span>
       </Link>
 
-      {/* 🆕 ESTABLISHMENT SWITCHER - Masqué sur mobile et tablette */}
+      {/* ESTABLISHMENT SWITCHER - Masqué sur mobile et tablette */}
       <div className="hidden xl:block flex-shrink-0">
         <EstablishmentSwitcher />
       </div>
 
-      {/* Barre de recherche globale - Cmd+K - Responsive */}
-      <div className="flex-1 max-w-xs sm:max-w-md">
+      {/* Spacer flexible pour pousser les éléments à droite */}
+      <div className="flex-1 min-w-0" />
+
+      {/* Barre de recherche globale - Cmd+K */}
+      <div className="flex-shrink-0 w-auto">
         <SearchButton />
       </div>
 
-      {/* Actions - Responsive gap */}
+      {/* Actions */}
       <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-        {/* 🆕 Network Indicator - Masqué sur mobile */}
-        <div className="hidden sm:block">
+        {/* Network Indicator - Masqué sur mobile */}
+        <div className="hidden md:block">
           <NetworkIndicator />
         </div>
 
-        {/* 🆕 Theme Toggle - Masqué sur très petit mobile */}
-        <div className="hidden xs:block">
+        {/* Theme Toggle - Masqué sur petit écran */}
+        <div className="hidden sm:block">
           <ThemeToggle />
         </div>
 
-        {/* 🆕 Notifications - Clic vers le centre de notifications */}
+        {/* Notifications - Clic vers le centre de notifications */}
         <Button
           variant="ghost"
           size="icon"
@@ -110,7 +116,10 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         {/* Menu utilisateur - Avatar plus petit sur mobile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0">
+            <Button
+              variant="ghost"
+              className="relative h-8 w-8 sm:h-10 sm:w-10 rounded-full flex-shrink-0"
+            >
               <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
                 <AvatarImage src={user?.photoURL} alt={user?.displayName} />
                 <AvatarFallback

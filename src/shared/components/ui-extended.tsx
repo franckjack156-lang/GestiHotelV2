@@ -333,35 +333,50 @@ export function StatCard({
 
   return (
     <Card
-      className={cn(onClick && 'cursor-pointer hover:shadow-md transition-shadow')}
+      className={cn('h-full', onClick && 'cursor-pointer hover:shadow-md transition-shadow')}
       onClick={onClick}
     >
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+      <CardHeader className="flex flex-row items-center justify-between pb-2 gap-2">
+        {/* min-w-0 est CRUCIAL pour permettre le truncate sur flex items */}
+        <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate min-w-0 flex-1">
           {title}
         </CardTitle>
-        {icon && <div className={cn('rounded-lg p-2', colorClasses[color])}>{icon}</div>}
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {(description || trend) && (
-          <div className="flex items-center gap-2 mt-2">
-            {trend && (
-              <span
-                className={cn(
-                  'flex items-center gap-1 text-sm',
-                  trend.isPositive ? 'text-green-600' : 'text-red-600'
-                )}
-              >
-                {trend.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                {Math.abs(trend.value)}%
-              </span>
-            )}
-            {description && (
-              <span className="text-xs text-gray-600 dark:text-gray-400">{description}</span>
-            )}
+        {icon && (
+          <div className={cn('rounded-lg p-1.5 sm:p-2 flex-shrink-0', colorClasses[color])}>
+            {icon}
           </div>
         )}
+      </CardHeader>
+      <CardContent className="pt-0">
+        {/* Conteneur avec min-w-0 pour le truncate */}
+        <div className="min-w-0">
+          <div className="text-xl sm:text-2xl font-bold truncate" title={String(value)}>
+            {value}
+          </div>
+          {(description || trend) && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {trend && (
+                <span
+                  className={cn(
+                    'flex items-center gap-1 text-xs sm:text-sm flex-shrink-0',
+                    trend.isPositive ? 'text-green-600' : 'text-red-600'
+                  )}
+                >
+                  {trend.isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  {Math.abs(trend.value)}%
+                </span>
+              )}
+              {description && (
+                <span
+                  className="text-xs text-gray-600 dark:text-gray-400 truncate min-w-0"
+                  title={description}
+                >
+                  {description}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -55,11 +55,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/shared/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import { useInterventions } from '@/features/interventions/hooks/useInterventions';
 import { useInterventionActions } from '@/features/interventions/hooks/useInterventionActions';
@@ -161,9 +157,7 @@ const DraggableIntervention = ({ intervention, onClick }: DraggableInterventionP
             <div className="text-xs font-medium truncate leading-tight">{intervention.title}</div>
             <div className="flex items-center gap-1.5 mt-0.5 text-[10px] opacity-90">
               {intervention.scheduledAt && (
-                <span>
-                  {format(intervention.scheduledAt.toDate(), 'HH:mm', { locale: fr })}
-                </span>
+                <span>{format(intervention.scheduledAt.toDate(), 'HH:mm', { locale: fr })}</span>
               )}
               {intervention.assignedToName && (
                 <>
@@ -191,7 +185,9 @@ const DraggableIntervention = ({ intervention, onClick }: DraggableInterventionP
               <div className="flex items-center gap-2">
                 <Clock size={12} />
                 <span>
-                  {format(intervention.scheduledAt.toDate(), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                  {format(intervention.scheduledAt.toDate(), 'dd MMMM yyyy à HH:mm', {
+                    locale: fr,
+                  })}
                 </span>
               </div>
             )}
@@ -257,7 +253,9 @@ const DroppableMonthDay = ({ day, interventions, onInterventionClick }: Droppabl
     <div
       ref={setNodeRef}
       className={`border rounded-lg p-2 min-h-24 transition-colors ${
-        isOver ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500' : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+        isOver
+          ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
       }`}
     >
       <div className="text-sm font-medium mb-2">{format(day, 'd')}</div>
@@ -291,7 +289,13 @@ interface DroppableTimeSlotProps {
   onSlotClick?: (date: Date) => void;
 }
 
-const DroppableTimeSlot = ({ day, hour, interventions, onInterventionClick, onSlotClick }: DroppableTimeSlotProps) => {
+const DroppableTimeSlot = ({
+  day,
+  hour,
+  interventions,
+  onInterventionClick,
+  onSlotClick,
+}: DroppableTimeSlotProps) => {
   const slotDate = setHours(setMinutes(day, 0), hour);
   const { setNodeRef, isOver } = useDroppable({
     id: `${format(day, 'yyyy-MM-dd')}-${hour}`,
@@ -300,7 +304,8 @@ const DroppableTimeSlot = ({ day, hour, interventions, onInterventionClick, onSl
 
   // Filtrer les interventions qui commencent dans cet créneau horaire
   const slotInterventions = interventions.filter(intervention => {
-    if (!intervention.scheduledAt || typeof intervention.scheduledAt.toDate !== 'function') return false;
+    if (!intervention.scheduledAt || typeof intervention.scheduledAt.toDate !== 'function')
+      return false;
     const intDate = intervention.scheduledAt.toDate();
     return intDate.getHours() === hour && isSameDay(intDate, day);
   });
@@ -320,7 +325,9 @@ const DroppableTimeSlot = ({ day, hour, interventions, onInterventionClick, onSl
       ref={setNodeRef}
       onClick={handleSlotClick}
       className={`relative border-t border-l border-gray-200 dark:border-gray-700 min-h-16 transition-colors ${
-        isOver ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50 cursor-pointer'
+        isOver
+          ? 'bg-indigo-50 dark:bg-indigo-900/20'
+          : 'hover:bg-gray-50/50 dark:hover:bg-gray-800/50 cursor-pointer'
       }`}
     >
       {slotInterventions.map((intervention, index) => {
@@ -332,7 +339,7 @@ const DroppableTimeSlot = ({ day, hour, interventions, onInterventionClick, onSl
         // Calculer le décalage horizontal pour les interventions qui se chevauchent
         const totalInSlot = slotInterventions.length;
         const widthPercent = totalInSlot > 1 ? 100 / totalInSlot : 100;
-        const leftPercent = totalInSlot > 1 ? (index * widthPercent) : 0;
+        const leftPercent = totalInSlot > 1 ? index * widthPercent : 0;
 
         return (
           <div
@@ -374,7 +381,12 @@ interface CalendarGridProps {
   onSlotClick?: (date: Date) => void;
 }
 
-const CalendarGrid = ({ days, interventions, onInterventionClick, onSlotClick }: CalendarGridProps) => {
+const CalendarGrid = ({
+  days,
+  interventions,
+  onInterventionClick,
+  onSlotClick,
+}: CalendarGridProps) => {
   const hours = Array.from({ length: 24 }, (_, i) => i); // 0-23h
   const workingHours = hours.filter(h => h >= 6 && h <= 22); // 6h-22h pour réduire l'affichage
 
@@ -391,30 +403,36 @@ const CalendarGrid = ({ days, interventions, onInterventionClick, onSlotClick }:
     if (count === 0) return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
     if (count <= 3) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
     if (count <= 6) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
-    if (count <= 9) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+    if (count <= 9)
+      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
   };
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {/* Header avec les jours */}
-      <div className="grid bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+      <div
+        className="grid bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
         style={{ gridTemplateColumns: `80px repeat(${days.length}, 1fr)` }}
       >
         <div className="p-2 border-r border-gray-200 dark:border-gray-700"></div>
         {days.map(day => {
           const dayCount = getInterventionsForDay(day);
           return (
-            <div key={day.toString()} className="p-2 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0">
+            <div
+              key={day.toString()}
+              className="p-2 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0"
+            >
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {format(day, 'EEE', { locale: fr })}
               </div>
-              <div className="text-lg font-semibold">
-                {format(day, 'd')}
-              </div>
+              <div className="text-lg font-semibold">{format(day, 'd')}</div>
               {/* Badge de charge */}
               <div className="mt-1">
-                <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${getLoadBadgeColor(dayCount)}`}>
+                <Badge
+                  variant="secondary"
+                  className={`text-[10px] px-1.5 py-0 ${getLoadBadgeColor(dayCount)}`}
+                >
                   {dayCount} {dayCount > 1 ? 'interventions' : 'intervention'}
                 </Badge>
               </div>
@@ -560,7 +578,10 @@ export const PlanningPage = () => {
       }
 
       // Filtre par priorité
-      if (selectedPriorities.length > 0 && !selectedPriorities.includes(intervention.priority || 'normal')) {
+      if (
+        selectedPriorities.length > 0 &&
+        !selectedPriorities.includes(intervention.priority || 'normal')
+      ) {
         return false;
       }
 
@@ -579,7 +600,14 @@ export const PlanningPage = () => {
 
       return true;
     });
-  }, [allInterventions, currentDate, viewMode, selectedStatuses, selectedPriorities, searchKeyword]);
+  }, [
+    allInterventions,
+    currentDate,
+    viewMode,
+    selectedStatuses,
+    selectedPriorities,
+    searchKeyword,
+  ]);
 
   // Grouper les interventions
   const groupedInterventions = useMemo(() => {
@@ -673,19 +701,24 @@ export const PlanningPage = () => {
           `Intervention déplacée au ${format(newDate, 'dd MMMM yyyy à HH:mm', { locale: fr })}`
         );
       } catch {
-        toast.error('Erreur lors du déplacement de l\'intervention');
+        toast.error("Erreur lors du déplacement de l'intervention");
       }
     },
     [updateIntervention]
   );
 
   // Handler pour créer une intervention en cliquant sur un créneau vide
-  const handleSlotClick = useCallback((date: Date) => {
-    // Naviguer vers la création d'intervention avec la date préremplie
-    const dateParam = encodeURIComponent(date.toISOString());
-    navigate(`/app/interventions/create?scheduledAt=${dateParam}`);
-    toast.info(`Création d'intervention pour le ${format(date, 'dd MMMM yyyy à HH:mm', { locale: fr })}`);
-  }, [navigate]);
+  const handleSlotClick = useCallback(
+    (date: Date) => {
+      // Naviguer vers la création d'intervention avec la date préremplie
+      const dateParam = encodeURIComponent(date.toISOString());
+      navigate(`/app/interventions/create?scheduledAt=${dateParam}`);
+      toast.info(
+        `Création d'intervention pour le ${format(date, 'dd MMMM yyyy à HH:mm', { locale: fr })}`
+      );
+    },
+    [navigate]
+  );
 
   if (!establishmentId) {
     return (
@@ -708,351 +741,412 @@ export const PlanningPage = () => {
         onDragEnd={handleDragEnd}
       >
         <div className="space-y-4 sm:space-y-6">
-        {/* Header - Responsive optimisé */}
-        <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-3">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Planning</h1>
-            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1 line-clamp-1">
-              <span className="hidden md:inline">Vue d'ensemble des interventions planifiées - Drag & drop pour déplacer</span>
-              <span className="md:hidden">Interventions planifiées</span>
-            </p>
+          {/* Header - Responsive optimisé */}
+          <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 xs:gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Planning</h1>
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 sm:mt-1 line-clamp-1">
+                <span className="hidden md:inline">
+                  Vue d'ensemble des interventions planifiées - Drag & drop pour déplacer
+                </span>
+                <span className="md:hidden">Interventions planifiées</span>
+              </p>
+            </div>
+            <Button
+              onClick={() => navigate('/app/interventions/create')}
+              size="sm"
+              className="flex-shrink-0 w-full xs:w-auto"
+            >
+              <Plus size={16} className="sm:mr-2" />
+              <span className="hidden xs:inline">Nouvelle intervention</span>
+              <span className="xs:hidden">Nouvelle intervention</span>
+            </Button>
           </div>
-          <Button onClick={() => navigate('/app/interventions/create')} size="sm" className="flex-shrink-0 w-full xs:w-auto">
-            <Plus size={16} className="sm:mr-2" />
-            <span className="hidden xs:inline">Nouvelle intervention</span>
-            <span className="xs:hidden">Nouvelle intervention</span>
-          </Button>
-        </div>
 
-        {/* Contrôles - Optimisé mobile */}
-        <Card>
-          <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
-            <div className="space-y-3 sm:space-y-4">
-              <div className="flex flex-col gap-3">
-                {/* Navigation */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <Button variant="outline" size="sm" onClick={goToPrevious} className="flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 p-0">
-                      <ChevronLeft size={16} />
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={goToToday} className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4">
-                      Aujourd'hui
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={goToNext} className="flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 p-0">
-                      <ChevronRight size={16} />
-                    </Button>
+          {/* Contrôles - Optimisé mobile */}
+          <Card>
+            <CardContent className="pt-3 sm:pt-6 px-3 sm:px-6">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col gap-3">
+                  {/* Navigation */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPrevious}
+                        className="flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 p-0"
+                      >
+                        <ChevronLeft size={16} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToToday}
+                        className="flex-shrink-0 whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4"
+                      >
+                        Aujourd'hui
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNext}
+                        className="flex-shrink-0 h-8 w-8 sm:h-9 sm:w-9 p-0"
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </div>
+                    <div className="font-semibold text-xs sm:text-base md:text-lg capitalize truncate ml-2">
+                      {periodTitle}
+                    </div>
                   </div>
-                  <div className="font-semibold text-xs sm:text-base md:text-lg capitalize truncate ml-2">{periodTitle}</div>
+
+                  {/* Vues et filtres */}
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={viewMode}
+                      onValueChange={(value: ViewMode) => setViewMode(value)}
+                    >
+                      <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="day">Jour</SelectItem>
+                        <SelectItem value="week">Semaine</SelectItem>
+                        <SelectItem value="month">Mois</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={groupMode}
+                      onValueChange={(value: GroupMode) => setGroupMode(value)}
+                    >
+                      <SelectTrigger className="flex-1 sm:w-40 text-xs sm:text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Défaut</SelectItem>
+                        <SelectItem value="technician">Technicien</SelectItem>
+                        <SelectItem value="room">Chambre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                {/* Vues et filtres */}
-                <div className="flex items-center gap-2">
-                  <Select value={viewMode} onValueChange={(value: ViewMode) => setViewMode(value)}>
-                    <SelectTrigger className="w-24 sm:w-32 text-xs sm:text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="day">Jour</SelectItem>
-                      <SelectItem value="week">Semaine</SelectItem>
-                      <SelectItem value="month">Mois</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Filtres avancés */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  {/* Recherche par mot-clé */}
+                  <div className="relative flex-1 min-w-0">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Rechercher..."
+                      value={searchKeyword}
+                      onChange={e => setSearchKeyword(e.target.value)}
+                      className="pl-10 text-sm"
+                    />
+                    {searchKeyword && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                        onClick={() => setSearchKeyword('')}
+                      >
+                        <X size={14} />
+                      </Button>
+                    )}
+                  </div>
 
-                  <Select value={groupMode} onValueChange={(value: GroupMode) => setGroupMode(value)}>
-                    <SelectTrigger className="flex-1 sm:w-40 text-xs sm:text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="default">Défaut</SelectItem>
-                      <SelectItem value="technician">Technicien</SelectItem>
-                      <SelectItem value="room">Chambre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                  {/* Filtre par statut */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
+                        <Filter size={14} />
+                        <span className="hidden xs:inline">Statut</span>
+                        {selectedStatuses.length > 0 && (
+                          <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                            {selectedStatuses.length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-sm">Filtrer par statut</h4>
+                        <div className="space-y-2">
+                          {[
+                            'pending',
+                            'assigned',
+                            'in_progress',
+                            'on_hold',
+                            'completed',
+                            'validated',
+                            'cancelled',
+                          ].map(status => (
+                            <div key={status} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`status-${status}`}
+                                checked={selectedStatuses.includes(status)}
+                                onCheckedChange={checked => {
+                                  if (checked) {
+                                    setSelectedStatuses([...selectedStatuses, status]);
+                                  } else {
+                                    setSelectedStatuses(selectedStatuses.filter(s => s !== status));
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`status-${status}`}
+                                className="text-sm cursor-pointer capitalize"
+                              >
+                                {status === 'pending'
+                                  ? 'En attente'
+                                  : status === 'assigned'
+                                    ? 'Assignée'
+                                    : status === 'in_progress'
+                                      ? 'En cours'
+                                      : status === 'on_hold'
+                                        ? 'En pause'
+                                        : status === 'completed'
+                                          ? 'Terminée'
+                                          : status === 'validated'
+                                            ? 'Validée'
+                                            : 'Annulée'}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        {selectedStatuses.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setSelectedStatuses([])}
+                          >
+                            Réinitialiser
+                          </Button>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
 
-              {/* Filtres avancés */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                {/* Recherche par mot-clé */}
-                <div className="relative flex-1 min-w-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Rechercher..."
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    className="pl-10 text-sm"
-                  />
-                  {searchKeyword && (
+                  {/* Filtre par priorité */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
+                        <Filter size={14} />
+                        <span className="hidden xs:inline">Priorité</span>
+                        {selectedPriorities.length > 0 && (
+                          <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
+                            {selectedPriorities.length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-sm">Filtrer par priorité</h4>
+                        <div className="space-y-2">
+                          {['low', 'normal', 'high', 'urgent', 'critical'].map(priority => (
+                            <div key={priority} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`priority-${priority}`}
+                                checked={selectedPriorities.includes(priority)}
+                                onCheckedChange={checked => {
+                                  if (checked) {
+                                    setSelectedPriorities([...selectedPriorities, priority]);
+                                  } else {
+                                    setSelectedPriorities(
+                                      selectedPriorities.filter(p => p !== priority)
+                                    );
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={`priority-${priority}`}
+                                className="text-sm cursor-pointer capitalize"
+                              >
+                                {priority === 'low'
+                                  ? 'Basse'
+                                  : priority === 'normal'
+                                    ? 'Normale'
+                                    : priority === 'high'
+                                      ? 'Haute'
+                                      : priority === 'urgent'
+                                        ? 'Urgente'
+                                        : 'Critique'}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                        {selectedPriorities.length > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setSelectedPriorities([])}
+                          >
+                            Réinitialiser
+                          </Button>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Indicateur de filtres actifs */}
+                  {(searchKeyword ||
+                    selectedStatuses.length > 0 ||
+                    selectedPriorities.length > 0) && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
-                      onClick={() => setSearchKeyword('')}
+                      onClick={() => {
+                        setSearchKeyword('');
+                        setSelectedStatuses([]);
+                        setSelectedPriorities([]);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
                     >
-                      <X size={14} />
+                      <X size={14} className="mr-1" />
+                      Effacer tous les filtres
                     </Button>
                   )}
                 </div>
-
-                {/* Filtre par statut */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
-                      <Filter size={14} />
-                      <span className="hidden xs:inline">Statut</span>
-                      {selectedStatuses.length > 0 && (
-                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                          {selectedStatuses.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64">
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Filtrer par statut</h4>
-                      <div className="space-y-2">
-                        {['pending', 'assigned', 'in_progress', 'on_hold', 'completed', 'validated', 'cancelled'].map((status) => (
-                          <div key={status} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`status-${status}`}
-                              checked={selectedStatuses.includes(status)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedStatuses([...selectedStatuses, status]);
-                                } else {
-                                  setSelectedStatuses(selectedStatuses.filter((s) => s !== status));
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`status-${status}`}
-                              className="text-sm cursor-pointer capitalize"
-                            >
-                              {status === 'pending' ? 'En attente' :
-                               status === 'assigned' ? 'Assignée' :
-                               status === 'in_progress' ? 'En cours' :
-                               status === 'on_hold' ? 'En pause' :
-                               status === 'completed' ? 'Terminée' :
-                               status === 'validated' ? 'Validée' :
-                               'Annulée'}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      {selectedStatuses.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setSelectedStatuses([])}
-                        >
-                          Réinitialiser
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Filtre par priorité */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 flex-shrink-0">
-                      <Filter size={14} />
-                      <span className="hidden xs:inline">Priorité</span>
-                      {selectedPriorities.length > 0 && (
-                        <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs">
-                          {selectedPriorities.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64">
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Filtrer par priorité</h4>
-                      <div className="space-y-2">
-                        {['low', 'normal', 'high', 'urgent', 'critical'].map((priority) => (
-                          <div key={priority} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`priority-${priority}`}
-                              checked={selectedPriorities.includes(priority)}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedPriorities([...selectedPriorities, priority]);
-                                } else {
-                                  setSelectedPriorities(selectedPriorities.filter((p) => p !== priority));
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`priority-${priority}`}
-                              className="text-sm cursor-pointer capitalize"
-                            >
-                              {priority === 'low' ? 'Basse' :
-                               priority === 'normal' ? 'Normale' :
-                               priority === 'high' ? 'Haute' :
-                               priority === 'urgent' ? 'Urgente' :
-                               'Critique'}
-                            </label>
-                          </div>
-                        ))}
-                      </div>
-                      {selectedPriorities.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full"
-                          onClick={() => setSelectedPriorities([])}
-                        >
-                          Réinitialiser
-                        </Button>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Indicateur de filtres actifs */}
-                {(searchKeyword || selectedStatuses.length > 0 || selectedPriorities.length > 0) && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchKeyword('');
-                      setSelectedStatuses([]);
-                      setSelectedPriorities([]);
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <X size={14} className="mr-1" />
-                    Effacer tous les filtres
-                  </Button>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Calendrier */}
-        <div className="space-y-4">
-          {Object.entries(groupedInterventions).map(([groupKey, interventions]) => (
-            <Card key={groupKey}>
-              {groupMode !== 'default' && (
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    {groupMode === 'technician' ? (
-                      <>
-                        <Users size={16} />
-                        {groupKey === 'unassigned' ? 'Non assignées' : `Technicien ${groupKey}`}
-                      </>
-                    ) : (
-                      <>
-                        <DoorClosed size={16} />
-                        {groupKey === 'no-room' ? 'Sans chambre' : `Chambre ${groupKey}`}
-                      </>
-                    )}
-                    <span className="text-sm text-gray-500">({interventions.length})</span>
-                  </CardTitle>
-                </CardHeader>
-              )}
-
-              <CardContent className={groupMode !== 'default' ? '' : 'pt-6'}>
-                {viewMode === 'month' ? (
-                  // Vue mois : Grille de jours
-                  <div className="grid grid-cols-7 gap-2">
-                    {/* Jours de la semaine */}
-                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day => (
-                      <div
-                        key={day}
-                        className="text-center text-sm font-medium text-gray-600 dark:text-gray-400 py-2"
-                      >
-                        {day}
-                      </div>
-                    ))}
-
-                    {/* Jours du mois */}
-                    {days.map(day => {
-                      const dayInterventions = interventions.filter(i =>
-                        i.scheduledAt && typeof i.scheduledAt.toDate === 'function' && isSameDay(i.scheduledAt.toDate(), day)
-                      );
-
-                      return (
-                        <DroppableMonthDay
-                          key={day.toString()}
-                          day={day}
-                          interventions={dayInterventions}
-                          onInterventionClick={(id) => navigate(`/app/interventions/${id}`)}
-                        />
-                      );
-                    })}
-                  </div>
-                ) : (
-                  // Vue jour/semaine : Calendrier avec échelle d'heures
-                  <CalendarGrid
-                    days={days}
-                    interventions={interventions}
-                    viewMode={viewMode}
-                    onInterventionClick={(id) => navigate(`/app/interventions/${id}`)}
-                    onSlotClick={handleSlotClick}
-                  />
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredInterventions.length === 0 && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <CalendarIcon className="mx-auto mb-4 text-gray-400" size={48} />
-              <h3 className="text-lg font-semibold mb-2">Aucune intervention</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Aucune intervention planifiée pour cette période
-              </p>
-              <Button onClick={() => navigate('/app/interventions/create')}>
-                Créer une intervention
-              </Button>
             </CardContent>
           </Card>
-        )}
 
-        {/* Statistiques visuelles */}
-        {filteredInterventions.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-4">Statistiques de la période</h2>
-            <PlanningStatistics
-              interventions={filteredInterventions}
-              period={{
-                start: viewMode === 'week'
-                  ? startOfWeek(currentDate, { locale: fr })
-                  : viewMode === 'month'
-                  ? startOfMonth(currentDate)
-                  : currentDate,
-                end: viewMode === 'week'
-                  ? endOfWeek(currentDate, { locale: fr })
-                  : viewMode === 'month'
-                  ? endOfMonth(currentDate)
-                  : currentDate,
-              }}
-            />
+          {/* Calendrier */}
+          <div className="space-y-4">
+            {Object.entries(groupedInterventions).map(([groupKey, interventions]) => (
+              <Card key={groupKey}>
+                {groupMode !== 'default' && (
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      {groupMode === 'technician' ? (
+                        <>
+                          <Users size={16} />
+                          {groupKey === 'unassigned' ? 'Non assignées' : `Technicien ${groupKey}`}
+                        </>
+                      ) : (
+                        <>
+                          <DoorClosed size={16} />
+                          {groupKey === 'no-room' ? 'Sans chambre' : `Chambre ${groupKey}`}
+                        </>
+                      )}
+                      <span className="text-sm text-gray-500">({interventions.length})</span>
+                    </CardTitle>
+                  </CardHeader>
+                )}
+
+                <CardContent className={groupMode !== 'default' ? '' : 'pt-6'}>
+                  {viewMode === 'month' ? (
+                    // Vue mois : Grille de jours avec scroll horizontal sur mobile
+                    <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+                      <div className="grid grid-cols-7 gap-1 sm:gap-2 min-w-[320px]">
+                        {/* Jours de la semaine */}
+                        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, index) => (
+                          <div
+                            key={`${day}-${index}`}
+                            className="text-center text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 py-1 sm:py-2"
+                          >
+                            <span className="sm:hidden">{day}</span>
+                            <span className="hidden sm:inline">
+                              {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'][index]}
+                            </span>
+                          </div>
+                        ))}
+
+                        {/* Jours du mois */}
+                        {days.map(day => {
+                          const dayInterventions = interventions.filter(
+                            i =>
+                              i.scheduledAt &&
+                              typeof i.scheduledAt.toDate === 'function' &&
+                              isSameDay(i.scheduledAt.toDate(), day)
+                          );
+
+                          return (
+                            <DroppableMonthDay
+                              key={day.toString()}
+                              day={day}
+                              interventions={dayInterventions}
+                              onInterventionClick={id => navigate(`/app/interventions/${id}`)}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    // Vue jour/semaine : Calendrier avec échelle d'heures
+                    <CalendarGrid
+                      days={days}
+                      interventions={interventions}
+                      viewMode={viewMode}
+                      onInterventionClick={id => navigate(`/app/interventions/${id}`)}
+                      onSlotClick={handleSlotClick}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        )}
-      </div>
 
-      {/* Drag Overlay */}
-      <DragOverlay>
-        {activeIntervention && (
-          <div className="border rounded-lg p-4 bg-white dark:bg-gray-800 shadow-lg opacity-90">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock size={14} className="text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {activeIntervention.scheduledAt &&
-                  format(activeIntervention.scheduledAt.toDate(), 'HH:mm', { locale: fr })}
-              </span>
+          {filteredInterventions.length === 0 && (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <CalendarIcon className="mx-auto mb-4 text-gray-400" size={48} />
+                <h3 className="text-lg font-semibold mb-2">Aucune intervention</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Aucune intervention planifiée pour cette période
+                </p>
+                <Button onClick={() => navigate('/app/interventions/create')}>
+                  Créer une intervention
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Statistiques visuelles */}
+          {filteredInterventions.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-4">Statistiques de la période</h2>
+              <PlanningStatistics
+                interventions={filteredInterventions}
+                period={{
+                  start:
+                    viewMode === 'week'
+                      ? startOfWeek(currentDate, { locale: fr })
+                      : viewMode === 'month'
+                        ? startOfMonth(currentDate)
+                        : currentDate,
+                  end:
+                    viewMode === 'week'
+                      ? endOfWeek(currentDate, { locale: fr })
+                      : viewMode === 'month'
+                        ? endOfMonth(currentDate)
+                        : currentDate,
+                }}
+              />
             </div>
-            <h4 className="font-medium">{activeIntervention.title}</h4>
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+          )}
+        </div>
+
+        {/* Drag Overlay */}
+        <DragOverlay>
+          {activeIntervention && (
+            <div className="border rounded-lg p-4 bg-white dark:bg-gray-800 shadow-lg opacity-90">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock size={14} className="text-gray-400" />
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {activeIntervention.scheduledAt &&
+                    format(activeIntervention.scheduledAt.toDate(), 'HH:mm', { locale: fr })}
+                </span>
+              </div>
+              <h4 className="font-medium">{activeIntervention.title}</h4>
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
     </TooltipProvider>
   );
 };
