@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Dashboard Service
  *
@@ -529,7 +528,9 @@ class DashboardService {
     const q = query(roomsRef);
 
     const snapshot = await getDocs(q);
-    const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as any[];
+    const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Array<
+      Record<string, unknown>
+    >;
 
     const stats: RoomStats = {
       total: rooms.length,

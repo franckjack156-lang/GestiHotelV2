@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PieChart Component
  *
@@ -8,6 +7,7 @@
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { SafeResponsiveContainer } from './SafeResponsiveContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import type { ChartDataPoint, PieLabelRenderProps } from './types';
 
 const COLORS = [
   '#3b82f6',
@@ -22,7 +22,7 @@ const COLORS = [
 
 interface PieChartProps {
   title: string;
-  data: any[];
+  data: ChartDataPoint[];
   dataKey?: string;
   nameKey?: string;
   showLegend?: boolean;
@@ -53,17 +53,19 @@ export const PieChart = ({
   colors = COLORS,
 }: PieChartProps) => {
   const hasData = data && data.length > 0;
-  const totalValue = hasData ? data.reduce((sum, item) => sum + (item[dataKey] || 0), 0) : 0;
+  const totalValue = hasData
+    ? data.reduce((sum, item) => sum + (Number(item[dataKey]) || 0), 0)
+    : 0;
 
   // Custom label qui n'affiche que le pourcentage
   const renderCustomLabel = ({
-    cx,
-    cy,
-    midAngle,
-    innerRadius: ir,
-    outerRadius: or,
-    percent,
-  }: any) => {
+    cx = 0,
+    cy = 0,
+    midAngle = 0,
+    innerRadius: ir = 0,
+    outerRadius: or = 0,
+    percent = 0,
+  }: PieLabelRenderProps) => {
     if (percent < 0.08) return null; // Ne pas afficher si < 8%
 
     const RADIAN = Math.PI / 180;

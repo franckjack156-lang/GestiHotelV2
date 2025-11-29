@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * AreaChart Component
  *
@@ -16,10 +15,11 @@ import {
 } from 'recharts';
 import { SafeResponsiveContainer } from './SafeResponsiveContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import type { ChartDataPoint } from './types';
 
 interface AreaChartProps {
   title: string;
-  data: any[];
+  data: ChartDataPoint[];
   areas: {
     dataKey: string;
     name: string;

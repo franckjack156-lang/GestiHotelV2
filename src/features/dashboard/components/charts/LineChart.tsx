@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * LineChart Component
  *
@@ -16,10 +15,11 @@ import {
 } from 'recharts';
 import { SafeResponsiveContainer } from './SafeResponsiveContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import type { ChartDataPoint } from './types';
 
 interface LineChartProps {
   title: string;
-  data: any[];
+  data: ChartDataPoint[];
   lines: {
     dataKey: string;
     name: string;

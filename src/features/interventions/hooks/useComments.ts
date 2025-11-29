@@ -74,10 +74,10 @@ export const useComments = (interventionId: string, establishmentId: string) => 
         );
 
         return true;
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error adding comment:', error);
         toast.error("Erreur lors de l'ajout du commentaire", {
-          description: error.message,
+          description: error instanceof Error ? error.message : 'Erreur inconnue',
         });
         return false;
       } finally {
@@ -104,7 +104,7 @@ export const useComments = (interventionId: string, establishmentId: string) => 
         });
 
         return true;
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error adding system comment:', error);
         return false;
       }
@@ -125,10 +125,10 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       await updateComment(commentId, { content });
       toast.success('Commentaire modifié');
       return true;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error editing comment:', error);
       toast.error('Erreur lors de la modification', {
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Erreur inconnue',
       });
       return false;
     }
@@ -148,10 +148,10 @@ export const useComments = (interventionId: string, establishmentId: string) => 
         await deleteComment(commentId, user.id);
         toast.success('Commentaire supprimé');
         return true;
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error deleting comment:', error);
         toast.error('Erreur lors de la suppression', {
-          description: error.message,
+          description: error instanceof Error ? error.message : 'Erreur inconnue',
         });
         return false;
       }
@@ -180,7 +180,12 @@ export const useComments = (interventionId: string, establishmentId: string) => 
       if (!user) return false;
       // L'auteur ou un admin peut supprimer
       if (comment.contentType === 'system') return false;
-      return comment.authorId === user.id || user.role === 'editor' || user.role === 'super_admin' || user.role === 'admin';
+      return (
+        comment.authorId === user.id ||
+        user.role === 'editor' ||
+        user.role === 'super_admin' ||
+        user.role === 'admin'
+      );
     },
     [user]
   );

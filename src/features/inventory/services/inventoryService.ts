@@ -35,7 +35,7 @@ import type {
 /**
  * Utilitaire pour nettoyer les champs undefined
  */
-const removeUndefinedFields = <T extends Record<string, any>>(obj: T): Partial<T> => {
+const removeUndefinedFields = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
   const cleaned: any = {};
   Object.keys(obj).forEach(key => {
     const value = obj[key];
@@ -103,9 +103,7 @@ export const getInventoryItems = async (
   const q = query(getInventoryCollection(establishmentId), ...constraints);
   const snapshot = await getDocs(q);
 
-  let items = snapshot.docs.map(
-    doc => ({ id: doc.id, ...doc.data() } as InventoryItem)
-  );
+  let items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as InventoryItem);
 
   // Filtrage côté client pour la recherche
   if (filters?.search) {
@@ -120,9 +118,7 @@ export const getInventoryItems = async (
 
   // Filtrage par tags
   if (filters?.tags && filters.tags.length > 0) {
-    items = items.filter(item =>
-      filters.tags?.some(tag => item.tags?.includes(tag))
-    );
+    items = items.filter(item => filters.tags?.some(tag => item.tags?.includes(tag)));
   }
 
   return items;
@@ -195,7 +191,7 @@ export const updateInventoryItem = async (
 
   const quantity = data.quantity !== undefined ? data.quantity : currentItem.quantity;
   const minQuantity = data.minQuantity !== undefined ? data.minQuantity : currentItem.minQuantity;
-  const unitPrice = data.unitPrice !== undefined ? data.unitPrice : (currentItem.unitPrice || 0);
+  const unitPrice = data.unitPrice !== undefined ? data.unitPrice : currentItem.unitPrice || 0;
   const totalValue = quantity * unitPrice;
   const status = calculateStatus(quantity, minQuantity);
 
@@ -319,25 +315,19 @@ export const getStockMovements = async (
   const q = query(getStockMovementsCollection(establishmentId), ...constraints);
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(
-    doc => ({ id: doc.id, ...doc.data() } as StockMovement)
-  );
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }) as StockMovement);
 };
 
 /**
  * Récupérer les articles en stock faible
  */
-export const getLowStockItems = async (
-  establishmentId: string
-): Promise<InventoryItem[]> => {
+export const getLowStockItems = async (establishmentId: string): Promise<InventoryItem[]> => {
   return getInventoryItems(establishmentId, { status: 'low_stock' });
 };
 
 /**
  * Récupérer les articles en rupture de stock
  */
-export const getOutOfStockItems = async (
-  establishmentId: string
-): Promise<InventoryItem[]> => {
+export const getOutOfStockItems = async (establishmentId: string): Promise<InventoryItem[]> => {
   return getInventoryItems(establishmentId, { status: 'out_of_stock' });
 };

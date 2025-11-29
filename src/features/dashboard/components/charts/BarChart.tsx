@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * BarChart Component
  *
@@ -16,10 +15,11 @@ import {
 } from 'recharts';
 import { SafeResponsiveContainer } from './SafeResponsiveContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
+import type { ChartDataPoint } from './types';
 
 interface BarChartProps {
   title: string;
-  data: any[];
+  data: ChartDataPoint[];
   bars: {
     dataKey: string;
     name: string;
@@ -108,7 +108,7 @@ export const BarChart = ({
             formatter={(value: number, name: string) => [value, name]}
             labelFormatter={(label: string) => {
               const item = processedData.find(d => d._displayName === label);
-              return item ? item._originalName : label;
+              return item ? String(item._originalName) : label;
             }}
           />
         )}

@@ -27,7 +27,7 @@ export const useAuth = () => {
       useAuthStore.getState().setLoading(true);
       useAuthStore.getState().setError(null);
       await authService.loginWithEmail(credentials);
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       useAuthStore.getState().setError(err.message);
       throw err;
@@ -41,7 +41,7 @@ export const useAuth = () => {
       useAuthStore.getState().setLoading(true);
       useAuthStore.getState().setError(null);
       await authService.loginWithGoogle();
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       useAuthStore.getState().setError(err.message);
       throw err;
@@ -55,7 +55,7 @@ export const useAuth = () => {
       useAuthStore.getState().setLoading(true);
       useAuthStore.getState().setError(null);
       await authService.registerWithEmail(email, password, displayName);
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       useAuthStore.getState().setError(err.message);
       throw err;
@@ -70,7 +70,7 @@ export const useAuth = () => {
       await authService.logout();
       useAuthStore.getState().logout();
       navigate('/login');
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       useAuthStore.getState().setError(err.message);
       throw err;
@@ -84,7 +84,7 @@ export const useAuth = () => {
       useAuthStore.getState().setLoading(true);
       useAuthStore.getState().setError(null);
       await authService.resetPassword(data);
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       useAuthStore.getState().setError(err.message);
       throw err;

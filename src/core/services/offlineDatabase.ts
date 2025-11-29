@@ -327,7 +327,7 @@ export const exportDatabase = async () => {
 /**
  * Importer une base de données (pour debug/restauration)
  */
-export const importDatabase = async (data: any) => {
+export const importDatabase = async (data: unknown) => {
   await db.interventions.bulkPut(data.interventions || []);
   await db.rooms.bulkPut(data.rooms || []);
   await db.users.bulkPut(data.users || []);

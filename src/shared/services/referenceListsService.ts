@@ -151,7 +151,7 @@ async function performListOperation<T>(
   const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
 
   // ✅ CORRECTION : Créer l'objet sans valeurs undefined
-  const auditEntry: Record<string, any> = {
+  const auditEntry: Record<string, unknown> = {
     id: auditRef.id,
     timestamp: serverTimestamp(),
     userId,
@@ -215,7 +215,7 @@ export const getAllLists = async (
         {} as Record<string, ListConfig>
       ),
     } as EstablishmentReferenceLists;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur chargement listes:', error);
     throw new Error('Impossible de charger les listes');
   }
@@ -271,7 +271,7 @@ export const initializeEmptyLists = async (
     await logAudit(establishmentId, userId, 'CREATE_LIST', 'system', 'system', null, data);
 
     logger.debug('✅ Listes vides initialisées');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur initialisation:', error);
     throw error;
   }
@@ -310,7 +310,7 @@ export const createList = async (
     await logAudit(establishmentId, userId, 'CREATE_LIST', listKey, config.name, null, newList);
 
     logger.debug(`✅ Liste créée: ${listKey}`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur création liste:', error);
     throw error;
   }
@@ -347,7 +347,7 @@ export const deleteList = async (
     await logAudit(establishmentId, userId, 'DELETE_LIST', listKey, list.name, list, null);
 
     logger.debug(`✅ Liste supprimée: ${listKey}`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur suppression liste:', error);
     throw error;
   }
@@ -403,7 +403,7 @@ export const addItem = async (
       },
       'ADD_ITEM'
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur ajout item:', error);
     throw error;
   }
@@ -455,7 +455,7 @@ export const updateItem = async (
       'UPDATE_ITEM',
       { itemId: input.itemId }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur mise à jour item:', error);
     throw error;
   }
@@ -507,7 +507,7 @@ export const deleteItem = async (
       'DELETE_ITEM',
       { itemId }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur suppression item:', error);
     throw error;
   }
@@ -537,7 +537,7 @@ export const reorderItems = async (
       },
       'REORDER_ITEMS'
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur réorganisation:', error);
     throw error;
   }
@@ -597,7 +597,7 @@ export const exportToExcel = async (
     return new Blob([excelBuffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur export Excel:', error);
     throw error;
   }
@@ -658,7 +658,7 @@ export const importFromFile = async (
 
         items.push(item);
         itemsImported++;
-      } catch (error) {
+      } catch (error: unknown) {
         errors.push({
           row: i + 2,
           field: 'parse',
@@ -721,7 +721,7 @@ export const importFromFile = async (
       errors,
       warnings: [],
     };
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur import:', error);
     throw error;
   }
@@ -788,7 +788,7 @@ export const getListAnalytics = async (
       usageTrend: 'stable',
       lastAnalyzed: new Date(),
     };
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur analytics:', error);
     return null;
   }
@@ -833,7 +833,7 @@ export const trackItemUsage = async (
     await updateDoc(docRef, {
       [`lists.${listKey}.items`]: updatedItems,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur track usage:', error);
   }
 };
@@ -857,7 +857,7 @@ const logAudit = async (
 ): Promise<void> => {
   try {
     // ✅ Créer l'objet de base sans valeurs undefined
-    const auditEntry: Record<string, any> = {
+    const auditEntry: Record<string, unknown> = {
       timestamp: serverTimestamp(),
       userId,
       userName: 'User',
@@ -876,7 +876,7 @@ const logAudit = async (
 
     const auditRef = doc(collection(db, 'establishments', establishmentId, 'audit'));
     await setDoc(auditRef, auditEntry);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur log audit:', error);
   }
 };
@@ -911,7 +911,7 @@ export const getAuditHistory = async (
     })) as AuditEntry[];
 
     return entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur récupération audit:', error);
     return [];
   }
@@ -966,7 +966,7 @@ export const duplicateLists = async (userId: string, input: DuplicateListsInput)
     );
 
     logger.debug('✅ Listes dupliquées');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur duplication:', error);
     throw error;
   }
@@ -1323,7 +1323,7 @@ export const logListsSummary = async (establishmentId: string): Promise<void> =>
 
     logger.debug('==========================================');
     logger.debug('✅ Résumé terminé\n');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur lors du logging du résumé:', error);
   }
 };
@@ -1353,7 +1353,7 @@ export const logListsCompact = async (establishmentId: string): Promise<void> =>
       );
     });
     logger.debug('');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur lors du logging compact:', error);
   }
 };

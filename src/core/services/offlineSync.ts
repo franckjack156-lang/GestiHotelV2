@@ -21,16 +21,17 @@ import {
   updateIntervention,
   deleteIntervention,
 } from '@/features/interventions/services/interventionService';
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import type { CreateInterventionData } from '@/features/interventions/types/intervention.types';
+import { collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
 import { toast } from 'sonner';
+// Type pour ServiceWorkerRegistration avec sync API
+interface ServiceWorkerRegistrationWithSync extends ServiceWorkerRegistration {
+  sync: {
+    register(tag: string): Promise<void>;
+  };
+}
+
 import { logger } from '@/core/utils/logger';
 
 // ============================================================================
@@ -93,7 +94,7 @@ export class OfflineSyncManager {
           await this.syncOperation(sync);
           await markSyncComplete(sync.id!);
           successCount++;
-        } catch (error) {
+        } catch (error: unknown) {
           logger.error(`Sync failed for ${sync.collection}:${sync.documentId}`, error);
           await incrementSyncRetries(
             sync.id!,
@@ -143,12 +144,20 @@ export class OfflineSyncManager {
           throw new Error('createdBy is required for intervention creation');
         }
         // Cast les données vers le type CreateInterventionData
-        await createIntervention(data.establishmentId, data.createdBy, data as any);
+        await createIntervention(
+          data.establishmentId,
+          data.createdBy,
+          data as unknown as CreateInterventionData
+        );
         break;
       case 'update':
         // Synchroniser la mise à jour de l'intervention
         // Cast les données vers le type UpdateInterventionData
-        await updateIntervention(data.establishmentId, documentId, data as any);
+        await updateIntervention(
+          data.establishmentId,
+          documentId,
+          data as unknown as CreateInterventionData
+        );
         break;
       case 'delete':
         // Synchroniser la suppression de l'intervention (soft delete)
@@ -261,14 +270,14 @@ export const registerBackgroundSync = async (tag: string) => {
       const registration = await navigator.serviceWorker.ready;
       // Vérifier si la propriété sync existe (Background Sync API)
       if ('sync' in registration) {
-        await (registration as any).sync.register(tag);
+        await (registration as ServiceWorkerRegistrationWithSync).sync.register(tag);
         logger.debug(`Background sync registered: ${tag}`);
       } else {
         // Background Sync API not supported, fallback
         logger.warn('Background Sync API not supported');
         await offlineSyncManager.syncAll();
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Background sync registration failed:', error);
       // Fallback: synchroniser immédiatement
       await offlineSyncManager.syncAll();

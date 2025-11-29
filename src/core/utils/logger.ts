@@ -20,13 +20,10 @@ export enum LogLevel {
 }
 
 // LogContext accepte tout type pour flexibilité maximale
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LogContext = any;
+type LogContext = unknown;
 
 // Type strict pour les objets de contexte (utilisé internement)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LogContextObject = Record<string, any>;
-
+type LogContextObject = Record<string, unknown>;
 class Logger {
   private isDev = import.meta.env.DEV;
   private isTest = import.meta.env.MODE === 'test';

@@ -6,7 +6,6 @@
  * calculées aux enfants plutôt que d'utiliser ResponsiveContainer.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef, cloneElement, isValidElement, type ReactNode } from 'react';
 
 interface SafeResponsiveContainerProps {
@@ -98,7 +97,7 @@ export const SafeResponsiveContainer = ({
     }
 
     // Injecter width et height dans le composant enfant (le chart Recharts)
-    return cloneElement(children as React.ReactElement<any>, {
+    return cloneElement(children as React.ReactElement<{ width?: number; height?: number }>, {
       width: effectiveWidth,
       height: effectiveHeight,
     });

@@ -49,11 +49,11 @@ export const useInventory = (establishmentId: string | null) => {
       try {
         const data = await getInventoryItems(establishmentId, filters);
         setItems(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error loading inventory items:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Erreur inconnue');
         toast.error('Erreur de chargement', {
-          description: 'Impossible de charger l\'inventaire',
+          description: "Impossible de charger l'inventaire",
         });
       } finally {
         setIsLoading(false);
@@ -96,9 +96,11 @@ export const useInventory = (establishmentId: string | null) => {
         toast.success('Article créé avec succès');
         await loadItems();
         return id;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error creating inventory item:', err);
-        toast.error('Erreur de création', { description: err.message });
+        toast.error('Erreur de création', {
+          description: err instanceof Error ? err.message : 'Erreur inconnue',
+        });
         return null;
       }
     },
@@ -120,9 +122,11 @@ export const useInventory = (establishmentId: string | null) => {
         toast.success('Article mis à jour');
         await loadItems();
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error updating inventory item:', err);
-        toast.error('Erreur de mise à jour', { description: err.message });
+        toast.error('Erreur de mise à jour', {
+          description: err instanceof Error ? err.message : 'Erreur inconnue',
+        });
         return false;
       }
     },
@@ -144,9 +148,11 @@ export const useInventory = (establishmentId: string | null) => {
         toast.success('Article supprimé');
         await loadItems();
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error deleting inventory item:', err);
-        toast.error('Erreur de suppression', { description: err.message });
+        toast.error('Erreur de suppression', {
+          description: err instanceof Error ? err.message : 'Erreur inconnue',
+        });
         return false;
       }
     },
@@ -180,9 +186,11 @@ export const useInventory = (establishmentId: string | null) => {
 
         await loadItems();
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error creating stock movement:', err);
-        toast.error('Erreur de mouvement', { description: err.message });
+        toast.error('Erreur de mouvement', {
+          description: err instanceof Error ? err.message : 'Erreur inconnue',
+        });
         return false;
       }
     },
@@ -225,11 +233,11 @@ export const useInventoryItem = (establishmentId: string | null, itemId: string 
 
       setItem(itemData);
       setMovements(movementsData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error loading inventory item:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : 'Erreur inconnue');
       toast.error('Erreur de chargement', {
-        description: 'Impossible de charger l\'article',
+        description: "Impossible de charger l'article",
       });
     } finally {
       setIsLoading(false);
@@ -270,7 +278,7 @@ export const useStockAlerts = (establishmentId: string | null) => {
 
       setLowStock(low);
       setOutOfStock(out);
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Error loading stock alerts:', err);
     } finally {
       setIsLoading(false);

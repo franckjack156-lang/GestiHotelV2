@@ -117,6 +117,9 @@ const IntegrationsPage = lazy(() =>
   import('@/pages/settings/IntegrationsPage').then(m => ({ default: m.IntegrationsPage }))
 );
 
+const AuditLogsPage = lazy(() =>
+  import('@/pages/settings/AuditLogsPage').then(m => ({ default: m.AuditLogsPage }))
+);
 const DiagnosticPage = lazy(() =>
   import('@/pages/DiagnosticPage').then(m => ({ default: m.DiagnosticPage }))
 );
@@ -339,6 +342,10 @@ export const router = createBrowserRouter([
       {
         path: 'settings/integrations',
         element: withSuspense(IntegrationsPage),
+      },
+      {
+        path: 'settings/audit-logs',
+        element: withSuspense(AuditLogsPage),
       },
 
       // ----------------------------------------------------------------------------

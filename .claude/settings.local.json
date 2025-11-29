@@ -100,7 +100,11 @@
       "Bash(dir:*)",
       "Bash(timeout 90 npx tsc:*)",
       "Bash(git push:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(xargs cat:*)",
+      "Bash(xargs:*)",
+      "Bash(npm run:*)",
+      "Bash(echo:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * CustomizeDashboardDialog Component
  *
@@ -475,7 +474,7 @@ export const CustomizeDashboardDialog = ({
                   <Label>Plage de dates par défaut</Label>
                   <Select
                     value={preferences.defaultDateRange}
-                    onValueChange={(value: any) =>
+                    onValueChange={(value: 'today' | 'week' | 'month' | 'quarter' | 'year') =>
                       handleUpdatePreferences({ defaultDateRange: value })
                     }
                   >

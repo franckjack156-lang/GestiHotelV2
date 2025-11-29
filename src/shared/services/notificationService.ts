@@ -86,8 +86,8 @@ export interface Notification {
   actionLabel?: string;
 
   // Données additionnelles
-  data?: Record<string, any>;
-  metadata?: Record<string, any>;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   icon?: string;
   image?: string;
 
@@ -113,8 +113,8 @@ export interface CreateNotificationData {
   relatedType?: 'intervention' | 'message' | 'user' | 'room';
   actionUrl?: string;
   actionLabel?: string;
-  data?: Record<string, any>;
-  metadata?: Record<string, any>;
+  data?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
   icon?: string;
   groupKey?: string;
   expiresAt?: Date;
@@ -355,7 +355,7 @@ export const createDefaultPreferences = async (
     });
 
     logger.debug('✅ Préférences par défaut créées');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur création préférences:', error);
   }
 };
@@ -378,7 +378,7 @@ export const updatePreferences = async (
     });
 
     logger.debug('✅ Préférences mises à jour');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur mise à jour préférences:', error);
     throw error;
   }
@@ -429,7 +429,7 @@ export const shouldSendNotification = async (
     }
 
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur vérification préférences:', error);
     return true; // En cas d'erreur, envoyer quand même
   }
@@ -458,7 +458,7 @@ export const createNotification = async (data: CreateNotificationData): Promise<
     }
 
     // Construire l'objet sans les champs undefined (Firestore les rejette)
-    const notificationData: Record<string, any> = {
+    const notificationData: Record<string, unknown> = {
       ...data,
       body: data.message, // Alias pour compatibilité
       read: false,
@@ -501,7 +501,7 @@ export const createNotification = async (data: CreateNotificationData): Promise<
     }
 
     return docRef.id;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur création notification:', error);
     throw new Error('Impossible de créer la notification');
   }
@@ -555,7 +555,7 @@ export const createNotifications = async (
     }
 
     return ids;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur création notifications:', error);
     throw new Error('Impossible de créer les notifications');
   }
@@ -847,7 +847,7 @@ export const getUserNotifications = async (
       id: doc.id,
       ...doc.data(),
     })) as Notification[];
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur récupération notifications:', error);
     throw new Error('Impossible de récupérer les notifications');
   }
@@ -907,7 +907,7 @@ export const getUnreadCount = async (userId: string, establishmentId?: string): 
     const q = query(getNotificationsCollection(), ...constraints);
     const snapshot = await getDocs(q);
     return snapshot.size;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur comptage non lues:', error);
     return 0;
   }
@@ -967,7 +967,7 @@ export const markAsRead = async (notificationId: string): Promise<void> => {
       updatedAt: serverTimestamp(),
     });
     logger.debug('✅ Notification marquée comme lue');
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur marquage notification:', error);
     throw new Error('Impossible de marquer la notification comme lue');
   }
@@ -986,7 +986,7 @@ export const markAsClicked = async (notificationId: string): Promise<void> => {
       readAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur marquage cliqué:', error);
   }
 };
@@ -1019,7 +1019,7 @@ export const markAllAsRead = async (userId: string, establishmentId?: string): P
 
     await batch.commit();
     logger.debug(`✅ ${snapshot.size} notifications marquées comme lues`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur marquage toutes notifications:', error);
     throw new Error('Impossible de marquer toutes les notifications comme lues');
   }
@@ -1036,7 +1036,7 @@ export const deleteNotification = async (notificationId: string): Promise<void> 
   try {
     const docRef = doc(getNotificationsCollection(), notificationId);
     await deleteDoc(docRef);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur suppression notification:', error);
     throw error;
   }
@@ -1066,7 +1066,7 @@ export const deleteAllRead = async (userId: string, establishmentId?: string): P
 
     await batch.commit();
     logger.debug(`✅ ${snapshot.size} notifications supprimées`);
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur suppression notifications lues:', error);
     throw error;
   }
@@ -1092,7 +1092,7 @@ export const initializeFCM = async (): Promise<boolean> => {
     messagingInstance = getMessaging(app);
     logger.debug('✅ FCM initialisé');
     return true;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur initialisation FCM:', error);
     return false;
   }
@@ -1132,7 +1132,7 @@ export const requestPushPermission = async (userId: string): Promise<string | nu
     }
 
     return null;
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur demande permission push:', error);
     return null;
   }
@@ -1159,7 +1159,7 @@ const saveFCMToken = async (userId: string, token: string): Promise<void> => {
       },
       { merge: true }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('❌ Erreur sauvegarde token FCM:', error);
   }
 };
@@ -1188,7 +1188,7 @@ const sendPushNotification = async (
     title: string;
     body: string;
     icon?: string;
-    data?: Record<string, any>;
+    data?: Record<string, unknown>;
   }
 ): Promise<void> => {
   // Cette fonction appelle une Cloud Function pour envoyer la notif
@@ -1221,7 +1221,7 @@ const sendPushNotification = async (
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     logger.warn('⚠️ Envoi push échoué:', error);
   }
 };

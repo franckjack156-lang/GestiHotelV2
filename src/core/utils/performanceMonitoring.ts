@@ -39,7 +39,7 @@ export const initWebVitals = async () => {
     const { onCLS, onFCP, onLCP, onTTFB, onINP } = await import('web-vitals');
 
     // Handler pour envoyer les métriques
-    const sendToAnalytics = (metric: any) => {
+    const sendToAnalytics = (metric: { name: string; value: number; rating?: string }) => {
       // Track dans Google Analytics
       trackPerformanceMetric(metric.name, metric.value);
 

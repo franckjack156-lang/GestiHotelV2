@@ -32,7 +32,7 @@ import type {
 /**
  * Nettoyer un objet en supprimant les valeurs undefined
  */
-const removeUndefinedFields = <T extends Record<string, any>>(obj: T): Partial<T> => {
+const removeUndefinedFields = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
   const cleaned: any = {};
   Object.keys(obj).forEach(key => {
     const value = obj[key];

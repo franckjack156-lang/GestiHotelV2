@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { auth } from '@/core/config/firebase';
 import { logger } from '@/core/utils/logger';
+import { TwoFactorSetup } from '@/features/auth/components/TwoFactorSetup';
 
 // ============================================================================
 // TYPES
@@ -153,18 +154,22 @@ export const SecuritySection = () => {
 
   return (
     <div className="space-y-6">
+      {/* Two-Factor Authentication Section */}
+      <TwoFactorSetup />
+
+      {/* Password Change Section */}
       <Card className="border-none shadow-sm hover:shadow-md transition-shadow duration-300">
         <CardHeader className="space-y-3">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-rose-600 shadow-sm">
-              <Shield className="h-5 w-5 text-white" />
+              <Lock className="h-5 w-5 text-white" />
             </div>
             <div>
-              <CardTitle className="text-2xl">Sécurité</CardTitle>
+              <CardTitle className="text-2xl">Mot de passe</CardTitle>
             </div>
           </div>
           <CardDescription className="text-base">
-            Gérez votre mot de passe et protégez votre compte
+            Changez votre mot de passe régulièrement pour plus de sécurité
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * DashboardGrid Component
  *
@@ -36,9 +35,9 @@ interface DashboardGridProps {
     avgDuration: string;
   };
   chartData?: {
-    evolutionData: any[];
-    statusData: any[];
-    priorityData: any[];
+    evolutionData: Array<Record<string, unknown>>;
+    statusData: Array<Record<string, unknown>>;
+    priorityData: Array<Record<string, unknown>>;
   };
   onNavigate?: (path: string) => void;
   onLayoutChange?: (widgets: WidgetConfig[]) => void;

@@ -42,7 +42,7 @@ export interface KeyboardShortcutOptions {
 export const useKeyboardShortcut = (
   options: KeyboardShortcutOptions,
   callback: () => void,
-  deps: any[] = []
+  deps: unknown[] = []
 ) => {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

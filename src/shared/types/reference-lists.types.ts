@@ -47,7 +47,7 @@ export interface ReferenceItem {
   labels?: Record<string, string>; // { fr: "Plomberie", en: "Plumbing" }
 
   // Métadonnées
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   // Usage stats
   usageCount?: number;
@@ -548,7 +548,7 @@ export interface CreateItemInput {
   icon?: string;
   description?: string;
   labels?: Record<string, string>;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface UpdateItemInput extends Partial<CreateItemInput> {

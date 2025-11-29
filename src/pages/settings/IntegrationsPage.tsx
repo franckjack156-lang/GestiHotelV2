@@ -38,10 +38,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/shared/components/ui/button';
-import {
-  Card,
-  CardContent,
-} from '@/shared/components/ui/card';
+import { Card, CardContent } from '@/shared/components/ui/card';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import {
@@ -160,7 +157,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
       setLoading(true);
       const data = await getScheduledExports(establishmentId);
       setExports(data);
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors du chargement des exports');
     } finally {
       setLoading(false);
@@ -175,7 +172,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
 
     if (!formData.name.trim()) {
       console.log('Validation échouée: nom vide');
-      toast.error('Veuillez saisir un nom pour l\'export');
+      toast.error("Veuillez saisir un nom pour l'export");
       return;
     }
 
@@ -188,7 +185,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
       setShowCreateDialog(false);
       resetForm();
       loadExports();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erreur lors de la création:', error);
       toast.error('Erreur lors de la création');
     } finally {
@@ -201,7 +198,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
       await toggleScheduledExport(establishmentId, exportId, !isActive);
       toast.success(isActive ? 'Export désactivé' : 'Export activé');
       loadExports();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la mise à jour');
     }
   };
@@ -213,7 +210,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
       await deleteScheduledExport(establishmentId, exportId);
       toast.success('Export supprimé');
       loadExports();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -221,7 +218,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
   const handleRunNow = async (exportId: string) => {
     try {
       setRunningExportId(exportId);
-      toast.info('Exécution de l\'export en cours...');
+      toast.info("Exécution de l'export en cours...");
 
       const functions = getFunctions(undefined, 'europe-west1');
       const runExportNow = httpsCallable(functions, 'runExportNow');
@@ -233,11 +230,11 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
         toast.success(data.message || 'Export exécuté avec succès');
         loadExports();
       } else {
-        toast.error('Erreur lors de l\'exécution');
+        toast.error("Erreur lors de l'exécution");
       }
     } catch (error: any) {
       console.error('Erreur runExportNow:', error);
-      toast.error(error.message || 'Erreur lors de l\'exécution de l\'export');
+      toast.error(error.message || "Erreur lors de l'exécution de l'export");
     } finally {
       setRunningExportId(null);
     }
@@ -290,7 +287,7 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
       rooms: 'Chambres',
       analytics: 'Analytics',
       sla_report: 'Rapport SLA',
-      activity_log: 'Journal d\'activité',
+      activity_log: "Journal d'activité",
     };
     return labels[type];
   };
@@ -313,7 +310,12 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
             Configurez des exports automatiques envoyés par email
           </p>
         </div>
-        <Button onClick={() => { console.log('Bouton Nouvel export cliqué'); setShowCreateDialog(true); }}>
+        <Button
+          onClick={() => {
+            console.log('Bouton Nouvel export cliqué');
+            setShowCreateDialog(true);
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Nouvel export
         </Button>
@@ -328,7 +330,12 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
             <p className="text-muted-foreground mb-4">
               Créez votre premier export automatique pour recevoir des rapports par email.
             </p>
-            <Button onClick={() => { console.log('Bouton Créer un export cliqué'); setShowCreateDialog(true); }}>
+            <Button
+              onClick={() => {
+                console.log('Bouton Créer un export cliqué');
+                setShowCreateDialog(true);
+              }}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Créer un export
             </Button>
@@ -341,8 +348,12 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${exp.isActive ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                      <Clock className={`h-5 w-5 ${exp.isActive ? 'text-green-600' : 'text-gray-400'}`} />
+                    <div
+                      className={`p-2 rounded-lg ${exp.isActive ? 'bg-green-100 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}
+                    >
+                      <Clock
+                        className={`h-5 w-5 ${exp.isActive ? 'text-green-600' : 'text-gray-400'}`}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -356,7 +367,9 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
                         <span>•</span>
                         <span>{exp.format.toUpperCase()}</span>
                         <span>•</span>
-                        <span>{getFrequencyLabel(exp.frequency)} à {exp.scheduledTime}</span>
+                        <span>
+                          {getFrequencyLabel(exp.frequency)} à {exp.scheduledTime}
+                        </span>
                       </div>
                       {exp.recipients.length > 0 && (
                         <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
@@ -394,7 +407,10 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
                             </>
                           )}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(exp.id)} className="text-red-600">
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(exp.id)}
+                          className="text-red-600"
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Supprimer
                         </DropdownMenuItem>
@@ -433,7 +449,9 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
                 <Label>Type de données</Label>
                 <Select
                   value={formData.dataType}
-                  onValueChange={value => setFormData({ ...formData, dataType: value as ExportDataType })}
+                  onValueChange={value =>
+                    setFormData({ ...formData, dataType: value as ExportDataType })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -453,7 +471,9 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
                 <Label>Format</Label>
                 <Select
                   value={formData.format}
-                  onValueChange={value => setFormData({ ...formData, format: value as ExportFormat })}
+                  onValueChange={value =>
+                    setFormData({ ...formData, format: value as ExportFormat })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -472,7 +492,9 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
                 <Label>Fréquence</Label>
                 <Select
                   value={formData.frequency}
-                  onValueChange={value => setFormData({ ...formData, frequency: value as ExportFrequency })}
+                  onValueChange={value =>
+                    setFormData({ ...formData, frequency: value as ExportFrequency })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -542,7 +564,13 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
               Annuler
             </Button>
-            <Button onClick={() => { console.log('Bouton Créer cliqué dans le dialog exports'); handleCreate(); }} disabled={creating}>
+            <Button
+              onClick={() => {
+                console.log('Bouton Créer cliqué dans le dialog exports');
+                handleCreate();
+              }}
+              disabled={creating}
+            >
               {creating ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -589,11 +617,12 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
       const urls: Record<string, string> = {};
       data.forEach((integration: any) => {
         if (integration.feedToken) {
-          urls[integration.id] = `https://europe-west1-gestihotel-v2.cloudfunctions.net/getICalFeed?establishmentId=${establishmentId}&token=${integration.feedToken}`;
+          urls[integration.id] =
+            `https://europe-west1-gestihotel-v2.cloudfunctions.net/getICalFeed?establishmentId=${establishmentId}&token=${integration.feedToken}`;
         }
       });
       setFeedUrls(urls);
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -603,7 +632,11 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
   const handleCreate = async () => {
     try {
       setCreating(true);
-      const integrationId = await createCalendarIntegration(establishmentId, userId, selectedProvider);
+      const integrationId = await createCalendarIntegration(
+        establishmentId,
+        userId,
+        selectedProvider
+      );
       toast.success('Intégration calendrier créée');
       setShowCreateDialog(false);
 
@@ -613,7 +646,7 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
       }
 
       loadIntegrations();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la création');
     } finally {
       setCreating(false);
@@ -636,7 +669,7 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
       }
     } catch (error: any) {
       console.error('Erreur génération URL:', error);
-      toast.error('Erreur lors de la génération de l\'URL');
+      toast.error("Erreur lors de la génération de l'URL");
     } finally {
       setGeneratingUrl(null);
     }
@@ -654,7 +687,7 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
       await deleteCalendarIntegration(establishmentId, id);
       toast.success('Intégration supprimée');
       loadIntegrations();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -688,7 +721,8 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
         <Calendar className="h-4 w-4" />
         <AlertDescription>
           Créez une intégration <strong>Fichier iCal</strong> pour obtenir une URL d'abonnement.
-          Vous pourrez ensuite l'ajouter à Google Calendar, Outlook, Apple Calendar ou tout autre calendrier compatible.
+          Vous pourrez ensuite l'ajouter à Google Calendar, Outlook, Apple Calendar ou tout autre
+          calendrier compatible.
         </AlertDescription>
       </Alert>
 
@@ -716,14 +750,10 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
                   {/* Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="text-2xl">
-                        {PROVIDER_ICONS[integration.provider]}
-                      </div>
+                      <div className="text-2xl">{PROVIDER_ICONS[integration.provider]}</div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium">
-                            {PROVIDER_LABELS[integration.provider]}
-                          </h4>
+                          <h4 className="font-medium">{PROVIDER_LABELS[integration.provider]}</h4>
                           <Badge variant={integration.syncEnabled ? 'default' : 'secondary'}>
                             {integration.syncEnabled ? 'Actif' : 'Désactivé'}
                           </Badge>
@@ -773,9 +803,18 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
                           <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
                             <p className="font-medium">Comment utiliser cette URL :</p>
                             <ul className="space-y-1 text-muted-foreground list-disc list-inside">
-                              <li><strong>Google Calendar</strong> : Paramètres → Ajouter un calendrier → À partir d'une URL</li>
-                              <li><strong>Outlook</strong> : Ajouter un calendrier → S'abonner à partir du web</li>
-                              <li><strong>Apple Calendar</strong> : Fichier → Nouvel abonnement au calendrier</li>
+                              <li>
+                                <strong>Google Calendar</strong> : Paramètres → Ajouter un
+                                calendrier → À partir d'une URL
+                              </li>
+                              <li>
+                                <strong>Outlook</strong> : Ajouter un calendrier → S'abonner à
+                                partir du web
+                              </li>
+                              <li>
+                                <strong>Apple Calendar</strong> : Fichier → Nouvel abonnement au
+                                calendrier
+                              </li>
                             </ul>
                           </div>
                         </div>
@@ -811,9 +850,7 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nouvelle intégration calendrier</DialogTitle>
-            <DialogDescription>
-              Choisissez le type d'intégration calendrier
-            </DialogDescription>
+            <DialogDescription>Choisissez le type d'intégration calendrier</DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-2 gap-4">
@@ -842,8 +879,9 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
             <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
               <Calendar className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800 dark:text-blue-200">
-                L'intégration iCal génère une URL que vous pouvez ajouter à n'importe quel calendrier (Google, Outlook, Apple, etc.).
-                Le calendrier sera automatiquement mis à jour avec vos interventions.
+                L'intégration iCal génère une URL que vous pouvez ajouter à n'importe quel
+                calendrier (Google, Outlook, Apple, etc.). Le calendrier sera automatiquement mis à
+                jour avec vos interventions.
               </AlertDescription>
             </Alert>
           )}
@@ -916,7 +954,7 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
       setLoading(true);
       const data = await getWebhooks(establishmentId);
       setWebhooks(data);
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -953,7 +991,7 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
       setShowCreateDialog(false);
       resetForm();
       loadWebhooks();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la création');
     } finally {
       setCreating(false);
@@ -969,7 +1007,7 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
       } else {
         toast.error(`Échec du test: ${result.error}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors du test');
     } finally {
       setTesting(null);
@@ -983,7 +1021,7 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
       await deleteWebhook(establishmentId, webhookId);
       toast.success('Webhook supprimé');
       loadWebhooks();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -1057,8 +1095,12 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${webhook.isActive ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                      <Webhook className={`h-5 w-5 ${webhook.isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                    <div
+                      className={`p-2 rounded-lg ${webhook.isActive ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}
+                    >
+                      <Webhook
+                        className={`h-5 w-5 ${webhook.isActive ? 'text-blue-600' : 'text-gray-400'}`}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
@@ -1067,7 +1109,11 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
                           {webhook.isActive ? 'Actif' : 'Inactif'}
                         </Badge>
                         {webhook.lastDeliveryStatus && (
-                          <Badge variant={webhook.lastDeliveryStatus === 'success' ? 'outline' : 'destructive'}>
+                          <Badge
+                            variant={
+                              webhook.lastDeliveryStatus === 'success' ? 'outline' : 'destructive'
+                            }
+                          >
                             {webhook.lastDeliveryStatus === 'success' ? (
                               <CheckCircle className="h-3 w-3 mr-1" />
                             ) : (
@@ -1124,7 +1170,10 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
                           <Eye className="mr-2 h-4 w-4" />
                           Voir les logs
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(webhook.id)} className="text-red-600">
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(webhook.id)}
+                          className="text-red-600"
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Supprimer
                         </DropdownMenuItem>
@@ -1174,7 +1223,9 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
                   <Label>Méthode HTTP</Label>
                   <Select
                     value={formData.method}
-                    onValueChange={value => setFormData({ ...formData, method: value as HttpMethod })}
+                    onValueChange={value =>
+                      setFormData({ ...formData, method: value as HttpMethod })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1191,7 +1242,9 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
                   <Label>Authentification</Label>
                   <Select
                     value={formData.authType}
-                    onValueChange={value => setFormData({ ...formData, authType: value as typeof formData.authType })}
+                    onValueChange={value =>
+                      setFormData({ ...formData, authType: value as typeof formData.authType })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1221,11 +1274,13 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
                       }`}
                       onClick={() => toggleEvent(event)}
                     >
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                        formData.events.includes(event)
-                          ? 'bg-primary border-primary'
-                          : 'border-muted-foreground'
-                      }`}>
+                      <div
+                        className={`w-4 h-4 rounded border flex items-center justify-center ${
+                          formData.events.includes(event)
+                            ? 'bg-primary border-primary'
+                            : 'border-muted-foreground'
+                        }`}
+                      >
                         {formData.events.includes(event) && (
                           <CheckCircle className="h-3 w-3 text-primary-foreground" />
                         )}
@@ -1241,9 +1296,7 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Retry automatique</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Réessayer en cas d'échec
-                  </p>
+                  <p className="text-xs text-muted-foreground">Réessayer en cas d'échec</p>
                 </div>
                 <Switch
                   checked={formData.retryEnabled}
@@ -1256,7 +1309,9 @@ const WebhooksTab = ({ establishmentId, userId }: TabContentProps) => {
                   <Label>Nombre maximum de tentatives</Label>
                   <Select
                     value={formData.maxRetries.toString()}
-                    onValueChange={value => setFormData({ ...formData, maxRetries: parseInt(value) })}
+                    onValueChange={value =>
+                      setFormData({ ...formData, maxRetries: parseInt(value) })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1330,7 +1385,7 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
       ]);
       setConfigs(configsData);
       setReports(reportsData);
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors du chargement');
     } finally {
       setLoading(false);
@@ -1360,7 +1415,7 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
       setShowCreateDialog(false);
       resetForm();
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la création');
     } finally {
       setCreating(false);
@@ -1375,7 +1430,7 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
       toast.info('Génération de rapport en cours de développement');
       await new Promise(resolve => setTimeout(resolve, 1000));
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la génération');
     } finally {
       setGenerating(null);
@@ -1389,7 +1444,7 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
       await deleteReportConfig(establishmentId, configId);
       toast.success('Configuration supprimée');
       loadData();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -1471,28 +1526,34 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
               <CardContent className="py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`p-2 rounded-lg ${config.isActive ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}>
-                      <FileText className={`h-5 w-5 ${config.isActive ? 'text-orange-600' : 'text-gray-400'}`} />
+                    <div
+                      className={`p-2 rounded-lg ${config.isActive ? 'bg-orange-100 dark:bg-orange-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}
+                    >
+                      <FileText
+                        className={`h-5 w-5 ${config.isActive ? 'text-orange-600' : 'text-gray-400'}`}
+                      />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="font-medium">{config.name}</h4>
-                        <Badge variant="outline">
-                          {getReportTypeLabel(config.type)}
-                        </Badge>
+                        <Badge variant="outline">{getReportTypeLabel(config.type)}</Badge>
                         {config.frequency !== 'once' && (
                           <Badge variant="secondary">
-                            {config.frequency === 'daily' ? 'Quotidien' :
-                             config.frequency === 'weekly' ? 'Hebdo' : 'Mensuel'}
+                            {config.frequency === 'daily'
+                              ? 'Quotidien'
+                              : config.frequency === 'weekly'
+                                ? 'Hebdo'
+                                : 'Mensuel'}
                           </Badge>
                         )}
                       </div>
-                      {config.emailConfig?.recipients && config.emailConfig.recipients.length > 0 && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
-                          <Mail className="h-3 w-3" />
-                          <span>{config.emailConfig.recipients.join(', ')}</span>
-                        </div>
-                      )}
+                      {config.emailConfig?.recipients &&
+                        config.emailConfig.recipients.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                            <Mail className="h-3 w-3" />
+                            <span>{config.emailConfig.recipients.join(', ')}</span>
+                          </div>
+                        )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1518,7 +1579,10 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => config.id && handleDelete(config.id)} className="text-red-600">
+                        <DropdownMenuItem
+                          onClick={() => config.id && handleDelete(config.id)}
+                          className="text-red-600"
+                        >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Supprimer
                         </DropdownMenuItem>
@@ -1578,9 +1642,7 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Nouveau rapport PDF</DialogTitle>
-            <DialogDescription>
-              Configurez un rapport automatique
-            </DialogDescription>
+            <DialogDescription>Configurez un rapport automatique</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -1619,7 +1681,9 @@ const PdfReportsTab = ({ establishmentId, userId }: TabContentProps) => {
                 <Label>Fréquence</Label>
                 <Select
                   value={formData.frequency}
-                  onValueChange={value => setFormData({ ...formData, frequency: value as typeof formData.frequency })}
+                  onValueChange={value =>
+                    setFormData({ ...formData, frequency: value as typeof formData.frequency })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1723,9 +1787,7 @@ export const IntegrationsPage = () => {
       <div className="container mx-auto max-w-4xl py-8">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Veuillez sélectionner un établissement.
-          </AlertDescription>
+          <AlertDescription>Veuillez sélectionner un établissement.</AlertDescription>
         </Alert>
       </div>
     );
@@ -1744,9 +1806,7 @@ export const IntegrationsPage = () => {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Intégrations & Automatisations
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {currentEstablishment.name}
-              </p>
+              <p className="text-gray-600 dark:text-gray-400">{currentEstablishment.name}</p>
             </div>
           </div>
         </div>
@@ -1778,31 +1838,19 @@ export const IntegrationsPage = () => {
         </TabsList>
 
         <TabsContent value="exports">
-          <ExportsScheduleTab
-            establishmentId={currentEstablishment.id}
-            userId={user!.id}
-          />
+          <ExportsScheduleTab establishmentId={currentEstablishment.id} userId={user!.id} />
         </TabsContent>
 
         <TabsContent value="calendar">
-          <CalendarIntegrationTab
-            establishmentId={currentEstablishment.id}
-            userId={user!.id}
-          />
+          <CalendarIntegrationTab establishmentId={currentEstablishment.id} userId={user!.id} />
         </TabsContent>
 
         <TabsContent value="webhooks">
-          <WebhooksTab
-            establishmentId={currentEstablishment.id}
-            userId={user!.id}
-          />
+          <WebhooksTab establishmentId={currentEstablishment.id} userId={user!.id} />
         </TabsContent>
 
         <TabsContent value="reports">
-          <PdfReportsTab
-            establishmentId={currentEstablishment.id}
-            userId={user!.id}
-          />
+          <PdfReportsTab establishmentId={currentEstablishment.id} userId={user!.id} />
         </TabsContent>
       </Tabs>
     </div>

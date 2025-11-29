@@ -152,7 +152,7 @@ export interface UserProfile extends User {
   emergencyContact?: EmergencyContact;
 
   /** Métadonnées additionnelles */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -565,7 +565,7 @@ export interface UserActivity {
   resourceId?: string;
 
   /** Métadonnées */
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 
   /** Date */
   timestamp: Date | Timestamp;
@@ -638,7 +638,7 @@ export interface UserNotification {
   readAt?: Date | Timestamp;
   createdAt: Date | Timestamp;
   link?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================

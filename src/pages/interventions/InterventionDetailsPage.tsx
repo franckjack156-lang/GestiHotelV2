@@ -98,21 +98,25 @@ export const InterventionDetailsPage = () => {
   // PERMISSIONS
   // ============================================================================
   const canEdit =
-    user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin' || user?.id === intervention.createdBy;
-  const canDelete = user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
+    user?.role === 'editor' ||
+    user?.role === 'admin' ||
+    user?.role === 'super_admin' ||
+    user?.id === intervention.createdBy;
+  const canDelete =
+    user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
   const canStart =
     intervention.status === 'pending' && (user?.id === intervention.assignedTo || canEdit);
   const canComplete =
     intervention.status === 'in_progress' && (user?.id === intervention.assignedTo || canEdit);
   const canValidate =
-    intervention.status === 'completed' && (user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin');
+    intervention.status === 'completed' &&
+    (user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin');
 
   // ============================================================================
   // ACTIONS
   // ============================================================================
   const handleStatusChange = async (newStatus: string) => {
     if (!id) return false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const success = await changeStatus(id, { newStatus: newStatus as any });
     return success || false;
   };
@@ -176,7 +180,12 @@ export const InterventionDetailsPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
             {/* Gauche - Retour + Titre */}
             <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/app/interventions')} className="flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/app/interventions')}
+                className="flex-shrink-0"
+              >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex-1 min-w-0">
@@ -315,7 +324,6 @@ export const InterventionDetailsPage = () => {
         {/* Informations rapides (badges et infos clés) */}
         <div className="px-3 sm:px-6 pb-3 sm:pb-4">
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {/* eslint-disable @typescript-eslint/no-explicit-any */}
             <StatusBadgeDropdown
               currentStatus={intervention.status as any}
               interventionId={intervention.id}
@@ -323,7 +331,7 @@ export const InterventionDetailsPage = () => {
               onStatusChange={handleStatusChange as any}
               disabled={isUpdating}
             />
-            {/* eslint-enable @typescript-eslint/no-explicit-any */}
+            {}
             <PriorityBadge priority={intervention.priority} />
             <TypeBadge type={intervention.type} />
 
@@ -397,7 +405,10 @@ export const InterventionDetailsPage = () => {
                   <ImageIcon className="h-4 w-4 flex-shrink-0" />
                   <span className="text-xs sm:text-sm">Photos</span>
                   {intervention.photosCount > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 text-[10px] sm:text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="ml-1 h-4 sm:h-5 min-w-4 sm:min-w-5 px-1 text-[10px] sm:text-xs"
+                    >
                       {intervention.photosCount}
                     </Badge>
                   )}

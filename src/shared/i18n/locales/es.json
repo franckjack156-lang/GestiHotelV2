@@ -18,6 +18,52 @@
     "profile": "Perfil",
     "logout": "Cerrar sesión"
   },
+  "dashboard": {
+    "title": "Panel de control",
+    "welcome": "Bienvenido",
+    "statistics": "Estadísticas",
+    "recent_activities": "Actividades recientes"
+  },
+  "interventions": {
+    "title": "Intervenciones",
+    "create": "Crear intervención",
+    "edit": "Editar intervención",
+    "details": "Detalles de la intervención",
+    "list": "Lista de intervenciones",
+    "status": "Estado",
+    "priority": "Prioridad",
+    "type": "Tipo",
+    "room": "Habitación",
+    "description": "Descripción",
+    "assigned_to": "Asignado a",
+    "created_at": "Creado el",
+    "updated_at": "Actualizado el"
+  },
+  "rooms": {
+    "title": "Habitaciones",
+    "create": "Añadir habitación",
+    "edit": "Editar habitación",
+    "details": "Detalles de la habitación",
+    "list": "Lista de habitaciones",
+    "number": "Número",
+    "floor": "Planta",
+    "type": "Tipo",
+    "status": "Estado",
+    "capacity": "Capacidad"
+  },
+  "planning": {
+    "title": "Planificación",
+    "calendar": "Calendario",
+    "day": "Día",
+    "week": "Semana",
+    "month": "Mes"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "mark_as_read": "Marcar como leído",
+    "mark_all_as_read": "Marcar todo como leído",
+    "no_notifications": "Sin notificaciones"
+  },
   "settings": {
     "title": "Configuración",
     "profile": "Perfil",
@@ -38,7 +84,35 @@
     "auto": "Auto",
     "compact": "Compacto",
     "comfortable": "Cómodo",
-    "spacious": "Espacioso"
+    "spacious": "Espacioso",
+    "date_format": "Formato de fecha",
+    "time_format": "Formato de hora",
+    "default_view": "Vista por defecto",
+    "items_per_page": "Elementos por página"
+  },
+  "users": {
+    "title": "Usuarios",
+    "create": "Crear usuario",
+    "edit": "Editar usuario",
+    "details": "Detalles del usuario",
+    "list": "Lista de usuarios",
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "role": "Rol",
+    "status": "Estado",
+    "active": "Activo",
+    "inactive": "Inactivo"
+  },
+  "establishments": {
+    "title": "Establecimientos",
+    "create": "Crear establecimiento",
+    "edit": "Editar establecimiento",
+    "details": "Detalles del establecimiento",
+    "list": "Lista de establecimientos",
+    "name": "Nombre",
+    "address": "Dirección",
+    "phone": "Teléfono",
+    "features": "Características"
   },
   "common": {
     "save": "Guardar",
@@ -46,6 +120,7 @@
     "delete": "Eliminar",
     "edit": "Editar",
     "add": "Añadir",
+    "create": "Crear",
     "search": "Buscar",
     "filter": "Filtrar",
     "export": "Exportar",
@@ -56,10 +131,37 @@
     "no": "No",
     "loading": "Cargando...",
     "error": "Error",
-    "success": "Éxito"
+    "success": "Éxito",
+    "actions": "Acciones",
+    "view": "Ver",
+    "download": "Descargar",
+    "upload": "Subir",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "reset": "Restablecer"
   },
   "footer": {
-    "version": "GestiHôtel v2.0.0",
+    "version": "GestiHotel v2.0.0",
     "copyright": "© 2025 Todos los derechos reservados"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "email": "Correo electrónico inválido",
+    "min_length": "Mínimo {{count}} caracteres",
+    "max_length": "Máximo {{count}} caracteres"
+  },
+  "network": {
+    "offline": "Sin conexión",
+    "online": "En línea",
+    "slow_connection": "Conexión lenta",
+    "pending_syncs": "pendientes",
+    "failed_syncs": "fallidos",
+    "sync_now": "Sincronizar ahora",
+    "connection_lost": "Conexión perdida",
+    "connection_restored": "Conexión restablecida",
+    "offline_mode": "Modo sin conexión",
+    "offline_message": "Sus cambios se sincronizarán automáticamente cuando se restablezca la conexión"
   }
 }

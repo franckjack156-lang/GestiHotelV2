@@ -171,7 +171,7 @@ export interface HistoryEvent {
   oldValue?: string;
   newValue?: string;
   details?: string;
-  metadata?: Record<string, any>; // Données supplémentaires spécifiques à l'événement
+  metadata?: Record<string, unknown>; // Données supplémentaires spécifiques à l'événement
   createdAt: Timestamp;
 }
 
@@ -181,7 +181,7 @@ export interface CreateHistoryEventData {
   oldValue?: string;
   newValue?: string;
   details?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 // ============================================================================

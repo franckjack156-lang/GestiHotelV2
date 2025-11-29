@@ -34,7 +34,7 @@ interface ExportOptions {
 /**
  * Convertir des données en CSV
  */
-const convertToCSV = (data: any[], headers: string[]): string => {
+const convertToCSV = (data: unknown[], headers: string[]): string => {
   const rows = [headers];
 
   data.forEach(item => {
@@ -74,7 +74,7 @@ const downloadCSV = (csv: string, filename: string): void => {
 /**
  * Exporter des données en Excel
  */
-const exportToExcel = (data: any[], options: ExportOptions = {}): void => {
+const exportToExcel = (data: unknown[], options: ExportOptions = {}): void => {
   const { filename = `export_${Date.now()}.xlsx`, sheetName = 'Data' } = options;
 
   // Créer un nouveau workbook
@@ -94,7 +94,7 @@ const exportToExcel = (data: any[], options: ExportOptions = {}): void => {
  * Exporter plusieurs feuilles en Excel
  */
 const exportMultiSheetExcel = (
-  sheets: { name: string; data: any[] }[],
+  sheets: { name: string; data: unknown[] }[],
   filename: string = `export_${Date.now()}.xlsx`
 ): void => {
   const wb = XLSX.utils.book_new();
@@ -317,7 +317,7 @@ export const preparePrintContent = (intervention: Intervention): string => {
 export const downloadInterventionsTemplate = (): void => {
   logger.warn(
     'downloadInterventionsTemplate depuis exportService est déprécié. ' +
-    'Utilisez downloadInterventionsTemplate depuis templateGeneratorService à la place.'
+      'Utilisez downloadInterventionsTemplate depuis templateGeneratorService à la place.'
   );
 
   const template = [

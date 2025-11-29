@@ -55,7 +55,7 @@ export const useEstablishmentInit = () => {
     try {
       const initialized = await isEstablishmentInitialized(establishmentId);
       return initialized;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error checking initialization:', error);
       return false;
     } finally {

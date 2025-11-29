@@ -89,7 +89,7 @@ export type SystemAction =
  */
 export interface SystemActionData {
   action: SystemAction;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   userId: string;
   userName: string;
 }

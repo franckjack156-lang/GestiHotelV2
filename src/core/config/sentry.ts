@@ -129,7 +129,7 @@ export const clearSentryUser = () => {
 /**
  * Capture une erreur manuellement
  */
-export const captureError = (error: Error, context?: Record<string, any>) => {
+export const captureError = (error: Error, context?: Record<string, unknown>) => {
   if (context) {
     Sentry.setContext('additional_context', context);
   }
@@ -150,7 +150,7 @@ export const addBreadcrumb = (breadcrumb: {
   message: string;
   category?: string;
   level?: 'info' | 'warning' | 'error';
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }) => {
   Sentry.addBreadcrumb(breadcrumb);
 };

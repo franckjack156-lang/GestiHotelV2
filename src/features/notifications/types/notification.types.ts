@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Notification Types
  *
@@ -75,7 +74,7 @@ export interface Notification extends TimestampedDocument {
     messageId?: string;
     userId?: string;
     roomId?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 
   // Métadonnées
@@ -106,7 +105,7 @@ export interface CreateNotificationData {
   channels?: NotificationChannel[];
   actionUrl?: string;
   actionLabel?: string;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
   groupKey?: string;
   expiresAt?: Date;
 }

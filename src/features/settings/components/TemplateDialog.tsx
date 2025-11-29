@@ -130,7 +130,7 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
   };
 
   // Map des icônes
-  const iconMap: Record<string, any> = {
+  const iconMap: Record<string, unknown> = {
     Building,
     Palmtree,
     Users,

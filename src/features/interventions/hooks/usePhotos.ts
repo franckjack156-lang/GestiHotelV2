@@ -128,7 +128,7 @@ export const usePhotos = (interventionId: string) => {
       await deletePhoto(establishmentId, interventionId, photoId, photo.url, photo.thumbnailUrl);
       toast.success('Photo supprimée');
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la suppression');
       logger.error(error);
       return false;
@@ -148,7 +148,7 @@ export const usePhotos = (interventionId: string) => {
       await updatePhotoCaption(establishmentId, interventionId, photoId, caption);
       toast.success('Légende mise à jour');
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la mise à jour');
       logger.error(error);
       return false;

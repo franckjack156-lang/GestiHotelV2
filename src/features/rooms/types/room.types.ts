@@ -121,6 +121,6 @@ export interface RoomHistoryEvent {
   description: string;
   userId: string;
   userName: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: Timestamp;
 }

@@ -157,7 +157,7 @@ export const EditInterventionPage = () => {
       if (success) {
         navigate(`/app/interventions/${id}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Erreur mise à jour:', error);
     }
   };

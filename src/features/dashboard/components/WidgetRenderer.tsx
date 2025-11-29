@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * WidgetRenderer Component
  *
@@ -33,6 +32,7 @@ import type {
   TechnicianPerformance,
 } from '../types/dashboard.types';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
+import type { LucideIcon } from 'lucide-react';
 import {
   ClipboardList,
   CheckCircle2,
@@ -73,9 +73,9 @@ interface WidgetRendererProps {
     avgDuration: string;
   };
   chartData?: {
-    evolutionData: any[];
-    statusData: any[];
-    priorityData: any[];
+    evolutionData: Array<Record<string, unknown>>;
+    statusData: Array<Record<string, unknown>>;
+    priorityData: Array<Record<string, unknown>>;
   };
   onNavigate?: (path: string) => void;
 }
@@ -87,7 +87,7 @@ const EmptyDataCard = ({
   message,
 }: {
   title: string;
-  icon: any;
+  icon: LucideIcon;
   message: string;
 }) => (
   <Card className="h-full">

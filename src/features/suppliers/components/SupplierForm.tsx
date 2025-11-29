@@ -51,7 +51,7 @@ type FormData = z.infer<typeof supplierSchema>;
 
 interface SupplierFormProps {
   supplier?: Supplier;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: unknown) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }

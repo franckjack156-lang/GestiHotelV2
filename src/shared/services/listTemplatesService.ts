@@ -249,7 +249,7 @@ const HOSTEL: Template = {
 // CONFIGURATION DES LISTES
 // ============================================================================
 
-const LIST_CONFIGS: Record<string, any> = {
+const LIST_CONFIGS: Record<string, unknown> = {
   interventionTypes: {
     name: "Types d'intervention",
     allowCustom: true,

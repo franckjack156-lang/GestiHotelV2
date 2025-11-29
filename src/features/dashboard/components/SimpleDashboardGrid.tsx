@@ -42,9 +42,9 @@ interface SimpleDashboardGridProps {
     avgDuration: string;
   };
   chartData?: {
-    evolutionData: unknown[];
-    statusData: unknown[];
-    priorityData: unknown[];
+    evolutionData: Record<string, unknown>[];
+    statusData: Record<string, unknown>[];
+    priorityData: Record<string, unknown>[];
   };
   onNavigate?: (path: string) => void;
   onLayoutChange?: (widgets: WidgetConfig[]) => void;

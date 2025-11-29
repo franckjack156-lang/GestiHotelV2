@@ -147,7 +147,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
 
       toast.dismiss();
       toast.success('Export réussi !');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Erreur export:', error);
       toast.dismiss();
       toast.error("Erreur lors de l'export");
@@ -169,7 +169,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
         toast.dismiss();
         toast.success('Template appliqué avec succès !');
         setIsTemplateDialogOpen(false);
-      } catch (error) {
+      } catch (error: unknown) {
         logger.error('Erreur application template:', error);
         toast.dismiss();
         toast.error("Erreur lors de l'application du template");
@@ -207,7 +207,7 @@ export const ReferenceListsOrchestrator: React.FC = () => {
       toast.dismiss();
       toast.success('Listes synchronisées avec succès !');
       logger.debug('✅ Synchronisation réussie');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('❌ Erreur synchronisation:', error);
       toast.dismiss();
       toast.error('Erreur lors de la synchronisation');
@@ -382,7 +382,7 @@ const TemplateSelectionDialog: React.FC<TemplateSelectionDialogProps> = ({
     try {
       await onApply(selectedTemplateId);
       onOpenChange(false);
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Erreur application template:', error);
     } finally {
       setIsApplying(false);

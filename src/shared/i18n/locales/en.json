@@ -18,6 +18,52 @@
     "profile": "Profile",
     "logout": "Logout"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome",
+    "statistics": "Statistics",
+    "recent_activities": "Recent Activities"
+  },
+  "interventions": {
+    "title": "Interventions",
+    "create": "Create Intervention",
+    "edit": "Edit Intervention",
+    "details": "Intervention Details",
+    "list": "Intervention List",
+    "status": "Status",
+    "priority": "Priority",
+    "type": "Type",
+    "room": "Room",
+    "description": "Description",
+    "assigned_to": "Assigned To",
+    "created_at": "Created At",
+    "updated_at": "Updated At"
+  },
+  "rooms": {
+    "title": "Rooms",
+    "create": "Add Room",
+    "edit": "Edit Room",
+    "details": "Room Details",
+    "list": "Room List",
+    "number": "Number",
+    "floor": "Floor",
+    "type": "Type",
+    "status": "Status",
+    "capacity": "Capacity"
+  },
+  "planning": {
+    "title": "Planning",
+    "calendar": "Calendar",
+    "day": "Day",
+    "week": "Week",
+    "month": "Month"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_as_read": "Mark as Read",
+    "mark_all_as_read": "Mark All as Read",
+    "no_notifications": "No Notifications"
+  },
   "settings": {
     "title": "Settings",
     "profile": "Profile",
@@ -38,7 +84,35 @@
     "auto": "Auto",
     "compact": "Compact",
     "comfortable": "Comfortable",
-    "spacious": "Spacious"
+    "spacious": "Spacious",
+    "date_format": "Date Format",
+    "time_format": "Time Format",
+    "default_view": "Default View",
+    "items_per_page": "Items Per Page"
+  },
+  "users": {
+    "title": "Users",
+    "create": "Create User",
+    "edit": "Edit User",
+    "details": "User Details",
+    "list": "User List",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "establishments": {
+    "title": "Establishments",
+    "create": "Create Establishment",
+    "edit": "Edit Establishment",
+    "details": "Establishment Details",
+    "list": "Establishment List",
+    "name": "Name",
+    "address": "Address",
+    "phone": "Phone",
+    "features": "Features"
   },
   "common": {
     "save": "Save",
@@ -46,6 +120,7 @@
     "delete": "Delete",
     "edit": "Edit",
     "add": "Add",
+    "create": "Create",
     "search": "Search",
     "filter": "Filter",
     "export": "Export",
@@ -56,10 +131,37 @@
     "no": "No",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "actions": "Actions",
+    "view": "View",
+    "download": "Download",
+    "upload": "Upload",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "reset": "Reset"
   },
   "footer": {
-    "version": "GestiHôtel v2.0.0",
-    "copyright": "© 2025 All rights reserved"
+    "version": "GestiHotel v2.0.0",
+    "copyright": "© 2025 All Rights Reserved"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Invalid email",
+    "min_length": "Minimum {{count}} characters",
+    "max_length": "Maximum {{count}} characters"
+  },
+  "network": {
+    "offline": "Offline",
+    "online": "Online",
+    "slow_connection": "Slow Connection",
+    "pending_syncs": "pending",
+    "failed_syncs": "failed",
+    "sync_now": "Sync Now",
+    "connection_lost": "Connection Lost",
+    "connection_restored": "Connection Restored",
+    "offline_mode": "Offline Mode",
+    "offline_message": "Your changes will be automatically synced when the connection is restored"
   }
 }

@@ -32,9 +32,10 @@ export const loginWithEmail = async (credentials: AuthCredentials): Promise<Fire
       credentials.password
     );
     return userCredential.user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erreur lors de la connexion avec email:', error);
-    throw new Error(getAuthErrorMessage(error.code));
+    const firebaseError = error as { code?: string };
+    throw new Error(getAuthErrorMessage(firebaseError.code || ''));
   }
 };
 
@@ -46,9 +47,10 @@ export const loginWithGoogle = async (): Promise<FirebaseUser> => {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     return userCredential.user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erreur lors de la connexion avec Google:', error);
-    throw new Error(getAuthErrorMessage(error.code));
+    const firebaseError = error as { code?: string };
+    throw new Error(getAuthErrorMessage(firebaseError.code || ''));
   }
 };
 
@@ -71,9 +73,10 @@ export const registerWithEmail = async (
     await sendEmailVerification(user);
 
     return user;
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Erreur lors de l'inscription:", error);
-    throw new Error(getAuthErrorMessage(error.code));
+    const firebaseError = error as { code?: string };
+    throw new Error(getAuthErrorMessage(firebaseError.code || ''));
   }
 };
 
@@ -83,9 +86,9 @@ export const registerWithEmail = async (
 export const logout = async (): Promise<void> => {
   try {
     await signOut(auth);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erreur lors de la déconnexion:', error);
-    throw new Error(error.message || 'Erreur lors de la déconnexion');
+    throw new Error(error instanceof Error ? error.message : 'Erreur lors de la déconnexion');
   }
 };
 
@@ -95,9 +98,10 @@ export const logout = async (): Promise<void> => {
 export const resetPassword = async (data: PasswordResetData): Promise<void> => {
   try {
     await sendPasswordResetEmail(auth, data.email);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erreur lors de la réinitialisation du mot de passe:', error);
-    throw new Error(getAuthErrorMessage(error.code));
+    const firebaseError = error as { code?: string };
+    throw new Error(getAuthErrorMessage(firebaseError.code || ''));
   }
 };
 
@@ -114,9 +118,10 @@ export const changePassword = async (data: ChangePasswordData): Promise<void> =>
 
     // Puis changer le mot de passe
     await updatePassword(user, data.newPassword);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erreur lors du changement de mot de passe:', error);
-    throw new Error(getAuthErrorMessage(error.code));
+    const firebaseError = error as { code?: string };
+    throw new Error(getAuthErrorMessage(firebaseError.code || ''));
   }
 };
 
@@ -130,9 +135,10 @@ export const changeEmail = async (newEmail: string): Promise<void> => {
 
     await updateEmail(user, newEmail);
     await sendEmailVerification(user);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Erreur lors du changement d'email:", error);
-    throw new Error(getAuthErrorMessage(error.code));
+    const firebaseError = error as { code?: string };
+    throw new Error(getAuthErrorMessage(firebaseError.code || ''));
   }
 };
 
@@ -145,9 +151,12 @@ export const resendVerificationEmail = async (): Promise<void> => {
     if (!user) throw new Error('Utilisateur non connecté');
 
     await sendEmailVerification(user);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error("Erreur lors de l'envoi de l'email de vérification:", error);
-    throw new Error(getAuthErrorMessage(error.code) || "Erreur lors de l'envoi de l'email");
+    const firebaseError = error as { code?: string };
+    throw new Error(
+      getAuthErrorMessage(firebaseError.code || '') || "Erreur lors de l'envoi de l'email"
+    );
   }
 };
 
@@ -163,9 +172,11 @@ export const updateUserProfile = async (data: {
     if (!user) throw new Error('Utilisateur non connecté');
 
     await updateProfile(user, data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Erreur lors de la mise à jour du profil:', error);
-    throw new Error(error.message || 'Erreur lors de la mise à jour du profil');
+    throw new Error(
+      error instanceof Error ? error.message : 'Erreur lors de la mise à jour du profil'
+    );
   }
 };
 
