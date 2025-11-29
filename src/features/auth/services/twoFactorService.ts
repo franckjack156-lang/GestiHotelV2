@@ -97,7 +97,7 @@ const encryptSecret = (secret: string): string => {
   for (let i = 0; i < secret.length; i++) {
     encrypted += String.fromCharCode(secret.charCodeAt(i) ^ key.charCodeAt(i % key.length));
   }
-  return Buffer.from(encrypted).toString('base64');
+  return btoa(encrypted);
 };
 
 /**
@@ -105,7 +105,7 @@ const encryptSecret = (secret: string): string => {
  */
 const decryptSecret = (encrypted: string): string => {
   const key = 'GESTIHOTEL_2FA_KEY';
-  const decoded = Buffer.from(encrypted, 'base64').toString();
+  const decoded = atob(encrypted);
   let decrypted = '';
   for (let i = 0; i < decoded.length; i++) {
     decrypted += String.fromCharCode(decoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));

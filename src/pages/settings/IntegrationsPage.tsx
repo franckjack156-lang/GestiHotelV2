@@ -952,12 +952,12 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
       setConnecting(true);
 
       // Créer le state avec userId et establishmentId pour le callback
-      const state = Buffer.from(
+      const state = btoa(
         JSON.stringify({
           userId,
           establishmentId,
         })
-      ).toString('base64');
+      );
 
       // Récupérer l'URL d'autorisation Google
       const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
