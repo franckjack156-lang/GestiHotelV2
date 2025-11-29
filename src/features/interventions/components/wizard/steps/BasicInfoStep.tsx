@@ -25,7 +25,7 @@ interface BasicInfoStepProps {
 }
 
 export const BasicInfoStep = ({ data, onUpdate }: BasicInfoStepProps) => {
-  const handleChange = (field: keyof WizardData, value: any) => {
+  const handleChange = (field: keyof WizardData, value: string | number | boolean) => {
     onUpdate({ [field]: value });
   };
 

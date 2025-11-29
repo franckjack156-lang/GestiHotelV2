@@ -44,7 +44,7 @@ export const useExport = () => {
         }
 
         toast.success(`${interventions.length} intervention(s) exportée(s)`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
           description: error.message,
@@ -75,7 +75,7 @@ export const useExport = () => {
         }
 
         toast.success(`${users.length} utilisateur(s) exporté(s)`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
           description: error.message,
@@ -96,7 +96,7 @@ export const useExport = () => {
       try {
         exportAnalyticsReport(interventions, users, stats);
         toast.success('Rapport exporté avec succès');
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
           description: error.message,
@@ -119,7 +119,7 @@ export const useExport = () => {
         downloadUsersTemplate();
       }
       toast.success('Template téléchargé');
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Download template error:', error);
       toast.error('Erreur lors du téléchargement');
     }

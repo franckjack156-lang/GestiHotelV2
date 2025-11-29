@@ -94,8 +94,8 @@ export const LogoUpload: React.FC<LogoUploadProps> = ({
         // Notifier le parent
         onLogoChange(result.url);
         toast.success('Logo mis à jour');
-      } catch (error: any) {
-        toast.error(error.message || "Erreur lors de l'upload");
+      } catch (error: unknown) {
+        toast.error(error instanceof Error ? error.message : "Erreur lors de l'upload");
         setPreviewURL(null);
       } finally {
         setIsUploading(false);

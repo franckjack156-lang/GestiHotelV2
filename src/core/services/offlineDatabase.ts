@@ -238,7 +238,7 @@ export const addPendingSync = async (
   collection: string,
   documentId: string,
   operation: 'create' | 'update' | 'delete',
-  data: any
+  data: PendingSyncData
 ) => {
   await db.pendingSyncs.add({
     collection,
@@ -324,10 +324,20 @@ export const exportDatabase = async () => {
   };
 };
 
+interface DatabaseExport {
+  interventions?: Intervention[];
+  rooms?: Room[];
+  users?: User[];
+  conversations?: Conversation[];
+  messages?: Message[];
+  pendingSyncs?: PendingSync[];
+  cacheMetadata?: CacheMetadata[];
+}
+
 /**
  * Importer une base de données (pour debug/restauration)
  */
-export const importDatabase = async (data: unknown) => {
+export const importDatabase = async (data: DatabaseExport) => {
   await db.interventions.bulkPut(data.interventions || []);
   await db.rooms.bulkPut(data.rooms || []);
   await db.users.bulkPut(data.users || []);

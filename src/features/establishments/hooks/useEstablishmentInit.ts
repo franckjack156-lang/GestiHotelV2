@@ -34,10 +34,10 @@ export const useEstablishmentInit = () => {
         await initializeEstablishment(establishmentId, user.id, features);
         toast.success('Établissement initialisé avec succès');
         return true;
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error initializing establishment:', error);
         toast.error("Erreur lors de l'initialisation", {
-          description: error.message,
+          description: error instanceof Error ? error.message : 'Erreur inconnue',
         });
         return false;
       } finally {

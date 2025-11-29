@@ -30,7 +30,7 @@ interface HistoryTabProps {
 
 const EVENT_CONFIG: Record<
   HistoryEventType,
-  { icon: any; color: string; bgColor: string; label: string }
+  { icon: LucideIcon; color: string; bgColor: string; label: string }
 > = {
   created: {
     icon: FileText,

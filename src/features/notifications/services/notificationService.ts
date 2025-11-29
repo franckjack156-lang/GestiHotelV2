@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Notification Service
  *
@@ -301,8 +300,8 @@ class NotificationService {
     const stats: NotificationStats = {
       total: notifications.length,
       unread: notifications.filter(n => !n.read).length,
-      byType: {} as any,
-      byPriority: {} as any,
+      byType: {} as unknown,
+      byPriority: {} as unknown,
       readRate: 0,
       clickRate: 0,
     };

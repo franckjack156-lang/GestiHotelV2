@@ -30,10 +30,10 @@ export const useQRCode = (options?: UseQRCodeOptions) => {
         const dataUrl = await generateRoomQRCode(data, options);
         setQrCodeUrl(dataUrl);
         return dataUrl;
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error generating QR code:', error);
         toast.error('Erreur de génération', {
-          description: error.message || 'Impossible de générer le QR code',
+          description: error instanceof Error ? error.message : 'Impossible de générer le QR code',
         });
         return null;
       } finally {
@@ -56,10 +56,10 @@ export const useQRCode = (options?: UseQRCodeOptions) => {
       try {
         downloadQRCode(qrCodeUrl, fileName || 'qr-code');
         toast.success('QR code téléchargé avec succès');
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error downloading QR code:', error);
         toast.error('Erreur de téléchargement', {
-          description: error.message,
+          description: error instanceof Error ? error.message : 'Erreur inconnue',
         });
       }
     },

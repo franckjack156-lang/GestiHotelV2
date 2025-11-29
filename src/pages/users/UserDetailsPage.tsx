@@ -73,8 +73,11 @@ export const UserDetailsPage = () => {
       } else {
         toast.error(result.data.message || "Erreur lors de l'envoi");
       }
-    } catch (error: any) {
-      const errorMessage = error.message || "Erreur lors de l'envoi de l'email de vérification";
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de l'envoi de l'email de vérification";
       toast.error(errorMessage);
     } finally {
       setIsSendingVerification(false);

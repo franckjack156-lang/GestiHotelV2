@@ -315,7 +315,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         </div>
 
         {/* Filtres par type */}
-        <Tabs value={filter} onValueChange={v => setFilter(v as any)}>
+        <Tabs value={filter} onValueChange={v => setFilter(v as unknown)}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all" className="text-xs">
               Tous

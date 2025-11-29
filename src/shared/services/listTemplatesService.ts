@@ -249,7 +249,14 @@ const HOSTEL: Template = {
 // CONFIGURATION DES LISTES
 // ============================================================================
 
-const LIST_CONFIGS: Record<string, unknown> = {
+interface ListConfigItem {
+  name: string;
+  allowCustom: boolean;
+  isRequired: boolean;
+  isSystem: boolean;
+}
+
+const LIST_CONFIGS: Record<string, ListConfigItem> = {
   interventionTypes: {
     name: "Types d'intervention",
     allowCustom: true,
@@ -396,12 +403,12 @@ export const applyTemplate = async (
           } else {
             totalSkipped++;
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.error(`  ❌ Erreur pour ${item.label}:`, error.message);
           totalSkipped++;
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error(`❌ Erreur traitement liste ${listKey}:`, error.message);
     }
   }

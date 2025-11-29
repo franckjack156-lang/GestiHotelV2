@@ -110,7 +110,7 @@ export const updatePart = async (
       partId
     );
 
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updatedAt: serverTimestamp(),
     };
 

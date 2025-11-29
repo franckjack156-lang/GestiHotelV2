@@ -25,10 +25,7 @@ import type {
   InventoryCategory,
   MeasurementUnit,
 } from '../types/inventory.types';
-import {
-  INVENTORY_CATEGORY_LABELS,
-  MEASUREMENT_UNIT_LABELS,
-} from '../types/inventory.types';
+import { INVENTORY_CATEGORY_LABELS, MEASUREMENT_UNIT_LABELS } from '../types/inventory.types';
 import { useSuppliers } from '@/features/suppliers/hooks/useSuppliers';
 import { useCurrentEstablishment } from '@/features/establishments/hooks/useCurrentEstablishment';
 
@@ -67,7 +64,7 @@ export const InventoryItemForm = ({
 
   const [tagInput, setTagInput] = useState('');
 
-  const handleChange = (field: keyof CreateInventoryItemData, value: any) => {
+  const handleChange = (field: keyof CreateInventoryItemData, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -208,7 +205,12 @@ export const InventoryItemForm = ({
                 min="0"
                 step="0.01"
                 value={formData.maxQuantity || ''}
-                onChange={e => handleChange('maxQuantity', e.target.value ? parseFloat(e.target.value) : undefined)}
+                onChange={e =>
+                  handleChange(
+                    'maxQuantity',
+                    e.target.value ? parseFloat(e.target.value) : undefined
+                  )
+                }
               />
             </div>
 
@@ -220,7 +222,9 @@ export const InventoryItemForm = ({
                 min="0"
                 step="0.01"
                 value={formData.unitPrice || ''}
-                onChange={e => handleChange('unitPrice', e.target.value ? parseFloat(e.target.value) : undefined)}
+                onChange={e =>
+                  handleChange('unitPrice', e.target.value ? parseFloat(e.target.value) : undefined)
+                }
               />
             </div>
 
@@ -228,7 +232,9 @@ export const InventoryItemForm = ({
               <Label htmlFor="supplier">Fournisseur</Label>
               <Select
                 value={formData.supplierId || 'none'}
-                onValueChange={value => handleChange('supplierId', value === 'none' ? undefined : value)}
+                onValueChange={value =>
+                  handleChange('supplierId', value === 'none' ? undefined : value)
+                }
               >
                 <SelectTrigger id="supplier">
                   <SelectValue placeholder="Sélectionner un fournisseur" />

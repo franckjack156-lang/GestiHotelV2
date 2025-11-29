@@ -232,9 +232,11 @@ const ExportsScheduleTab = ({ establishmentId, userId }: TabContentProps) => {
       } else {
         toast.error("Erreur lors de l'exécution");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur runExportNow:', error);
-      toast.error(error.message || "Erreur lors de l'exécution de l'export");
+      toast.error(
+        error instanceof Error ? error.message : "Erreur lors de l'exécution de l'export"
+      );
     } finally {
       setRunningExportId(null);
     }
@@ -667,7 +669,7 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
         setFeedUrls(prev => ({ ...prev, [integrationId]: data.feedUrl }));
         toast.success('URL de calendrier générée');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erreur génération URL:', error);
       toast.error("Erreur lors de la génération de l'URL");
     } finally {

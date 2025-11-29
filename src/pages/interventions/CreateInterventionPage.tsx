@@ -123,7 +123,7 @@ export const CreateInterventionPage = () => {
 
   // Form - initialiser avec priorité normale par défaut (utiliser la valeur anglaise, pas le label)
   const form = useForm<FormData>({
-    resolver: zodResolver(interventionSchema) as any,
+    resolver: zodResolver(interventionSchema) as unknown,
     defaultValues: {
       priority: 'normal',
     },
@@ -298,7 +298,7 @@ export const CreateInterventionPage = () => {
         priority: data.priority as InterventionPriority,
         ...(data.scheduledAt && { scheduledAt: data.scheduledAt }),
         ...(hasFeature('photos') && selectedFiles.length > 0 && { photos: selectedFiles }),
-      } as any;
+      } as unknown;
 
       // Ajouter explicitement assignedToIds si des techniciens sont sélectionnés
       if (assignedTo && Array.isArray(assignedTo) && assignedTo.length > 0) {
@@ -557,7 +557,7 @@ export const CreateInterventionPage = () => {
         {/* Form Steps */}
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit as any)}>
+            <form onSubmit={handleSubmit(onSubmit as unknown)}>
               {/* Step 1: Informations */}
               {currentStep === 1 && (
                 <div className="space-y-4">
@@ -888,7 +888,7 @@ export const CreateInterventionPage = () => {
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit as unknown)} className="space-y-6">
         {/* Titre principal - Hero Card */}
         <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">

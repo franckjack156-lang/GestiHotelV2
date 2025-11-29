@@ -23,7 +23,7 @@ export const PhotosStep = ({ data, onUpdate }: PhotosStepProps) => {
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (field: keyof WizardData, value: any) => {
+  const handleChange = (field: keyof WizardData, value: string | number | boolean) => {
     onUpdate({ [field]: value });
   };
 

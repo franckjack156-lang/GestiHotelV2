@@ -89,7 +89,7 @@ export const ListSelect = ({
    */
   const getIcon = (iconName?: string) => {
     if (!iconName) return null;
-    const Icon = (LucideIcons as any)[iconName];
+    const Icon = (LucideIcons as unknown)[iconName];
     return Icon ? <Icon size={16} className="mr-2" /> : null;
   };
 

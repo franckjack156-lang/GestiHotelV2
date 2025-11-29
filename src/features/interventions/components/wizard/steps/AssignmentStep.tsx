@@ -30,7 +30,7 @@ const mockTechnicians = [
 ];
 
 export const AssignmentStep = ({ data, onUpdate }: AssignmentStepProps) => {
-  const handleChange = (field: keyof WizardData, value: any) => {
+  const handleChange = (field: keyof WizardData, value: string | number | boolean) => {
     onUpdate({ [field]: value });
   };
 

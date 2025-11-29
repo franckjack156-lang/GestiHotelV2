@@ -467,7 +467,7 @@ const UserFormComponent: React.FC<UserFormProps> = ({
               <Label htmlFor="experienceLevel">Niveau d'expérience</Label>
               <Select
                 value={watch('experienceLevel') || ''}
-                onValueChange={value => setValue('experienceLevel', value as any)}
+                onValueChange={value => setValue('experienceLevel', value as unknown)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un niveau" />
@@ -519,8 +519,8 @@ const UserFormComponent: React.FC<UserFormProps> = ({
               Accès protégé
             </DialogTitle>
             <DialogDescription>
-              Le rôle <strong>Éditeur</strong> donne un accès complet à l'application, incluant
-              la gestion du support technique externe. Veuillez entrer le mot de passe pour
+              Le rôle <strong>Éditeur</strong> donne un accès complet à l'application, incluant la
+              gestion du support technique externe. Veuillez entrer le mot de passe pour
               déverrouiller ce rôle.
             </DialogDescription>
           </DialogHeader>
@@ -560,11 +560,7 @@ const UserFormComponent: React.FC<UserFormProps> = ({
             <Button type="button" variant="outline" onClick={handleEditorPasswordCancel}>
               Annuler
             </Button>
-            <Button
-              type="button"
-              onClick={handleEditorPasswordValidate}
-              disabled={!editorPassword}
-            >
+            <Button type="button" onClick={handleEditorPasswordValidate} disabled={!editorPassword}>
               <Shield className="mr-2 h-4 w-4" />
               Déverrouiller
             </Button>

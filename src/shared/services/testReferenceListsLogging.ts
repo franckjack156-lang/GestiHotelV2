@@ -44,7 +44,7 @@ export const testLogging = async (establishmentId: string) => {
  * Exposer les fonctions dans window pour faciliter l'accès depuis la console
  */
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
-  (window as any).debugReferenceLists = {
+  (window as unknown).debugReferenceLists = {
     logSummary: referenceListsService.logListsSummary,
     logCompact: referenceListsService.logListsCompact,
     test: testLogging,

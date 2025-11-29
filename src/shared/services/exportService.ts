@@ -34,7 +34,7 @@ interface ExportOptions {
 /**
  * Convertir des données en CSV
  */
-const convertToCSV = (data: unknown[], headers: string[]): string => {
+const convertToCSV = (data: Record<string, unknown>[], headers: string[]): string => {
   const rows = [headers];
 
   data.forEach(item => {
@@ -184,10 +184,10 @@ const prepareUsersData = (users: User[]) => {
     Prénom: user.firstName || '',
     'Nom de famille': user.lastName || '',
     Rôle: user.role,
-    Statut: (user as any).status || 'active',
+    Statut: (user as unknown).status || 'active',
     Téléphone: user.phoneNumber || '',
-    Poste: (user as any).jobTitle || '',
-    Département: (user as any).department || '',
+    Poste: (user as unknown).jobTitle || '',
+    Département: (user as unknown).department || '',
     Actif: user.isActive ? 'Oui' : 'Non',
     'Email vérifié': user.emailVerified ? 'Oui' : 'Non',
     'Date création': user.createdAt

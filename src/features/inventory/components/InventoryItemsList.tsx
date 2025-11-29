@@ -19,10 +19,7 @@ import {
 } from '@/shared/components/ui/select';
 import { InventoryItemCard } from './InventoryItemCard';
 import type { InventoryItem, InventoryFilters } from '../types/inventory.types';
-import {
-  INVENTORY_CATEGORY_LABELS,
-  INVENTORY_STATUS_LABELS,
-} from '../types/inventory.types';
+import { INVENTORY_CATEGORY_LABELS, INVENTORY_STATUS_LABELS } from '../types/inventory.types';
 
 interface InventoryItemsListProps {
   items: InventoryItem[];
@@ -44,7 +41,7 @@ export const InventoryItemsList = ({
   const [filters, setFilters] = useState<InventoryFilters>({});
   const [showFilters, setShowFilters] = useState(false);
 
-  const handleFilterChange = (key: keyof InventoryFilters, value: any) => {
+  const handleFilterChange = (key: keyof InventoryFilters, value: string | number | boolean) => {
     const newFilters = {
       ...filters,
       [key]: value || undefined,
@@ -82,7 +79,9 @@ export const InventoryItemsList = ({
             <label className="text-sm font-medium mb-2 block">Catégorie</label>
             <Select
               value={filters.category || 'all'}
-              onValueChange={value => handleFilterChange('category', value === 'all' ? undefined : value)}
+              onValueChange={value =>
+                handleFilterChange('category', value === 'all' ? undefined : value)
+              }
             >
               <SelectTrigger>
                 <SelectValue />
@@ -102,7 +101,9 @@ export const InventoryItemsList = ({
             <label className="text-sm font-medium mb-2 block">Statut</label>
             <Select
               value={filters.status || 'all'}
-              onValueChange={value => handleFilterChange('status', value === 'all' ? undefined : value)}
+              onValueChange={value =>
+                handleFilterChange('status', value === 'all' ? undefined : value)
+              }
             >
               <SelectTrigger>
                 <SelectValue />

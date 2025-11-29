@@ -51,7 +51,7 @@ export const StockMovementDialog = ({
     notes: '',
   });
 
-  const handleChange = (field: keyof CreateStockMovementData, value: any) => {
+  const handleChange = (field: keyof CreateStockMovementData, value: string | number | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -104,17 +104,15 @@ export const StockMovementDialog = ({
         <DialogHeader>
           <DialogTitle>Mouvement de stock</DialogTitle>
           <DialogDescription>
-            Article: {item.name} - Stock actuel: {item.quantity} {MEASUREMENT_UNIT_LABELS[item.unit]}
+            Article: {item.name} - Stock actuel: {item.quantity}{' '}
+            {MEASUREMENT_UNIT_LABELS[item.unit]}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="type">Type de mouvement *</Label>
-            <Select
-              value={formData.type}
-              onValueChange={value => handleChange('type', value)}
-            >
+            <Select value={formData.type} onValueChange={value => handleChange('type', value)}>
               <SelectTrigger id="type">
                 <SelectValue />
               </SelectTrigger>
@@ -122,17 +120,13 @@ export const StockMovementDialog = ({
                 <SelectItem value="in">
                   <div>
                     <div className="font-medium">{getTypeLabel('in')}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {getTypeDescription('in')}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{getTypeDescription('in')}</div>
                   </div>
                 </SelectItem>
                 <SelectItem value="out">
                   <div>
                     <div className="font-medium">{getTypeLabel('out')}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {getTypeDescription('out')}
-                    </div>
+                    <div className="text-xs text-muted-foreground">{getTypeDescription('out')}</div>
                   </div>
                 </SelectItem>
                 <SelectItem value="adjustment">
@@ -156,9 +150,7 @@ export const StockMovementDialog = ({
           </div>
 
           <div>
-            <Label htmlFor="quantity">
-              Quantité * ({MEASUREMENT_UNIT_LABELS[item.unit]})
-            </Label>
+            <Label htmlFor="quantity">Quantité * ({MEASUREMENT_UNIT_LABELS[item.unit]})</Label>
             <Input
               id="quantity"
               type="number"

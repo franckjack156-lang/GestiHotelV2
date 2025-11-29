@@ -206,8 +206,8 @@ export const useUsers = () => {
           : await userService.getUsersByEstablishment(establishmentId, filters, sortOptions);
 
       setUsers(users);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : 'Erreur inconnue');
     } finally {
       setLoading(false);
     }
@@ -327,8 +327,8 @@ export const useUserActions = () => {
         }
 
         return userId;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return null;
       } finally {
         setIsCreating(false);
@@ -353,8 +353,8 @@ export const useUserActions = () => {
 
         const invitationId = await userService.inviteUser(data, user.id);
         return invitationId;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return null;
       } finally {
         setIsCreating(false);
@@ -376,8 +376,8 @@ export const useUserActions = () => {
         updateUserInList(userId, data);
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return false;
       } finally {
         setIsUpdating(false);
@@ -399,8 +399,8 @@ export const useUserActions = () => {
         updateUserInList(userId, data);
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return false;
       } finally {
         setIsUpdating(false);
@@ -422,8 +422,8 @@ export const useUserActions = () => {
         updateUserInList(userId, { status, isActive: status === UserStatus.ACTIVE });
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return false;
       } finally {
         setIsUpdating(false);
@@ -448,8 +448,8 @@ export const useUserActions = () => {
         });
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return false;
       } finally {
         setIsUpdating(false);
@@ -471,8 +471,8 @@ export const useUserActions = () => {
         removeUser(userId);
 
         return true;
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return false;
       } finally {
         setIsDeleting(false);
@@ -488,8 +488,8 @@ export const useUserActions = () => {
     async (searchTerm: string, establishmentId?: string): Promise<User[]> => {
       try {
         return await userService.searchUsers(searchTerm, establishmentId);
-      } catch (error: any) {
-        setActionError(error.message);
+      } catch (error: unknown) {
+        setActionError(error instanceof Error ? error.message : 'Erreur inconnue');
         return [];
       }
     },

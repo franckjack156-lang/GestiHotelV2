@@ -203,7 +203,7 @@ const NotFoundPage = lazy(() =>
 // WRAPPER WITH SUSPENSE
 // ============================================================================
 
-const withSuspense = (Component: React.LazyExoticComponent<any>) => {
+const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<unknown>>) => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Component />
@@ -469,7 +469,9 @@ export const router = createBrowserRouter([
           {
             path: ':itemId',
             element: (
-              <FeatureGuard feature="inventory">{withSuspense(InventoryItemDetailPage)}</FeatureGuard>
+              <FeatureGuard feature="inventory">
+                {withSuspense(InventoryItemDetailPage)}
+              </FeatureGuard>
             ),
           },
         ],

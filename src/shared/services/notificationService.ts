@@ -315,7 +315,7 @@ export const getPreferences = async (
     }
 
     return { ...snapshot.data(), userId, establishmentId } as NotificationPreferences;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Permission errors are expected when preferences don't exist yet
     // Log as debug instead of error to avoid console noise
     if (error?.code === 'permission-denied') {

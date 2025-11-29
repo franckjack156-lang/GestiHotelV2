@@ -26,7 +26,7 @@ const statusConfig: Record<
   UserStatus,
   {
     label: string;
-    icon: any;
+    icon: LucideIcon;
     className: string;
   }
 > = {

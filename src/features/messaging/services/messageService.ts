@@ -103,7 +103,7 @@ export const createConversation = async (
     })
   );
 
-  const conversationData: any = {
+  const conversationData: Record<string, unknown> = {
     type: data.type,
     participantIds: allParticipantIds,
     participants: participantsData,
@@ -358,7 +358,7 @@ export const sendMessage = async (
 ): Promise<string> => {
   // Créer le message avec timestamp client pour garantir l'ordre
   const clientTimestamp = Date.now();
-  const messageData: any = {
+  const messageData: Record<string, unknown> = {
     conversationId,
     type: data.type || 'text',
     content: data.content,
@@ -399,7 +399,7 @@ export const sendMessage = async (
   const batch = writeBatch(db);
 
   // Incrémenter le compteur non lu pour tous les participants sauf le sender
-  const updates: any = {
+  const updates: Record<string, unknown> = {
     lastMessage: {
       content: data.content,
       senderId: userId,
@@ -452,8 +452,8 @@ export const getMessages = async (
       const createdAt = msg.createdAt;
       const msgTimestamp =
         msg.clientCreatedAt ||
-        (createdAt && typeof (createdAt as any).toDate === 'function'
-          ? (createdAt as any).toDate().getTime()
+        (createdAt && typeof (createdAt as unknown).toDate === 'function'
+          ? (createdAt as unknown).toDate().getTime()
           : createdAt instanceof Date
             ? createdAt.getTime()
             : 0);
@@ -537,8 +537,8 @@ export const subscribeToMessages = (
         const createdAt = msg.createdAt;
         const msgTimestamp =
           msg.clientCreatedAt ||
-          (createdAt && typeof (createdAt as any).toDate === 'function'
-            ? (createdAt as any).toDate().getTime()
+          (createdAt && typeof (createdAt as unknown).toDate === 'function'
+            ? (createdAt as unknown).toDate().getTime()
             : createdAt instanceof Date
               ? createdAt.getTime()
               : 0);

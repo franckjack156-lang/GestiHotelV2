@@ -34,7 +34,7 @@ export const LocationStep = ({ data, onUpdate }: LocationStepProps) => {
   const { currentEstablishment } = useCurrentEstablishment();
   const { rooms } = useRooms(currentEstablishment?.id || '');
 
-  const handleChange = (field: keyof WizardData, value: any) => {
+  const handleChange = (field: keyof WizardData, value: string | number | boolean) => {
     onUpdate({ [field]: value });
   };
 
@@ -82,9 +82,7 @@ export const LocationStep = ({ data, onUpdate }: LocationStepProps) => {
     <div className="space-y-6">
       {/* Type de zone */}
       <div className="space-y-2">
-        <Label htmlFor="roomType">
-          Type de zone
-        </Label>
+        <Label htmlFor="roomType">Type de zone</Label>
         <Select
           value={data.roomType || ''}
           onValueChange={(value: 'chambre' | 'commun' | 'exterieur' | '') =>
@@ -105,9 +103,7 @@ export const LocationStep = ({ data, onUpdate }: LocationStepProps) => {
 
       {/* Localisation principale */}
       <div className="space-y-2">
-        <Label htmlFor="location">
-          Localisation principale
-        </Label>
+        <Label htmlFor="location">Localisation principale</Label>
         <DynamicListSelect
           listKey="interventionLocations"
           value={data.location || ''}
@@ -227,7 +223,8 @@ export const LocationStep = ({ data, onUpdate }: LocationStepProps) => {
       {!data.location && !data.roomNumber && !data.floor && !data.building && (
         <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <p className="text-sm text-yellow-800 dark:text-yellow-300">
-            ⚠️ Aucune information de localisation fournie. Il est recommandé de renseigner au moins un champ pour situer l'intervention.
+            ⚠️ Aucune information de localisation fournie. Il est recommandé de renseigner au moins
+            un champ pour situer l'intervention.
           </p>
         </div>
       )}

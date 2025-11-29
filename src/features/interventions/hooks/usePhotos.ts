@@ -77,8 +77,8 @@ export const usePhotos = (interventionId: string) => {
       );
       toast.success('Photo ajoutée');
       return true;
-    } catch (error: any) {
-      toast.error(error.message || "Erreur lors de l'upload");
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de l'upload");
       logger.error(error);
       return false;
     } finally {

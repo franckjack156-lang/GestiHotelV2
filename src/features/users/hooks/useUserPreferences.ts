@@ -54,7 +54,7 @@ export const useUserPreferences = () => {
   };
 
   // Préférences actuelles (avec fallback sur les valeurs par défaut)
-  const userDisplayPrefs = (user as any)?.displayPreferences;
+  const userDisplayPrefs = (user as unknown)?.displayPreferences;
 
   const displayPreferences: DisplayPreferences = {
     ...defaultDisplayPreferences,
@@ -64,15 +64,15 @@ export const useUserPreferences = () => {
   const notificationPreferences: NotificationPreferences = {
     email: {
       ...defaultNotificationPreferences.email,
-      ...(user as any)?.notificationPreferences?.email,
+      ...(user as unknown)?.notificationPreferences?.email,
     },
     push: {
       ...defaultNotificationPreferences.push,
-      ...(user as any)?.notificationPreferences?.push,
+      ...(user as unknown)?.notificationPreferences?.push,
     },
     inApp: {
       ...defaultNotificationPreferences.inApp,
-      ...(user as any)?.notificationPreferences?.inApp,
+      ...(user as unknown)?.notificationPreferences?.inApp,
     },
   };
 
@@ -99,10 +99,10 @@ export const useUserPreferences = () => {
         setUser({
           ...user,
           displayPreferences: newPreferences,
-        } as any);
+        } as unknown);
 
         toast.success('Préférences enregistrées');
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error updating display preferences:', error);
         toast.error('Erreur lors de la sauvegarde');
       } finally {
@@ -145,10 +145,10 @@ export const useUserPreferences = () => {
         setUser({
           ...user,
           notificationPreferences: newPreferences,
-        } as any);
+        } as unknown);
 
         toast.success('Préférences enregistrées');
-      } catch (error: any) {
+      } catch (error: unknown) {
         logger.error('Error updating notification preferences:', error);
         toast.error('Erreur lors de la sauvegarde');
       } finally {
@@ -176,10 +176,10 @@ export const useUserPreferences = () => {
         ...user,
         displayPreferences: defaultDisplayPreferences,
         notificationPreferences: defaultNotificationPreferences,
-      } as any);
+      } as unknown);
 
       toast.success('Préférences réinitialisées');
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error resetting preferences:', error);
       toast.error('Erreur lors de la réinitialisation');
     } finally {

@@ -53,7 +53,7 @@ interface PartsTabProps {
   roomNumber?: string;
 }
 
-const STATUS_CONFIG: Record<PartStatus, { label: string; color: string; icon: any }> = {
+const STATUS_CONFIG: Record<PartStatus, { label: string; color: string; icon: LucideIcon }> = {
   to_order: { label: 'À commander', color: 'bg-orange-500', icon: Clock },
   ordered: { label: 'Commandée', color: 'bg-blue-500', icon: ShoppingCart },
   received: { label: 'Reçue', color: 'bg-green-500', icon: Package },
@@ -171,10 +171,10 @@ export const PartsTab = ({ interventionId, interventionNumber, roomNumber }: Par
 
       toast.success('Email envoyé avec succès au responsable des achats');
       setShowEmailDialog(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Erreur envoi email:', error);
       toast.error("Erreur lors de l'envoi de l'email", {
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Erreur inconnue',
       });
     } finally {
       setIsSendingEmail(false);

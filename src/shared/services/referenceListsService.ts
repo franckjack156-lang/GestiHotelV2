@@ -1040,7 +1040,7 @@ export const validateItem = (item: Partial<ReferenceItem>, listKey?: ListKey): V
   }
 
   // Icône
-  if (item.icon && !(LucideIcons as any)[item.icon]) {
+  if (item.icon && !(LucideIcons as unknown)[item.icon]) {
     warnings.push(`L'icône "${item.icon}" n'existe pas dans Lucide`);
   }
 

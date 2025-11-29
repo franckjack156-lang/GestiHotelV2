@@ -44,7 +44,7 @@ export const useTemplates = (establishmentId: string | null) => {
       try {
         const data = await getTemplates(establishmentId, filters);
         setTemplates(data);
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error loading templates:', err);
         setError(err.message);
         toast.error('Erreur de chargement', {
@@ -91,7 +91,7 @@ export const useTemplates = (establishmentId: string | null) => {
         toast.success('Modèle créé avec succès');
         await loadTemplates({ isActive: true });
         return id;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error creating template:', err);
         toast.error('Erreur de création', { description: err.message });
         return null;
@@ -115,7 +115,7 @@ export const useTemplates = (establishmentId: string | null) => {
         toast.success('Modèle mis à jour');
         await loadTemplates({ isActive: true });
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error updating template:', err);
         toast.error('Erreur de mise à jour', { description: err.message });
         return false;
@@ -139,7 +139,7 @@ export const useTemplates = (establishmentId: string | null) => {
         toast.success('Modèle supprimé');
         await loadTemplates({ isActive: true });
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error deleting template:', err);
         toast.error('Erreur de suppression', { description: err.message });
         return false;
@@ -163,7 +163,7 @@ export const useTemplates = (establishmentId: string | null) => {
         toast.success('Modèle dupliqué');
         await loadTemplates({ isActive: true });
         return id;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error duplicating template:', err);
         toast.error('Erreur de duplication', { description: err.message });
         return null;
@@ -187,7 +187,7 @@ export const useTemplates = (establishmentId: string | null) => {
         toast.success(isActive ? 'Modèle activé' : 'Modèle désactivé');
         await loadTemplates({ isActive: true });
         return true;
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error toggling template:', err);
         toast.error('Erreur', { description: err.message });
         return false;
@@ -208,7 +208,7 @@ export const useTemplates = (establishmentId: string | null) => {
         // Pas de toast pour ne pas spammer l'utilisateur
         // Juste recharger silencieusement
         await loadTemplates({ isActive: true });
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Error incrementing template usage:', err);
         // Erreur silencieuse, pas critique
       }

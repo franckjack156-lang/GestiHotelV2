@@ -174,9 +174,9 @@ export const useInterventionWizard = () => {
     return {
       title: wizardData.title!,
       description: wizardData.description!,
-      type: wizardData.type as any,
-      category: wizardData.category as any,
-      priority: wizardData.priority as any,
+      type: wizardData.type as unknown,
+      category: wizardData.category as unknown,
+      priority: wizardData.priority as unknown,
       location: wizardData.location!,
       roomNumber: wizardData.roomNumber,
       floor: wizardData.floor,

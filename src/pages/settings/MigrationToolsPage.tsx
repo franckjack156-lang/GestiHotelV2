@@ -63,9 +63,9 @@ export const MigrationToolsPage = () => {
 
       toast.success('Prévisualisation terminée');
       setMigrationResult({ type: 'preview', logs });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la prévisualisation', {
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Erreur inconnue',
       });
     } finally {
       setIsPreviewing(false);
@@ -93,9 +93,9 @@ export const MigrationToolsPage = () => {
       });
 
       setMigrationResult({ type: 'migration', result });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Erreur lors de la migration', {
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Erreur inconnue',
       });
     } finally {
       setIsRunning(false);

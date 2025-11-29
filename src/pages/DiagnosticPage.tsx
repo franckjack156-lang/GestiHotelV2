@@ -25,7 +25,7 @@ export const DiagnosticPage = () => {
 
   const runDiagnostic = async () => {
     setLoading(true);
-    const newResults: any = {
+    const newResults: Record<string, unknown> = {
       auth: null,
       establishment: null,
       interventions: null,
@@ -85,14 +85,15 @@ export const DiagnosticPage = () => {
             })),
           };
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const firebaseError = error as { message?: string; code?: string };
         newResults.interventions = {
           status: false,
-          error: error.message,
-          code: error.code,
+          error: firebaseError.message || 'Erreur inconnue',
+          code: firebaseError.code,
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Diagnostic error:', error);
     }
 

@@ -325,12 +325,21 @@ const RoomsListPageComponent = () => {
           </p>
         </div>
         <div className="flex gap-2 w-full xs:w-auto">
-          <Button variant="outline" onClick={() => setImportDialogOpen(true)} size="sm" className="flex-1 xs:flex-initial">
+          <Button
+            variant="outline"
+            onClick={() => setImportDialogOpen(true)}
+            size="sm"
+            className="flex-1 xs:flex-initial"
+          >
             <Upload size={16} className="sm:mr-2" />
             <span className="hidden sm:inline">Importer</span>
             <span className="sm:hidden">Import</span>
           </Button>
-          <Button onClick={() => navigate('/app/rooms/create')} size="sm" className="flex-1 xs:flex-initial">
+          <Button
+            onClick={() => navigate('/app/rooms/create')}
+            size="sm"
+            className="flex-1 xs:flex-initial"
+          >
             <Plus size={16} className="sm:mr-2" />
             <span className="hidden sm:inline">Nouvelle chambre</span>
             <span className="sm:hidden">Nouvelle</span>
@@ -344,7 +353,9 @@ const RoomsListPageComponent = () => {
           <CardContent className="pt-3 sm:pt-5 px-2 sm:px-6 pb-3 sm:pb-6">
             <div className="flex flex-col gap-1 sm:gap-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">Total</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                  Total
+                </p>
                 <DoorOpen className="text-gray-400" size={16} />
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold truncate">{stats.total}</p>
@@ -356,10 +367,14 @@ const RoomsListPageComponent = () => {
           <CardContent className="pt-3 sm:pt-5 px-2 sm:px-6 pb-3 sm:pb-6">
             <div className="flex flex-col gap-1 sm:gap-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">Dispo.</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                  Dispo.
+                </p>
                 <CheckCircle2 className="text-green-400" size={16} />
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600 truncate">{stats.available}</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600 truncate">
+                {stats.available}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -368,10 +383,14 @@ const RoomsListPageComponent = () => {
           <CardContent className="pt-3 sm:pt-5 px-2 sm:px-6 pb-3 sm:pb-6">
             <div className="flex flex-col gap-1 sm:gap-2">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">Bloquées</p>
+                <p className="text-[10px] sm:text-xs md:text-sm text-gray-600 dark:text-gray-400">
+                  Bloquées
+                </p>
                 <AlertCircle className="text-red-400" size={16} />
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-600 truncate">{stats.blocked}</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-red-600 truncate">
+                {stats.blocked}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -381,13 +400,12 @@ const RoomsListPageComponent = () => {
       <Card>
         <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Rechercher..."
-            />
+            <SearchBar value={searchTerm} onChange={setSearchTerm} placeholder="Rechercher..." />
 
-            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as typeof filterStatus)}>
+            <Select
+              value={filterStatus}
+              onValueChange={value => setFilterStatus(value as typeof filterStatus)}
+            >
               <SelectTrigger className="text-sm">
                 <SelectValue />
               </SelectTrigger>
@@ -517,7 +535,7 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   const navigate = useNavigate();
 
   const form = useForm<RoomFormData>({
-    resolver: zodResolver(roomSchema) as any,
+    resolver: zodResolver(roomSchema) as unknown,
     defaultValues: room || {
       type: 'double',
       capacity: 2,
@@ -532,7 +550,7 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   } = form;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit as unknown)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <Label htmlFor="number">Numéro de chambre *</Label>

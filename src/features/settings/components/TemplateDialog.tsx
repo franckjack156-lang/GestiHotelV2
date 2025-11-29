@@ -109,11 +109,12 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
 
       onSuccess();
       onClose();
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
       logger.error('❌ [TemplateDialog] Erreur:', error);
-      setError(error.message);
+      setError(errorMessage);
       alert(
-        `Erreur lors de l'application du template:\n\n${error.message}\n\nConsultez la console (F12) pour plus de détails.`
+        `Erreur lors de l'application du template:\n\n${errorMessage}\n\nConsultez la console (F12) pour plus de détails.`
       );
     } finally {
       setIsApplying(false);
@@ -130,7 +131,10 @@ export const TemplateDialog: React.FC<TemplateDialogProps> = ({
   };
 
   // Map des icônes
-  const iconMap: Record<string, unknown> = {
+  const iconMap: Record<
+    string,
+    React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+  > = {
     Building,
     Palmtree,
     Users,

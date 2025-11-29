@@ -93,7 +93,7 @@ export const QRCodeScanner = ({ onScan, trigger }: QRCodeScannerProps) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('Camera access error:', err);
       setHasPermission(false);
 

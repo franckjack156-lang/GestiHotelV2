@@ -51,7 +51,7 @@ type FormData = z.infer<typeof supplierSchema>;
 
 interface SupplierFormProps {
   supplier?: Supplier;
-  onSubmit: (data: unknown) => void;
+  onSubmit: (data: FormData) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
@@ -63,7 +63,7 @@ export const SupplierForm = ({ supplier, onSubmit, onCancel, isSubmitting }: Sup
     control,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(supplierSchema) as any,
+    resolver: zodResolver(supplierSchema) as unknown,
     defaultValues: supplier
       ? {
           name: supplier.name,
@@ -129,7 +129,7 @@ export const SupplierForm = ({ supplier, onSubmit, onCancel, isSubmitting }: Sup
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit as unknown)} className="space-y-6">
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">Général</TabsTrigger>

@@ -111,7 +111,7 @@ export const EditInterventionPage = () => {
           internalNotes: data.internalNotes || '',
           resolutionNotes: data.resolutionNotes || '',
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         logger.error('Erreur chargement:', err);
       } finally {
         setIsLoading(false);
@@ -152,7 +152,7 @@ export const EditInterventionPage = () => {
         resolutionNotes: data.resolutionNotes,
       };
 
-      const success = await updateIntervention(id, updateData as any);
+      const success = await updateIntervention(id, updateData as unknown);
 
       if (success) {
         navigate(`/app/interventions/${id}`);

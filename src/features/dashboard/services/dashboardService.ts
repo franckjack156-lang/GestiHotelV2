@@ -545,11 +545,13 @@ class DashboardService {
     rooms.forEach(room => {
       // Par type
       const type = room.type || 'other';
-      stats.byType[type] = (stats.byType[type] || 0) + 1;
+      stats.byType[type as keyof typeof stats.byType] =
+        ((stats.byType[type as keyof typeof stats.byType] as number) || 0) + 1;
 
       // Par statut
       const status = room.status || 'available';
-      stats.byStatus[status] = (stats.byStatus[status] || 0) + 1;
+      stats.byStatus[status as keyof typeof stats.byStatus] =
+        ((stats.byStatus[status as keyof typeof stats.byStatus] as number) || 0) + 1;
 
       // Compteurs
       if (status === 'available') stats.available++;

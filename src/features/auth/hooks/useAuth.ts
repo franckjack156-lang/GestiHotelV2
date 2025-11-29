@@ -146,8 +146,8 @@ export const useAuth = () => {
 
   const canManageUser = (targetUser: { role: UserRole; establishmentIds: string[] }): boolean => {
     if (!user) return false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return permissionService.canManageUser(user, targetUser as any);
+
+    return permissionService.canManageUser(user, targetUser as unknown);
   };
 
   const canAssignRole = (targetRole: UserRole): boolean => {
