@@ -37,6 +37,7 @@ import {
   ChevronRight,
   RotateCcw,
   Loader2,
+  FileDown,
 } from 'lucide-react';
 import { ReferenceDisplay } from '@/shared/components/ReferenceDisplay';
 import { Button } from '@/shared/components/ui/button';
@@ -107,6 +108,7 @@ import type { Intervention } from '@/features/interventions/types/intervention.t
 import { cn } from '@/shared/lib/utils';
 import { useUserPreferences } from '@/features/users/hooks/useUserPreferences';
 import { useAllReferenceLists } from '@/shared/hooks/useReferenceLists';
+import { generateInterventionsPDF, downloadPDF } from '@/shared/services/pdfService';
 import {
   Dialog,
   DialogContent,
@@ -380,6 +382,26 @@ const InterventionsPageComponent = () => {
     }
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const toastId = toast.loading('Génération du PDF en cours...');
+
+      const blob = await generateInterventionsPDF(filteredInterventions, {
+        title: 'Liste des interventions',
+        subtitle: `${filteredInterventions.length} intervention(s)`,
+        orientation: 'landscape',
+      });
+
+      const filename = `interventions_${format(new Date(), 'yyyy-MM-dd_HHmm')}.pdf`;
+      downloadPDF(blob, filename);
+
+      toast.success('PDF généré avec succès', { id: toastId });
+    } catch (error) {
+      toast.error('Erreur lors de la génération du PDF');
+      console.error('Export PDF error:', error);
+    }
+  };
+
   // Drag & Drop handlers
   const handleDragStart = (event: DragStartEvent) => {
     const intervention = interventions.find(i => i.id === event.active.id);
@@ -558,6 +580,18 @@ const InterventionsPageComponent = () => {
             >
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline ml-2">Actualiser</span>
+            </Button>
+
+            {/* Bouton Export PDF */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              disabled={filteredInterventions.length === 0}
+              className="flex-1 sm:flex-initial"
+            >
+              <FileDown className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Exporter PDF</span>
             </Button>
 
             {/* Bouton Corbeille */}

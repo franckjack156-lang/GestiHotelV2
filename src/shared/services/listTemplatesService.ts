@@ -404,12 +404,12 @@ export const applyTemplate = async (
             totalSkipped++;
           }
         } catch (error: unknown) {
-          logger.error(`  ❌ Erreur pour ${item.label}:`, error.message);
+          logger.error(`  ❌ Erreur pour ${item.label}:`, (error as Error).message);
           totalSkipped++;
         }
       }
     } catch (error: unknown) {
-      logger.error(`❌ Erreur traitement liste ${listKey}:`, error.message);
+      logger.error(`❌ Erreur traitement liste ${listKey}:`, (error as Error).message);
     }
   }
 

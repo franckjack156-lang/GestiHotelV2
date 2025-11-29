@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Loader2,
   Mail,
+  type LucideIcon,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';

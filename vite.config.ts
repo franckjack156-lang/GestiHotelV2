@@ -1,12 +1,43 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
 import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Optimisation des images
+    ViteImageOptimizer({
+      png: {
+        quality: 80,
+      },
+      jpeg: {
+        quality: 80,
+      },
+      jpg: {
+        quality: 80,
+      },
+      webp: {
+        quality: 80,
+      },
+      svg: {
+        multipass: true,
+        plugins: [
+          {
+            name: 'preset-default',
+            params: {
+              overrides: {
+                cleanupNumericValues: false,
+                removeViewBox: false,
+              },
+            },
+          },
+        ],
+      },
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
@@ -64,7 +95,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
         // Stratégies de mise en cache améliorées
         runtimeCaching: [
           // API Firestore - Réseau en premier, cache en secours
@@ -125,6 +156,8 @@ export default defineConfig({
         ],
         // Nettoyage automatique des anciens caches
         cleanupOutdatedCaches: true,
+        // Augmenter la limite pour les gros fichiers (stats.html)
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB
         // Activer le skip waiting pour mise à jour immédiate
         skipWaiting: true,
         clientsClaim: true,
@@ -134,6 +167,14 @@ export default defineConfig({
         enabled: false, // Désactivé en dev pour éviter les problèmes de cache
         type: 'module',
       },
+    }),
+    // Analyseur de bundle (généré uniquement en build)
+    visualizer({
+      filename: 'dist/stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      template: 'treemap', // 'sunburst', 'treemap', 'network'
     }),
   ],
   resolve: {
@@ -146,12 +187,26 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'esnext',
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
+      format: {
+        comments: false,
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
-          // React core + Radix UI ensemble pour éviter les dépendances circulaires
+          // React core + runtime
           'vendor-react': ['react', 'react-dom', 'react/jsx-runtime'],
-          'vendor-router': ['react-router', 'react-router-dom'],
+          // Router
+          'vendor-router': ['react-router-dom'],
+          // Firebase - séparé pour permettre lazy loading
           'vendor-firebase': [
             'firebase/app',
             'firebase/auth',
@@ -159,21 +214,83 @@ export default defineConfig({
             'firebase/storage',
             'firebase/messaging',
           ],
+          // Formulaires
           'vendor-form': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          // Dates
           'vendor-date': ['date-fns'],
+          // UI Libraries - regroupées car souvent utilisées ensemble
+          'vendor-ui': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+            '@radix-ui/react-alert-dialog',
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-avatar',
+            '@radix-ui/react-checkbox',
+            '@radix-ui/react-label',
+            '@radix-ui/react-progress',
+            '@radix-ui/react-radio-group',
+            '@radix-ui/react-scroll-area',
+            '@radix-ui/react-separator',
+            '@radix-ui/react-slot',
+            '@radix-ui/react-switch',
+          ],
+          // DnD
           'vendor-dnd': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          // Icons
           'vendor-icons': ['lucide-react'],
+          // Charts (lazy loadable)
+          'vendor-charts': ['recharts'],
+          // Calendar (lazy loadable)
+          'vendor-calendar': ['react-big-calendar', 'react-day-picker'],
+          // État global
+          'vendor-state': ['zustand', 'dexie', 'dexie-react-hooks'],
+          // i18n
+          'vendor-i18n': ['i18next', 'react-i18next', 'i18next-browser-languagedetector'],
+          // Utilitaires
+          'vendor-utils': [
+            'class-variance-authority',
+            'clsx',
+            'tailwind-merge',
+            'framer-motion',
+            'sonner',
+          ],
+          // PDF/Excel (lazy loadable)
+          'vendor-export': ['jspdf', 'jspdf-autotable', 'xlsx'],
+          // QR/Barcode (lazy loadable)
+          'vendor-qr': ['qrcode', '@zxing/library', 'otplib'],
         },
+        // Noms de fichiers avec hash pour cache-busting
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
     sourcemap: false,
-    minify: 'esbuild',
     // Optimisations supplémentaires
-    chunkSizeWarningLimit: 1000, // Avertir si chunk > 1MB
+    chunkSizeWarningLimit: 800, // Avertir si chunk > 800KB
     cssCodeSplit: true, // Split CSS par route
+    reportCompressedSize: true, // Afficher la taille compressée
+    // Optimisation des assets
+    assetsInlineLimit: 4096, // Inline des assets < 4KB en base64
   },
   server: {
     port: 5173,
     open: true,
+  },
+  // Optimisations supplémentaires
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      'firebase/app',
+      'firebase/auth',
+      'firebase/firestore',
+    ],
+    exclude: ['@vite-pwa/assets-generator'],
   },
 });

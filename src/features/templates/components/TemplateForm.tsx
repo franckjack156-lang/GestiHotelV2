@@ -55,7 +55,8 @@ export const TemplateForm = ({ template, onSubmit, onCancel, isLoading }: Templa
     setValue,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(templateSchema) as unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(templateSchema) as any,
     defaultValues: template
       ? {
           name: template.name,
@@ -80,7 +81,7 @@ export const TemplateForm = ({ template, onSubmit, onCancel, isLoading }: Templa
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit as unknown)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6">
       {/* Informations du modèle */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Informations du modèle</h3>

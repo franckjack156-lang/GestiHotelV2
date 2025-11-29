@@ -65,7 +65,8 @@ interface MultiSelectProps extends BaseListSelectProps {
 const ItemIcon: React.FC<{ iconName?: string; className?: string }> = ({ iconName, className }) => {
   if (!iconName) return null;
 
-  const Icon = (LucideIcons as unknown)[iconName];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Icon = (LucideIcons as any)[iconName];
   if (!Icon) return null;
 
   return <Icon className={className} />;

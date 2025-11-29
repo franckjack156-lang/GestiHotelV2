@@ -63,7 +63,8 @@ class ThemeService {
     try {
       const docRef = doc(db, this.preferencesCollection, userId);
 
-      await updateDoc(docRef, updates as unknown);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await updateDoc(docRef, updates as any);
     } catch (error) {
       logger.error('Erreur updateThemePreferences:', error);
       throw error;

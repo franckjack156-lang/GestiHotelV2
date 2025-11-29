@@ -203,7 +203,8 @@ const NotFoundPage = lazy(() =>
 // WRAPPER WITH SUSPENSE
 // ============================================================================
 
-const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<unknown>>) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType<any>>) => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Component />

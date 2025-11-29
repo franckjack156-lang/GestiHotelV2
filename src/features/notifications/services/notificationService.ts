@@ -297,11 +297,12 @@ class NotificationService {
   async getStats(userId: string, establishmentId: string): Promise<NotificationStats> {
     const notifications = await this.getNotifications(userId, establishmentId);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stats: NotificationStats = {
       total: notifications.length,
       unread: notifications.filter(n => !n.read).length,
-      byType: {} as unknown,
-      byPriority: {} as unknown,
+      byType: {} as any,
+      byPriority: {} as any,
       readRate: 0,
       clickRate: 0,
     };

@@ -23,10 +23,9 @@ export const useNetworkStatus = (): NetworkStatus => {
 
   useEffect(() => {
     const updateNetworkStatus = () => {
-      const connection =
-        (navigator as unknown).connection ||
-        (navigator as unknown).mozConnection ||
-        (navigator as unknown).webkitConnection;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const nav = navigator as any;
+      const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
 
       setNetworkStatus({
         isOnline: navigator.onLine,
@@ -42,10 +41,9 @@ export const useNetworkStatus = (): NetworkStatus => {
     window.addEventListener('offline', updateNetworkStatus);
 
     // Écouter les changements de Network Information API
-    const connection =
-      (navigator as unknown).connection ||
-      (navigator as unknown).mozConnection ||
-      (navigator as unknown).webkitConnection;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nav = navigator as any;
+    const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
 
     if (connection) {
       connection.addEventListener('change', updateNetworkStatus);

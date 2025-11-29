@@ -73,6 +73,7 @@ export interface ChatWindowProps {
  * @param timestamp - Le timestamp à convertir
  * @param fallbackTimestamp - Timestamp de fallback (optionnel, ex: clientCreatedAt)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const toDate = (timestamp: any, fallbackTimestamp?: number): Date => {
   if (timestamp?.toDate) {
     return timestamp.toDate();
@@ -123,7 +124,8 @@ const groupMessagesByDate = (messages: Message[]): Map<string, Message[]> => {
   const grouped = new Map<string, Message[]>();
 
   messages.forEach(message => {
-    const date = toDate(message.createdAt, (message as unknown).clientCreatedAt);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const date = toDate(message.createdAt, (message as any).clientCreatedAt);
     const dateKey = format(date, 'yyyy-MM-dd');
 
     if (!grouped.has(dateKey)) {
@@ -137,8 +139,10 @@ const groupMessagesByDate = (messages: Message[]): Map<string, Message[]> => {
     grouped.set(
       key,
       msgs.sort((a, b) => {
-        const aTime = toDate(a.createdAt, (a as unknown).clientCreatedAt).getTime();
-        const bTime = toDate(b.createdAt, (b as unknown).clientCreatedAt).getTime();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const aTime = toDate(a.createdAt, (a as any).clientCreatedAt).getTime();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bTime = toDate(b.createdAt, (b as any).clientCreatedAt).getTime();
         return aTime - bTime; // Ordre chronologique (ancien -> récent)
       })
     );
@@ -152,8 +156,10 @@ const shouldGroupMessages = (current: Message, previous: Message | undefined): b
   if (current.senderId !== previous.senderId) return false;
   if (current.type === 'system' || previous.type === 'system') return false;
 
-  const currentTime = toDate(current.createdAt, (current as unknown).clientCreatedAt);
-  const previousTime = toDate(previous.createdAt, (previous as unknown).clientCreatedAt);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const currentTime = toDate(current.createdAt, (current as any).clientCreatedAt);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const previousTime = toDate(previous.createdAt, (previous as any).clientCreatedAt);
 
   const diff = currentTime.getTime() - previousTime.getTime();
   return diff < 5 * 60 * 1000; // 5 minutes
@@ -345,7 +351,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                 )}
               >
                 <span>
-                  {formatMessageTime(message.createdAt, (message as unknown).clientCreatedAt)}
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                  {formatMessageTime(message.createdAt, (message as any).clientCreatedAt)}
                 </span>
                 {message.isEdited && <span>(modifié)</span>}
                 {isOwn && (
@@ -625,14 +632,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           {sortedDates.map(dateKey => {
             const dateMessages = groupedMessages.get(dateKey) || [];
             const firstMessage = dateMessages[0];
-            const date = toDate(firstMessage.createdAt, (firstMessage as unknown).clientCreatedAt);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const date = toDate(firstMessage.createdAt, (firstMessage as any).clientCreatedAt);
 
             return (
               <div key={dateKey}>
                 {/* Date separator */}
                 <div className="flex justify-center my-4">
                   <div className="bg-muted px-3 py-1 rounded-full text-xs font-medium text-muted-foreground">
-                    {formatDateSeparator(date, (firstMessage as unknown).clientCreatedAt)}
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {formatDateSeparator(date, (firstMessage as any).clientCreatedAt)}
                   </div>
                 </div>
 

@@ -3088,3 +3088,379 @@ export const processScheduledReports = functions
       return { success: false, error: error.message };
     }
   });
+
+// ============================================================================
+// GOOGLE CALENDAR INTEGRATION
+// ============================================================================
+
+/**
+ * Cloud Function pour gérer le callback OAuth Google Calendar
+ */
+export const googleCalendarCallback = functions
+  .region('europe-west1')
+  .https.onRequest(async (req, res) => {
+    return corsHandler(req, res, async () => {
+      try {
+        // Récupérer le code d'autorisation et le state
+        const { code, state } = req.query;
+
+        if (!code || typeof code !== 'string') {
+          res.status(400).json({ error: 'Code d\'autorisation manquant' });
+          return;
+        }
+
+        // Décoder le state pour récupérer userId et establishmentId
+        let userId: string;
+        let establishmentId: string;
+
+        if (state && typeof state === 'string') {
+          try {
+            const stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
+            userId = stateData.userId;
+            establishmentId = stateData.establishmentId;
+          } catch (error) {
+            console.error('Erreur décodage state:', error);
+            res.status(400).json({ error: 'State invalide' });
+            return;
+          }
+        } else {
+          res.status(400).json({ error: 'State manquant' });
+          return;
+        }
+
+        // Vérifier que l'utilisateur existe
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+          res.status(404).json({ error: 'Utilisateur non trouvé' });
+          return;
+        }
+
+        // Configuration OAuth Google
+        const config = functions.config();
+        const clientId = config.google?.client_id || process.env.GOOGLE_CLIENT_ID;
+        const clientSecret = config.google?.client_secret || process.env.GOOGLE_CLIENT_SECRET;
+        const redirectUri = config.google?.redirect_uri || process.env.GOOGLE_REDIRECT_URI;
+
+        if (!clientId || !clientSecret || !redirectUri) {
+          res.status(500).json({
+            error: 'Configuration Google OAuth manquante',
+          });
+          return;
+        }
+
+        // Échanger le code contre des tokens
+        // Note: En production, il faudrait utiliser la bibliothèque googleapis côté serveur
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            code,
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          }),
+        });
+
+        if (!tokenResponse.ok) {
+          const errorData = await tokenResponse.json();
+          console.error('Erreur échange token:', errorData);
+          res.status(500).json({ error: 'Échec de l\'échange de tokens' });
+          return;
+        }
+
+        const tokens = await tokenResponse.json();
+
+        // Stocker les tokens dans Firestore
+        await db.collection('users').doc(userId).update({
+          googleCalendarTokens: {
+            access_token: tokens.access_token,
+            refresh_token: tokens.refresh_token,
+            scope: tokens.scope,
+            token_type: tokens.token_type,
+            expiry_date: Date.now() + tokens.expires_in * 1000,
+          },
+          googleCalendarSyncEnabled: true,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        console.log(`Google Calendar connecté pour user ${userId}`);
+
+        // Rediriger vers l'application avec succès
+        const appUrl = config.app?.url || process.env.APP_URL || 'http://localhost:5173';
+        res.redirect(
+          `${appUrl}/app/settings/integrations?google_calendar=success&tab=google-calendar`
+        );
+      } catch (error) {
+        console.error('Erreur googleCalendarCallback:', error);
+        res.status(500).json({
+          error: 'Erreur serveur',
+          message: error instanceof Error ? error.message : 'Erreur inconnue',
+        });
+      }
+    });
+  });
+
+/**
+ * Cloud Function pour déconnecter Google Calendar
+ */
+export const disconnectGoogleCalendar = functions
+  .region('europe-west1')
+  .https.onCall(async (data, context) => {
+    // Vérifier l'authentification
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Non authentifié');
+    }
+
+    const userId = context.auth.uid;
+
+    try {
+      // Supprimer les tokens Google Calendar
+      await db.collection('users').doc(userId).update({
+        googleCalendarTokens: admin.firestore.FieldValue.delete(),
+        googleCalendarSyncEnabled: false,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      console.log(`Google Calendar déconnecté pour user ${userId}`);
+
+      return {
+        success: true,
+        message: 'Google Calendar déconnecté avec succès',
+      };
+    } catch (error) {
+      console.error('Erreur disconnectGoogleCalendar:', error);
+      throw new functions.https.HttpsError(
+        'internal',
+        error instanceof Error ? error.message : 'Erreur lors de la déconnexion'
+      );
+    }
+  });
+
+/**
+ * Cloud Function pour synchroniser une intervention avec Google Calendar
+ */
+export const syncInterventionToGoogleCalendar = functions
+  .region('europe-west1')
+  .https.onCall(async (data, context) => {
+    // Vérifier l'authentification
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Non authentifié');
+    }
+
+    const { interventionId, establishmentId } = data;
+
+    if (!interventionId || !establishmentId) {
+      throw new functions.https.HttpsError('invalid-argument', 'Paramètres manquants');
+    }
+
+    const userId = context.auth.uid;
+
+    try {
+      // Récupérer l'utilisateur
+      const userDoc = await db.collection('users').doc(userId).get();
+      const userData = userDoc.data();
+
+      if (!userData?.googleCalendarTokens || !userData?.googleCalendarSyncEnabled) {
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'Google Calendar non configuré'
+        );
+      }
+
+      // Récupérer l'intervention
+      const interventionDoc = await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('interventions')
+        .doc(interventionId)
+        .get();
+
+      if (!interventionDoc.exists) {
+        throw new functions.https.HttpsError('not-found', 'Intervention non trouvée');
+      }
+
+      const intervention = interventionDoc.data();
+
+      // Vérifier si le token a expiré
+      const tokens = userData.googleCalendarTokens;
+      const now = Date.now();
+      const expiryWithMargin = (tokens.expiry_date || 0) - 5 * 60 * 1000;
+
+      let accessToken = tokens.access_token;
+
+      // Rafraîchir le token si nécessaire
+      if (now >= expiryWithMargin && tokens.refresh_token) {
+        const config = functions.config();
+        const clientId = config.google?.client_id || process.env.GOOGLE_CLIENT_ID;
+        const clientSecret = config.google?.client_secret || process.env.GOOGLE_CLIENT_SECRET;
+
+        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            refresh_token: tokens.refresh_token,
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: 'refresh_token',
+          }),
+        });
+
+        const newTokens = await refreshResponse.json();
+        accessToken = newTokens.access_token;
+
+        // Mettre à jour les tokens
+        await db.collection('users').doc(userId).update({
+          'googleCalendarTokens.access_token': accessToken,
+          'googleCalendarTokens.expiry_date': Date.now() + newTokens.expires_in * 1000,
+        });
+      }
+
+      // Créer l'événement Google Calendar
+      const startTime = intervention.scheduledAt?.toDate() || intervention.createdAt.toDate();
+      const durationMinutes = intervention.estimatedDuration || 60;
+      const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+
+      const event = {
+        summary: `[${intervention.priority.toUpperCase()}] ${intervention.title}`,
+        description: buildInterventionDescription(intervention, interventionId, establishmentId),
+        location: buildInterventionLocation(intervention),
+        start: {
+          dateTime: startTime.toISOString(),
+          timeZone: 'Europe/Paris',
+        },
+        end: {
+          dateTime: endTime.toISOString(),
+          timeZone: 'Europe/Paris',
+        },
+        reminders: {
+          useDefault: false,
+          overrides: [
+            { method: 'email', minutes: 24 * 60 },
+            { method: 'popup', minutes: 30 },
+          ],
+        },
+      };
+
+      // Appeler l'API Google Calendar
+      const calendarResponse = await fetch(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(event),
+        }
+      );
+
+      if (!calendarResponse.ok) {
+        const errorData = await calendarResponse.json();
+        console.error('Erreur création événement:', errorData);
+        throw new functions.https.HttpsError('internal', 'Échec de création de l\'événement');
+      }
+
+      const calendarEvent = await calendarResponse.json();
+
+      // Mettre à jour l'intervention avec l'ID de l'événement Google
+      await db
+        .collection('establishments')
+        .doc(establishmentId)
+        .collection('interventions')
+        .doc(interventionId)
+        .update({
+          googleCalendarEventId: calendarEvent.id,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+      console.log(
+        `Intervention ${interventionId} synchronisée avec Google Calendar (event: ${calendarEvent.id})`
+      );
+
+      return {
+        success: true,
+        eventId: calendarEvent.id,
+        message: 'Intervention synchronisée avec Google Calendar',
+      };
+    } catch (error) {
+      console.error('Erreur syncInterventionToGoogleCalendar:', error);
+      throw new functions.https.HttpsError(
+        'internal',
+        error instanceof Error ? error.message : 'Erreur lors de la synchronisation'
+      );
+    }
+  });
+
+/**
+ * Fonction helper pour construire la description de l'événement
+ */
+function buildInterventionDescription(intervention: any, interventionId: string, establishmentId: string): string {
+  const lines: string[] = [
+    `📋 ${intervention.description}`,
+    '',
+    `🏷️ Type: ${intervention.type}`,
+    `📂 Catégorie: ${intervention.category}`,
+    `⚡ Priorité: ${intervention.priority}`,
+    `📊 Statut: ${intervention.status}`,
+  ];
+
+  if (intervention.roomNumber) {
+    lines.push(`🚪 Chambre: ${intervention.roomNumber}`);
+  }
+
+  if (intervention.assignedToNames?.length) {
+    lines.push(`👤 Assigné à: ${intervention.assignedToNames.join(', ')}`);
+  }
+
+  if (intervention.estimatedDuration) {
+    lines.push(`⏱️ Durée estimée: ${intervention.estimatedDuration} minutes`);
+  }
+
+  if (intervention.internalNotes) {
+    lines.push('', `📝 Notes: ${intervention.internalNotes}`);
+  }
+
+  // Ajouter un lien vers l'intervention
+  const config = functions.config();
+  const appUrl = config.app?.url || process.env.APP_URL || 'http://localhost:5173';
+  lines.push('', `🔗 Voir l'intervention: ${appUrl}/app/interventions/${interventionId}`);
+
+  return lines.join('\n');
+}
+
+/**
+ * Fonction helper pour construire la localisation de l'événement
+ */
+function buildInterventionLocation(intervention: any): string {
+  const parts: string[] = [];
+
+  if (intervention.building) {
+    parts.push(intervention.building);
+  }
+
+  if (intervention.floor !== undefined) {
+    parts.push(`Étage ${intervention.floor}`);
+  }
+
+  if (intervention.roomNumber) {
+    parts.push(`Chambre ${intervention.roomNumber}`);
+  }
+
+  if (intervention.location) {
+    parts.push(intervention.location);
+  }
+
+  return parts.join(', ') || 'Non spécifié';
+}
+
+// ============================================================================
+// SMS NOTIFICATIONS (TWILIO)
+// ============================================================================
+
+// Exporter la fonction SMS depuis le module séparé
+export { sendSMS } from './sms';

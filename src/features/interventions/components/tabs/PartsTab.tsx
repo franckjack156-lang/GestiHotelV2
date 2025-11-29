@@ -36,6 +36,7 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';

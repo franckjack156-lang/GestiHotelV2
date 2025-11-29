@@ -35,7 +35,9 @@ import type {
 /**
  * Utilitaire pour nettoyer les champs undefined
  */
-const removeUndefinedFields = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const removeUndefinedFields = (obj: any): any => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cleaned: any = {};
   Object.keys(obj).forEach(key => {
     const value = obj[key];

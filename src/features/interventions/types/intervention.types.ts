@@ -95,6 +95,9 @@ export interface Intervention extends TimestampedDocument {
   recurrenceGroupId?: string;
   parentInterventionId?: string;
   occurrenceIndex?: number;
+
+  // Google Calendar Integration
+  googleCalendarEventId?: string; // ID de l'événement dans Google Calendar
 }
 
 /**

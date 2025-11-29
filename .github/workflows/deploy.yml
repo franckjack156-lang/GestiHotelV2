@@ -1,0 +1,201 @@
+name: Deploy to Firebase
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  # Job pour valider que tous les checks CI sont passes
+  validate:
+    name: Validate CI Status
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for CI checks
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'All checks passed'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
+  # Job principal de deploiement
+  deploy:
+    name: Deploy to Firebase Hosting
+    runs-on: ubuntu-latest
+    needs: validate
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: ${{ steps.get-url.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Get environment URL
+        id: get-url
+        run: |
+          if [ "${{ github.event.inputs.environment || 'production' }}" == "production" ]; then
+            echo "url=https://app.gestihotel.fr" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://staging.gestihotel.app" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm run test -- --run --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+
+      - name: Build for production
+        run: npm run build
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.PROD_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.PROD_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.PROD_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.PROD_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.PROD_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.PROD_FIREBASE_APP_ID }}
+          VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.PROD_FIREBASE_MEASUREMENT_ID }}
+          VITE_APP_ENV: production
+
+      - name: Create deployment backup tag
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          git tag "backup/deploy-$TIMESTAMP"
+          git push origin "backup/deploy-$TIMESTAMP"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        id: firebase-deploy
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
+          projectId: ${{ secrets.PROD_FIREBASE_PROJECT_ID }}
+          channelId: live
+
+      - name: Get deployment info
+        id: deployment-info
+        run: |
+          echo "version=${{ github.run_number }}" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "timestamp=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.deployment-info.outputs.version }}
+          name: Release v${{ steps.deployment-info.outputs.version }}
+          body: |
+            ## Production Deployment
+
+            ### Deployment Information
+            - **Version**: v${{ steps.deployment-info.outputs.version }}
+            - **Date**: ${{ steps.deployment-info.outputs.timestamp }}
+            - **Commit**: ${{ steps.deployment-info.outputs.short_sha }}
+            - **Author**: ${{ github.actor }}
+            - **URL**: ${{ steps.get-url.outputs.url }}
+
+            ### Recent Changes
+            ${{ github.event.head_commit.message }}
+
+            ### Links
+            - [View Deployment](${{ steps.get-url.outputs.url }})
+            - [Firebase Console](https://console.firebase.google.com/project/${{ secrets.PROD_FIREBASE_PROJECT_ID }}/overview)
+            - [Commit Details](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+
+            ---
+            Deployed automatically via GitHub Actions
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Notifications de succes
+      - name: Deployment success notification
+        if: success()
+        run: |
+          echo "=========================================="
+          echo "Deployment Successful!"
+          echo "=========================================="
+          echo ""
+          echo "Version: v${{ steps.deployment-info.outputs.version }}"
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}"
+          echo "URL: ${{ steps.get-url.outputs.url }}"
+          echo "Commit: ${{ steps.deployment-info.outputs.short_sha }}"
+          echo "Time: ${{ steps.deployment-info.outputs.timestamp }}"
+          echo ""
+          echo "=========================================="
+
+      # Notifications d'echec
+      - name: Deployment failure notification
+        if: failure()
+        run: |
+          echo "=========================================="
+          echo "Deployment Failed!"
+          echo "=========================================="
+          echo ""
+          echo "Environment: ${{ github.event.inputs.environment || 'production' }}"
+          echo "Commit: ${{ steps.deployment-info.outputs.short_sha }}"
+          echo "Time: ${{ steps.deployment-info.outputs.timestamp }}"
+          echo ""
+          echo "Please check the logs above for details."
+          echo "You may need to rollback the deployment."
+          echo ""
+          echo "=========================================="
+
+  # Job de notification Slack (optionnel)
+  notify-slack:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always()
+    steps:
+      - name: Slack Notification
+        uses: 8398a7/action-slack@v3
+        if: env.SLACK_WEBHOOK_URL != ''
+        with:
+          status: ${{ needs.deploy.result }}
+          text: |
+            Deployment to ${{ github.event.inputs.environment || 'production' }}
+            Result: ${{ needs.deploy.result }}
+            Version: v${{ github.run_number }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

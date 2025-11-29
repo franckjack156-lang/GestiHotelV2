@@ -467,7 +467,8 @@ const UserFormComponent: React.FC<UserFormProps> = ({
               <Label htmlFor="experienceLevel">Niveau d'expérience</Label>
               <Select
                 value={watch('experienceLevel') || ''}
-                onValueChange={value => setValue('experienceLevel', value as unknown)}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onValueChange={value => setValue('experienceLevel', value as any)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un niveau" />

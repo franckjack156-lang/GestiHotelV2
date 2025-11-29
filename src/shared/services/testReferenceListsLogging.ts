@@ -44,7 +44,8 @@ export const testLogging = async (establishmentId: string) => {
  * Exposer les fonctions dans window pour faciliter l'accès depuis la console
  */
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
-  (window as unknown).debugReferenceLists = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).debugReferenceLists = {
     logSummary: referenceListsService.logListsSummary,
     logCompact: referenceListsService.logListsCompact,
     test: testLogging,

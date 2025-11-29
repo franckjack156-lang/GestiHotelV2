@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/votre-username/gestihotel-v2/blob/main/README.md
+    about: Consultez la documentation du projet
+  - name: Discussions
+    url: https://github.com/votre-username/gestihotel-v2/discussions
+    about: Posez des questions et discutez avec la communaute
+  - name: Guide de contribution
+    url: https://github.com/votre-username/gestihotel-v2/blob/main/CONTRIBUTING.md
+    about: Apprenez comment contribuer au projet

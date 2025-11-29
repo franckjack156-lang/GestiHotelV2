@@ -54,7 +54,9 @@ const PRESENCE_COLLECTION = 'presence';
 /**
  * Nettoyer les champs undefined d'un objet (Firestore n'accepte pas undefined)
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cleanUndefined = (obj: any): any => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cleaned: any = {};
   Object.keys(obj).forEach(key => {
     if (obj[key] !== undefined) {
@@ -450,10 +452,12 @@ export const getMessages = async (
   if (deletionTimestamp) {
     messages = messages.filter(msg => {
       const createdAt = msg.createdAt;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const msgTimestamp =
         msg.clientCreatedAt ||
-        (createdAt && typeof (createdAt as unknown).toDate === 'function'
-          ? (createdAt as unknown).toDate().getTime()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (createdAt && typeof (createdAt as any).toDate === 'function'
+          ? (createdAt as any).toDate().getTime()
           : createdAt instanceof Date
             ? createdAt.getTime()
             : 0);
@@ -535,10 +539,12 @@ export const subscribeToMessages = (
     if (deletionTimestamp) {
       messages = messages.filter(msg => {
         const createdAt = msg.createdAt;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const msgTimestamp =
           msg.clientCreatedAt ||
-          (createdAt && typeof (createdAt as unknown).toDate === 'function'
-            ? (createdAt as unknown).toDate().getTime()
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (createdAt && typeof (createdAt as any).toDate === 'function'
+            ? (createdAt as any).toDate().getTime()
             : createdAt instanceof Date
               ? createdAt.getTime()
               : 0);

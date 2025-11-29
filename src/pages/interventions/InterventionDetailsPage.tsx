@@ -54,6 +54,7 @@ import { BlockRoomDialog, RoomStatusBadge } from '@/features/rooms/components';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { generateInterventionDetailPDF, downloadPDF } from '@/shared/services/pdfService';
 // TODO: cn imported but unused
 // import { cn } from '@/shared/lib/utils';
 
@@ -158,8 +159,23 @@ export const InterventionDetailsPage = () => {
     }
   };
 
-  const handleExportPDF = () => {
-    toast.info('Export PDF en cours de développement');
+  const handleExportPDF = async () => {
+    try {
+      const toastId = toast.loading('Génération du PDF en cours...');
+
+      const blob = await generateInterventionDetailPDF(intervention, {
+        title: `Intervention - ${intervention.title}`,
+        subtitle: intervention.reference || `#${intervention.id.slice(0, 8)}`,
+      });
+
+      const filename = `intervention_${intervention.reference || intervention.id.slice(0, 8)}_${format(new Date(), 'yyyy-MM-dd_HHmm')}.pdf`;
+      downloadPDF(blob, filename);
+
+      toast.success('PDF généré avec succès', { id: toastId });
+    } catch (error) {
+      toast.error('Erreur lors de la génération du PDF');
+      console.error('Export PDF error:', error);
+    }
   };
 
   const handleShare = () => {

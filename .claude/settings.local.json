@@ -104,7 +104,16 @@
       "Bash(xargs cat:*)",
       "Bash(xargs:*)",
       "Bash(npm run:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(perl -pi -e:*)",
+      "Bash(perl -pi -e 's/const updateData: any = \\{/const updateData: Record<string, unknown> = {/g':*)",
+      "Bash(perl -pi -e 's/const cleaned: any = \\{\\}/const cleaned: Record<string, unknown> = {}/g':*)",
+      "Bash(npm pkg set:*)",
+      "Bash(git checkout:*)",
+      "Bash(node fix-ts-errors.js:*)",
+      "Bash(node:*)",
+      "Bash(timeout 120 npx tsc:*)",
+      "Bash(git stash pop:*)"
     ],
     "deny": [],
     "ask": []

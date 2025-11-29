@@ -1,0 +1,158 @@
+name: Feature Request
+description: Proposer une nouvelle fonctionnalite ou amelioration
+title: "[FEATURE] "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de prendre le temps de suggerer une amelioration!
+        Veuillez remplir le formulaire ci-dessous pour nous aider a comprendre votre besoin.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description de la fonctionnalite
+      description: Une description claire et concise de la fonctionnalite souhaitee
+      placeholder: "Ex: Ajouter la possibilite d'exporter les reservations en format Excel"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Probleme a resoudre
+      description: Quel probleme cette fonctionnalite resout-elle? Est-ce lie a une frustration?
+      placeholder: |
+        Ex: Je suis frustre quand je dois exporter manuellement les donnees car...
+        C'est toujours frustrant quand...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solution proposee
+      description: Decrivez la solution que vous envisagez
+      placeholder: |
+        Ex: Ajouter un bouton "Exporter en Excel" sur la page des reservations qui...
+        Implementer une fonctionnalite qui permettrait de...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considerees
+      description: Decrivez les solutions alternatives que vous avez envisagees
+      placeholder: |
+        Ex: J'ai egalement pense a exporter en CSV, mais Excel serait plus pratique car...
+        Une autre approche pourrait etre...
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: Type d'utilisateur
+      description: Qui beneficierait de cette fonctionnalite?
+      options:
+        - Gestionnaire d'hotel
+        - Receptionniste
+        - Administrateur
+        - Tous les utilisateurs
+        - Autre (preciser ci-dessous)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priorite souhaitee
+      description: Quelle importance cette fonctionnalite a-t-elle pour vous?
+      options:
+        - Critique (bloquant pour mon utilisation)
+        - Haute (tres important)
+        - Moyenne (serait bien d'avoir)
+        - Basse (nice to have)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Categorie
+      description: Dans quelle categorie cette fonctionnalite s'inscrit-elle?
+      options:
+        - Reservations
+        - Chambres
+        - Clients
+        - Facturation
+        - Rapports/Analytics
+        - Parametres
+        - Authentification/Securite
+        - Interface utilisateur
+        - Performance
+        - Integration/API
+        - Mobile
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Cas d'utilisation
+      description: Decrivez les scenarios d'utilisation de cette fonctionnalite
+      placeholder: |
+        Scenario 1: L'utilisateur veut...
+        Scenario 2: Quand un client demande...
+        Scenario 3: Pour generer un rapport mensuel...
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Maquettes ou schemas
+      description: Si vous avez des maquettes, captures d'ecran ou schemas, ajoutez-les ici
+      placeholder: Glissez-deposez vos images ici ou collez-les
+
+  - type: textarea
+    id: technical-details
+    attributes:
+      label: Details techniques (optionnel)
+      description: Si vous avez des suggestions techniques sur l'implementation
+      placeholder: |
+        Ex: Cette fonctionnalite pourrait utiliser la librairie...
+        Cela necessitera probablement...
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Contribution
+      description: Seriez-vous interesse par contribuer a l'implementation?
+      options:
+        - label: Je serais interesse par implementer cette fonctionnalite moi-meme
+        - label: Je peux aider a tester cette fonctionnalite
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Informations supplementaires
+      description: Tout autre contexte, capture d'ecran, ou exemple
+      placeholder: |
+        - Des exemples d'autres applications qui ont cette fonctionnalite
+        - Des statistiques ou donnees supportant le besoin
+        - Etc.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Verification
+      description: Veuillez confirmer les elements suivants
+      options:
+        - label: J'ai verifie qu'il n'y a pas de demande similaire deja existante
+          required: true
+        - label: Cette fonctionnalite s'aligne avec les objectifs du projet
+          required: true
+        - label: J'ai fourni suffisamment de details pour comprendre le besoin
+          required: true

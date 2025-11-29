@@ -663,7 +663,8 @@ export const importFromFile = async (
           row: i + 2,
           field: 'parse',
           value: row,
-          error: error instanceof Error ? error.message : 'Erreur inconnue',
+          error: error instanceof Error ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (error as any).message : 'Erreur inconnue',
         });
         itemsSkipped++;
       }
@@ -1040,7 +1041,8 @@ export const validateItem = (item: Partial<ReferenceItem>, listKey?: ListKey): V
   }
 
   // Icône
-  if (item.icon && !(LucideIcons as unknown)[item.icon]) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (item.icon && !(LucideIcons as any)[item.icon]) {
     warnings.push(`L'icône "${item.icon}" n'existe pas dans Lucide`);
   }
 

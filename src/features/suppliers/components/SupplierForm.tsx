@@ -63,7 +63,8 @@ export const SupplierForm = ({ supplier, onSubmit, onCancel, isSubmitting }: Sup
     control,
     formState: { errors },
   } = useForm<FormData>({
-    resolver: zodResolver(supplierSchema) as unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(supplierSchema) as any,
     defaultValues: supplier
       ? {
           name: supplier.name,
@@ -125,11 +126,12 @@ export const SupplierForm = ({ supplier, onSubmit, onCancel, isSubmitting }: Sup
         : [],
     };
 
-    onSubmit(formattedData);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSubmit(formattedData as any);
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit as unknown)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6">
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">Général</TabsTrigger>

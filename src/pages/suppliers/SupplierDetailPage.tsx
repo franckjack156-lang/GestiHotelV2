@@ -433,7 +433,8 @@ export const SupplierDetailPage = () => {
 
           <SupplierForm
             supplier={supplier}
-            onSubmit={handleEdit}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onSubmit={handleEdit as any}
             onCancel={() => setIsEditDialogOpen(false)}
             isSubmitting={isSubmitting}
           />

@@ -96,6 +96,18 @@ export interface User {
 
   /** Tokens FCM pour notifications push */
   fcmTokens?: string[];
+
+  /** Intégration Google Calendar */
+  googleCalendarTokens?: {
+    access_token: string;
+    refresh_token?: string;
+    scope: string;
+    token_type: string;
+    expiry_date?: number;
+  };
+
+  /** Activation de la synchronisation Google Calendar */
+  googleCalendarSyncEnabled?: boolean;
 }
 
 // ============================================================================

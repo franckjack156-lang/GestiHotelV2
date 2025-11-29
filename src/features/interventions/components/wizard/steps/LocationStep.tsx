@@ -34,7 +34,8 @@ export const LocationStep = ({ data, onUpdate }: LocationStepProps) => {
   const { currentEstablishment } = useCurrentEstablishment();
   const { rooms } = useRooms(currentEstablishment?.id || '');
 
-  const handleChange = (field: keyof WizardData, value: string | number | boolean) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleChange = (field: keyof WizardData, value: any) => {
     onUpdate({ [field]: value });
   };
 

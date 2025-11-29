@@ -54,7 +54,8 @@ export const useUserPreferences = () => {
   };
 
   // Préférences actuelles (avec fallback sur les valeurs par défaut)
-  const userDisplayPrefs = (user as unknown)?.displayPreferences;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userDisplayPrefs = (user as any)?.displayPreferences;
 
   const displayPreferences: DisplayPreferences = {
     ...defaultDisplayPreferences,
@@ -64,15 +65,15 @@ export const useUserPreferences = () => {
   const notificationPreferences: NotificationPreferences = {
     email: {
       ...defaultNotificationPreferences.email,
-      ...(user as unknown)?.notificationPreferences?.email,
+      ...(user as any)?.notificationPreferences?.email,
     },
     push: {
       ...defaultNotificationPreferences.push,
-      ...(user as unknown)?.notificationPreferences?.push,
+      ...(user as any)?.notificationPreferences?.push,
     },
     inApp: {
       ...defaultNotificationPreferences.inApp,
-      ...(user as unknown)?.notificationPreferences?.inApp,
+      ...(user as any)?.notificationPreferences?.inApp,
     },
   };
 
@@ -99,7 +100,8 @@ export const useUserPreferences = () => {
         setUser({
           ...user,
           displayPreferences: newPreferences,
-        } as unknown);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
 
         toast.success('Préférences enregistrées');
       } catch (error: unknown) {
@@ -145,7 +147,8 @@ export const useUserPreferences = () => {
         setUser({
           ...user,
           notificationPreferences: newPreferences,
-        } as unknown);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
 
         toast.success('Préférences enregistrées');
       } catch (error: unknown) {
@@ -176,7 +179,8 @@ export const useUserPreferences = () => {
         ...user,
         displayPreferences: defaultDisplayPreferences,
         notificationPreferences: defaultNotificationPreferences,
-      } as unknown);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any);
 
       toast.success('Préférences réinitialisées');
     } catch (error: unknown) {

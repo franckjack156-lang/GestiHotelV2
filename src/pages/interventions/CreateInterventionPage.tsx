@@ -46,7 +46,6 @@ import { useInterventionActions } from '@/features/interventions/hooks/useInterv
 import { useLocalStorage } from '@/shared/hooks/utilityHooks';
 import { useFeature } from '@/features/establishments/hooks/useFeature';
 import { toast } from 'sonner';
-import type { CreateInterventionData } from '@/features/interventions/types/intervention.types';
 import {
   INTERVENTION_TYPE_LABELS,
   PRIORITY_LABELS,
@@ -123,7 +122,8 @@ export const CreateInterventionPage = () => {
 
   // Form - initialiser avec priorité normale par défaut (utiliser la valeur anglaise, pas le label)
   const form = useForm<FormData>({
-    resolver: zodResolver(interventionSchema) as unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(interventionSchema) as any,
     defaultValues: {
       priority: 'normal',
     },
@@ -291,7 +291,8 @@ export const CreateInterventionPage = () => {
       const { assignedTo, ...restData } = data;
 
       // Construire les données de l'intervention
-      const interventionData: CreateInterventionData = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const interventionData: any = {
         ...restData,
         type: data.type as InterventionType,
         category: data.category as InterventionCategory,
@@ -557,7 +558,8 @@ export const CreateInterventionPage = () => {
         {/* Form Steps */}
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit as unknown)}>
+            <form onSubmit={// eslint-disable-next-line @typescript-eslint/no-explicit-any
+              handleSubmit(onSubmit as any)}>
               {/* Step 1: Informations */}
               {currentStep === 1 && (
                 <div className="space-y-4">
@@ -888,7 +890,8 @@ export const CreateInterventionPage = () => {
         )}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit as unknown)} className="space-y-6">
+      <form onSubmit={// eslint-disable-next-line @typescript-eslint/no-explicit-any
+              handleSubmit(onSubmit as any)} className="space-y-6">
         {/* Titre principal - Hero Card */}
         <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">

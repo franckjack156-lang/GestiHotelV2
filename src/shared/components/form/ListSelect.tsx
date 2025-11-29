@@ -89,7 +89,8 @@ export const ListSelect = ({
    */
   const getIcon = (iconName?: string) => {
     if (!iconName) return null;
-    const Icon = (LucideIcons as unknown)[iconName];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Icon = (LucideIcons as any)[iconName];
     return Icon ? <Icon size={16} className="mr-2" /> : null;
   };
 
@@ -224,7 +225,7 @@ export const ListSelect = ({
           {listConfig?.name && <SelectLabel>{listConfig.name}</SelectLabel>}
           <SelectGroup>
             {options.map(option => (
-              <SelectItem key={option.value} value={option.value} className="cursor-pointer">
+              <SelectItem key={(option as any).value} value={(option as any).value} className="cursor-pointer">
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
                     {showIcons && getIcon(option.icon)}

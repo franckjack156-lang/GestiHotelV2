@@ -171,12 +171,13 @@ export const useInterventionWizard = () => {
    * Obtenir les données complètes pour la création
    */
   const getInterventionData = useCallback((): CreateInterventionData => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {
       title: wizardData.title!,
       description: wizardData.description!,
-      type: wizardData.type as unknown,
-      category: wizardData.category as unknown,
-      priority: wizardData.priority as unknown,
+      type: wizardData.type as any,
+      category: wizardData.category as any,
+      priority: wizardData.priority as any,
       location: wizardData.location!,
       roomNumber: wizardData.roomNumber,
       floor: wizardData.floor,

@@ -115,6 +115,7 @@ import {
 } from '@/shared/services/pdfReportService';
 
 import { getFunctions, httpsCallable } from 'firebase/functions';
+// import type { User } from '@/features/users/types/user.types'; // Unused
 
 // ============================================================================
 // TYPES
@@ -908,6 +909,313 @@ const CalendarIntegrationTab = ({ establishmentId, userId }: TabContentProps) =>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+// ============================================================================
+// GOOGLE CALENDAR TAB
+// ============================================================================
+
+const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
+  const { user: currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+
+  useEffect(() => {
+    loadGoogleCalendarStatus();
+  }, [currentUser]);
+
+  const loadGoogleCalendarStatus = () => {
+    try {
+      setLoading(true);
+      if (currentUser?.googleCalendarTokens && currentUser?.googleCalendarSyncEnabled) {
+        setIsConnected(true);
+        setAutoSyncEnabled(currentUser.googleCalendarSyncEnabled);
+      } else {
+        setIsConnected(false);
+        setAutoSyncEnabled(false);
+      }
+    } catch (error: unknown) {
+      console.error('Erreur chargement statut Google Calendar:', error);
+      toast.error('Erreur lors du chargement');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      setConnecting(true);
+
+      // Créer le state avec userId et establishmentId pour le callback
+      const state = Buffer.from(
+        JSON.stringify({
+          userId,
+          establishmentId,
+        })
+      ).toString('base64');
+
+      // Récupérer l'URL d'autorisation Google
+      const redirectUri = `${window.location.origin}/api/google-calendar-callback`;
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+      if (!clientId) {
+        toast.error('Configuration Google Calendar manquante');
+        return;
+      }
+
+      const scopes = ['https://www.googleapis.com/auth/calendar'];
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${new URLSearchParams({
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: scopes.join(' '),
+        access_type: 'offline',
+        prompt: 'consent',
+        state,
+      }).toString()}`;
+
+      // Rediriger vers Google OAuth
+      window.location.href = authUrl;
+    } catch (error: unknown) {
+      console.error('Erreur connexion Google Calendar:', error);
+      toast.error('Erreur lors de la connexion');
+      setConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir déconnecter Google Calendar ?')) {
+      return;
+    }
+
+    try {
+      setDisconnecting(true);
+
+      const functions = getFunctions(undefined, 'europe-west1');
+      const disconnectGoogleCalendar = httpsCallable(functions, 'disconnectGoogleCalendar');
+
+      await disconnectGoogleCalendar();
+
+      toast.success('Google Calendar déconnecté');
+      setIsConnected(false);
+      setAutoSyncEnabled(false);
+
+      // Recharger l'utilisateur
+      loadGoogleCalendarStatus();
+    } catch (error: unknown) {
+      console.error('Erreur déconnexion Google Calendar:', error);
+      toast.error('Erreur lors de la déconnexion');
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  const handleToggleAutoSync = async (enabled: boolean) => {
+    try {
+      // Note: Il faudrait créer une Cloud Function pour mettre à jour ce paramètre
+      // Pour l'instant, on met à jour localement
+      setAutoSyncEnabled(enabled);
+      toast.success(
+        enabled
+          ? 'Synchronisation automatique activée'
+          : 'Synchronisation automatique désactivée'
+      );
+    } catch (error: unknown) {
+      console.error('Erreur toggle auto sync:', error);
+      toast.error('Erreur lors de la mise à jour');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold">Google Calendar</h3>
+          <p className="text-sm text-muted-foreground">
+            Synchronisez vos interventions avec votre calendrier Google
+          </p>
+        </div>
+      </div>
+
+      {/* Info box */}
+      <Alert>
+        <Calendar className="h-4 w-4" />
+        <AlertDescription>
+          Connectez votre compte Google pour synchroniser automatiquement vos interventions avec
+          Google Calendar. Chaque intervention planifiée apparaîtra dans votre calendrier avec
+          tous les détails.
+        </AlertDescription>
+      </Alert>
+
+      {/* État de connexion */}
+      <Card>
+        <CardContent className="py-6">
+          <div className="space-y-6">
+            {/* Statut */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className={`p-3 rounded-lg ${
+                    isConnected
+                      ? 'bg-green-100 dark:bg-green-900/30'
+                      : 'bg-gray-100 dark:bg-gray-800'
+                  }`}
+                >
+                  <Calendar
+                    className={`h-6 w-6 ${isConnected ? 'text-green-600' : 'text-gray-400'}`}
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">Google Calendar</h4>
+                    <Badge variant={isConnected ? 'default' : 'secondary'}>
+                      {isConnected ? 'Connecté' : 'Non connecté'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {isConnected
+                      ? 'Votre compte Google est connecté'
+                      : 'Connectez votre compte Google pour commencer'}
+                  </p>
+                </div>
+              </div>
+              <div>
+                {isConnected ? (
+                  <Button
+                    variant="destructive"
+                    onClick={handleDisconnect}
+                    disabled={disconnecting}
+                  >
+                    {disconnecting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Déconnexion...
+                      </>
+                    ) : (
+                      'Déconnecter'
+                    )}
+                  </Button>
+                ) : (
+                  <Button onClick={handleConnect} disabled={connecting}>
+                    {connecting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Connexion...
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="mr-2 h-4 w-4" />
+                        Connecter Google Calendar
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Options de synchronisation (si connecté) */}
+            {isConnected && (
+              <>
+                <Separator />
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Options de synchronisation</h4>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Synchronisation automatique</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Synchroniser automatiquement les nouvelles interventions
+                      </p>
+                    </div>
+                    <Switch
+                      checked={autoSyncEnabled}
+                      onCheckedChange={handleToggleAutoSync}
+                    />
+                  </div>
+
+                  <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
+                    <Calendar className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800 dark:text-blue-200">
+                      Les interventions planifiées seront automatiquement ajoutées à votre Google
+                      Calendar. Vous recevrez des rappels selon vos paramètres Google Calendar.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Comment ça marche ?</h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>
+                      Chaque intervention planifiée est créée comme un événement dans votre
+                      calendrier Google
+                    </li>
+                    <li>
+                      L'événement inclut tous les détails : titre, description, localisation, durée
+                      estimée
+                    </li>
+                    <li>
+                      Les modifications d'une intervention mettent à jour l'événement
+                      correspondant
+                    </li>
+                    <li>La suppression d'une intervention supprime l'événement du calendrier</li>
+                    <li>
+                      Vous pouvez désactiver la synchronisation automatique et synchroniser
+                      manuellement
+                    </li>
+                  </ul>
+                </div>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Instructions si non connecté */}
+      {!isConnected && (
+        <Card className="border-dashed">
+          <CardContent className="py-8 text-center">
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="text-4xl">📅</div>
+              <h4 className="font-medium text-lg">Connectez Google Calendar</h4>
+              <p className="text-muted-foreground text-sm">
+                Connectez votre compte Google pour synchroniser automatiquement toutes vos
+                interventions planifiées avec Google Calendar. Vous pourrez voir vos
+                interventions sur tous vos appareils et recevoir des rappels.
+              </p>
+              <Button onClick={handleConnect} disabled={connecting} size="lg">
+                {connecting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Connexion en cours...
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Connecter mon compte Google
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
@@ -1820,7 +2128,7 @@ export const IntegrationsPage = () => {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="exports" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Exports</span>
@@ -1828,6 +2136,10 @@ export const IntegrationsPage = () => {
           <TabsTrigger value="calendar" className="gap-2">
             <Calendar className="h-4 w-4" />
             <span className="hidden sm:inline">Calendrier</span>
+          </TabsTrigger>
+          <TabsTrigger value="google-calendar" className="gap-2">
+            <Calendar className="h-4 w-4" />
+            <span className="hidden sm:inline">Google</span>
           </TabsTrigger>
           <TabsTrigger value="webhooks" className="gap-2">
             <Webhook className="h-4 w-4" />
@@ -1845,6 +2157,10 @@ export const IntegrationsPage = () => {
 
         <TabsContent value="calendar">
           <CalendarIntegrationTab establishmentId={currentEstablishment.id} userId={user!.id} />
+        </TabsContent>
+
+        <TabsContent value="google-calendar">
+          <GoogleCalendarTab establishmentId={currentEstablishment.id} userId={user!.id} />
         </TabsContent>
 
         <TabsContent value="webhooks">

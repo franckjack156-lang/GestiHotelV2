@@ -41,10 +41,11 @@ interface SimpleDashboardGridProps {
     completionRate: number;
     avgDuration: string;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chartData?: {
-    evolutionData: Record<string, unknown>[];
-    statusData: Record<string, unknown>[];
-    priorityData: Record<string, unknown>[];
+    evolutionData: any[];
+    statusData: any[];
+    priorityData: any[];
   };
   onNavigate?: (path: string) => void;
   onLayoutChange?: (widgets: WidgetConfig[]) => void;

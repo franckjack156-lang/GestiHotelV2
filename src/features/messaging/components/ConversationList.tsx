@@ -85,6 +85,7 @@ const getOnlineStatus = (conversation: Conversation, currentUserId: string): boo
   return otherParticipant?.isOnline || false;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatTimestamp = (date: Date | any): string => {
   const dateObj = date?.toDate ? date.toDate() : new Date(date);
 
@@ -104,6 +105,7 @@ const truncateText = (text: string, maxLength: number = 50): string => {
   return text.substring(0, maxLength) + '...';
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const toDate = (timestamp: any): Date => {
   if (timestamp?.toDate) {
     return timestamp.toDate();
@@ -315,7 +317,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         </div>
 
         {/* Filtres par type */}
-        <Tabs value={filter} onValueChange={v => setFilter(v as unknown)}>
+        <Tabs value={filter} onValueChange={v => setFilter(v as ConversationType | 'all')}>
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all" className="text-xs">
               Tous

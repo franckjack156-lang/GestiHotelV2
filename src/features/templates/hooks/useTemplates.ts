@@ -46,7 +46,7 @@ export const useTemplates = (establishmentId: string | null) => {
         setTemplates(data);
       } catch (err: unknown) {
         logger.error('Error loading templates:', err);
-        setError(err.message);
+        setError((err as Error).message);
         toast.error('Erreur de chargement', {
           description: 'Impossible de charger les modèles',
         });
@@ -93,7 +93,7 @@ export const useTemplates = (establishmentId: string | null) => {
         return id;
       } catch (err: unknown) {
         logger.error('Error creating template:', err);
-        toast.error('Erreur de création', { description: err.message });
+        toast.error('Erreur de création', { description: (err as Error).message });
         return null;
       }
     },
@@ -117,7 +117,7 @@ export const useTemplates = (establishmentId: string | null) => {
         return true;
       } catch (err: unknown) {
         logger.error('Error updating template:', err);
-        toast.error('Erreur de mise à jour', { description: err.message });
+        toast.error('Erreur de mise à jour', { description: (err as Error).message });
         return false;
       }
     },
@@ -141,7 +141,7 @@ export const useTemplates = (establishmentId: string | null) => {
         return true;
       } catch (err: unknown) {
         logger.error('Error deleting template:', err);
-        toast.error('Erreur de suppression', { description: err.message });
+        toast.error('Erreur de suppression', { description: (err as Error).message });
         return false;
       }
     },
@@ -165,7 +165,7 @@ export const useTemplates = (establishmentId: string | null) => {
         return id;
       } catch (err: unknown) {
         logger.error('Error duplicating template:', err);
-        toast.error('Erreur de duplication', { description: err.message });
+        toast.error('Erreur de duplication', { description: (err as Error).message });
         return null;
       }
     },
@@ -189,7 +189,7 @@ export const useTemplates = (establishmentId: string | null) => {
         return true;
       } catch (err: unknown) {
         logger.error('Error toggling template:', err);
-        toast.error('Erreur', { description: err.message });
+        toast.error('Erreur', { description: (err as Error).message });
         return false;
       }
     },

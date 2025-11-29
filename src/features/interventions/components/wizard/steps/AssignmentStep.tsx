@@ -30,7 +30,8 @@ const mockTechnicians = [
 ];
 
 export const AssignmentStep = ({ data, onUpdate }: AssignmentStepProps) => {
-  const handleChange = (field: keyof WizardData, value: string | number | boolean) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleChange = (field: keyof WizardData, value: any) => {
     onUpdate({ [field]: value });
   };
 

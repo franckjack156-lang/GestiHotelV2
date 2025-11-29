@@ -10,6 +10,7 @@ import { useAuthStore } from '../stores/authStore';
 import * as authService from '../services/authService';
 import { permissionService } from '@/core/services/permissionService';
 import type { Permission, UserRole } from '@/features/users/types/role.types';
+import type { User } from '@/features/users/types/user.types';
 import type { AuthCredentials, PasswordResetData } from '@/shared/types';
 
 export const useAuth = () => {
@@ -147,7 +148,7 @@ export const useAuth = () => {
   const canManageUser = (targetUser: { role: UserRole; establishmentIds: string[] }): boolean => {
     if (!user) return false;
 
-    return permissionService.canManageUser(user, targetUser as unknown);
+    return permissionService.canManageUser(user, targetUser as User);
   };
 
   const canAssignRole = (targetRole: UserRole): boolean => {

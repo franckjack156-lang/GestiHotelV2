@@ -184,10 +184,13 @@ const prepareUsersData = (users: User[]) => {
     Prénom: user.firstName || '',
     'Nom de famille': user.lastName || '',
     Rôle: user.role,
-    Statut: (user as unknown).status || 'active',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Statut: (user as any).status || 'active',
     Téléphone: user.phoneNumber || '',
-    Poste: (user as unknown).jobTitle || '',
-    Département: (user as unknown).department || '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Poste: (user as any).jobTitle || '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Département: (user as any).department || '',
     Actif: user.isActive ? 'Oui' : 'Non',
     'Email vérifié': user.emailVerified ? 'Oui' : 'Non',
     'Date création': user.createdAt

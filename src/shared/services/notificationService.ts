@@ -318,7 +318,8 @@ export const getPreferences = async (
   } catch (error: unknown) {
     // Permission errors are expected when preferences don't exist yet
     // Log as debug instead of error to avoid console noise
-    if (error?.code === 'permission-denied') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((error as any)?.code === 'permission-denied') {
       logger.debug('Préférences non accessibles (permissions ou document inexistant)');
     } else {
       logger.warn('⚠️ Erreur récupération préférences:', error);

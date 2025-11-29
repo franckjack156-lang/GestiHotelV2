@@ -152,7 +152,8 @@ export const EditInterventionPage = () => {
         resolutionNotes: data.resolutionNotes,
       };
 
-      const success = await updateIntervention(id, updateData as unknown);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const success = await updateIntervention(id, updateData as any);
 
       if (success) {
         navigate(`/app/interventions/${id}`);

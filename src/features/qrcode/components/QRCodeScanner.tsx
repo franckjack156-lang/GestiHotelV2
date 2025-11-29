@@ -97,9 +97,9 @@ export const QRCodeScanner = ({ onScan, trigger }: QRCodeScannerProps) => {
       logger.error('Camera access error:', err);
       setHasPermission(false);
 
-      if (err.name === 'NotAllowedError') {
+      if ((err as Error).name === 'NotAllowedError') {
         setError("Accès à la caméra refusé. Veuillez autoriser l'accès à la caméra.");
-      } else if (err.name === 'NotFoundError') {
+      } else if ((err as Error).name === 'NotFoundError') {
         setError('Aucune caméra détectée sur cet appareil.');
       } else {
         setError("Erreur lors de l'accès à la caméra.");

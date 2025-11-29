@@ -1,0 +1,102 @@
+version: 2
+updates:
+  # Enable version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "ovole"
+    assignees:
+      - "ovole"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(dev-deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Group updates for better PR management
+    groups:
+      # Group all React-related packages
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      # Group all testing packages
+      testing:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "playwright*"
+          - "@playwright/*"
+          - "msw*"
+      # Group Firebase packages
+      firebase:
+        patterns:
+          - "firebase*"
+      # Group Radix UI packages
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+      # Group ESLint and related packages
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+      # Group Vite and plugins
+      vite:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      # Group build tools
+      build-tools:
+        patterns:
+          - "typescript"
+          - "postcss"
+          - "autoprefixer"
+          - "tailwindcss*"
+    # Ignore specific packages or versions
+    ignore:
+      # Ignore major version updates for stable packages (review manually)
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    # Allow both direct and indirect dependency updates
+    versioning-strategy: auto
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "ovole"
+    assignees:
+      - "ovole"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "ci/cd"
+      - "dependencies"
+      - "automated"
+
+  # Enable version updates for Docker (if you add Docker later)
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #   open-pull-requests-limit: 3

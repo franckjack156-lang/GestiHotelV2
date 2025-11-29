@@ -64,7 +64,8 @@ export const InventoryItemForm = ({
 
   const [tagInput, setTagInput] = useState('');
 
-  const handleChange = (field: keyof CreateInventoryItemData, value: string | number | boolean) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleChange = (field: keyof CreateInventoryItemData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 

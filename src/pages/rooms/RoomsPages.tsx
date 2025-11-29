@@ -535,7 +535,8 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   const navigate = useNavigate();
 
   const form = useForm<RoomFormData>({
-    resolver: zodResolver(roomSchema) as unknown,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(roomSchema) as any,
     defaultValues: room || {
       type: 'double',
       capacity: 2,
@@ -550,7 +551,8 @@ const RoomFormComponent = ({ room, onSubmit, isLoading }: RoomFormProps) => {
   } = form;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as unknown)} className="space-y-6">
+    <form onSubmit={// eslint-disable-next-line @typescript-eslint/no-explicit-any
+                handleSubmit(onSubmit as any)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <Label htmlFor="number">Numéro de chambre *</Label>

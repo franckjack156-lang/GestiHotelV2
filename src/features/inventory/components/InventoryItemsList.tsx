@@ -41,7 +41,8 @@ export const InventoryItemsList = ({
   const [filters, setFilters] = useState<InventoryFilters>({});
   const [showFilters, setShowFilters] = useState(false);
 
-  const handleFilterChange = (key: keyof InventoryFilters, value: string | number | boolean) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleFilterChange = (key: keyof InventoryFilters, value: any) => {
     const newFilters = {
       ...filters,
       [key]: value || undefined,

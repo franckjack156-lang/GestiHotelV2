@@ -72,10 +72,11 @@ interface WidgetRendererProps {
     completionRate: number;
     avgDuration: string;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   chartData?: {
-    evolutionData: Array<Record<string, unknown>>;
-    statusData: Array<Record<string, unknown>>;
-    priorityData: Array<Record<string, unknown>>;
+    evolutionData: any[];
+    statusData: any[];
+    priorityData: any[];
   };
   onNavigate?: (path: string) => void;
 }

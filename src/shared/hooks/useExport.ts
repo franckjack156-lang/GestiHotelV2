@@ -47,7 +47,7 @@ export const useExport = () => {
       } catch (error: unknown) {
         logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
-          description: error.message,
+          description: (error as Error).message,
         });
       } finally {
         setExporting(false);
@@ -78,7 +78,7 @@ export const useExport = () => {
       } catch (error: unknown) {
         logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
-          description: error.message,
+          description: (error as Error).message,
         });
       } finally {
         setExporting(false);
@@ -99,7 +99,7 @@ export const useExport = () => {
       } catch (error: unknown) {
         logger.error('Export error:', error);
         toast.error("Erreur lors de l'export", {
-          description: error.message,
+          description: (error as Error).message,
         });
       } finally {
         setExporting(false);
