@@ -11,6 +11,7 @@ import * as authService from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
 import { UserRole } from '@/features/users/types/role.types';
 import type { AuthCredentials, PasswordResetData } from '@/shared/types';
+import { permissionService } from '@/core/services/permissionService';
 
 // =============================================================================
 // MOCKS
@@ -464,7 +465,6 @@ describe('useAuth', () => {
   describe('hasPermission', () => {
     it('devrait utiliser permissionService pour vérifier les permissions', () => {
       // Arrange
-      const { permissionService } = require('@/core/services/permissionService');
       vi.mocked(permissionService.hasPermission).mockReturnValue(true);
 
       (useAuthStore as any).mockImplementation((selector: any) => {
@@ -494,7 +494,6 @@ describe('useAuth', () => {
   describe('isAdmin', () => {
     it('devrait vérifier si l utilisateur est admin', () => {
       // Arrange
-      const { permissionService } = require('@/core/services/permissionService');
       vi.mocked(permissionService.isAdmin).mockReturnValue(true);
 
       (useAuthStore as any).mockImplementation((selector: any) => {
@@ -521,7 +520,6 @@ describe('useAuth', () => {
   describe('isSuperAdmin', () => {
     it('devrait vérifier si l utilisateur est super admin', () => {
       // Arrange
-      const { permissionService } = require('@/core/services/permissionService');
       vi.mocked(permissionService.isSuperAdmin).mockReturnValue(false);
 
       (useAuthStore as any).mockImplementation((selector: any) => {
@@ -548,7 +546,7 @@ describe('useAuth', () => {
   describe('canAccessEstablishment', () => {
     it('devrait vérifier l accès à un établissement', () => {
       // Arrange
-      const { permissionService } = require('@/core/services/permissionService');
+      // permissionService déjà importé en haut
       vi.mocked(permissionService.hasEstablishmentAccess).mockReturnValue(true);
 
       (useAuthStore as any).mockImplementation((selector: any) => {
@@ -597,7 +595,7 @@ describe('useAuth', () => {
         establishmentIds: ['est-123'],
       };
 
-      const { permissionService } = require('@/core/services/permissionService');
+      // permissionService déjà importé en haut
       vi.mocked(permissionService.canManageUser).mockReturnValue(true);
 
       (useAuthStore as any).mockImplementation((selector: any) => {
@@ -644,7 +642,7 @@ describe('useAuth', () => {
   describe('canAssignRole', () => {
     it('devrait vérifier si l utilisateur peut assigner un rôle', () => {
       // Arrange
-      const { permissionService } = require('@/core/services/permissionService');
+      // permissionService déjà importé en haut
       vi.mocked(permissionService.canAssignRole).mockReturnValue(true);
 
       (useAuthStore as any).mockImplementation((selector: any) => {

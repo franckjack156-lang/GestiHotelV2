@@ -7,6 +7,23 @@ import * as admin from 'firebase-admin';
 import { Resend } from 'resend';
 import cors from 'cors';
 import * as XLSX from 'xlsx';
+import * as crypto from 'crypto';
+
+// Helper function to extract error message
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+// Helper function to check if error has code property
+function hasErrorCode(error: unknown, code: string): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === code
+  );
+}
 
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -293,10 +310,10 @@ export const sendPartOrderEmail = functions
           success: true,
           messageId: result.data?.id,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erreur lors de l'envoi de l'email:", error);
         res.status(500).json({
-          error: `Impossible d'envoyer l'email: ${error.message}`,
+          error: `Impossible d'envoyer l'email: ${getErrorMessage(error)}`,
         });
       }
     });
@@ -403,10 +420,10 @@ export const sendUserInvitationEmail = functions
           success: true,
           messageId: result.data?.id,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Erreur lors de l'envoi de l'email d'invitation:", error);
         res.status(500).json({
-          error: `Impossible d'envoyer l'email: ${error.message}`,
+          error: `Impossible d'envoyer l'email: ${getErrorMessage(error)}`,
         });
       }
     });
@@ -475,9 +492,9 @@ export const deleteAuthUser = functions
       try {
         await admin.auth().deleteUser(userId);
         console.log(`Utilisateur ${userId} supprimé de Firebase Auth`);
-      } catch (authError: any) {
+      } catch (authError: unknown) {
         // Si l'utilisateur n'existe pas dans Auth, continuer quand même
-        if (authError.code !== 'auth/user-not-found') {
+        if (!hasErrorCode(authError, 'auth/user-not-found')) {
           throw authError;
         }
         console.log(
@@ -494,7 +511,7 @@ export const deleteAuthUser = functions
         message: 'Utilisateur supprimé avec succès',
         deletedUserId: userId,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erreur lors de la suppression de l'utilisateur:", error);
 
       // Si c'est déjà une HttpsError, la relancer
@@ -505,7 +522,7 @@ export const deleteAuthUser = functions
       // Sinon, créer une nouvelle HttpsError
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de la suppression: ${error.message}`
+        `Erreur lors de la suppression: ${getErrorMessage(error)}`
       );
     }
   });
@@ -584,7 +601,7 @@ export const purgeDeletedInterventions = functions
       console.log(`[Purge] Terminé. ${totalDeleted} interventions purgées définitivement.`);
 
       return { success: true, deletedCount: totalDeleted };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Purge] Erreur lors de la purge:', error);
       totalErrors++;
       return {
@@ -663,9 +680,9 @@ export const manualPurgeDeleted = functions
         deletedInterventions: deletedInterventionsCount,
         message: `${deletedInterventionsCount} éléments purgés définitivement`,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Purge manuelle] Erreur:', error);
-      throw new functions.https.HttpsError('internal', `Erreur lors de la purge: ${error.message}`);
+      throw new functions.https.HttpsError('internal', `Erreur lors de la purge: ${getErrorMessage(error)}`);
     }
   });
 
@@ -726,14 +743,14 @@ export const restoreDeletedIntervention = functions
         message: 'Intervention restaurée avec succès',
         interventionId,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof functions.https.HttpsError) {
         throw error;
       }
       console.error('[Restore] Erreur:', error);
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de la restauration: ${error.message}`
+        `Erreur lors de la restauration: ${getErrorMessage(error)}`
       );
     }
   });
@@ -755,6 +772,7 @@ export const getDeletedItems = functions
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let items: any[] = [];
 
       if (type === 'interventions' || type === 'all') {
@@ -795,11 +813,11 @@ export const getDeletedItems = functions
         items,
         count: items.length,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[GetDeleted] Erreur:', error);
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de la récupération: ${error.message}`
+        `Erreur lors de la récupération: ${getErrorMessage(error)}`
       );
     }
   });
@@ -917,7 +935,7 @@ export const sendPushNotification = functions
           success: true,
           messageId: response,
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("[Push] Erreur lors de l'envoi de la notification:", error);
 
         // Gérer les erreurs de token invalide/expiré
@@ -941,7 +959,7 @@ export const sendPushNotification = functions
         }
 
         res.status(500).json({
-          error: `Impossible d'envoyer la notification: ${error.message}`,
+          error: `Impossible d'envoyer la notification: ${getErrorMessage(error)}`,
         });
       }
     });
@@ -1061,11 +1079,11 @@ export const sendBulkPushNotifications = functions
         failed: response.failureCount,
         invalidTokensRemoved: invalidTokenUserIds.length,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Push Bulk] Erreur:', error);
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de l'envoi des notifications: ${error.message}`
+        `Erreur lors de l'envoi des notifications: ${getErrorMessage(error)}`
       );
     }
   });
@@ -1142,7 +1160,7 @@ export const onNotificationCreated = functions
       });
 
       return { success: true, messageId: response };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`[Push Trigger] Erreur pour notification ${snap.id}:`, error);
 
       // Gérer les tokens invalides
@@ -1349,7 +1367,7 @@ export const onSupportRequestCreated = functions
       console.log(`[Support] Email de confirmation envoyé à ${ticket.userEmail}`);
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Support] Erreur:', error);
       return { success: false, error: error.message };
     }
@@ -1455,7 +1473,7 @@ export const onSupportResponseAdded = functions
       });
 
       return { success: true };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Support] Erreur notification réponse:', error);
       return { success: false, error: error.message };
     }
@@ -1530,7 +1548,7 @@ export const processScheduledExports = functions
             // Exécuter l'export
             await executeScheduledExport(establishmentId, establishmentName, exportConfig);
             totalProcessed++;
-          } catch (error: any) {
+          } catch (error: unknown) {
             console.error(`[Scheduled Exports] Erreur pour ${exportConfig.name}:`, error);
             totalErrors++;
 
@@ -1547,7 +1565,7 @@ export const processScheduledExports = functions
         `[Scheduled Exports] Terminé. ${totalProcessed} traités, ${totalErrors} erreurs.`
       );
       return { success: true, processed: totalProcessed, errors: totalErrors };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Scheduled Exports] Erreur globale:', error);
       return { success: false, error: error.message };
     }
@@ -2068,7 +2086,7 @@ export const runExportNow = functions
         success: true,
         message: `Export "${exportConfig.name}" exécuté avec succès`,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Export Manual] Erreur:', error);
 
       if (error instanceof functions.https.HttpsError) {
@@ -2077,7 +2095,7 @@ export const runExportNow = functions
 
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de l'exécution de l'export: ${error.message}`
+        `Erreur lors de l'exécution de l'export: ${getErrorMessage(error)}`
       );
     }
   });
@@ -2206,7 +2224,7 @@ export const sendVerificationEmail = functions
         success: true,
         message: `Email de vérification envoyé à ${userRecord.email}`,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[VerifyEmail] Erreur:', error);
 
       if (error.code === 'auth/user-not-found') {
@@ -2215,7 +2233,7 @@ export const sendVerificationEmail = functions
 
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de l'envoi de l'email de vérification: ${error.message}`
+        `Erreur lors de l'envoi de l'email de vérification: ${getErrorMessage(error)}`
       );
     }
   });
@@ -2382,9 +2400,9 @@ export const getICalFeed = functions
           lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[iCal Feed] Erreur:', error);
-        res.status(500).send(`Erreur: ${error.message}`);
+        res.status(500).send(`Erreur: ${getErrorMessage(error)}`);
       }
     });
   });
@@ -2410,7 +2428,7 @@ export const generateCalendarFeedToken = functions
 
     try {
       // Générer un token unique
-      const token = require('crypto').randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString('hex');
 
       // Mettre à jour l'intégration avec le token
       await db
@@ -2432,7 +2450,7 @@ export const generateCalendarFeedToken = functions
         feedUrl,
         token,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Generate Feed Token] Erreur:', error);
       throw new functions.https.HttpsError('internal', error.message);
     }
@@ -2507,7 +2525,7 @@ async function sendWebhookNotification(
       success: response.ok,
       statusCode: response.status,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       error: error.message,
@@ -2572,7 +2590,7 @@ async function triggerWebhooksForEvent(
     });
 
     await Promise.all(promises);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Webhooks] Erreur:', error);
   }
 }
@@ -2722,7 +2740,8 @@ export const generatePdfReport = functions
       const establishmentName = establishmentDoc.data()?.name || 'Établissement';
 
       // Récupérer les données selon le type de rapport
-      let reportData: any = {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const reportData: Record<string, any> = {};
       const now = new Date();
       const startDate = dateRange?.start
         ? new Date(dateRange.start)
@@ -2861,7 +2880,7 @@ export const generatePdfReport = functions
         message: 'Rapport généré avec succès',
         stats: reportData.stats,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[PDF Report] Erreur:', error);
       throw new functions.https.HttpsError('internal', error.message);
     }
@@ -3083,7 +3102,7 @@ export const processScheduledReports = functions
 
       console.log(`[Scheduled Reports] ${totalGenerated} rapports traités`);
       return { success: true, generated: totalGenerated };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Scheduled Reports] Erreur globale:', error);
       return { success: false, error: error.message };
     }
@@ -3111,13 +3130,14 @@ export const googleCalendarCallback = functions
 
         // Décoder le state pour récupérer userId et establishmentId
         let userId: string;
-        let establishmentId: string;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        let _establishmentId: string;
 
         if (state && typeof state === 'string') {
           try {
             const stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
             userId = stateData.userId;
-            establishmentId = stateData.establishmentId;
+            _establishmentId = stateData.establishmentId;
           } catch (error) {
             console.error('Erreur décodage state:', error);
             res.status(400).json({ error: 'State invalide' });
@@ -3399,7 +3419,8 @@ export const syncInterventionToGoogleCalendar = functions
 /**
  * Fonction helper pour construire la description de l'événement
  */
-function buildInterventionDescription(intervention: any, interventionId: string, establishmentId: string): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildInterventionDescription(intervention: any, interventionId: string, _establishmentId: string): string {
   const lines: string[] = [
     `📋 ${intervention.description}`,
     '',
@@ -3436,6 +3457,7 @@ function buildInterventionDescription(intervention: any, interventionId: string,
 /**
  * Fonction helper pour construire la localisation de l'événement
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildInterventionLocation(intervention: any): string {
   const parts: string[] = [];
 

@@ -5,6 +5,30 @@
  */
 
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+// Mock Firebase modules
+vi.mock('@/core/config/firebase', () => ({
+  db: {},
+  auth: {
+    currentUser: null,
+    onAuthStateChanged: vi.fn(),
+  },
+  storage: {},
+  messaging: null,
+}));
+
+// Mock permissionService
+vi.mock('@/core/services/permissionService', () => ({
+  permissionService: {
+    hasPermission: vi.fn(() => false),
+    isAdmin: vi.fn(() => false),
+    isSuperAdmin: vi.fn(() => false),
+    canAccessEstablishment: vi.fn(() => true),
+    canManageUser: vi.fn(() => false),
+    canAssignRole: vi.fn(() => false),
+  },
+}));
 
 // Mock window.matchMedia (utilisé par shadcn/ui)
 Object.defineProperty(window, 'matchMedia', {

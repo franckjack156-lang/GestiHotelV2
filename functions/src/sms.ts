@@ -4,6 +4,13 @@
 
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import twilio from 'twilio';
+
+// Helper function to extract error message
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
 
 /**
  * Interface pour les données de notification SMS
@@ -53,7 +60,6 @@ export const sendSMS = functions
       }
 
       // Initialiser le client Twilio
-      const twilio = require('twilio');
       const client = twilio(accountSid, authToken);
 
       // Envoyer le SMS
@@ -84,11 +90,11 @@ export const sendSMS = functions
         sid: smsResult.sid,
         status: smsResult.status,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[SMS] Erreur lors de l\'envoi:', error);
       throw new functions.https.HttpsError(
         'internal',
-        `Erreur lors de l'envoi du SMS: ${error.message}`
+        `Erreur lors de l'envoi du SMS: ${getErrorMessage(error)}`
       );
     }
   });

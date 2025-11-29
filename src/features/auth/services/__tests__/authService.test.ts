@@ -21,6 +21,7 @@ import {
 } from '../authService';
 import * as firebaseAuth from 'firebase/auth';
 import type { AuthCredentials, PasswordResetData, ChangePasswordData } from '@/shared/types';
+import { auth } from '@/core/config/firebase';
 
 // =============================================================================
 // MOCKS
@@ -557,8 +558,9 @@ describe('authService', () => {
         email: 'test@example.com',
       };
 
-      const { auth } = require('@/core/config/firebase');
-      auth.currentUser = mockUser;
+      // auth déjà importé en haut
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).currentUser = mockUser;
 
       // Act
       const result = getCurrentUser();
@@ -569,8 +571,9 @@ describe('authService', () => {
 
     it('devrait retourner null si aucun utilisateur connecté', () => {
       // Arrange
-      const { auth } = require('@/core/config/firebase');
-      auth.currentUser = null;
+      // auth déjà importé en haut
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).currentUser = null;
 
       // Act
       const result = getCurrentUser();
@@ -587,8 +590,9 @@ describe('authService', () => {
   describe('isAuthenticated', () => {
     it('devrait retourner true si utilisateur connecté', () => {
       // Arrange
-      const { auth } = require('@/core/config/firebase');
-      auth.currentUser = { uid: 'user123' };
+      // auth déjà importé en haut
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).currentUser = { uid: 'user123' };
 
       // Act
       const result = isAuthenticated();
@@ -599,8 +603,9 @@ describe('authService', () => {
 
     it('devrait retourner false si aucun utilisateur connecté', () => {
       // Arrange
-      const { auth } = require('@/core/config/firebase');
-      auth.currentUser = null;
+      // auth déjà importé en haut
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (auth as any).currentUser = null;
 
       // Act
       const result = isAuthenticated();
