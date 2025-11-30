@@ -682,7 +682,10 @@ export const manualPurgeDeleted = functions
       };
     } catch (error: unknown) {
       console.error('[Purge manuelle] Erreur:', error);
-      throw new functions.https.HttpsError('internal', `Erreur lors de la purge: ${getErrorMessage(error)}`);
+      throw new functions.https.HttpsError(
+        'internal',
+        `Erreur lors de la purge: ${getErrorMessage(error)}`
+      );
     }
   });
 
@@ -1271,12 +1274,16 @@ export const onSupportRequestCreated = functions
         <span class="info-label">De :</span>
         <span>${ticket.userName} (${ticket.userEmail})</span>
       </div>
-      ${ticket.establishmentName ? `
+      ${
+        ticket.establishmentName
+          ? `
       <div class="info-row">
         <span class="info-label">Établissement :</span>
         <span>${ticket.establishmentName}</span>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
       <div class="info-row">
         <span class="info-label">Date :</span>
         <span>${ticket.createdAt?.toDate?.()?.toLocaleString('fr-FR') || 'N/A'}</span>
@@ -1397,7 +1404,7 @@ export const onSupportResponseAdded = functions
 
       // Vérifier que c'est une réponse du support (pas de l'utilisateur)
       if (response.isFromUser) {
-        console.log('[Support] Réponse de l\'utilisateur, pas de notification');
+        console.log("[Support] Réponse de l'utilisateur, pas de notification");
         return null;
       }
 
@@ -1467,10 +1474,13 @@ export const onSupportResponseAdded = functions
       console.log(`[Support] Notification envoyée à ${ticket.userEmail}`);
 
       // Mettre à jour le ticket
-      await db.collection('supportRequests').doc(ticketId).update({
-        lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
-        status: response.status || 'in_progress',
-      });
+      await db
+        .collection('supportRequests')
+        .doc(ticketId)
+        .update({
+          lastResponseAt: admin.firestore.FieldValue.serverTimestamp(),
+          status: response.status || 'in_progress',
+        });
 
       return { success: true };
     } catch (error: unknown) {
@@ -1574,11 +1584,7 @@ export const processScheduledExports = functions
 /**
  * Génère un fichier Excel stylé avec en-têtes formatés et colonnes ajustées
  */
-function generateStyledExcel(
-  data: any[],
-  dataType: string,
-  establishmentName: string
-): Buffer {
+function generateStyledExcel(data: any[], dataType: string, establishmentName: string): Buffer {
   // Créer un nouveau workbook
   const wb = XLSX.utils.book_new();
 
@@ -1683,20 +1689,16 @@ function generateStyledExcel(
 
   // Créer les données du worksheet avec ligne de titre
   const titleRow = [`Export ${dataType} - ${establishmentName}`];
-  const dateRow = [`Généré le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`];
+  const dateRow = [
+    `Généré le ${new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`,
+  ];
   const emptyRow: string[] = [];
 
   // Convertir les données en tableau de tableaux
   const dataRows = formattedData.map(row => keys.map(key => row[key]));
 
   // Assembler toutes les lignes
-  const allRows = [
-    titleRow,
-    dateRow,
-    emptyRow,
-    headers,
-    ...dataRows,
-  ];
+  const allRows = [titleRow, dateRow, emptyRow, headers, ...dataRows];
 
   // Créer le worksheet
   const ws = XLSX.utils.aoa_to_sheet(allRows);
@@ -1855,21 +1857,17 @@ async function executeScheduledExport(
   console.log(`[Export] Fichier uploadé: ${filePath}`);
 
   // Créer l'enregistrement d'exécution
-  await db
-    .collection('establishments')
-    .doc(establishmentId)
-    .collection('exportExecutions')
-    .add({
-      scheduledExportId: config.id,
-      establishmentId,
-      status: 'completed',
-      startedAt: admin.firestore.FieldValue.serverTimestamp(),
-      completedAt: admin.firestore.FieldValue.serverTimestamp(),
-      fileUrl: publicUrl,
-      filePath,
-      fileSize: fileBuffer.length,
-      recordCount: data.length,
-    });
+  await db.collection('establishments').doc(establishmentId).collection('exportExecutions').add({
+    scheduledExportId: config.id,
+    establishmentId,
+    status: 'completed',
+    startedAt: admin.firestore.FieldValue.serverTimestamp(),
+    completedAt: admin.firestore.FieldValue.serverTimestamp(),
+    fileUrl: publicUrl,
+    filePath,
+    fileSize: fileBuffer.length,
+    recordCount: data.length,
+  });
 
   // Envoyer par email
   const recipients = [...config.recipients];
@@ -1985,7 +1983,7 @@ async function updateNextRunDate(
 ): Promise<void> {
   const now = new Date();
   const [hours, minutes] = config.scheduledTime.split(':').map(Number);
-  let nextRun = new Date(now);
+  const nextRun = new Date(now);
   nextRun.setHours(hours, minutes, 0, 0);
 
   // Si l'heure est déjà passée, passer au prochain jour
@@ -2040,65 +2038,63 @@ async function updateNextRunDate(
 /**
  * Cloud Function callable pour exécuter un export manuellement
  */
-export const runExportNow = functions
-  .region('europe-west1')
-  .https.onCall(async (data, context) => {
-    // Vérifier l'authentification
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        'unauthenticated',
-        'Vous devez être connecté pour effectuer cette action'
-      );
+export const runExportNow = functions.region('europe-west1').https.onCall(async (data, context) => {
+  // Vérifier l'authentification
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Vous devez être connecté pour effectuer cette action'
+    );
+  }
+
+  const { establishmentId, exportId } = data;
+
+  if (!establishmentId || !exportId) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'establishmentId et exportId sont requis'
+    );
+  }
+
+  try {
+    // Récupérer l'export
+    const exportDoc = await db
+      .collection('establishments')
+      .doc(establishmentId)
+      .collection('scheduledExports')
+      .doc(exportId)
+      .get();
+
+    if (!exportDoc.exists) {
+      throw new functions.https.HttpsError('not-found', 'Export non trouvé');
     }
 
-    const { establishmentId, exportId } = data;
+    // Récupérer l'établissement
+    const establishmentDoc = await db.collection('establishments').doc(establishmentId).get();
+    const establishmentName = establishmentDoc.data()?.name || 'Établissement';
 
-    if (!establishmentId || !exportId) {
-      throw new functions.https.HttpsError(
-        'invalid-argument',
-        'establishmentId et exportId sont requis'
-      );
+    const exportConfig = { id: exportDoc.id, ...exportDoc.data() } as ScheduledExportConfig;
+
+    // Exécuter l'export
+    await executeScheduledExport(establishmentId, establishmentName, exportConfig);
+
+    return {
+      success: true,
+      message: `Export "${exportConfig.name}" exécuté avec succès`,
+    };
+  } catch (error: unknown) {
+    console.error('[Export Manual] Erreur:', error);
+
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
     }
 
-    try {
-      // Récupérer l'export
-      const exportDoc = await db
-        .collection('establishments')
-        .doc(establishmentId)
-        .collection('scheduledExports')
-        .doc(exportId)
-        .get();
-
-      if (!exportDoc.exists) {
-        throw new functions.https.HttpsError('not-found', 'Export non trouvé');
-      }
-
-      // Récupérer l'établissement
-      const establishmentDoc = await db.collection('establishments').doc(establishmentId).get();
-      const establishmentName = establishmentDoc.data()?.name || 'Établissement';
-
-      const exportConfig = { id: exportDoc.id, ...exportDoc.data() } as ScheduledExportConfig;
-
-      // Exécuter l'export
-      await executeScheduledExport(establishmentId, establishmentName, exportConfig);
-
-      return {
-        success: true,
-        message: `Export "${exportConfig.name}" exécuté avec succès`,
-      };
-    } catch (error: unknown) {
-      console.error('[Export Manual] Erreur:', error);
-
-      if (error instanceof functions.https.HttpsError) {
-        throw error;
-      }
-
-      throw new functions.https.HttpsError(
-        'internal',
-        `Erreur lors de l'exécution de l'export: ${getErrorMessage(error)}`
-      );
-    }
-  });
+    throw new functions.https.HttpsError(
+      'internal',
+      `Erreur lors de l'exécution de l'export: ${getErrorMessage(error)}`
+    );
+  }
+});
 
 // ============================================================================
 // EMAIL VERIFICATION
@@ -2246,166 +2242,165 @@ export const sendVerificationEmail = functions
  * Formater une date en format iCal (RFC 5545)
  */
 function formatICalDate(date: Date): string {
-  return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+  return date
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}/, '');
 }
 
 /**
  * Échapper les caractères spéciaux iCal
  */
 function escapeICalString(str: string): string {
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\n/g, '\\n');
+  return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 }
 
 /**
  * Cloud Function HTTP pour générer un flux iCal (URL d'abonnement)
  * Accessible publiquement avec un token unique
  */
-export const getICalFeed = functions
-  .region('europe-west1')
-  .https.onRequest(async (req, res) => {
-    return corsHandler(req, res, async () => {
-      try {
-        // Récupérer les paramètres
-        const { establishmentId, token } = req.query;
+export const getICalFeed = functions.region('europe-west1').https.onRequest(async (req, res) => {
+  return corsHandler(req, res, async () => {
+    try {
+      // Récupérer les paramètres
+      const { establishmentId, token } = req.query;
 
-        if (!establishmentId || !token) {
-          res.status(400).send('establishmentId et token sont requis');
-          return;
-        }
-
-        // Vérifier le token d'accès
-        const integrationQuery = await db
-          .collection('establishments')
-          .doc(establishmentId as string)
-          .collection('calendarIntegrations')
-          .where('feedToken', '==', token)
-          .where('syncEnabled', '==', true)
-          .limit(1)
-          .get();
-
-        if (integrationQuery.empty) {
-          res.status(403).send('Token invalide ou intégration désactivée');
-          return;
-        }
-
-        const integration = integrationQuery.docs[0].data();
-
-        // Récupérer les interventions
-        // Note: On utilise isDeleted == false pour une requête plus simple
-        // Les documents sans le champ isDeleted ou avec isDeleted = false seront inclus
-        let interventionsQuery = db
-          .collection('establishments')
-          .doc(establishmentId as string)
-          .collection('interventions')
-          .where('isDeleted', '==', false)
-          .orderBy('scheduledAt', 'desc')
-          .limit(500);
-
-        // Appliquer les filtres si configurés
-        if (integration.filterByStatus?.length > 0) {
-          interventionsQuery = interventionsQuery.where('status', 'in', integration.filterByStatus);
-        }
-
-        const interventionsSnap = await interventionsQuery.get();
-
-        // Récupérer le nom de l'établissement
-        const establishmentDoc = await db.collection('establishments').doc(establishmentId as string).get();
-        const establishmentName = establishmentDoc.data()?.name || 'GestiHotel';
-
-        // Générer le contenu iCal
-        const events: string[] = [];
-
-        for (const doc of interventionsSnap.docs) {
-          const intervention = doc.data();
-
-          // Ignorer les interventions sans date planifiée
-          if (!intervention.scheduledAt) continue;
-
-          const startDate = intervention.scheduledAt.toDate();
-          const duration = intervention.estimatedDuration || 60;
-          const endDate = new Date(startDate.getTime() + duration * 60000);
-
-          const statusLabels: Record<string, string> = {
-            pending: 'En attente',
-            in_progress: 'En cours',
-            completed: 'Terminée',
-            cancelled: 'Annulée',
-          };
-
-          const description = [
-            intervention.description || '',
-            '',
-            `Réf: ${intervention.reference || doc.id}`,
-            `Statut: ${statusLabels[intervention.status] || intervention.status}`,
-            `Priorité: ${intervention.priority}`,
-            intervention.assignedToNames?.length
-              ? `Assigné à: ${intervention.assignedToNames.join(', ')}`
-              : null,
-          ]
-            .filter(Boolean)
-            .join('\\n');
-
-          const location = [
-            intervention.location,
-            intervention.roomNumber ? `Chambre ${intervention.roomNumber}` : null,
-          ]
-            .filter(Boolean)
-            .join(' - ');
-
-          const event = [
-            'BEGIN:VEVENT',
-            `UID:${doc.id}@gestihotel.app`,
-            `DTSTAMP:${formatICalDate(new Date())}`,
-            `DTSTART:${formatICalDate(startDate)}`,
-            `DTEND:${formatICalDate(endDate)}`,
-            `SUMMARY:${escapeICalString(`[${intervention.priority?.toUpperCase() || 'NORMAL'}] ${intervention.title || 'Intervention'}`)}`,
-            `DESCRIPTION:${escapeICalString(description)}`,
-            location ? `LOCATION:${escapeICalString(location)}` : null,
-            `STATUS:${intervention.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
-            `CATEGORIES:${intervention.type || 'intervention'}`,
-            'END:VEVENT',
-          ]
-            .filter(Boolean)
-            .join('\r\n');
-
-          events.push(event);
-        }
-
-        // Construire le fichier iCal complet
-        const icalContent = [
-          'BEGIN:VCALENDAR',
-          'VERSION:2.0',
-          'PRODID:-//GestiHotel//Interventions//FR',
-          'CALSCALE:GREGORIAN',
-          'METHOD:PUBLISH',
-          `X-WR-CALNAME:${escapeICalString(establishmentName)} - Interventions`,
-          'X-WR-TIMEZONE:Europe/Paris',
-          ...events,
-          'END:VCALENDAR',
-        ].join('\r\n');
-
-        // Définir les headers pour le fichier iCal
-        res.set('Content-Type', 'text/calendar; charset=utf-8');
-        res.set('Content-Disposition', `attachment; filename="interventions.ics"`);
-        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-
-        res.status(200).send(icalContent);
-
-        // Mettre à jour la date de dernière synchronisation
-        await integrationQuery.docs[0].ref.update({
-          lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-
-      } catch (error: unknown) {
-        console.error('[iCal Feed] Erreur:', error);
-        res.status(500).send(`Erreur: ${getErrorMessage(error)}`);
+      if (!establishmentId || !token) {
+        res.status(400).send('establishmentId et token sont requis');
+        return;
       }
-    });
+
+      // Vérifier le token d'accès
+      const integrationQuery = await db
+        .collection('establishments')
+        .doc(establishmentId as string)
+        .collection('calendarIntegrations')
+        .where('feedToken', '==', token)
+        .where('syncEnabled', '==', true)
+        .limit(1)
+        .get();
+
+      if (integrationQuery.empty) {
+        res.status(403).send('Token invalide ou intégration désactivée');
+        return;
+      }
+
+      const integration = integrationQuery.docs[0].data();
+
+      // Récupérer les interventions
+      // Note: On utilise isDeleted == false pour une requête plus simple
+      // Les documents sans le champ isDeleted ou avec isDeleted = false seront inclus
+      let interventionsQuery = db
+        .collection('establishments')
+        .doc(establishmentId as string)
+        .collection('interventions')
+        .where('isDeleted', '==', false)
+        .orderBy('scheduledAt', 'desc')
+        .limit(500);
+
+      // Appliquer les filtres si configurés
+      if (integration.filterByStatus?.length > 0) {
+        interventionsQuery = interventionsQuery.where('status', 'in', integration.filterByStatus);
+      }
+
+      const interventionsSnap = await interventionsQuery.get();
+
+      // Récupérer le nom de l'établissement
+      const establishmentDoc = await db
+        .collection('establishments')
+        .doc(establishmentId as string)
+        .get();
+      const establishmentName = establishmentDoc.data()?.name || 'GestiHotel';
+
+      // Générer le contenu iCal
+      const events: string[] = [];
+
+      for (const doc of interventionsSnap.docs) {
+        const intervention = doc.data();
+
+        // Ignorer les interventions sans date planifiée
+        if (!intervention.scheduledAt) continue;
+
+        const startDate = intervention.scheduledAt.toDate();
+        const duration = intervention.estimatedDuration || 60;
+        const endDate = new Date(startDate.getTime() + duration * 60000);
+
+        const statusLabels: Record<string, string> = {
+          pending: 'En attente',
+          in_progress: 'En cours',
+          completed: 'Terminée',
+          cancelled: 'Annulée',
+        };
+
+        const description = [
+          intervention.description || '',
+          '',
+          `Réf: ${intervention.reference || doc.id}`,
+          `Statut: ${statusLabels[intervention.status] || intervention.status}`,
+          `Priorité: ${intervention.priority}`,
+          intervention.assignedToNames?.length
+            ? `Assigné à: ${intervention.assignedToNames.join(', ')}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join('\\n');
+
+        const location = [
+          intervention.location,
+          intervention.roomNumber ? `Chambre ${intervention.roomNumber}` : null,
+        ]
+          .filter(Boolean)
+          .join(' - ');
+
+        const event = [
+          'BEGIN:VEVENT',
+          `UID:${doc.id}@gestihotel.app`,
+          `DTSTAMP:${formatICalDate(new Date())}`,
+          `DTSTART:${formatICalDate(startDate)}`,
+          `DTEND:${formatICalDate(endDate)}`,
+          `SUMMARY:${escapeICalString(`[${intervention.priority?.toUpperCase() || 'NORMAL'}] ${intervention.title || 'Intervention'}`)}`,
+          `DESCRIPTION:${escapeICalString(description)}`,
+          location ? `LOCATION:${escapeICalString(location)}` : null,
+          `STATUS:${intervention.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
+          `CATEGORIES:${intervention.type || 'intervention'}`,
+          'END:VEVENT',
+        ]
+          .filter(Boolean)
+          .join('\r\n');
+
+        events.push(event);
+      }
+
+      // Construire le fichier iCal complet
+      const icalContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//GestiHotel//Interventions//FR',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        `X-WR-CALNAME:${escapeICalString(establishmentName)} - Interventions`,
+        'X-WR-TIMEZONE:Europe/Paris',
+        ...events,
+        'END:VCALENDAR',
+      ].join('\r\n');
+
+      // Définir les headers pour le fichier iCal
+      res.set('Content-Type', 'text/calendar; charset=utf-8');
+      res.set('Content-Disposition', `attachment; filename="interventions.ics"`);
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+
+      res.status(200).send(icalContent);
+
+      // Mettre à jour la date de dernière synchronisation
+      await integrationQuery.docs[0].ref.update({
+        lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (error: unknown) {
+      console.error('[iCal Feed] Erreur:', error);
+      res.status(500).send(`Erreur: ${getErrorMessage(error)}`);
+    }
   });
+});
 
 /**
  * Cloud Function callable pour générer un token de flux iCal
@@ -2556,7 +2551,7 @@ async function triggerWebhooksForEvent(
 
     console.log(`[Webhooks] ${webhooksSnap.size} webhooks à déclencher pour ${eventType}`);
 
-    const promises = webhooksSnap.docs.map(async (doc) => {
+    const promises = webhooksSnap.docs.map(async doc => {
       const webhook = { id: doc.id, ...doc.data() } as WebhookConfig;
       const result = await sendWebhookNotification(webhook, eventType, data);
 
@@ -2642,7 +2637,9 @@ export const onInterventionUpdated = functions
       events.push('intervention.assigned');
     }
 
-    console.log(`[Webhook Trigger] Intervention mise à jour: ${interventionId}, events: ${events.join(', ')}`);
+    console.log(
+      `[Webhook Trigger] Intervention mise à jour: ${interventionId}, events: ${events.join(', ')}`
+    );
 
     for (const eventType of events) {
       await triggerWebhooksForEvent(establishmentId, eventType, {
@@ -2746,9 +2743,7 @@ export const generatePdfReport = functions
       const startDate = dateRange?.start
         ? new Date(dateRange.start)
         : new Date(now.getFullYear(), now.getMonth(), 1);
-      const endDate = dateRange?.end
-        ? new Date(dateRange.end)
-        : now;
+      const endDate = dateRange?.end ? new Date(dateRange.end) : now;
 
       switch (config.type) {
         case 'interventions_summary':
@@ -2795,7 +2790,8 @@ export const generatePdfReport = functions
             .where('completedAt', '<=', admin.firestore.Timestamp.fromDate(endDate))
             .get();
 
-          const techStats: Record<string, { name: string; completed: number; totalTime: number }> = {};
+          const techStats: Record<string, { name: string; completed: number; totalTime: number }> =
+            {};
 
           for (const doc of techInterventionsSnap.docs) {
             const intervention = doc.data();
@@ -2827,7 +2823,13 @@ export const generatePdfReport = functions
       }
 
       // Générer le contenu HTML du rapport
-      const htmlContent = generateReportHtml(config, establishmentName, reportData, startDate, endDate);
+      const htmlContent = generateReportHtml(
+        config,
+        establishmentName,
+        reportData,
+        startDate,
+        endDate
+      );
 
       // Pour l'instant, on retourne le HTML (la génération PDF nécessite puppeteer ou une autre lib)
       // Sauvegarder le rapport généré
@@ -2896,11 +2898,12 @@ function generateReportHtml(
   startDate: Date,
   endDate: Date
 ): string {
-  const formatDate = (date: Date) => date.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
 
   const statusLabels: Record<string, string> = {
     pending: 'En attente',
@@ -2920,11 +2923,16 @@ function generateReportHtml(
   let statsHtml = '';
   if (data.stats) {
     const statusStats = Object.entries(data.stats.byStatus || {})
-      .map(([status, count]) => `<li>${statusLabels[status] || status}: <strong>${count}</strong></li>`)
+      .map(
+        ([status, count]) => `<li>${statusLabels[status] || status}: <strong>${count}</strong></li>`
+      )
       .join('');
 
     const priorityStats = Object.entries(data.stats.byPriority || {})
-      .map(([priority, count]) => `<li>${priorityLabels[priority] || priority}: <strong>${count}</strong></li>`)
+      .map(
+        ([priority, count]) =>
+          `<li>${priorityLabels[priority] || priority}: <strong>${count}</strong></li>`
+      )
       .join('');
 
     statsHtml = `
@@ -2949,13 +2957,15 @@ function generateReportHtml(
   if (data.technicians?.length > 0) {
     const techRows = data.technicians
       .sort((a: any, b: any) => b.completed - a.completed)
-      .map((tech: any) => `
+      .map(
+        (tech: any) => `
         <tr>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${tech.name}</td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${tech.completed}</td>
           <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${tech.avgTime} min</td>
         </tr>
-      `)
+      `
+      )
       .join('');
 
     technicianHtml = `
@@ -3124,20 +3134,17 @@ export const googleCalendarCallback = functions
         const { code, state } = req.query;
 
         if (!code || typeof code !== 'string') {
-          res.status(400).json({ error: 'Code d\'autorisation manquant' });
+          res.status(400).json({ error: "Code d'autorisation manquant" });
           return;
         }
 
-        // Décoder le state pour récupérer userId et establishmentId
+        // Décoder le state pour récupérer userId
         let userId: string;
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        let _establishmentId: string;
 
         if (state && typeof state === 'string') {
           try {
             const stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
             userId = stateData.userId;
-            _establishmentId = stateData.establishmentId;
           } catch (error) {
             console.error('Erreur décodage state:', error);
             res.status(400).json({ error: 'State invalide' });
@@ -3187,24 +3194,27 @@ export const googleCalendarCallback = functions
         if (!tokenResponse.ok) {
           const errorData = await tokenResponse.json();
           console.error('Erreur échange token:', errorData);
-          res.status(500).json({ error: 'Échec de l\'échange de tokens' });
+          res.status(500).json({ error: "Échec de l'échange de tokens" });
           return;
         }
 
         const tokens = await tokenResponse.json();
 
         // Stocker les tokens dans Firestore
-        await db.collection('users').doc(userId).update({
-          googleCalendarTokens: {
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            scope: tokens.scope,
-            token_type: tokens.token_type,
-            expiry_date: Date.now() + tokens.expires_in * 1000,
-          },
-          googleCalendarSyncEnabled: true,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        await db
+          .collection('users')
+          .doc(userId)
+          .update({
+            googleCalendarTokens: {
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+              scope: tokens.scope,
+              token_type: tokens.token_type,
+              expiry_date: Date.now() + tokens.expires_in * 1000,
+            },
+            googleCalendarSyncEnabled: true,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
 
         console.log(`Google Calendar connecté pour user ${userId}`);
 
@@ -3334,10 +3344,13 @@ export const syncInterventionToGoogleCalendar = functions
         accessToken = newTokens.access_token;
 
         // Mettre à jour les tokens
-        await db.collection('users').doc(userId).update({
-          'googleCalendarTokens.access_token': accessToken,
-          'googleCalendarTokens.expiry_date': Date.now() + newTokens.expires_in * 1000,
-        });
+        await db
+          .collection('users')
+          .doc(userId)
+          .update({
+            'googleCalendarTokens.access_token': accessToken,
+            'googleCalendarTokens.expiry_date': Date.now() + newTokens.expires_in * 1000,
+          });
       }
 
       // Créer l'événement Google Calendar
@@ -3382,7 +3395,7 @@ export const syncInterventionToGoogleCalendar = functions
       if (!calendarResponse.ok) {
         const errorData = await calendarResponse.json();
         console.error('Erreur création événement:', errorData);
-        throw new functions.https.HttpsError('internal', 'Échec de création de l\'événement');
+        throw new functions.https.HttpsError('internal', "Échec de création de l'événement");
       }
 
       const calendarEvent = await calendarResponse.json();
@@ -3420,7 +3433,11 @@ export const syncInterventionToGoogleCalendar = functions
  * Fonction helper pour construire la description de l'événement
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildInterventionDescription(intervention: any, interventionId: string, _establishmentId: string): string {
+function buildInterventionDescription(
+  intervention: any,
+  interventionId: string,
+  _establishmentId: string
+): string {
   const lines: string[] = [
     `📋 ${intervention.description}`,
     '',

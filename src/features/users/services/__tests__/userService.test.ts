@@ -21,24 +21,42 @@ import { UserRole } from '../../types/role.types';
 // =============================================================================
 
 // Mock Firestore
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+vi.mock('firebase/firestore', () => {
+  // Mock Firestore Timestamp class inline
+  class MockTimestamp {
+    seconds: number;
+    nanoseconds: number;
+    constructor(seconds: number, nanoseconds: number) {
+      this.seconds = seconds;
+      this.nanoseconds = nanoseconds;
+    }
+    toDate() {
+      return new Date(this.seconds * 1000);
+    }
+    static now() {
+      return new MockTimestamp(Math.floor(Date.now() / 1000), 0);
+    }
+    static fromDate(date: Date) {
+      return new MockTimestamp(Math.floor(date.getTime() / 1000), 0);
+    }
+  }
 
-  getDoc: vi.fn(),
-  getDocs: vi.fn(),
-  setDoc: vi.fn(),
-  updateDoc: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  orderBy: vi.fn(),
-  limit: vi.fn(),
-  onSnapshot: vi.fn(),
-  Timestamp: {
-    now: vi.fn(() => ({ toDate: () => new Date() })),
-    fromDate: vi.fn((date: Date) => ({ toDate: () => date })),
-  },
-}));
+  return {
+    collection: vi.fn(),
+    doc: vi.fn(() => ({ id: 'mock-doc-id' })),
+    getDoc: vi.fn(),
+    getDocs: vi.fn(),
+    setDoc: vi.fn(),
+    updateDoc: vi.fn(),
+    query: vi.fn(),
+    where: vi.fn(),
+    orderBy: vi.fn(),
+    limit: vi.fn(),
+    onSnapshot: vi.fn(),
+    serverTimestamp: vi.fn(() => new Date()),
+    Timestamp: MockTimestamp,
+  };
+});
 
 // Mock Firebase Auth
 vi.mock('firebase/auth', () => ({
@@ -255,7 +273,7 @@ describe('userService', () => {
         establishmentIds: ['est-123'],
         firstName: 'Jane',
         lastName: 'Smith',
-        message: 'Bienvenue dans l\'équipe',
+        message: "Bienvenue dans l'équipe",
       };
 
       const mockInviterProfile = {
@@ -290,7 +308,7 @@ describe('userService', () => {
 
       // Act & Assert
       await expect(userService.inviteUser(data, mockCreatedBy)).rejects.toThrow(
-        'Erreur lors de l\'invitation'
+        "Erreur lors de l'invitation"
       );
     });
   });
@@ -347,7 +365,7 @@ describe('userService', () => {
 
       // Act & Assert
       await expect(userService.getUser('user-123')).rejects.toThrow(
-        'Erreur lors de la récupération de l\'utilisateur'
+        "Erreur lors de la récupération de l'utilisateur"
       );
     });
   });
@@ -530,9 +548,9 @@ describe('userService', () => {
       vi.mocked(updateDoc).mockRejectedValue(new Error('Update failed'));
 
       // Act & Assert
-      await expect(
-        userService.updateUser('user-123', { firstName: 'Test' })
-      ).rejects.toThrow('Erreur lors de la mise à jour de l\'utilisateur');
+      await expect(userService.updateUser('user-123', { firstName: 'Test' })).rejects.toThrow(
+        "Erreur lors de la mise à jour de l'utilisateur"
+      );
     });
   });
 
@@ -583,9 +601,9 @@ describe('userService', () => {
       vi.mocked(updateDoc).mockRejectedValue(new Error('Update failed'));
 
       // Act & Assert
-      await expect(
-        userService.updateProfile('user-123', { displayName: 'Test' })
-      ).rejects.toThrow('Erreur lors de la mise à jour du profil');
+      await expect(userService.updateProfile('user-123', { displayName: 'Test' })).rejects.toThrow(
+        'Erreur lors de la mise à jour du profil'
+      );
     });
   });
 
@@ -676,7 +694,7 @@ describe('userService', () => {
 
       // Act & Assert
       await expect(userService.deleteUser('user-123')).rejects.toThrow(
-        'Erreur lors de la suppression de l\'utilisateur'
+        "Erreur lors de la suppression de l'utilisateur"
       );
     });
   });
@@ -686,21 +704,21 @@ describe('userService', () => {
   // ===========================================================================
 
   describe('subscribeToUser', () => {
-    it('devrait s abonner aux changements d un utilisateur', () => {
+    it('devrait s abonner aux changements d un utilisateur', async () => {
       // Arrange
       const userId = 'user-123';
       const onData = vi.fn();
       const onError = vi.fn();
       const mockUnsubscribe = vi.fn();
 
-      const { onSnapshot } = require('firebase/firestore');
-      vi.mocked(onSnapshot).mockReturnValue(mockUnsubscribe);
+      const firestoreMock = await import('firebase/firestore');
+      vi.spyOn(firestoreMock, 'onSnapshot').mockReturnValue(mockUnsubscribe);
 
       // Act
       const unsubscribe = userService.subscribeToUser(userId, onData, onError);
 
       // Assert
-      expect(onSnapshot).toHaveBeenCalled();
+      expect(firestoreMock.onSnapshot).toHaveBeenCalled();
       expect(typeof unsubscribe).toBe('function');
     });
   });

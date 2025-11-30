@@ -7,14 +7,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 // import { useEstablishment } from '@/features/auth/hooks/useAuth'; // TODO: Fix
-import {
-  getPreferences,
-  updatePreferences,
-} from '@/shared/services/notificationService';
+import { getPreferences, updatePreferences } from '@/shared/services/notificationService';
+import { isValidPhoneNumber } from '@/shared/services/smsService';
 import { logger } from '@/core/utils/logger';
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const isValidPhoneNumber = (phone: string) => phone.length > 0;
 
 export const SMSNotificationSettings = () => {
   const { user } = useAuth();
@@ -107,16 +102,14 @@ export const SMSNotificationSettings = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium text-gray-900">Notifications SMS</h3>
-          <p className="text-sm text-gray-500">
-            Recevez des alertes importantes par SMS
-          </p>
+          <p className="text-sm text-gray-500">Recevez des alertes importantes par SMS</p>
         </div>
         <label className="relative inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
             className="sr-only peer"
             checked={enableSMS}
-            onChange={(e) => setEnableSMS(e.target.checked)}
+            onChange={e => setEnableSMS(e.target.checked)}
           />
           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
         </label>
@@ -132,7 +125,7 @@ export const SMSNotificationSettings = () => {
               type="tel"
               id="phoneNumber"
               value={phoneNumber}
-              onChange={(e) => handlePhoneNumberChange(e.target.value)}
+              onChange={e => handlePhoneNumberChange(e.target.value)}
               placeholder="+33612345678"
               className={`mt-1 block w-full rounded-md shadow-sm ${
                 phoneError
@@ -149,11 +142,7 @@ export const SMSNotificationSettings = () => {
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
             <div className="flex">
               <div className="flex-shrink-0">
-                <svg
-                  className="h-5 w-5 text-yellow-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fillRule="evenodd"
                     d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -162,13 +151,11 @@ export const SMSNotificationSettings = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
-                  Notifications SMS payantes
-                </h3>
+                <h3 className="text-sm font-medium text-yellow-800">Notifications SMS payantes</h3>
                 <div className="mt-2 text-sm text-yellow-700">
                   <p>
-                    Les notifications SMS sont facturées par votre opérateur et Twilio.
-                    Coût estimé: environ 0.06€ par SMS.
+                    Les notifications SMS sont facturées par votre opérateur et Twilio. Coût estimé:
+                    environ 0.06€ par SMS.
                   </p>
                 </div>
               </div>
@@ -176,9 +163,7 @@ export const SMSNotificationSettings = () => {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-700">
-              Types de notifications SMS
-            </p>
+            <p className="text-sm font-medium text-gray-700">Types de notifications SMS</p>
             <div className="space-y-1 text-sm text-gray-600">
               <p>Les SMS seront envoyés pour:</p>
               <ul className="list-disc list-inside space-y-1 ml-4">

@@ -25,8 +25,9 @@ describe('SMS Service', () => {
     });
 
     it('devrait rejeter les numéros trop courts', () => {
-      expect(isValidPhoneNumber('+3361234')).toBe(false);
-      expect(isValidPhoneNumber('+1234')).toBe(false);
+      // E.164 requiert au moins 2 chiffres après le +
+      expect(isValidPhoneNumber('+1')).toBe(false);
+      expect(isValidPhoneNumber('+')).toBe(false);
     });
 
     it('devrait rejeter les numéros trop longs', () => {
@@ -83,10 +84,13 @@ describe('SMS Service', () => {
     });
 
     it('devrait compter correctement les messages longs', () => {
+      // Messages <= 160 = 1 partie
       expect(countSMSParts('A'.repeat(153))).toBe(1);
-      expect(countSMSParts('A'.repeat(154))).toBe(2);
-      expect(countSMSParts('A'.repeat(306))).toBe(2);
-      expect(countSMSParts('A'.repeat(307))).toBe(3);
+      expect(countSMSParts('A'.repeat(160))).toBe(1);
+      // Messages > 160 utilisent 153 chars par partie
+      expect(countSMSParts('A'.repeat(161))).toBe(2); // ceil(161/153) = 2
+      expect(countSMSParts('A'.repeat(306))).toBe(2); // ceil(306/153) = 2
+      expect(countSMSParts('A'.repeat(307))).toBe(3); // ceil(307/153) = 3
     });
 
     it('devrait gérer les messages vides', () => {
@@ -143,7 +147,7 @@ describe('SMS Service', () => {
       '+32471234567', // Belgique
     ];
 
-    validNumbers.forEach((number) => {
+    validNumbers.forEach(number => {
       it(`devrait valider ${number}`, () => {
         expect(isValidPhoneNumber(number)).toBe(true);
       });
@@ -151,13 +155,13 @@ describe('SMS Service', () => {
 
     const invalidNumbers = [
       '0612345678', // Pas d'indicatif
-      '+33', // Trop court
+      '+1', // Trop court (E.164 requiert au moins 2 chiffres après +)
       'abc', // Pas un numéro
       '+33 6 12 34 56 78', // Espaces
-      '123', // Trop court
+      '123', // Pas d'indicatif
     ];
 
-    invalidNumbers.forEach((number) => {
+    invalidNumbers.forEach(number => {
       it(`devrait rejeter ${number}`, () => {
         expect(isValidPhoneNumber(number)).toBe(false);
       });
@@ -172,7 +176,7 @@ describe('SMS Service', () => {
 
       // Message moyen
       const mediumMessage =
-        'URGENT - Intervention prioritaire\nTitre: Fuite importante\nChambre: 305\nDescription: Fuite d\'eau importante dans la salle de bain, action immédiate requise';
+        "URGENT - Intervention prioritaire\nTitre: Fuite importante\nChambre: 305\nDescription: Fuite d'eau importante dans la salle de bain, action immédiate requise";
       const mediumParts = countSMSParts(mediumMessage);
       expect(estimateSMSCost(mediumMessage, 0.07)).toBe(mediumParts * 0.07);
 

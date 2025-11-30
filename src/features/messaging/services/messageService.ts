@@ -452,12 +452,10 @@ export const getMessages = async (
   if (deletionTimestamp) {
     messages = messages.filter(msg => {
       const createdAt = msg.createdAt;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const msgTimestamp =
         msg.clientCreatedAt ||
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (createdAt && typeof (createdAt as any).toDate === 'function'
-          ? (createdAt as any).toDate().getTime()
+        (createdAt && typeof (createdAt as { toDate?: () => Date }).toDate === 'function'
+          ? (createdAt as { toDate: () => Date }).toDate().getTime()
           : createdAt instanceof Date
             ? createdAt.getTime()
             : 0);
@@ -539,12 +537,10 @@ export const subscribeToMessages = (
     if (deletionTimestamp) {
       messages = messages.filter(msg => {
         const createdAt = msg.createdAt;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const msgTimestamp =
           msg.clientCreatedAt ||
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (createdAt && typeof (createdAt as any).toDate === 'function'
-            ? (createdAt as any).toDate().getTime()
+          (createdAt && typeof (createdAt as { toDate?: () => Date }).toDate === 'function'
+            ? (createdAt as { toDate: () => Date }).toDate().getTime()
             : createdAt instanceof Date
               ? createdAt.getTime()
               : 0);

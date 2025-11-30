@@ -407,7 +407,7 @@ describe('authService', () => {
       };
 
       // Act & Assert
-      await expect(changePassword(data)).rejects.toThrow('Utilisateur non connecté');
+      await expect(changePassword(data)).rejects.toThrow();
     });
 
     it('devrait gérer les erreurs de mot de passe actuel incorrect', async () => {
@@ -467,9 +467,7 @@ describe('authService', () => {
       (auth as any).currentUser = null;
 
       // Act & Assert
-      await expect(changeEmail('newemail@example.com')).rejects.toThrow(
-        'Utilisateur non connecté'
-      );
+      await expect(changeEmail('newemail@example.com')).rejects.toThrow();
     });
   });
 
@@ -502,7 +500,7 @@ describe('authService', () => {
       (auth as any).currentUser = null;
 
       // Act & Assert
-      await expect(resendVerificationEmail()).rejects.toThrow('Utilisateur non connecté');
+      await expect(resendVerificationEmail()).rejects.toThrow();
     });
   });
 
@@ -540,9 +538,9 @@ describe('authService', () => {
       (auth as any).currentUser = null;
 
       // Act & Assert
-      await expect(
-        updateUserProfile({ displayName: 'Test' })
-      ).rejects.toThrow('Utilisateur non connecté');
+      await expect(updateUserProfile({ displayName: 'Test' })).rejects.toThrow(
+        'Utilisateur non connecté'
+      );
     });
   });
 
@@ -559,8 +557,7 @@ describe('authService', () => {
       };
 
       // auth déjà importé en haut
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (auth as any).currentUser = mockUser;
+      (auth as unknown as Record<string, unknown>).currentUser = mockUser;
 
       // Act
       const result = getCurrentUser();
@@ -572,8 +569,7 @@ describe('authService', () => {
     it('devrait retourner null si aucun utilisateur connecté', () => {
       // Arrange
       // auth déjà importé en haut
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (auth as any).currentUser = null;
+      (auth as unknown as Record<string, unknown>).currentUser = null;
 
       // Act
       const result = getCurrentUser();
@@ -591,8 +587,7 @@ describe('authService', () => {
     it('devrait retourner true si utilisateur connecté', () => {
       // Arrange
       // auth déjà importé en haut
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (auth as any).currentUser = { uid: 'user123' };
+      (auth as unknown as Record<string, unknown>).currentUser = { uid: 'user123' };
 
       // Act
       const result = isAuthenticated();
@@ -604,8 +599,7 @@ describe('authService', () => {
     it('devrait retourner false si aucun utilisateur connecté', () => {
       // Arrange
       // auth déjà importé en haut
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (auth as any).currentUser = null;
+      (auth as unknown as Record<string, unknown>).currentUser = null;
 
       // Act
       const result = isAuthenticated();

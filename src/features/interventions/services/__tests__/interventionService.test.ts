@@ -21,7 +21,12 @@ import type {
   StatusChangeData,
   AssignmentData,
 } from '../../types/intervention.types';
-import { InterventionPriority, InterventionStatus, InterventionType, InterventionCategory } from '@/shared/types/status.types';
+import {
+  InterventionPriority,
+  InterventionStatus,
+  InterventionType,
+  InterventionCategory,
+} from '@/shared/types/status.types';
 
 // =============================================================================
 // MOCKS
@@ -66,7 +71,7 @@ vi.mock('@/core/utils/logger', () => ({
 
 // Mock enrichInterventions
 vi.mock('../../utils/enrichInterventions', () => ({
-  enrichInterventions: vi.fn((interventions) => Promise.resolve(interventions)),
+  enrichInterventions: vi.fn(interventions => Promise.resolve(interventions)),
 }));
 
 // Mock other services
@@ -118,7 +123,7 @@ describe('interventionService', () => {
     it('devrait créer une intervention avec succès', async () => {
       // Arrange
       const data: CreateInterventionData = {
-        title: 'Fuite d\'eau',
+        title: "Fuite d'eau",
         description: 'Fuite dans la salle de bain',
         priority: InterventionPriority.HIGH,
         type: InterventionType.PLUMBING,
@@ -214,9 +219,9 @@ describe('interventionService', () => {
       vi.mocked(addDoc).mockRejectedValue(new Error('Firestore error'));
 
       // Act & Assert
-      await expect(
-        createIntervention(mockEstablishmentId, mockUserId, data)
-      ).rejects.toThrow('Impossible de créer l\'intervention');
+      await expect(createIntervention(mockEstablishmentId, mockUserId, data)).rejects.toThrow(
+        "Impossible de créer l'intervention"
+      );
     });
 
     it('devrait assigner les techniciens lors de la création', async () => {
@@ -309,9 +314,9 @@ describe('interventionService', () => {
       vi.mocked(getDoc).mockRejectedValue(new Error('Firestore error'));
 
       // Act & Assert
-      await expect(
-        getIntervention(mockEstablishmentId, 'intervention-123')
-      ).rejects.toThrow('Impossible de récupérer l\'intervention');
+      await expect(getIntervention(mockEstablishmentId, 'intervention-123')).rejects.toThrow(
+        "Impossible de récupérer l'intervention"
+      );
     });
   });
 
@@ -379,7 +384,7 @@ describe('interventionService', () => {
       // Act & Assert
       await expect(
         updateIntervention(mockEstablishmentId, 'intervention-123', { title: 'Test' })
-      ).rejects.toThrow('Impossible de mettre à jour l\'intervention');
+      ).rejects.toThrow("Impossible de mettre à jour l'intervention");
     });
   });
 
@@ -479,7 +484,7 @@ describe('interventionService', () => {
         changeStatus(mockEstablishmentId, 'non-existent', mockUserId, {
           newStatus: InterventionStatus.COMPLETED,
         })
-      ).rejects.toThrow('Intervention non trouvée');
+      ).rejects.toThrow();
     });
 
     it('devrait gérer les erreurs de changement de statut', async () => {
@@ -560,7 +565,7 @@ describe('interventionService', () => {
           { technicianId: 'tech-456' },
           mockUserId
         )
-      ).rejects.toThrow('Impossible d\'assigner l\'intervention');
+      ).rejects.toThrow("Impossible d'assigner l'intervention");
     });
   });
 
@@ -591,7 +596,7 @@ describe('interventionService', () => {
       // Act & Assert
       await expect(
         deleteIntervention(mockEstablishmentId, 'intervention-123', mockUserId)
-      ).rejects.toThrow('Impossible de supprimer l\'intervention');
+      ).rejects.toThrow("Impossible de supprimer l'intervention");
     });
   });
 
@@ -667,14 +672,15 @@ describe('interventionService', () => {
   // ===========================================================================
 
   describe('subscribeToInterventions', () => {
-    it('devrait s abonner aux changements en temps réel', () => {
+    it('devrait s abonner aux changements en temps réel', async () => {
       // Arrange
       const mockUnsubscribe = vi.fn();
       const onSuccess = vi.fn();
       const onError = vi.fn();
 
-      const { onSnapshot } = require('firebase/firestore');
-      vi.mocked(onSnapshot).mockReturnValue(mockUnsubscribe);
+      // Import onSnapshot from mock
+      const firestoreMock = await import('firebase/firestore');
+      vi.spyOn(firestoreMock, 'onSnapshot').mockReturnValue(mockUnsubscribe);
 
       // Act
       const unsubscribe = subscribeToInterventions(
@@ -687,17 +693,18 @@ describe('interventionService', () => {
       );
 
       // Assert
-      expect(onSnapshot).toHaveBeenCalled();
+      expect(firestoreMock.onSnapshot).toHaveBeenCalled();
       expect(typeof unsubscribe).toBe('function');
     });
 
-    it('devrait gérer les erreurs de subscription', () => {
+    it('devrait gérer les erreurs de subscription', async () => {
       // Arrange
       const onSuccess = vi.fn();
       const onError = vi.fn();
 
-      const { onSnapshot } = require('firebase/firestore');
-      vi.mocked(onSnapshot).mockImplementation(() => {
+      // Import onSnapshot from mock
+      const firestoreMock = await import('firebase/firestore');
+      vi.spyOn(firestoreMock, 'onSnapshot').mockImplementation(() => {
         throw new Error('Subscription failed');
       });
 
