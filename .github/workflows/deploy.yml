@@ -74,7 +74,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check Firebase secrets
+        id: check-secrets
+        run: |
+          if [ -z "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}" ]; then
+            echo "has_secrets=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Firebase secrets not configured. Skipping deployment."
+          else
+            echo "has_secrets=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy to Firebase Hosting
+        if: steps.check-secrets.outputs.has_secrets == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
         id: firebase-deploy
         with:
@@ -82,6 +93,24 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}
           projectId: ${{ secrets.PROD_FIREBASE_PROJECT_ID }}
           channelId: live
+
+      - name: Skip deployment notice
+        if: steps.check-secrets.outputs.has_secrets != 'true'
+        run: |
+          echo "=========================================="
+          echo "⚠️ DEPLOYMENT SKIPPED"
+          echo "=========================================="
+          echo ""
+          echo "Firebase secrets are not configured."
+          echo "Please configure the following secrets in GitHub:"
+          echo "  - FIREBASE_SERVICE_ACCOUNT_PROD"
+          echo "  - PROD_FIREBASE_PROJECT_ID"
+          echo "  - PROD_FIREBASE_API_KEY"
+          echo "  - PROD_FIREBASE_AUTH_DOMAIN"
+          echo "  - etc."
+          echo ""
+          echo "See: https://github.com/franckjack156-lang/GestiHotelV2/settings/secrets/actions"
+          echo "=========================================="
 
       - name: Get deployment info
         id: deployment-info
