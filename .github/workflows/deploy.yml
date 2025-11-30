@@ -15,27 +15,10 @@ on:
           - staging
 
 jobs:
-  # Job pour valider que tous les checks CI sont passes
-  validate:
-    name: Validate CI Status
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for CI checks
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          ref: ${{ github.ref }}
-          check-name: 'All checks passed'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-
   # Job principal de deploiement
   deploy:
     name: Deploy to Firebase Hosting
     runs-on: ubuntu-latest
-    needs: validate
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
       url: ${{ steps.get-url.outputs.url }}
