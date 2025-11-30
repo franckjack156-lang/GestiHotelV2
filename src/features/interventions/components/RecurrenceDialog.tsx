@@ -147,7 +147,10 @@ export const RecurrenceDialog = ({
           {/* Fréquence */}
           <div className="space-y-2">
             <Label htmlFor="frequency">Fréquence</Label>
-            <Select value={frequency} onValueChange={(value: RecurrenceFrequency) => setFrequency(value)}>
+            <Select
+              value={frequency}
+              onValueChange={(value: RecurrenceFrequency) => setFrequency(value)}
+            >
               <SelectTrigger id="frequency">
                 <SelectValue />
               </SelectTrigger>
@@ -164,9 +167,13 @@ export const RecurrenceDialog = ({
           <div className="space-y-2">
             <Label htmlFor="interval">
               Répéter tous les{' '}
-              {frequency === 'daily' ? 'jours' :
-               frequency === 'weekly' ? 'semaines' :
-               frequency === 'monthly' ? 'mois' : 'ans'}
+              {frequency === 'daily'
+                ? 'jours'
+                : frequency === 'weekly'
+                  ? 'semaines'
+                  : frequency === 'monthly'
+                    ? 'mois'
+                    : 'ans'}
             </Label>
             <Input
               id="interval"
@@ -174,7 +181,7 @@ export const RecurrenceDialog = ({
               min="1"
               max="365"
               value={interval}
-              onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
+              onChange={e => setInterval(parseInt(e.target.value) || 1)}
             />
           </div>
 
@@ -209,7 +216,7 @@ export const RecurrenceDialog = ({
                 min="1"
                 max="31"
                 value={dayOfMonth}
-                onChange={(e) => setDayOfMonth(parseInt(e.target.value) || 1)}
+                onChange={e => setDayOfMonth(parseInt(e.target.value) || 1)}
               />
             </div>
           )}
@@ -217,7 +224,10 @@ export const RecurrenceDialog = ({
           {/* Fin de la récurrence */}
           <div className="space-y-3">
             <Label>Fin de la récurrence</Label>
-            <RadioGroup value={endMode} onValueChange={(value: 'never' | 'count' | 'date') => setEndMode(value)}>
+            <RadioGroup
+              value={endMode}
+              onValueChange={(value: 'never' | 'count' | 'date') => setEndMode(value)}
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="never" id="end-never" />
                 <label htmlFor="end-never" className="text-sm cursor-pointer">
@@ -235,7 +245,7 @@ export const RecurrenceDialog = ({
                   min="1"
                   max="365"
                   value={count}
-                  onChange={(e) => {
+                  onChange={e => {
                     setCount(parseInt(e.target.value) || 1);
                     setEndMode('count');
                   }}
@@ -260,14 +270,16 @@ export const RecurrenceDialog = ({
                       className="justify-start text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, 'dd MMMM yyyy', { locale: fr }) : 'Choisir une date'}
+                      {endDate
+                        ? format(endDate, 'dd MMMM yyyy', { locale: fr })
+                        : 'Choisir une date'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={endDate}
-                      onSelect={(date) => {
+                      onSelect={date => {
                         setEndDate(date);
                         setEndMode('date');
                       }}
@@ -281,12 +293,8 @@ export const RecurrenceDialog = ({
 
           {/* Aperçu */}
           <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">
-              Aperçu
-            </p>
-            <p className="text-sm text-blue-800 dark:text-blue-400">
-              {description}
-            </p>
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-1">Aperçu</p>
+            <p className="text-sm text-blue-800 dark:text-blue-400">{description}</p>
           </div>
 
           {/* Erreurs */}
@@ -318,9 +326,7 @@ export const RecurrenceDialog = ({
               <Button variant="outline" onClick={handleCancel}>
                 Annuler
               </Button>
-              <Button onClick={handleSave}>
-                Enregistrer
-              </Button>
+              <Button onClick={handleSave}>Enregistrer</Button>
             </div>
           </div>
         </DialogFooter>

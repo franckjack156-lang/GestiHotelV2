@@ -342,7 +342,9 @@ export const AdminTicketsPage = () => {
                         </TableCell>
                       )}
                       <TableCell>
-                        <div className={`flex items-center gap-2 ${REQUEST_TYPE_COLORS[ticket.type]}`}>
+                        <div
+                          className={`flex items-center gap-2 ${REQUEST_TYPE_COLORS[ticket.type]}`}
+                        >
                           <Icon className="h-4 w-4" />
                           <span className="text-xs">{REQUEST_TYPE_LABELS[ticket.type]}</span>
                         </div>

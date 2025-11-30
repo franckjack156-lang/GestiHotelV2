@@ -144,11 +144,18 @@ export const RoomDetailPage = () => {
       {/* Header - Responsive optimisé */}
       <div className="flex flex-col gap-3 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/app/rooms')} className="flex-shrink-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/app/rooms')}
+            className="flex-shrink-0"
+          >
             <ArrowLeft size={16} />
           </Button>
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">Chambre {room.number}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
+              Chambre {room.number}
+            </h1>
             <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-0.5 truncate">
               {ROOM_TYPES[room.type]} - Étage {room.floor}
             </p>
@@ -168,12 +175,22 @@ export const RoomDetailPage = () => {
               }}
             />
           )}
-          <Button variant="outline" onClick={() => navigate(`/app/rooms/${room.id}/edit`)} size="sm" className="flex-1 sm:flex-initial">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/app/rooms/${room.id}/edit`)}
+            size="sm"
+            className="flex-1 sm:flex-initial"
+          >
             <Edit size={16} className="sm:mr-2" />
             <span className="hidden sm:inline">Modifier</span>
           </Button>
           {room.isBlocked ? (
-            <Button variant="outline" onClick={handleUnblock} className="text-green-600 flex-1 sm:flex-initial" size="sm">
+            <Button
+              variant="outline"
+              onClick={handleUnblock}
+              className="text-green-600 flex-1 sm:flex-initial"
+              size="sm"
+            >
               <Unlock size={16} className="sm:mr-2" />
               <span className="hidden sm:inline">Débloquer</span>
             </Button>
@@ -188,7 +205,12 @@ export const RoomDetailPage = () => {
               <span className="hidden sm:inline">Bloquer</span>
             </Button>
           )}
-          <Button variant="outline" onClick={handleDelete} className="text-red-600 hidden sm:flex" size="sm">
+          <Button
+            variant="outline"
+            onClick={handleDelete}
+            className="text-red-600 hidden sm:flex"
+            size="sm"
+          >
             <Trash2 size={16} className="mr-2" />
             Supprimer
           </Button>
@@ -381,13 +403,21 @@ export const RoomDetailPage = () => {
           <Tabs defaultValue="blockages" className="w-full">
             <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 scrollbar-hide">
               <TabsList className="inline-flex w-max sm:grid sm:w-full sm:grid-cols-2">
-                <TabsTrigger value="blockages" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                <TabsTrigger
+                  value="blockages"
+                  className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
+                >
                   <Lock className="h-4 w-4 flex-shrink-0" />
                   <span className="text-xs sm:text-sm">Blocages ({blockageHistory.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="interventions" className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                <TabsTrigger
+                  value="interventions"
+                  className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap"
+                >
                   <Wrench className="h-4 w-4 flex-shrink-0" />
-                  <span className="text-xs sm:text-sm">Interventions ({roomInterventions.length})</span>
+                  <span className="text-xs sm:text-sm">
+                    Interventions ({roomInterventions.length})
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </div>

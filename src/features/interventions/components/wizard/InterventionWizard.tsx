@@ -123,7 +123,7 @@ export const InterventionWizard = ({ onCancel, onSuccess }: InterventionWizardPr
       }
     } catch (error) {
       logger.error('Erreur lors de la création:', error);
-      toast.error('Erreur lors de la création de l\'intervention');
+      toast.error("Erreur lors de la création de l'intervention");
     } finally {
       setIsSubmitting(false);
     }

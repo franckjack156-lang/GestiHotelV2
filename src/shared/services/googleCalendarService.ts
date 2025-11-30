@@ -71,7 +71,9 @@ const createOAuth2Client = () => {
   const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
 
   if (!clientId || !clientSecret || !redirectUri) {
-    throw new Error('Configuration Google OAuth2 manquante. Vérifiez les variables d\'environnement.');
+    throw new Error(
+      "Configuration Google OAuth2 manquante. Vérifiez les variables d'environnement."
+    );
   }
 
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
@@ -119,7 +121,7 @@ export const getTokensFromCode = async (
   });
 
   if (!tokens.access_token) {
-    throw new Error('Impossible d\'obtenir l\'access_token');
+    throw new Error("Impossible d'obtenir l'access_token");
   }
 
   return {
@@ -218,7 +220,7 @@ export const createCalendarEvent = async (
   });
 
   if (!response.data.id) {
-    throw new Error('Impossible de créer l\'événement');
+    throw new Error("Impossible de créer l'événement");
   }
 
   return response.data.id;

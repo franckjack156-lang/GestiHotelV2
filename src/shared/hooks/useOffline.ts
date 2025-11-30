@@ -89,12 +89,9 @@ export const useOffline = (options: UseOfflineOptions = {}) => {
     onSync,
   } = options;
 
-  const [status, setStatus] = useState<ConnectionStatus>(
-    navigator.onLine ? 'online' : 'offline'
-  );
-  const [pendingOperations, setPendingOperations] = useState<PendingOperation[]>(
-    loadPendingOperations
-  );
+  const [status, setStatus] = useState<ConnectionStatus>(navigator.onLine ? 'online' : 'offline');
+  const [pendingOperations, setPendingOperations] =
+    useState<PendingOperation[]>(loadPendingOperations);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
@@ -129,12 +126,7 @@ export const useOffline = (options: UseOfflineOptions = {}) => {
    * Ajouter une opération en attente
    */
   const addPendingOperation = useCallback(
-    (
-      type: PendingOperation['type'],
-      collection: string,
-      data: unknown,
-      documentId?: string
-    ) => {
+    (type: PendingOperation['type'], collection: string, data: unknown, documentId?: string) => {
       const operation: PendingOperation = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type,

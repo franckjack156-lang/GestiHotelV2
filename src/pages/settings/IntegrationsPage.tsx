@@ -1021,9 +1021,7 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
       // Pour l'instant, on met à jour localement
       setAutoSyncEnabled(enabled);
       toast.success(
-        enabled
-          ? 'Synchronisation automatique activée'
-          : 'Synchronisation automatique désactivée'
+        enabled ? 'Synchronisation automatique activée' : 'Synchronisation automatique désactivée'
       );
     } catch (error: unknown) {
       console.error('Erreur toggle auto sync:', error);
@@ -1056,8 +1054,8 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
         <Calendar className="h-4 w-4" />
         <AlertDescription>
           Connectez votre compte Google pour synchroniser automatiquement vos interventions avec
-          Google Calendar. Chaque intervention planifiée apparaîtra dans votre calendrier avec
-          tous les détails.
+          Google Calendar. Chaque intervention planifiée apparaîtra dans votre calendrier avec tous
+          les détails.
         </AlertDescription>
       </Alert>
 
@@ -1095,11 +1093,7 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
               </div>
               <div>
                 {isConnected ? (
-                  <Button
-                    variant="destructive"
-                    onClick={handleDisconnect}
-                    disabled={disconnecting}
-                  >
+                  <Button variant="destructive" onClick={handleDisconnect} disabled={disconnecting}>
                     {disconnecting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1142,10 +1136,7 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
                         Synchroniser automatiquement les nouvelles interventions
                       </p>
                     </div>
-                    <Switch
-                      checked={autoSyncEnabled}
-                      onCheckedChange={handleToggleAutoSync}
-                    />
+                    <Switch checked={autoSyncEnabled} onCheckedChange={handleToggleAutoSync} />
                   </div>
 
                   <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
@@ -1171,8 +1162,7 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
                       estimée
                     </li>
                     <li>
-                      Les modifications d'une intervention mettent à jour l'événement
-                      correspondant
+                      Les modifications d'une intervention mettent à jour l'événement correspondant
                     </li>
                     <li>La suppression d'une intervention supprime l'événement du calendrier</li>
                     <li>
@@ -1196,8 +1186,8 @@ const GoogleCalendarTab = ({ establishmentId, userId }: TabContentProps) => {
               <h4 className="font-medium text-lg">Connectez Google Calendar</h4>
               <p className="text-muted-foreground text-sm">
                 Connectez votre compte Google pour synchroniser automatiquement toutes vos
-                interventions planifiées avec Google Calendar. Vous pourrez voir vos
-                interventions sur tous vos appareils et recevoir des rappels.
+                interventions planifiées avec Google Calendar. Vous pourrez voir vos interventions
+                sur tous vos appareils et recevoir des rappels.
               </p>
               <Button onClick={handleConnect} disabled={connecting} size="lg">
                 {connecting ? (

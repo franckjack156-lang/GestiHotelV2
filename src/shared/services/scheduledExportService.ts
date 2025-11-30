@@ -291,9 +291,7 @@ export const deleteScheduledExport = async (
 /**
  * Récupérer tous les exports programmés
  */
-export const getScheduledExports = async (
-  establishmentId: string
-): Promise<ScheduledExport[]> => {
+export const getScheduledExports = async (establishmentId: string): Promise<ScheduledExport[]> => {
   try {
     const collectionRef = getExportsCollection(establishmentId);
     const snapshot = await getDocs(collectionRef);
@@ -334,18 +332,12 @@ export const getScheduledExportById = async (
 /**
  * Récupérer les exports à exécuter maintenant
  */
-export const getPendingExports = async (
-  establishmentId: string
-): Promise<ScheduledExport[]> => {
+export const getPendingExports = async (establishmentId: string): Promise<ScheduledExport[]> => {
   try {
     const collectionRef = getExportsCollection(establishmentId);
     const now = Timestamp.now();
 
-    const q = query(
-      collectionRef,
-      where('isActive', '==', true),
-      where('nextRunAt', '<=', now)
-    );
+    const q = query(collectionRef, where('isActive', '==', true), where('nextRunAt', '<=', now));
 
     const snapshot = await getDocs(q);
 
@@ -470,7 +462,9 @@ export const generateExportFile = async (
       const csvContent = [
         headers.join(','),
         ...(data as object[]).map(row =>
-          headers.map(h => `"${String((row as Record<string, unknown>)[h] || '').replace(/"/g, '""')}"`).join(',')
+          headers
+            .map(h => `"${String((row as Record<string, unknown>)[h] || '').replace(/"/g, '""')}"`)
+            .join(',')
         ),
       ].join('\n');
       blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -533,14 +527,15 @@ export const runScheduledExport = async (
     await updateExportExecution(establishmentId, executionId, execution);
 
     // Mettre à jour l'export programmé
-    const nextRunAt = exportConfig.frequency !== 'once'
-      ? calculateNextRunDate(
-          exportConfig.frequency,
-          exportConfig.scheduledTime,
-          exportConfig.scheduledDayOfWeek,
-          exportConfig.scheduledDayOfMonth
-        )
-      : null;
+    const nextRunAt =
+      exportConfig.frequency !== 'once'
+        ? calculateNextRunDate(
+            exportConfig.frequency,
+            exportConfig.scheduledTime,
+            exportConfig.scheduledDayOfWeek,
+            exportConfig.scheduledDayOfMonth
+          )
+        : null;
 
     await updateDoc(doc(getExportsCollection(establishmentId), exportId), {
       lastRunAt: serverTimestamp(),
@@ -615,7 +610,7 @@ export const DATA_TYPE_LABELS: Record<ExportDataType, string> = {
   rooms: 'Chambres',
   analytics: 'Analytics',
   sla_report: 'Rapport SLA',
-  activity_log: 'Journal d\'activité',
+  activity_log: "Journal d'activité",
 };
 
 export const FORMAT_LABELS: Record<ExportFormat, string> = {

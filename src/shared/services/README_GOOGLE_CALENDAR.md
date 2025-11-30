@@ -75,12 +75,7 @@ const eventId = await syncInterventionToCalendar(
 ```typescript
 import { updateInterventionInCalendar } from '@/shared/services/googleCalendarService';
 
-await updateInterventionInCalendar(
-  tokens,
-  intervention,
-  googleEventId,
-  'primary'
-);
+await updateInterventionInCalendar(tokens, intervention, googleEventId, 'primary');
 ```
 
 #### Supprimer un événement
@@ -88,11 +83,7 @@ await updateInterventionInCalendar(
 ```typescript
 import { deleteInterventionFromCalendar } from '@/shared/services/googleCalendarService';
 
-await deleteInterventionFromCalendar(
-  tokens,
-  googleEventId,
-  'primary'
-);
+await deleteInterventionFromCalendar(tokens, googleEventId, 'primary');
 ```
 
 ### 4. Cloud Functions
@@ -107,7 +98,7 @@ const syncIntervention = httpsCallable(functions, 'syncInterventionToGoogleCalen
 
 const result = await syncIntervention({
   interventionId: 'intervention-123',
-  establishmentId: 'establishment-456'
+  establishmentId: 'establishment-456',
 });
 
 console.log(result.data.eventId); // ID de l'événement Google Calendar
@@ -226,7 +217,7 @@ try {
 } catch (error) {
   if (error.message.includes('invalid_grant')) {
     // Code d'autorisation expiré ou invalide
-    console.error('Le code d\'autorisation a expiré');
+    console.error("Le code d'autorisation a expiré");
   } else if (error.message.includes('redirect_uri_mismatch')) {
     // L'URI de redirection ne correspond pas
     console.error('Configuration OAuth incorrecte');
@@ -282,7 +273,7 @@ describe('Google Calendar Service', () => {
     it('devrait retourner true si le token est expiré', () => {
       const tokens = {
         access_token: 'token',
-        expiry_date: Date.now() - 10000 // Expiré il y a 10 secondes
+        expiry_date: Date.now() - 10000, // Expiré il y a 10 secondes
       };
       expect(isTokenExpired(tokens)).toBe(true);
     });
@@ -290,7 +281,7 @@ describe('Google Calendar Service', () => {
     it('devrait retourner false si le token est valide', () => {
       const tokens = {
         access_token: 'token',
-        expiry_date: Date.now() + 10000 // Expire dans 10 secondes
+        expiry_date: Date.now() + 10000, // Expire dans 10 secondes
       };
       expect(isTokenExpired(tokens)).toBe(false);
     });
@@ -303,7 +294,7 @@ describe('Google Calendar Service', () => {
 ```typescript
 // Tester le flux OAuth complet
 describe('OAuth Flow', () => {
-  it('devrait générer une URL d\'autorisation valide', () => {
+  it("devrait générer une URL d'autorisation valide", () => {
     const authUrl = getAuthUrl('http://localhost/callback', 'state123');
     expect(authUrl).toContain('accounts.google.com');
     expect(authUrl).toContain('state=state123');
@@ -316,8 +307,8 @@ describe('OAuth Flow', () => {
       json: async () => ({
         access_token: 'access',
         refresh_token: 'refresh',
-        expires_in: 3600
-      })
+        expires_in: 3600,
+      }),
     });
 
     const tokens = await getTokensFromCode('code123', 'http://localhost/callback');
@@ -332,6 +323,7 @@ describe('OAuth Flow', () => {
 ### Problème : "Configuration Google OAuth manquante"
 
 **Solution** : Vérifier que toutes les variables d'environnement sont définies :
+
 - `VITE_GOOGLE_CLIENT_ID`
 - `VITE_GOOGLE_CLIENT_SECRET`
 - `VITE_GOOGLE_REDIRECT_URI`
@@ -347,6 +339,7 @@ describe('OAuth Flow', () => {
 **Cause** : L'URI de redirection ne correspond pas à celle configurée dans Google Cloud Console
 
 **Solution** :
+
 1. Vérifier la configuration dans Google Cloud Console
 2. S'assurer que l'URI inclut le protocole (https://)
 3. Vérifier qu'il n'y a pas de slash final inutile

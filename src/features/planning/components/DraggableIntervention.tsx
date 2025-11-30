@@ -6,11 +6,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { GripVertical, Clock, Users, DoorClosed, Repeat } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/shared/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip';
 import type { Intervention } from '@/features/interventions/types/intervention.types';
 
 interface DraggableInterventionProps {

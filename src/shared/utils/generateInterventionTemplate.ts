@@ -14,16 +14,16 @@ import * as XLSX from 'xlsx';
  */
 interface InterventionTemplateRow {
   'Titre ⚠️': string;
-  'Description': string;
+  Description: string;
   'Type ⚠️': string;
-  'Catégorie': string;
+  Catégorie: string;
   'Priorité ⚠️': string;
-  'Localisation': string;
-  'Chambre': string;
-  'Étage': string;
-  'Bâtiment': string;
-  'Urgent': string;
-  'Bloquant': string;
+  Localisation: string;
+  Chambre: string;
+  Étage: string;
+  Bâtiment: string;
+  Urgent: string;
+  Bloquant: string;
   'Notes Internes': string;
   'Référence Externe': string;
 }
@@ -34,76 +34,76 @@ interface InterventionTemplateRow {
 const exampleData: InterventionTemplateRow[] = [
   {
     'Titre ⚠️': 'Fuite robinet chambre 101',
-    'Description': "L'eau fuit du robinet de la douche depuis hier",
+    Description: "L'eau fuit du robinet de la douche depuis hier",
     'Type ⚠️': 'Plomberie',
-    'Catégorie': 'Réparation',
+    Catégorie: 'Réparation',
     'Priorité ⚠️': 'urgente',
-    'Localisation': 'Salle de bain',
-    'Chambre': '101',
-    'Étage': '1',
-    'Bâtiment': 'A',
-    'Urgent': 'oui',
-    'Bloquant': 'oui',
+    Localisation: 'Salle de bain',
+    Chambre: '101',
+    Étage: '1',
+    Bâtiment: 'A',
+    Urgent: 'oui',
+    Bloquant: 'oui',
     'Notes Internes': 'Client évacué temporairement',
     'Référence Externe': 'PMS-12345',
   },
   {
     'Titre ⚠️': 'Ampoule grillée couloir',
-    'Description': 'Ampoule du couloir étage 2 ne fonctionne plus',
+    Description: 'Ampoule du couloir étage 2 ne fonctionne plus',
     'Type ⚠️': 'Électricité',
-    'Catégorie': 'Maintenance',
+    Catégorie: 'Maintenance',
     'Priorité ⚠️': 'basse',
-    'Localisation': 'Couloir étage 2',
-    'Chambre': '',
-    'Étage': '2',
-    'Bâtiment': 'A',
-    'Urgent': 'non',
-    'Bloquant': 'non',
+    Localisation: 'Couloir étage 2',
+    Chambre: '',
+    Étage: '2',
+    Bâtiment: 'A',
+    Urgent: 'non',
+    Bloquant: 'non',
     'Notes Internes': '',
     'Référence Externe': '',
   },
   {
     'Titre ⚠️': 'Climatisation en panne',
-    'Description': 'La climatisation ne refroidit plus correctement',
+    Description: 'La climatisation ne refroidit plus correctement',
     'Type ⚠️': 'Climatisation',
-    'Catégorie': 'Réparation',
+    Catégorie: 'Réparation',
     'Priorité ⚠️': 'haute',
-    'Localisation': 'Chambre principale',
-    'Chambre': '205',
-    'Étage': '2',
-    'Bâtiment': 'B',
-    'Urgent': 'no',
-    'Bloquant': 'yes',
+    Localisation: 'Chambre principale',
+    Chambre: '205',
+    Étage: '2',
+    Bâtiment: 'B',
+    Urgent: 'no',
+    Bloquant: 'yes',
     'Notes Internes': '',
     'Référence Externe': 'TICKET-456',
   },
   {
     'Titre ⚠️': 'Peinture écaillée',
-    'Description': 'Mur de la chambre présente des écailles de peinture',
+    Description: 'Mur de la chambre présente des écailles de peinture',
     'Type ⚠️': 'Peinture',
-    'Catégorie': 'Maintenance préventive',
+    Catégorie: 'Maintenance préventive',
     'Priorité ⚠️': 'normale',
-    'Localisation': 'Chambre',
-    'Chambre': '310',
-    'Étage': '3',
-    'Bâtiment': 'A',
-    'Urgent': 'non',
-    'Bloquant': 'non',
+    Localisation: 'Chambre',
+    Chambre: '310',
+    Étage: '3',
+    Bâtiment: 'A',
+    Urgent: 'non',
+    Bloquant: 'non',
     'Notes Internes': '',
     'Référence Externe': '',
   },
   {
     'Titre ⚠️': 'Serrure bloquée',
-    'Description': 'La serrure de la porte est bloquée, impossible de fermer à clé',
+    Description: 'La serrure de la porte est bloquée, impossible de fermer à clé',
     'Type ⚠️': 'Serrurerie',
-    'Catégorie': 'Réparation',
+    Catégorie: 'Réparation',
     'Priorité ⚠️': 'haute',
-    'Localisation': 'Porte d\'entrée',
-    'Chambre': '412',
-    'Étage': '4',
-    'Bâtiment': 'B',
-    'Urgent': '1',
-    'Bloquant': '0',
+    Localisation: "Porte d'entrée",
+    Chambre: '412',
+    Étage: '4',
+    Bâtiment: 'B',
+    Urgent: '1',
+    Bloquant: '0',
     'Notes Internes': 'Client signale le problème depuis 2 jours',
     'Référence Externe': '',
   },
@@ -115,16 +115,16 @@ const exampleData: InterventionTemplateRow[] = [
 export const generateBlankTemplate = (): ArrayBuffer => {
   const blankRow: InterventionTemplateRow = {
     'Titre ⚠️': '',
-    'Description': '',
+    Description: '',
     'Type ⚠️': '',
-    'Catégorie': '',
+    Catégorie: '',
     'Priorité ⚠️': '',
-    'Localisation': '',
-    'Chambre': '',
-    'Étage': '',
-    'Bâtiment': '',
-    'Urgent': '',
-    'Bloquant': '',
+    Localisation: '',
+    Chambre: '',
+    Étage: '',
+    Bâtiment: '',
+    Urgent: '',
+    Bloquant: '',
     'Notes Internes': '',
     'Référence Externe': '',
   };
@@ -153,7 +153,7 @@ export const generateExampleTemplate = (): ArrayBuffer => {
     { wch: 12 }, // Priorité
     { wch: 25 }, // Localisation
     { wch: 10 }, // Chambre
-    { wch: 8 },  // Étage
+    { wch: 8 }, // Étage
     { wch: 12 }, // Bâtiment
     { wch: 10 }, // Urgent
     { wch: 10 }, // Bloquant
@@ -165,12 +165,12 @@ export const generateExampleTemplate = (): ArrayBuffer => {
 
   // Ajouter une feuille d'instructions
   const instructionsData = [
-    ['GUIDE D\'UTILISATION DU TEMPLATE INTERVENTIONS'],
+    ["GUIDE D'UTILISATION DU TEMPLATE INTERVENTIONS"],
     [''],
     ['CHAMPS OBLIGATOIRES ⚠️'],
     ['Ces champs DOIVENT être remplis pour chaque ligne :'],
-    ['1. Titre ⚠️', 'Titre de l\'intervention (3-100 caractères)'],
-    ['2. Type ⚠️', 'Type d\'intervention selon vos listes de référence'],
+    ['1. Titre ⚠️', "Titre de l'intervention (3-100 caractères)"],
+    ['2. Type ⚠️', "Type d'intervention selon vos listes de référence"],
     ['3. Priorité ⚠️', 'basse, normale, haute ou urgente'],
     [''],
     ['CHAMPS OPTIONNELS'],
@@ -178,7 +178,7 @@ export const generateExampleTemplate = (): ArrayBuffer => {
     ['Catégorie', 'Catégorie selon vos listes de référence'],
     ['Localisation', 'Description du lieu (max 200 caractères)'],
     ['Chambre', 'Numéro de chambre (max 20 caractères)'],
-    ['Étage', 'Numéro d\'étage (-5 à 200)'],
+    ['Étage', "Numéro d'étage (-5 à 200)"],
     ['Bâtiment', 'Nom du bâtiment (max 50 caractères)'],
     ['Urgent', 'oui, non, yes, no, 1, 0, y, n, o'],
     ['Bloquant', 'oui, non, yes, no, 1, 0, y, n, o'],
@@ -197,7 +197,7 @@ export const generateExampleTemplate = (): ArrayBuffer => {
     ['Par défaut', 'Vide = NON'],
     [''],
     ['CONSEILS'],
-    ['1. Testez avec 5-10 lignes avant d\'importer en masse'],
+    ["1. Testez avec 5-10 lignes avant d'importer en masse"],
     ['2. Vérifiez les valeurs Type et Catégorie dans vos listes de référence'],
     ['3. Encodez le fichier en UTF-8 pour les accents'],
     ['4. Maximum 1000 lignes par import'],
@@ -212,7 +212,7 @@ export const generateExampleTemplate = (): ArrayBuffer => {
     ['Étage', 'Étage, Floor, Niveau'],
     ['Bâtiment', 'Bâtiment, Building'],
     [''],
-    ['Pour plus d\'informations, consultez TEMPLATE_IMPORT_INTERVENTIONS.md'],
+    ["Pour plus d'informations, consultez TEMPLATE_IMPORT_INTERVENTIONS.md"],
   ];
 
   const wsInstructions = XLSX.utils.aoa_to_sheet(instructionsData);

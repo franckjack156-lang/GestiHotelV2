@@ -62,7 +62,7 @@ export const ThemeColorEditor = ({
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/json';
-    input.onchange = async (e) => {
+    input.onchange = async e => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
 
@@ -96,14 +96,14 @@ export const ThemeColorEditor = ({
             const input = document.createElement('input');
             input.type = 'color';
             input.value = value;
-            input.onchange = (e) => onChange((e.target as HTMLInputElement).value);
+            input.onchange = e => onChange((e.target as HTMLInputElement).value);
             input.click();
           }}
         />
         <Input
           type="text"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           className="flex-1 text-sm"
           placeholder="#000000"
         />
@@ -178,47 +178,47 @@ export const ThemeColorEditor = ({
             <ColorInput
               label="Couleur primaire"
               value={colors.primary}
-              onChange={(value) => updateColor('primary', value)}
+              onChange={value => updateColor('primary', value)}
             />
             <ColorInput
               label="Couleur secondaire"
               value={colors.secondary}
-              onChange={(value) => updateColor('secondary', value)}
+              onChange={value => updateColor('secondary', value)}
             />
             <ColorInput
               label="Couleur d'accent"
               value={colors.accent}
-              onChange={(value) => updateColor('accent', value)}
+              onChange={value => updateColor('accent', value)}
             />
             <ColorInput
               label="Arrière-plan"
               value={colors.background}
-              onChange={(value) => updateColor('background', value)}
+              onChange={value => updateColor('background', value)}
             />
             <ColorInput
               label="Surface"
               value={colors.surface}
-              onChange={(value) => updateColor('surface', value)}
+              onChange={value => updateColor('surface', value)}
             />
             <ColorInput
               label="Texte principal"
               value={colors.textPrimary}
-              onChange={(value) => updateColor('textPrimary', value)}
+              onChange={value => updateColor('textPrimary', value)}
             />
             <ColorInput
               label="Texte secondaire"
               value={colors.textSecondary}
-              onChange={(value) => updateColor('textSecondary', value)}
+              onChange={value => updateColor('textSecondary', value)}
             />
             <ColorInput
               label="Bordure"
               value={colors.border}
-              onChange={(value) => updateColor('border', value)}
+              onChange={value => updateColor('border', value)}
             />
             <ColorInput
               label="Séparateur"
               value={colors.divider}
-              onChange={(value) => updateColor('divider', value)}
+              onChange={value => updateColor('divider', value)}
             />
           </>
         )}
@@ -228,22 +228,22 @@ export const ThemeColorEditor = ({
             <ColorInput
               label="Succès"
               value={colors.success}
-              onChange={(value) => updateColor('success', value)}
+              onChange={value => updateColor('success', value)}
             />
             <ColorInput
               label="Avertissement"
               value={colors.warning}
-              onChange={(value) => updateColor('warning', value)}
+              onChange={value => updateColor('warning', value)}
             />
             <ColorInput
               label="Erreur"
               value={colors.error}
-              onChange={(value) => updateColor('error', value)}
+              onChange={value => updateColor('error', value)}
             />
             <ColorInput
               label="Information"
               value={colors.info}
-              onChange={(value) => updateColor('info', value)}
+              onChange={value => updateColor('info', value)}
             />
           </>
         )}
@@ -253,32 +253,32 @@ export const ThemeColorEditor = ({
             <ColorInput
               label="Graphique - Couleur 1"
               value={colors.chart.color1}
-              onChange={(value) => updateColor('chart.color1', value)}
+              onChange={value => updateColor('chart.color1', value)}
             />
             <ColorInput
               label="Graphique - Couleur 2"
               value={colors.chart.color2}
-              onChange={(value) => updateColor('chart.color2', value)}
+              onChange={value => updateColor('chart.color2', value)}
             />
             <ColorInput
               label="Graphique - Couleur 3"
               value={colors.chart.color3}
-              onChange={(value) => updateColor('chart.color3', value)}
+              onChange={value => updateColor('chart.color3', value)}
             />
             <ColorInput
               label="Graphique - Couleur 4"
               value={colors.chart.color4}
-              onChange={(value) => updateColor('chart.color4', value)}
+              onChange={value => updateColor('chart.color4', value)}
             />
             <ColorInput
               label="Graphique - Couleur 5"
               value={colors.chart.color5}
-              onChange={(value) => updateColor('chart.color5', value)}
+              onChange={value => updateColor('chart.color5', value)}
             />
             <ColorInput
               label="Graphique - Couleur 6"
               value={colors.chart.color6}
-              onChange={(value) => updateColor('chart.color6', value)}
+              onChange={value => updateColor('chart.color6', value)}
             />
           </>
         )}
@@ -306,11 +306,17 @@ export const ThemeColorEditor = ({
                   <p className="text-xs text-gray-600 text-center">Accent</p>
                 </div>
                 <div className="space-y-1">
-                  <div className="h-12 rounded border" style={{ backgroundColor: colors.background }} />
+                  <div
+                    className="h-12 rounded border"
+                    style={{ backgroundColor: colors.background }}
+                  />
                   <p className="text-xs text-gray-600 text-center">Fond</p>
                 </div>
                 <div className="space-y-1">
-                  <div className="h-12 rounded border" style={{ backgroundColor: colors.surface }} />
+                  <div
+                    className="h-12 rounded border"
+                    style={{ backgroundColor: colors.surface }}
+                  />
                   <p className="text-xs text-gray-600 text-center">Surface</p>
                 </div>
                 <div className="space-y-1">

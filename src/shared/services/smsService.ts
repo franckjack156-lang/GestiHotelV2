@@ -81,10 +81,10 @@ export const sendSMS = async (
       throw new Error(result.data.error || 'Erreur inconnue');
     }
   } catch (error: any) {
-    logger.error('[SMS] Erreur lors de l\'envoi:', error);
+    logger.error("[SMS] Erreur lors de l'envoi:", error);
     return {
       success: false,
-      error: error.message || 'Impossible d\'envoyer le SMS',
+      error: error.message || "Impossible d'envoyer le SMS",
     };
   }
 };

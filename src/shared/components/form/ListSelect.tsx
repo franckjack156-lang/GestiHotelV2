@@ -225,7 +225,11 @@ export const ListSelect = ({
           {listConfig?.name && <SelectLabel>{listConfig.name}</SelectLabel>}
           <SelectGroup>
             {options.map(option => (
-              <SelectItem key={(option as any).value} value={(option as any).value} className="cursor-pointer">
+              <SelectItem
+                key={(option as any).value}
+                value={(option as any).value}
+                className="cursor-pointer"
+              >
                 <div className="flex items-center justify-between w-full">
                   <div className="flex items-center">
                     {showIcons && getIcon(option.icon)}

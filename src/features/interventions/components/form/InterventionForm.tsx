@@ -6,7 +6,15 @@
 
 import { useState, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Loader2, Calendar as CalendarIcon, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import {
+  Upload,
+  X,
+  Loader2,
+  Calendar as CalendarIcon,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+} from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
@@ -183,9 +191,7 @@ const InterventionFormComponent = ({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">
-              Description
-            </Label>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
               placeholder="Décrivez le problème en détail..."
@@ -497,7 +503,8 @@ const InterventionFormComponent = ({
                   planifiées
                 </p>
                 <p>
-                  Charge moyenne: <span className="font-medium">{stats.averageLoad.toFixed(1)}</span>{' '}
+                  Charge moyenne:{' '}
+                  <span className="font-medium">{stats.averageLoad.toFixed(1)}</span>{' '}
                   interventions/jour
                 </p>
                 {stats.maxLoad > 0 && (
@@ -520,9 +527,7 @@ const InterventionFormComponent = ({
         <CardContent className="space-y-4">
           {/* Lieu */}
           <div className="space-y-2">
-            <Label htmlFor="location">
-              Lieu
-            </Label>
+            <Label htmlFor="location">Lieu</Label>
             <Input
               id="location"
               placeholder="Ex: Salle de bain principale"
@@ -570,7 +575,8 @@ const InterventionFormComponent = ({
           {!watch('location') && !watch('roomNumber') && !watch('floor') && !watch('building') && (
             <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
               <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                ⚠️ Aucune information de localisation fournie. Il est recommandé de renseigner au moins un champ pour situer l'intervention.
+                ⚠️ Aucune information de localisation fournie. Il est recommandé de renseigner au
+                moins un champ pour situer l'intervention.
               </p>
             </div>
           )}

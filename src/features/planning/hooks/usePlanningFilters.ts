@@ -32,12 +32,12 @@ export const usePlanningFilters = (options: UsePlanningFiltersOptions = {}) => {
   /**
    * Met à jour un filtre spécifique
    */
-  const updateFilter = useCallback(<K extends keyof PlanningFilters>(
-    key: K,
-    value: PlanningFilters[K]
-  ) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  }, []);
+  const updateFilter = useCallback(
+    <K extends keyof PlanningFilters>(key: K, value: PlanningFilters[K]) => {
+      setFilters(prev => ({ ...prev, [key]: value }));
+    },
+    []
+  );
 
   /**
    * Réinitialise tous les filtres

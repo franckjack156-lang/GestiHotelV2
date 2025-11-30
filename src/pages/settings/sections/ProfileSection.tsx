@@ -124,7 +124,9 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
               <div className="p-1.5 sm:p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-sm flex-shrink-0">
                 <UserCircle className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
               </div>
-              <CardTitle className="text-lg sm:text-2xl truncate">Informations personnelles</CardTitle>
+              <CardTitle className="text-lg sm:text-2xl truncate">
+                Informations personnelles
+              </CardTitle>
             </div>
             <CardDescription className="text-sm sm:text-base">
               Gérez vos informations de profil et vos coordonnées
@@ -265,7 +267,9 @@ export const ProfileSection = ({ user }: ProfileSectionProps) => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 pt-4 sm:pt-6 border-t">
             <p className="text-xs sm:text-sm text-muted-foreground flex items-center gap-2">
               <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Les modifications seront visibles immédiatement</span>
+              <span className="hidden sm:inline">
+                Les modifications seront visibles immédiatement
+              </span>
               <span className="sm:hidden">Visibles immédiatement</span>
             </p>
             <Button

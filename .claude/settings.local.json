@@ -113,7 +113,8 @@
       "Bash(node fix-ts-errors.js:*)",
       "Bash(node:*)",
       "Bash(timeout 120 npx tsc:*)",
-      "Bash(git stash pop:*)"
+      "Bash(git stash pop:*)",
+      "Bash(gh run list:*)"
     ],
     "deny": [],
     "ask": []

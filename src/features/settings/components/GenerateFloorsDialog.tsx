@@ -108,7 +108,7 @@ export const GenerateFloorsDialog = ({
 
   const handleGenerate = async () => {
     if (totalFloors === 0) {
-      setError('Veuillez indiquer le nombre d\'étages');
+      setError("Veuillez indiquer le nombre d'étages");
       return;
     }
 
@@ -178,170 +178,173 @@ export const GenerateFloorsDialog = ({
         ) : (
           <div className="space-y-6 py-4">
             {/* Nombre d'étages */}
-          <div className="space-y-2">
-            <Label htmlFor="totalFloors">
-              Nombre d'étages <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="totalFloors"
-              type="number"
-              min={0}
-              max={100}
-              value={totalFloors}
-              onChange={e => setTotalFloors(parseInt(e.target.value) || 0)}
-              placeholder="Ex: 5"
-            />
-            <p className="text-xs text-gray-500">Sans compter le rez-de-chaussée</p>
-          </div>
-
-          {/* Sous-sols */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="includeBasements"
-                checked={includeBasements}
-                onCheckedChange={checked => setIncludeBasements(!!checked)}
-              />
-              <Label htmlFor="includeBasements" className="cursor-pointer">
-                Inclure des sous-sols
+            <div className="space-y-2">
+              <Label htmlFor="totalFloors">
+                Nombre d'étages <span className="text-red-500">*</span>
               </Label>
+              <Input
+                id="totalFloors"
+                type="number"
+                min={0}
+                max={100}
+                value={totalFloors}
+                onChange={e => setTotalFloors(parseInt(e.target.value) || 0)}
+                placeholder="Ex: 5"
+              />
+              <p className="text-xs text-gray-500">Sans compter le rez-de-chaussée</p>
             </div>
 
-            {includeBasements && (
-              <div className="pl-6 space-y-2">
-                <Label htmlFor="basementCount">Nombre de sous-sols</Label>
-                <Input
-                  id="basementCount"
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={basementCount}
-                  onChange={e => setBasementCount(parseInt(e.target.value) || 1)}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Rez-de-chaussée */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="includeGroundFloor"
-                checked={includeGroundFloor}
-                onCheckedChange={checked => setIncludeGroundFloor(!!checked)}
-              />
-              <Label htmlFor="includeGroundFloor" className="cursor-pointer">
-                Inclure le rez-de-chaussée
-              </Label>
-            </div>
-
-            {includeGroundFloor && (
-              <div className="pl-6 space-y-2">
-                <Label htmlFor="groundFloorLabel">Label du rez-de-chaussée</Label>
-                <Input
-                  id="groundFloorLabel"
-                  value={groundFloorLabel}
-                  onChange={e => setGroundFloorLabel(e.target.value)}
-                  placeholder="Ex: Rez-de-chaussée, RDC, 0"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Format */}
-          <div className="space-y-3">
-            <Label>Format d'affichage</Label>
-            <RadioGroup value={format} onValueChange={value => setFormat(value as 'numeric' | 'ordinal')}>
+            {/* Sous-sols */}
+            <div className="space-y-3">
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="numeric" id="format-numeric" />
-                <Label htmlFor="format-numeric" className="cursor-pointer font-normal">
-                  Numérique (0, 1, 2, 3...)
+                <Checkbox
+                  id="includeBasements"
+                  checked={includeBasements}
+                  onCheckedChange={checked => setIncludeBasements(!!checked)}
+                />
+                <Label htmlFor="includeBasements" className="cursor-pointer">
+                  Inclure des sous-sols
                 </Label>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="ordinal" id="format-ordinal" />
-                <Label htmlFor="format-ordinal" className="cursor-pointer font-normal">
-                  Ordinal (RDC, 1er, 2, 3...)
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
 
-          {/* Préfixe */}
-          <div className="space-y-2">
-            <Label htmlFor="prefix">Préfixe (optionnel)</Label>
-            <Input
-              id="prefix"
-              value={prefix}
-              onChange={e => setPrefix(e.target.value)}
-              placeholder="Ex: Étage, Niveau (laissez vide pour juste le numéro)"
-            />
-          </div>
-
-          {/* Avertissement si étages existants */}
-          {existingFloors.length > 0 && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription className="space-y-3">
-                <p>
-                  <strong>{existingFloors.length} étage(s)</strong> existent déjà dans la liste de
-                  référence.
-                </p>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="deleteExisting"
-                    checked={deleteExisting}
-                    onCheckedChange={checked => setDeleteExisting(!!checked)}
+              {includeBasements && (
+                <div className="pl-6 space-y-2">
+                  <Label htmlFor="basementCount">Nombre de sous-sols</Label>
+                  <Input
+                    id="basementCount"
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={basementCount}
+                    onChange={e => setBasementCount(parseInt(e.target.value) || 1)}
                   />
-                  <Label htmlFor="deleteExisting" className="cursor-pointer font-normal">
-                    Supprimer les étages existants avant de générer
+                </div>
+              )}
+            </div>
+
+            {/* Rez-de-chaussée */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="includeGroundFloor"
+                  checked={includeGroundFloor}
+                  onCheckedChange={checked => setIncludeGroundFloor(!!checked)}
+                />
+                <Label htmlFor="includeGroundFloor" className="cursor-pointer">
+                  Inclure le rez-de-chaussée
+                </Label>
+              </div>
+
+              {includeGroundFloor && (
+                <div className="pl-6 space-y-2">
+                  <Label htmlFor="groundFloorLabel">Label du rez-de-chaussée</Label>
+                  <Input
+                    id="groundFloorLabel"
+                    value={groundFloorLabel}
+                    onChange={e => setGroundFloorLabel(e.target.value)}
+                    placeholder="Ex: Rez-de-chaussée, RDC, 0"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Format */}
+            <div className="space-y-3">
+              <Label>Format d'affichage</Label>
+              <RadioGroup
+                value={format}
+                onValueChange={value => setFormat(value as 'numeric' | 'ordinal')}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="numeric" id="format-numeric" />
+                  <Label htmlFor="format-numeric" className="cursor-pointer font-normal">
+                    Numérique (0, 1, 2, 3...)
                   </Label>
                 </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Aperçu */}
-          {preview.length > 0 && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    <Sparkles className="h-4 w-4" />
-                    Aperçu ({preview.length} étages)
-                  </div>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {preview.map((floor, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
-                      >
-                        <span className="text-gray-500 w-8">{floor.value}</span>
-                        <span className="text-gray-900 dark:text-gray-100">{floor.label}</span>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ordinal" id="format-ordinal" />
+                  <Label htmlFor="format-ordinal" className="cursor-pointer font-normal">
+                    Ordinal (RDC, 1er, 2, 3...)
+                  </Label>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </RadioGroup>
+            </div>
 
-          {/* Messages */}
-          {error && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+            {/* Préfixe */}
+            <div className="space-y-2">
+              <Label htmlFor="prefix">Préfixe (optionnel)</Label>
+              <Input
+                id="prefix"
+                value={prefix}
+                onChange={e => setPrefix(e.target.value)}
+                placeholder="Ex: Étage, Niveau (laissez vide pour juste le numéro)"
+              />
+            </div>
 
-          {success && (
-            <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800 dark:text-green-300">
-                ✅ {preview.length} étages générés avec succès !
-              </AlertDescription>
-            </Alert>
-          )}
+            {/* Avertissement si étages existants */}
+            {existingFloors.length > 0 && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="space-y-3">
+                  <p>
+                    <strong>{existingFloors.length} étage(s)</strong> existent déjà dans la liste de
+                    référence.
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="deleteExisting"
+                      checked={deleteExisting}
+                      onCheckedChange={checked => setDeleteExisting(!!checked)}
+                    />
+                    <Label htmlFor="deleteExisting" className="cursor-pointer font-normal">
+                      Supprimer les étages existants avant de générer
+                    </Label>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Aperçu */}
+            {preview.length > 0 && (
+              <Card>
+                <CardContent className="p-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <Sparkles className="h-4 w-4" />
+                      Aperçu ({preview.length} étages)
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-1">
+                      {preview.map((floor, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 text-sm px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <span className="text-gray-500 w-8">{floor.value}</span>
+                          <span className="text-gray-900 dark:text-gray-100">{floor.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Messages */}
+            {error && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {success && (
+              <Alert className="border-green-200 bg-green-50 dark:bg-green-900/20">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800 dark:text-green-300">
+                  ✅ {preview.length} étages générés avec succès !
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         )}
 

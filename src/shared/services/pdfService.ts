@@ -147,12 +147,9 @@ const addFooter = (doc: jsPDF, pageNumber: number, totalPages: number) => {
   // Numéro de page
   doc.setFontSize(9);
   doc.setTextColor(COLORS.textLight);
-  doc.text(
-    `Page ${pageNumber} / ${totalPages}`,
-    pageWidth / 2,
-    pageHeight - 10,
-    { align: 'center' }
-  );
+  doc.text(`Page ${pageNumber} / ${totalPages}`, pageWidth / 2, pageHeight - 10, {
+    align: 'center',
+  });
 
   // Texte "Généré avec GestiHotel"
   doc.text('Généré avec GestiHotel', pageWidth - 15, pageHeight - 10, { align: 'right' });
@@ -237,7 +234,7 @@ export const generateInterventionsPDF = async (
       fillColor: '#f8fafc',
     },
     margin: { top: 55, left: 15, right: 15, bottom: 25 },
-    didDrawPage: (data) => {
+    didDrawPage: data => {
       // Pied de page sur chaque page
       const pageCount = doc.internal.pages.length - 1;
       addFooter(doc, data.pageNumber, pageCount);
@@ -293,9 +290,10 @@ export const generateInterventionDetailPDF = async (
     ['Catégorie', intervention.category || '-'],
     ['Statut', STATUS_LABELS[intervention.status] || intervention.status],
     ['Priorité', PRIORITY_LABELS[intervention.priority] || intervention.priority],
-    ['Localisation', intervention.roomNumber
-      ? `Chambre ${intervention.roomNumber}`
-      : intervention.location || '-'],
+    [
+      'Localisation',
+      intervention.roomNumber ? `Chambre ${intervention.roomNumber}` : intervention.location || '-',
+    ],
   ];
 
   if (intervention.building) {
@@ -378,7 +376,7 @@ export const generateInterventionDetailPDF = async (
     doc.setTextColor(COLORS.text);
     const notesLines = doc.splitTextToSize(intervention.internalNotes, pageWidth - 30);
     doc.text(notesLines, 15, currentY);
-    currentY += (notesLines.length * 5) + 10;
+    currentY += notesLines.length * 5 + 10;
   }
 
   // Notes de résolution (si présentes)
@@ -392,7 +390,7 @@ export const generateInterventionDetailPDF = async (
     doc.setTextColor(COLORS.text);
     const notesLines = doc.splitTextToSize(intervention.resolutionNotes, pageWidth - 30);
     doc.text(notesLines, 15, currentY);
-    currentY += (notesLines.length * 5) + 10;
+    currentY += notesLines.length * 5 + 10;
   }
 
   // Pied de page
@@ -436,10 +434,13 @@ export const generateMonthlyReportPDF = async (
     ['Interventions terminées', data.completedInterventions.toString()],
     ['Interventions en attente', data.pendingInterventions.toString()],
     ['Temps moyen de résolution', `${data.averageResolutionTime} min`],
-    ['Taux de complétion',
-      `${data.totalInterventions > 0
-        ? Math.round((data.completedInterventions / data.totalInterventions) * 100)
-        : 0}%`
+    [
+      'Taux de complétion',
+      `${
+        data.totalInterventions > 0
+          ? Math.round((data.completedInterventions / data.totalInterventions) * 100)
+          : 0
+      }%`,
     ],
   ];
 
@@ -545,10 +546,7 @@ export const generateMonthlyReportPDF = async (
     doc.text('Top 5 techniciens', 15, currentY);
     currentY += 10;
 
-    const techData = data.topTechnicians.map(tech => [
-      tech.name,
-      tech.count.toString(),
-    ]);
+    const techData = data.topTechnicians.map(tech => [tech.name, tech.count.toString()]);
 
     autoTable(doc, {
       startY: currentY,

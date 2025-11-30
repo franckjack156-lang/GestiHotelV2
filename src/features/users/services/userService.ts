@@ -157,9 +157,11 @@ class UserService {
       if (data.jobTitle) (userData as Record<string, unknown>).jobTitle = data.jobTitle;
       if (data.department) (userData as Record<string, unknown>).department = data.department;
       if (data.skills) (userData as Record<string, unknown>).skills = data.skills;
-      if (data.isTechnician !== undefined) (userData as Record<string, unknown>).isTechnician = data.isTechnician;
+      if (data.isTechnician !== undefined)
+        (userData as Record<string, unknown>).isTechnician = data.isTechnician;
       if (data.specialties) (userData as Record<string, unknown>).specialties = data.specialties;
-      if (data.experienceLevel) (userData as Record<string, unknown>).experienceLevel = data.experienceLevel;
+      if (data.experienceLevel)
+        (userData as Record<string, unknown>).experienceLevel = data.experienceLevel;
 
       // ✅ Nettoyer et créer le document Firestore
       const cleanedUserData = removeUndefinedFields(userData);
@@ -232,7 +234,9 @@ class UserService {
         );
       }
 
-      throw new Error(`Erreur lors de la création de l'utilisateur: ${authError.message || 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la création de l'utilisateur: ${authError.message || 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -270,10 +274,9 @@ class UserService {
 
         await sendUserInvitationEmail({
           to: data.email,
-          invitedUserName: data.firstName && data.lastName
-            ? `${data.firstName} ${data.lastName}`
-            : data.email,
-          invitedByName: invitedByUser?.displayName || 'L\'équipe GestiHotel',
+          invitedUserName:
+            data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : data.email,
+          invitedByName: invitedByUser?.displayName || "L'équipe GestiHotel",
           establishmentName,
           role: data.role,
           invitationMessage: data.message,
@@ -286,7 +289,9 @@ class UserService {
 
       return invitationId;
     } catch (error) {
-      throw new Error(`Erreur lors de l'invitation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de l'invitation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -311,7 +316,9 @@ class UserService {
         ...docSnap.data(),
       } as User;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la récupération de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -325,7 +332,9 @@ class UserService {
 
       return user as UserProfile;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération du profil: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la récupération du profil: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -384,11 +393,10 @@ class UserService {
       const snapshot = await getDocs(q);
 
       // Mapper et filtrer les utilisateurs supprimés
-      let users = snapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as User[];
+      let users = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as User[];
 
       users = users.filter(user => !user.email?.includes('@deleted.com'));
 
@@ -404,7 +412,9 @@ class UserService {
 
       return users;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la récupération des utilisateurs: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -455,11 +465,10 @@ class UserService {
       const snapshot = await getDocs(q);
 
       // Mapper et filtrer les utilisateurs supprimés
-      let users = snapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as User[];
+      let users = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as User[];
 
       users = users.filter(user => !user.email?.includes('@deleted.com'));
 
@@ -475,7 +484,9 @@ class UserService {
 
       return users;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des utilisateurs: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la récupération des utilisateurs: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -501,7 +512,9 @@ class UserService {
         ...doc.data(),
       })) as User[];
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des utilisateurs par rôle: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la récupération des utilisateurs par rôle: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -551,7 +564,9 @@ class UserService {
       const cleanedData = removeUndefinedFields(updateData);
       await updateDoc(doc(db, this.COLLECTION, userId), cleanedData);
     } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la mise à jour de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -594,7 +609,9 @@ class UserService {
       const cleanedData = removeUndefinedFields(updateData);
       await updateDoc(doc(db, this.COLLECTION, userId), cleanedData);
     } catch (error) {
-      throw new Error(`Erreur lors de la mise à jour du profil: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la mise à jour du profil: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -609,7 +626,9 @@ class UserService {
         updatedAt: Timestamp.now(),
       });
     } catch (error) {
-      throw new Error(`Erreur lors du changement de statut: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors du changement de statut: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -624,7 +643,9 @@ class UserService {
         updatedAt: Timestamp.now(),
       });
     } catch (error) {
-      throw new Error(`Erreur lors de l'activation/désactivation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de l'activation/désactivation: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -663,7 +684,9 @@ class UserService {
         updatedAt: Timestamp.now(),
       });
     } catch (error) {
-      throw new Error(`Erreur lors de la suppression de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la suppression de l'utilisateur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -674,10 +697,10 @@ class UserService {
   async permanentlyDeleteUser(userId: string): Promise<void> {
     try {
       // ✅ Appeler la Cloud Function pour supprimer l'utilisateur de Firebase Auth ET Firestore
-      const deleteAuthUserFn = httpsCallable<{ userId: string }, { success: boolean; message: string }>(
-        functions,
-        'deleteAuthUser'
-      );
+      const deleteAuthUserFn = httpsCallable<
+        { userId: string },
+        { success: boolean; message: string }
+      >(functions, 'deleteAuthUser');
 
       const result = await deleteAuthUserFn({ userId });
 
@@ -685,7 +708,9 @@ class UserService {
         throw new Error(result.data.message || 'Échec de la suppression');
       }
     } catch (error) {
-      throw new Error(`Erreur lors de la suppression définitive: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la suppression définitive: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -810,7 +835,9 @@ class UserService {
 
       return stats;
     } catch (error) {
-      throw new Error(`Erreur lors de la récupération des statistiques: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la récupération des statistiques: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 
@@ -885,7 +912,9 @@ class UserService {
           user.email.toLowerCase().includes(searchLower)
       );
     } catch (error) {
-      throw new Error(`Erreur lors de la recherche: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+      throw new Error(
+        `Erreur lors de la recherche: ${error instanceof Error ? error.message : 'Erreur inconnue'}`
+      );
     }
   }
 }

@@ -18,7 +18,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/utils/cn';
-import type { Notification, NotificationType, NotificationPriority } from '../types/notification.types';
+import type {
+  Notification,
+  NotificationType,
+  NotificationPriority,
+} from '../types/notification.types';
 
 interface NotificationItemProps {
   notification: Notification;
@@ -144,7 +148,12 @@ export const NotificationItem = ({
 
         {/* Contenu */}
         <div className="flex-1 min-w-0">
-          <p className={cn('text-sm font-medium truncate', !notification.read && 'text-gray-900 dark:text-white')}>
+          <p
+            className={cn(
+              'text-sm font-medium truncate',
+              !notification.read && 'text-gray-900 dark:text-white'
+            )}
+          >
             {notification.title}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</p>
@@ -178,7 +187,9 @@ export const NotificationItem = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h4 className={cn('font-medium', !notification.read && 'text-gray-900 dark:text-white')}>
+            <h4
+              className={cn('font-medium', !notification.read && 'text-gray-900 dark:text-white')}
+            >
               {notification.title}
             </h4>
             {(notification.body || notification.message) && (

@@ -97,7 +97,7 @@ class PermissionService {
 
     if (mode === 'AND') {
       // Mode AND : toutes les permissions sont requises
-      granted = permissionsArray.every((perm) => {
+      granted = permissionsArray.every(perm => {
         const has = userPermissions.includes(perm);
         if (!has) {
           missingPermissions.push(perm);
@@ -106,7 +106,7 @@ class PermissionService {
       });
     } else {
       // Mode OR : au moins une permission est requise
-      granted = permissionsArray.some((perm) => userPermissions.includes(perm));
+      granted = permissionsArray.some(perm => userPermissions.includes(perm));
 
       if (!granted) {
         missingPermissions.push(...permissionsArray);
@@ -171,7 +171,7 @@ class PermissionService {
     // Utiliser le cache si disponible
     const cached = this.permissionCache.get(user.id);
     if (cached) {
-      return Array.from(cached.keys()).filter((perm) => cached.get(perm));
+      return Array.from(cached.keys()).filter(perm => cached.get(perm));
     }
 
     // Permissions de base du rôle
@@ -185,7 +185,7 @@ class PermissionService {
 
     // Mettre en cache
     const cacheMap = new Map<Permission, boolean>();
-    allPermissions.forEach((perm) => cacheMap.set(perm, true));
+    allPermissions.forEach(perm => cacheMap.set(perm, true));
     this.permissionCache.set(user.id, cacheMap);
 
     return allPermissions;
@@ -267,11 +267,7 @@ class PermissionService {
   /**
    * Audit trail des vérifications de permissions (à implémenter avec Firestore)
    */
-  private auditPermissionCheck(
-    user: User,
-    permissions: Permission[],
-    granted: boolean
-  ): void {
+  private auditPermissionCheck(user: User, permissions: Permission[], granted: boolean): void {
     logger.info('Vérification de permission auditée', {
       userId: user.id,
       userRole: user.role,

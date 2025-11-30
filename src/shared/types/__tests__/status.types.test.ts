@@ -70,7 +70,7 @@ describe('InterventionType enum', () => {
 
 describe('STATUS_LABELS', () => {
   it('should have a label for every status', () => {
-    Object.values(InterventionStatus).forEach((status) => {
+    Object.values(InterventionStatus).forEach(status => {
       expect(STATUS_LABELS[status]).toBeDefined();
       expect(typeof STATUS_LABELS[status]).toBe('string');
     });
@@ -85,14 +85,14 @@ describe('STATUS_LABELS', () => {
 
 describe('STATUS_COLORS', () => {
   it('should have a color for every status', () => {
-    Object.values(InterventionStatus).forEach((status) => {
+    Object.values(InterventionStatus).forEach(status => {
       expect(STATUS_COLORS[status]).toBeDefined();
       expect(typeof STATUS_COLORS[status]).toBe('string');
     });
   });
 
   it('should use Tailwind CSS classes', () => {
-    Object.values(STATUS_COLORS).forEach((color) => {
+    Object.values(STATUS_COLORS).forEach(color => {
       expect(color).toMatch(/bg-/);
       expect(color).toMatch(/text-/);
     });
@@ -101,7 +101,7 @@ describe('STATUS_COLORS', () => {
 
 describe('STATUS_ICONS', () => {
   it('should have an icon for every status', () => {
-    Object.values(InterventionStatus).forEach((status) => {
+    Object.values(InterventionStatus).forEach(status => {
       expect(STATUS_ICONS[status]).toBeDefined();
       expect(typeof STATUS_ICONS[status]).toBe('string');
     });
@@ -110,7 +110,7 @@ describe('STATUS_ICONS', () => {
 
 describe('PRIORITY_LABELS', () => {
   it('should have a label for every priority', () => {
-    Object.values(InterventionPriority).forEach((priority) => {
+    Object.values(InterventionPriority).forEach(priority => {
       expect(PRIORITY_LABELS[priority]).toBeDefined();
       expect(typeof PRIORITY_LABELS[priority]).toBe('string');
     });
@@ -119,7 +119,7 @@ describe('PRIORITY_LABELS', () => {
 
 describe('PRIORITY_COLORS', () => {
   it('should have a color for every priority', () => {
-    Object.values(InterventionPriority).forEach((priority) => {
+    Object.values(InterventionPriority).forEach(priority => {
       expect(PRIORITY_COLORS[priority]).toBeDefined();
     });
   });
@@ -142,9 +142,7 @@ describe('PRIORITY_VALUES', () => {
       InterventionPriority.NORMAL,
     ];
 
-    const sorted = priorities.sort(
-      (a, b) => PRIORITY_VALUES[a] - PRIORITY_VALUES[b]
-    );
+    const sorted = priorities.sort((a, b) => PRIORITY_VALUES[a] - PRIORITY_VALUES[b]);
 
     expect(sorted[0]).toBe(InterventionPriority.LOW);
     expect(sorted[sorted.length - 1]).toBe(InterventionPriority.CRITICAL);
@@ -153,7 +151,7 @@ describe('PRIORITY_VALUES', () => {
 
 describe('INTERVENTION_TYPE_LABELS', () => {
   it('should have a label for every type', () => {
-    Object.values(InterventionType).forEach((type) => {
+    Object.values(InterventionType).forEach(type => {
       expect(INTERVENTION_TYPE_LABELS[type]).toBeDefined();
     });
   });
@@ -161,7 +159,7 @@ describe('INTERVENTION_TYPE_LABELS', () => {
 
 describe('CATEGORY_LABELS', () => {
   it('should have a label for every category', () => {
-    Object.values(InterventionCategory).forEach((category) => {
+    Object.values(InterventionCategory).forEach(category => {
       expect(CATEGORY_LABELS[category]).toBeDefined();
     });
   });
@@ -169,7 +167,7 @@ describe('CATEGORY_LABELS', () => {
 
 describe('ALLOWED_STATUS_TRANSITIONS', () => {
   it('should have transitions defined for every status', () => {
-    Object.values(InterventionStatus).forEach((status) => {
+    Object.values(InterventionStatus).forEach(status => {
       expect(ALLOWED_STATUS_TRANSITIONS[status]).toBeDefined();
       expect(Array.isArray(ALLOWED_STATUS_TRANSITIONS[status])).toBe(true);
     });

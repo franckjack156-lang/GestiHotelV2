@@ -19,10 +19,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { db } from '@/core/config/firebase';
-import {
-  generateRecurrenceDates,
-  generateRecurrenceGroupId,
-} from '../utils/recurrence.utils';
+import { generateRecurrenceDates, generateRecurrenceGroupId } from '../utils/recurrence.utils';
 import type {
   CreateInterventionData,
   RecurrenceConfig,
@@ -40,10 +37,7 @@ const getInterventionsCollection = (establishmentId: string) => {
 /**
  * Génère une référence unique pour les interventions récurrentes
  */
-const generateReference = async (
-  establishmentId: string,
-  baseIndex: number
-): Promise<string> => {
+const generateReference = async (establishmentId: string, baseIndex: number): Promise<string> => {
   const year = new Date().getFullYear();
   const collectionRef = getInterventionsCollection(establishmentId);
   const q = query(
@@ -73,7 +67,7 @@ export const createRecurringInterventions = async (
     const occurrenceDates = generateRecurrenceDates(startDate, recurrenceConfig);
 
     if (occurrenceDates.length === 0) {
-      throw new Error('Aucune date d\'occurrence générée avec cette configuration');
+      throw new Error("Aucune date d'occurrence générée avec cette configuration");
     }
 
     logger.info(`Création de ${occurrenceDates.length} interventions récurrentes`, {

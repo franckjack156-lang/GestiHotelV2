@@ -57,9 +57,7 @@ const CollapsibleSection = ({
         className="w-full flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
       >
         <span className="text-indigo-600 dark:text-indigo-400">{section.icon}</span>
-        <span className="flex-1 font-semibold text-gray-900 dark:text-white">
-          {section.title}
-        </span>
+        <span className="flex-1 font-semibold text-gray-900 dark:text-white">{section.title}</span>
         {isOpen ? (
           <ChevronDown className="h-5 w-5 text-gray-500" />
         ) : (
@@ -98,8 +96,8 @@ const sections: DocSection[] = [
           </li>
           <li>Lors de votre première connexion, vous serez redirigé vers le tableau de bord</li>
           <li>
-            Personnalisez votre profil en cliquant sur votre avatar en haut à droite puis
-            &quot;Mon profil&quot;
+            Personnalisez votre profil en cliquant sur votre avatar en haut à droite puis &quot;Mon
+            profil&quot;
           </li>
         </ol>
 
@@ -144,7 +142,8 @@ const sections: DocSection[] = [
         <h4 className="font-semibold mt-6">Créer une intervention</h4>
         <ol className="list-decimal list-inside space-y-2">
           <li>
-            Cliquez sur <strong>&quot;Nouvelle intervention&quot;</strong> dans la page Interventions
+            Cliquez sur <strong>&quot;Nouvelle intervention&quot;</strong> dans la page
+            Interventions
           </li>
           <li>
             Remplissez les informations obligatoires :
@@ -491,21 +490,15 @@ const sections: DocSection[] = [
           <li>
             Appuyez sur l&apos;icône de partage <ExternalLink className="h-4 w-4 inline" />
           </li>
-          <li>
-            Faites défiler et appuyez sur &quot;Sur l&apos;écran d&apos;accueil&quot;
-          </li>
+          <li>Faites défiler et appuyez sur &quot;Sur l&apos;écran d&apos;accueil&quot;</li>
           <li>Confirmez l&apos;installation</li>
         </ol>
 
         <h4 className="font-semibold mt-6">Installation sur Android (Chrome)</h4>
         <ol className="list-decimal list-inside space-y-2">
           <li>Ouvrez GestiHôtel dans Chrome</li>
-          <li>
-            Une bannière &quot;Installer l&apos;application&quot; apparaît automatiquement
-          </li>
-          <li>
-            Sinon, appuyez sur le menu (⋮) puis &quot;Installer l&apos;application&quot;
-          </li>
+          <li>Une bannière &quot;Installer l&apos;application&quot; apparaît automatiquement</li>
+          <li>Sinon, appuyez sur le menu (⋮) puis &quot;Installer l&apos;application&quot;</li>
         </ol>
 
         <h4 className="font-semibold mt-6">Avantages de la PWA</h4>
@@ -539,9 +532,7 @@ const sections: DocSection[] = [
           <li>Utilisez un mot de passe fort (min. 8 caractères, majuscules, chiffres)</li>
           <li>Ne partagez jamais votre mot de passe</li>
           <li>Changez votre mot de passe régulièrement</li>
-          <li>
-            En cas d&apos;oubli, utilisez la fonction &quot;Mot de passe oublié&quot;
-          </li>
+          <li>En cas d&apos;oubli, utilisez la fonction &quot;Mot de passe oublié&quot;</li>
         </ul>
 
         <h4 className="font-semibold mt-6">Session</h4>
@@ -667,10 +658,7 @@ export const DocumentationPage = () => {
   const filteredSections = sections.filter(section => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
-    return (
-      section.title.toLowerCase().includes(query) ||
-      section.id.toLowerCase().includes(query)
-    );
+    return section.title.toLowerCase().includes(query) || section.id.toLowerCase().includes(query);
   });
 
   return (

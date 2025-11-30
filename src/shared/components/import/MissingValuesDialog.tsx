@@ -122,7 +122,10 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
 
   // Calculer le nombre total de valeurs sélectionnées (références à créer + tous les mappings)
   const { toCreate, toMap, totalSelected } = useMemo(() => {
-    const referencesToCreate = Object.values(selectedValues).reduce((sum, set) => sum + set.size, 0);
+    const referencesToCreate = Object.values(selectedValues).reduce(
+      (sum, set) => sum + set.size,
+      0
+    );
     const userMappingsCount = userMappings.size;
     const referenceMappingsCount = Object.values(referenceMappings).reduce(
       (sum, map) => sum + map.size,
@@ -199,7 +202,11 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
   };
 
   // Sélectionner une suggestion (mapper vers un utilisateur existant)
-  const selectSuggestion = (excelName: string, userId: string, category: 'technicians' | 'creators') => {
+  const selectSuggestion = (
+    excelName: string,
+    userId: string,
+    category: 'technicians' | 'creators'
+  ) => {
     // Ajouter le mapping
     setUserMappings(prev => new Map(prev).set(excelName, userId));
 
@@ -359,19 +366,55 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                   <div className="ml-6 space-y-2">
                     {Array.from(missingValues[category.key]).map(value => {
                       // Vérifier si c'est une catégorie d'utilisateurs (technicians/creators)
-                      const isUserCategory = category.key === 'technicians' || category.key === 'creators';
+                      const isUserCategory =
+                        category.key === 'technicians' || category.key === 'creators';
                       // Vérifier si c'est une catégorie de référence (buildings, locations, etc.)
-                      const isReferenceCategory = ['buildings', 'locations', 'floors', 'types', 'categories', 'priorities'].includes(category.key);
+                      const isReferenceCategory = [
+                        'buildings',
+                        'locations',
+                        'floors',
+                        'types',
+                        'categories',
+                        'priorities',
+                      ].includes(category.key);
 
-                      const hasSuggestions = matchSuggestions && (matchSuggestions[category.key as keyof typeof matchSuggestions] as Map<string, unknown> | undefined)?.has(value);
+                      const hasSuggestions =
+                        matchSuggestions &&
+                        (
+                          matchSuggestions[category.key as keyof typeof matchSuggestions] as
+                            | Map<string, unknown>
+                            | undefined
+                        )?.has(value);
 
                       // Récupérer les suggestions appropriées selon le type
-                      const userSuggestions = (isUserCategory && hasSuggestions && matchSuggestions)
-                        ? (matchSuggestions[category.key as 'technicians' | 'creators'].get(value) || []) as Array<{ userId: string; userName: string; matchScore: number; matchType: string }>
-                        : [];
-                      const referenceSuggestions = (isReferenceCategory && hasSuggestions && matchSuggestions)
-                        ? (matchSuggestions[category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities'].get(value) || []) as Array<{ referenceValue: string; referenceLabel: string; matchScore: number; matchType: string }>
-                        : [];
+                      const userSuggestions =
+                        isUserCategory && hasSuggestions && matchSuggestions
+                          ? ((matchSuggestions[category.key as 'technicians' | 'creators'].get(
+                              value
+                            ) || []) as Array<{
+                              userId: string;
+                              userName: string;
+                              matchScore: number;
+                              matchType: string;
+                            }>)
+                          : [];
+                      const referenceSuggestions =
+                        isReferenceCategory && hasSuggestions && matchSuggestions
+                          ? ((matchSuggestions[
+                              category.key as
+                                | 'buildings'
+                                | 'locations'
+                                | 'floors'
+                                | 'types'
+                                | 'categories'
+                                | 'priorities'
+                            ].get(value) || []) as Array<{
+                              referenceValue: string;
+                              referenceLabel: string;
+                              matchScore: number;
+                              matchType: string;
+                            }>)
+                          : [];
 
                       const suggestions = isUserCategory ? userSuggestions : referenceSuggestions;
 
@@ -379,7 +422,15 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                       const selectedMapping = isUserCategory
                         ? userMappings.get(value)
                         : isReferenceCategory
-                          ? referenceMappings[category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities'].get(value)
+                          ? referenceMappings[
+                              category.key as
+                                | 'buildings'
+                                | 'locations'
+                                | 'floors'
+                                | 'types'
+                                | 'categories'
+                                | 'priorities'
+                            ].get(value)
                           : undefined;
 
                       return (
@@ -405,9 +456,13 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                                   {value}
                                 </Badge>
                                 {hasSuggestions && !selectedMapping && (
-                                  <Badge variant="outline" className="text-xs text-amber-600 border-amber-300 bg-amber-50">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-xs text-amber-600 border-amber-300 bg-amber-50"
+                                  >
                                     <Lightbulb className="h-3 w-3 mr-1" />
-                                    {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''}
+                                    {suggestions.length} suggestion
+                                    {suggestions.length > 1 ? 's' : ''}
                                   </Badge>
                                 )}
                               </label>
@@ -417,12 +472,23 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                                 <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
                                   <UserCheck className="h-4 w-4 text-green-600" />
                                   <span className="text-sm text-green-700 dark:text-green-300 flex-1">
-                                    Sera lié à : <strong>{userSuggestions.find(s => s.userId === selectedMapping)?.userName}</strong>
+                                    Sera lié à :{' '}
+                                    <strong>
+                                      {
+                                        userSuggestions.find(s => s.userId === selectedMapping)
+                                          ?.userName
+                                      }
+                                    </strong>
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => unselectSuggestion(value, category.key as 'technicians' | 'creators')}
+                                    onClick={() =>
+                                      unselectSuggestion(
+                                        value,
+                                        category.key as 'technicians' | 'creators'
+                                      )
+                                    }
                                     disabled={isCreating}
                                     className="h-6 px-2 text-xs"
                                   >
@@ -436,12 +502,30 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                                 <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
                                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                                   <span className="text-sm text-green-700 dark:text-green-300 flex-1">
-                                    Sera lié à : <strong>{referenceSuggestions.find(s => s.referenceValue === selectedMapping)?.referenceLabel}</strong>
+                                    Sera lié à :{' '}
+                                    <strong>
+                                      {
+                                        referenceSuggestions.find(
+                                          s => s.referenceValue === selectedMapping
+                                        )?.referenceLabel
+                                      }
+                                    </strong>
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => unselectReferenceSuggestion(value, category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities')}
+                                    onClick={() =>
+                                      unselectReferenceSuggestion(
+                                        value,
+                                        category.key as
+                                          | 'buildings'
+                                          | 'locations'
+                                          | 'floors'
+                                          | 'types'
+                                          | 'categories'
+                                          | 'priorities'
+                                      )
+                                    }
                                     disabled={isCreating}
                                     className="h-6 px-2 text-xs"
                                   >
@@ -451,66 +535,108 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                               )}
 
                               {/* Afficher les suggestions disponibles - UTILISATEURS */}
-                              {hasSuggestions && !selectedMapping && isUserCategory && userSuggestions.length > 0 && (
-                                <div className="space-y-1 pl-4 border-l-2 border-blue-200">
-                                  <p className="text-xs text-muted-foreground mb-1">Utilisateurs correspondants :</p>
-                                  {userSuggestions.slice(0, 3).map(suggestion => {
-                                    const score = Math.round(suggestion.matchScore * 100);
-                                    const isHighScore = score >= 75;
-                                    return (
-                                      <button
-                                        key={suggestion.userId}
-                                        onClick={() => selectSuggestion(value, suggestion.userId, category.key as 'technicians' | 'creators')}
-                                        disabled={isCreating}
-                                        className="flex items-center gap-2 p-2 w-full text-left rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        <div className={`flex items-center justify-center w-12 h-12 rounded-full ${isHighScore ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                                          <span className="text-xs font-bold">{score}%</span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium truncate">{suggestion.userName}</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {suggestion.matchType === 'exact' && '✅ Correspondance exacte'}
-                                            {suggestion.matchType === 'partial' && '⚡ Correspondance partielle'}
-                                            {suggestion.matchType === 'fuzzy' && '💡 Correspondance approximative'}
-                                          </p>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                              {hasSuggestions &&
+                                !selectedMapping &&
+                                isUserCategory &&
+                                userSuggestions.length > 0 && (
+                                  <div className="space-y-1 pl-4 border-l-2 border-blue-200">
+                                    <p className="text-xs text-muted-foreground mb-1">
+                                      Utilisateurs correspondants :
+                                    </p>
+                                    {userSuggestions.slice(0, 3).map(suggestion => {
+                                      const score = Math.round(suggestion.matchScore * 100);
+                                      const isHighScore = score >= 75;
+                                      return (
+                                        <button
+                                          key={suggestion.userId}
+                                          onClick={() =>
+                                            selectSuggestion(
+                                              value,
+                                              suggestion.userId,
+                                              category.key as 'technicians' | 'creators'
+                                            )
+                                          }
+                                          disabled={isCreating}
+                                          className="flex items-center gap-2 p-2 w-full text-left rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 border border-transparent hover:border-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          <div
+                                            className={`flex items-center justify-center w-12 h-12 rounded-full ${isHighScore ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}
+                                          >
+                                            <span className="text-xs font-bold">{score}%</span>
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">
+                                              {suggestion.userName}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {suggestion.matchType === 'exact' &&
+                                                '✅ Correspondance exacte'}
+                                              {suggestion.matchType === 'partial' &&
+                                                '⚡ Correspondance partielle'}
+                                              {suggestion.matchType === 'fuzzy' &&
+                                                '💡 Correspondance approximative'}
+                                            </p>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
 
                               {/* Afficher les suggestions disponibles - RÉFÉRENCES */}
-                              {hasSuggestions && !selectedMapping && isReferenceCategory && referenceSuggestions.length > 0 && (
-                                <div className="space-y-1 pl-4 border-l-2 border-purple-200">
-                                  <p className="text-xs text-muted-foreground mb-1">Valeurs correspondantes :</p>
-                                  {referenceSuggestions.slice(0, 3).map(suggestion => {
-                                    const score = Math.round(suggestion.matchScore * 100);
-                                    const isHighScore = score >= 75;
-                                    return (
-                                      <button
-                                        key={suggestion.referenceValue}
-                                        onClick={() => selectReferenceSuggestion(value, suggestion.referenceValue, category.key as 'buildings' | 'locations' | 'floors' | 'types' | 'categories' | 'priorities')}
-                                        disabled={isCreating}
-                                        className="flex items-center gap-2 p-2 w-full text-left rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-transparent hover:border-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      >
-                                        <div className={`flex items-center justify-center w-12 h-12 rounded-full ${isHighScore ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}>
-                                          <span className="text-xs font-bold">{score}%</span>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-sm font-medium truncate">{suggestion.referenceLabel}</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            {suggestion.matchType === 'exact' && '✅ Correspondance exacte'}
-                                            {suggestion.matchType === 'partial' && '⚡ Correspondance partielle'}
-                                            {suggestion.matchType === 'fuzzy' && '💡 Correspondance approximative'}
-                                          </p>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
+                              {hasSuggestions &&
+                                !selectedMapping &&
+                                isReferenceCategory &&
+                                referenceSuggestions.length > 0 && (
+                                  <div className="space-y-1 pl-4 border-l-2 border-purple-200">
+                                    <p className="text-xs text-muted-foreground mb-1">
+                                      Valeurs correspondantes :
+                                    </p>
+                                    {referenceSuggestions.slice(0, 3).map(suggestion => {
+                                      const score = Math.round(suggestion.matchScore * 100);
+                                      const isHighScore = score >= 75;
+                                      return (
+                                        <button
+                                          key={suggestion.referenceValue}
+                                          onClick={() =>
+                                            selectReferenceSuggestion(
+                                              value,
+                                              suggestion.referenceValue,
+                                              category.key as
+                                                | 'buildings'
+                                                | 'locations'
+                                                | 'floors'
+                                                | 'types'
+                                                | 'categories'
+                                                | 'priorities'
+                                            )
+                                          }
+                                          disabled={isCreating}
+                                          className="flex items-center gap-2 p-2 w-full text-left rounded-md hover:bg-purple-50 dark:hover:bg-purple-900/20 border border-transparent hover:border-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                          <div
+                                            className={`flex items-center justify-center w-12 h-12 rounded-full ${isHighScore ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'}`}
+                                          >
+                                            <span className="text-xs font-bold">{score}%</span>
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">
+                                              {suggestion.referenceLabel}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                              {suggestion.matchType === 'exact' &&
+                                                '✅ Correspondance exacte'}
+                                              {suggestion.matchType === 'partial' &&
+                                                '⚡ Correspondance partielle'}
+                                              {suggestion.matchType === 'fuzzy' &&
+                                                '💡 Correspondance approximative'}
+                                            </p>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -543,16 +669,15 @@ export const MissingValuesDialog: React.FC<MissingValuesDialogProps> = ({
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 {toMap > 0 ? (
                   <>
-                    Valider ({toCreate} à créer{toCreate > 1 ? '' : ''}, {toMap} mappé{toMap > 1 ? 's' : ''})
+                    Valider ({toCreate} à créer{toCreate > 1 ? '' : ''}, {toMap} mappé
+                    {toMap > 1 ? 's' : ''})
                   </>
                 ) : toCreate > 0 ? (
                   <>
                     Créer {toCreate} valeur{toCreate > 1 ? 's' : ''}
                   </>
                 ) : (
-                  <>
-                    Valider
-                  </>
+                  <>Valider</>
                 )}
               </>
             )}

@@ -174,7 +174,9 @@ export const MyTicketsPage = () => {
                             <>
                               <span>•</span>
                               <MessageSquare className="h-3 w-3" />
-                              <span>{ticket.responseCount} réponse{ticket.responseCount > 1 ? 's' : ''}</span>
+                              <span>
+                                {ticket.responseCount} réponse{ticket.responseCount > 1 ? 's' : ''}
+                              </span>
                             </>
                           )}
                         </div>

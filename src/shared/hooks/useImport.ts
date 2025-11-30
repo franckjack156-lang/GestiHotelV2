@@ -127,9 +127,8 @@ export const useImportInterventions = (
             isTechnician: u.isTechnician,
           })),
           creators:
-            referenceLists.lists['creators']?.items?.map(
-              (item: { label: string }) => item.label
-            ) || [],
+            referenceLists.lists['creators']?.items?.map((item: { label: string }) => item.label) ||
+            [],
           technicians:
             referenceLists.lists['technicians']?.items?.map(
               (item: { label: string }) => item.label
@@ -156,7 +155,8 @@ export const useImportInterventions = (
           logger.debug(`\n  "${excelName}" pourrait correspondre à:`);
           suggestions.forEach((sug, idx) => {
             const score = Math.round(sug.matchScore * 100);
-            const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
+            const emoji =
+              sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
             logger.debug(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
           });
         });
@@ -168,7 +168,8 @@ export const useImportInterventions = (
           logger.debug(`\n  "${excelName}" pourrait correspondre à:`);
           suggestions.forEach((sug, idx) => {
             const score = Math.round(sug.matchScore * 100);
-            const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
+            const emoji =
+              sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
             logger.debug(`    ${emoji} ${idx + 1}. ${sug.userName} (${score}% - ${sug.matchType})`);
           });
         });
@@ -191,7 +192,8 @@ export const useImportInterventions = (
             logger.debug(`\n  "${excelValue}" pourrait correspondre à:`);
             suggestions.forEach((sug, idx) => {
               const score = Math.round(sug.matchScore * 100);
-              const emoji = sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
+              const emoji =
+                sug.matchType === 'exact' ? '✅' : sug.matchType === 'partial' ? '⚡' : '💡';
               logger.debug(
                 `    ${emoji} ${idx + 1}. ${sug.referenceLabel} [${sug.referenceValue}] (${score}% - ${sug.matchType})`
               );
@@ -297,7 +299,7 @@ export const useImportInterventions = (
     if (allLists && !allLists.lists['creators'] && missingValues.creators.size > 0) {
       await referenceListsService.createList(currentEstablishment.id, user.id, 'creators', {
         name: 'Créateurs',
-        description: 'Liste des créateurs d\'interventions (historique)',
+        description: "Liste des créateurs d'interventions (historique)",
         allowCustom: true,
         isRequired: false,
         isSystem: false,

@@ -174,7 +174,7 @@ export const DynamicListSelect: React.FC<DynamicListSelectProps> = ({
     <div className="space-y-2">
       <Select
         value={value || (allowEmpty ? '__EMPTY__' : '')}
-        onValueChange={(val) => onChange(val === '__EMPTY__' ? '' : val)}
+        onValueChange={val => onChange(val === '__EMPTY__' ? '' : val)}
         disabled={disabled}
       >
         <SelectTrigger

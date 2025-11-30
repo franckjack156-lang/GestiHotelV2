@@ -179,9 +179,7 @@ export const DeleteEstablishmentDialog: React.FC<DeleteEstablishmentDialogProps>
       {isChecking ? (
         <div className="flex flex-col items-center gap-4 py-8">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Vérification des dépendances...
-          </p>
+          <p className="text-sm text-muted-foreground">Vérification des dépendances...</p>
         </div>
       ) : (
         <Alert>
@@ -404,7 +402,7 @@ export const DeleteEstablishmentDialog: React.FC<DeleteEstablishmentDialogProps>
       case 'error':
         return 'Erreur';
       default:
-        return 'Supprimer l\'établissement';
+        return "Supprimer l'établissement";
     }
   };
 
@@ -424,9 +422,7 @@ export const DeleteEstablishmentDialog: React.FC<DeleteEstablishmentDialogProps>
             <DialogTitle className="text-destructive">{getDialogTitle()}</DialogTitle>
           </div>
           {getDialogDescription() && (
-            <DialogDescription className="text-base">
-              {getDialogDescription()}
-            </DialogDescription>
+            <DialogDescription className="text-base">{getDialogDescription()}</DialogDescription>
           )}
         </DialogHeader>
 
@@ -439,17 +435,15 @@ export const DeleteEstablishmentDialog: React.FC<DeleteEstablishmentDialogProps>
         <DialogFooter>
           {step === 'confirm' && (
             <>
-              <Button
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isDeleting}
-              >
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isDeleting}>
                 Annuler
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={!(confirmationName === establishment.name && confirmUnderstood) || isDeleting}
+                disabled={
+                  !(confirmationName === establishment.name && confirmUnderstood) || isDeleting
+                }
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Supprimer définitivement
@@ -463,9 +457,7 @@ export const DeleteEstablishmentDialog: React.FC<DeleteEstablishmentDialogProps>
             </Button>
           )}
 
-          {step === 'done' && (
-            <Button onClick={() => onOpenChange(false)}>Fermer</Button>
-          )}
+          {step === 'done' && <Button onClick={() => onOpenChange(false)}>Fermer</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -100,7 +100,7 @@ export const useUserPreferences = () => {
         setUser({
           ...user,
           displayPreferences: newPreferences,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
         toast.success('Préférences enregistrées');
@@ -147,7 +147,7 @@ export const useUserPreferences = () => {
         setUser({
           ...user,
           notificationPreferences: newPreferences,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
 
         toast.success('Préférences enregistrées');
@@ -179,8 +179,8 @@ export const useUserPreferences = () => {
         ...user,
         displayPreferences: defaultDisplayPreferences,
         notificationPreferences: defaultNotificationPreferences,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any);
 
       toast.success('Préférences réinitialisées');
     } catch (error: unknown) {

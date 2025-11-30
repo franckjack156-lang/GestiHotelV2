@@ -103,7 +103,7 @@ describe('dateUtils', () => {
       expect(isTimestamp(obj)).toBe(false);
     });
 
-    it('devrait retourner false si toDate n\'est pas une fonction', () => {
+    it("devrait retourner false si toDate n'est pas une fonction", () => {
       const obj = { toDate: 'not a function' };
       expect(isTimestamp(obj)).toBe(false);
     });

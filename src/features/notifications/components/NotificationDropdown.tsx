@@ -7,11 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Settings, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { ScrollArea } from '@/shared/components/ui/scroll-area';
 import { NotificationItem } from './NotificationItem';
 import type { Notification } from '../types/notification.types';
@@ -71,9 +67,7 @@ export const NotificationDropdown = ({
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white"
-            >
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white">
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
           )}
@@ -93,21 +87,11 @@ export const NotificationDropdown = ({
           </div>
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs h-7"
-                onClick={onReadAll}
-              >
+              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={onReadAll}>
                 Tout marquer lu
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={handleSettings}
-            >
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleSettings}>
               <Settings size={14} />
             </Button>
           </div>
@@ -122,9 +106,7 @@ export const NotificationDropdown = ({
           ) : recentNotifications.length === 0 ? (
             <div className="text-center py-8 px-4">
               <Bell className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Aucune notification
-              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Aucune notification</p>
             </div>
           ) : (
             <div className="divide-y dark:divide-gray-700">

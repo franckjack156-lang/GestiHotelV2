@@ -65,7 +65,11 @@ export const useCurrentEstablishment = () => {
         throw new Error('Utilisateur non connecté');
       }
 
-      if (user.role !== 'editor' && user.role !== 'super_admin' && !user.establishmentIds?.includes(establishmentId)) {
+      if (
+        user.role !== 'editor' &&
+        user.role !== 'super_admin' &&
+        !user.establishmentIds?.includes(establishmentId)
+      ) {
         throw new Error("Vous n'avez pas accès à cet établissement");
       }
 

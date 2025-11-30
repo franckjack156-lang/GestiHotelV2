@@ -56,7 +56,12 @@ export const usePermissions = () => {
         // Permission globale d'édition
         if (hasPermission(Permission.INTERVENTIONS_EDIT)) {
           // Editor, SuperAdmin, Admin, Manager peuvent éditer toutes les interventions
-          if (user.role === 'editor' || user.role === 'super_admin' || user.role === 'admin' || user.role === 'manager') {
+          if (
+            user.role === 'editor' ||
+            user.role === 'super_admin' ||
+            user.role === 'admin' ||
+            user.role === 'manager'
+          ) {
             return true;
           }
 

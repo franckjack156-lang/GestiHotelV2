@@ -65,14 +65,7 @@ export const useInterventions = () => {
     return () => {
       unsubscribe();
     };
-  }, [
-    establishmentId,
-    filters,
-    sortOptions,
-    setInterventions,
-    setLoading,
-    setError,
-  ]);
+  }, [establishmentId, filters, sortOptions, setInterventions, setLoading, setError]);
 
   /**
    * Recharger les interventions manuellement
@@ -97,14 +90,7 @@ export const useInterventions = () => {
     } finally {
       setLoading(false);
     }
-  }, [
-    establishmentId,
-    filters,
-    sortOptions,
-    setInterventions,
-    setLoading,
-    setError,
-  ]);
+  }, [establishmentId, filters, sortOptions, setInterventions, setLoading, setError]);
 
   /**
    * Appliquer des filtres

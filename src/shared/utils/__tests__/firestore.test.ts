@@ -11,7 +11,7 @@ describe('firestore utils', () => {
   // ==========================================================================
 
   describe('removeUndefinedFields', () => {
-    it('devrait retourner l\'objet inchangé si pas d\'undefined', () => {
+    it("devrait retourner l'objet inchangé si pas d'undefined", () => {
       const obj = {
         name: 'Test',
         age: 25,
@@ -272,7 +272,11 @@ describe('firestore utils', () => {
 
       const result = removeUndefinedFields(obj);
 
-      expect(result.matrix).toEqual([[1, 2], [3, 4], [5, 6]]);
+      expect(result.matrix).toEqual([
+        [1, 2],
+        [3, 4],
+        [5, 6],
+      ]);
     });
 
     it('devrait gérer les propriétés avec valeurs mixtes', () => {

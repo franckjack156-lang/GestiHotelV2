@@ -106,7 +106,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
    * Change le thème et persiste dans localStorage
    */
   const setTheme = (newTheme: Theme) => {
-    logger.debug('📝 ThemeContext.setTheme appelé:', { current: theme, new: newTheme, actualTheme });
+    logger.debug('📝 ThemeContext.setTheme appelé:', {
+      current: theme,
+      new: newTheme,
+      actualTheme,
+    });
     setThemeState(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
     logger.debug('✅ Thème changé et sauvegardé dans localStorage');

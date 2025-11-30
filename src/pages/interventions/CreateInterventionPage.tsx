@@ -558,8 +558,12 @@ export const CreateInterventionPage = () => {
         {/* Form Steps */}
         <Card>
           <CardContent className="p-6">
-            <form onSubmit={// eslint-disable-next-line @typescript-eslint/no-explicit-any
-              handleSubmit(onSubmit as any)}>
+            <form
+              onSubmit={
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                handleSubmit(onSubmit as any)
+              }
+            >
               {/* Step 1: Informations */}
               {currentStep === 1 && (
                 <div className="space-y-4">
@@ -890,8 +894,13 @@ export const CreateInterventionPage = () => {
         )}
       </div>
 
-      <form onSubmit={// eslint-disable-next-line @typescript-eslint/no-explicit-any
-              handleSubmit(onSubmit as any)} className="space-y-6">
+      <form
+        onSubmit={
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          handleSubmit(onSubmit as any)
+        }
+        className="space-y-6"
+      >
         {/* Titre principal - Hero Card */}
         <Card className="border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="pt-6">

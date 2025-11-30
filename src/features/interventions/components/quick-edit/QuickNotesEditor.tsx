@@ -9,13 +9,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
 import { Textarea } from '@/shared/components/ui/textarea';
-import {
-  FileText,
-  X,
-  Edit,
-  Save,
-  AlertTriangle
-} from 'lucide-react';
+import { FileText, X, Edit, Save, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface QuickNotesEditorProps {
@@ -44,26 +38,28 @@ export const QuickNotesEditor = ({
   }, [currentValue]);
 
   // Configuration selon le type de note
-  const config = noteType === 'internal'
-    ? {
-        title: 'Notes internes',
-        icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
-        placeholder: 'Ajouter des notes internes (visibles uniquement par l\'équipe technique)...',
-        emptyMessage: 'Aucune note interne pour le moment',
-        maxLength: 1000,
-      }
-    : {
-        title: 'Notes de résolution',
-        icon: <FileText className="h-5 w-5 text-green-500" />,
-        placeholder: 'Décrire la résolution du problème et les actions réalisées...',
-        emptyMessage: 'La résolution sera documentée une fois l\'intervention terminée',
-        maxLength: 2000,
-      };
+  const config =
+    noteType === 'internal'
+      ? {
+          title: 'Notes internes',
+          icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+          placeholder: "Ajouter des notes internes (visibles uniquement par l'équipe technique)...",
+          emptyMessage: 'Aucune note interne pour le moment',
+          maxLength: 1000,
+        }
+      : {
+          title: 'Notes de résolution',
+          icon: <FileText className="h-5 w-5 text-green-500" />,
+          placeholder: 'Décrire la résolution du problème et les actions réalisées...',
+          emptyMessage: "La résolution sera documentée une fois l'intervention terminée",
+          maxLength: 2000,
+        };
 
   // Si c'est les notes de résolution et que l'intervention n'est pas en cours/terminée
-  const shouldShowResolutionNote = noteType === 'resolution'
-    ? ['in_progress', 'completed', 'validated'].includes(status || '')
-    : true;
+  const shouldShowResolutionNote =
+    noteType === 'resolution'
+      ? ['in_progress', 'completed', 'validated'].includes(status || '')
+      : true;
 
   if (!shouldShowResolutionNote) {
     return null;
@@ -77,10 +73,10 @@ export const QuickNotesEditor = ({
         toast.success(`${config.title} enregistrées avec succès`);
         setIsEditing(false);
       } else {
-        toast.error('Erreur lors de l\'enregistrement');
+        toast.error("Erreur lors de l'enregistrement");
       }
     } catch (error) {
-      toast.error('Erreur lors de l\'enregistrement');
+      toast.error("Erreur lors de l'enregistrement");
     } finally {
       setIsSaving(false);
     }
@@ -106,12 +102,7 @@ export const QuickNotesEditor = ({
             {config.title}
           </CardTitle>
           {!isEditing && canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleStartEdit}
-              className="gap-2"
-            >
+            <Button variant="ghost" size="sm" onClick={handleStartEdit} className="gap-2">
               <Edit className="h-4 w-4" />
               {currentValue ? 'Modifier' : 'Ajouter'}
             </Button>
@@ -123,7 +114,7 @@ export const QuickNotesEditor = ({
           <div className="space-y-3">
             <Textarea
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={e => setValue(e.target.value)}
               placeholder={config.placeholder}
               rows={6}
               maxLength={config.maxLength}
@@ -135,12 +126,7 @@ export const QuickNotesEditor = ({
                 {value.length} / {config.maxLength} caractères
               </span>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCancel}
-                  disabled={isSaving}
-                >
+                <Button variant="outline" size="sm" onClick={handleCancel} disabled={isSaving}>
                   <X className="h-4 w-4 mr-2" />
                   Annuler
                 </Button>
@@ -159,9 +145,7 @@ export const QuickNotesEditor = ({
         ) : (
           <div>
             {currentValue ? (
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                {currentValue}
-              </p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{currentValue}</p>
             ) : (
               <p className="text-gray-400 dark:text-gray-600 italic text-sm">
                 {config.emptyMessage}

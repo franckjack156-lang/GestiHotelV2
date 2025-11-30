@@ -173,7 +173,7 @@ const floorsDefault: ListConfig = {
  */
 const buildingsDefault: ListConfig = {
   name: 'Bâtiments',
-  description: 'Bâtiments et ailes de l\'établissement',
+  description: "Bâtiments et ailes de l'établissement",
   allowCustom: true,
   isRequired: false,
   isSystem: false,
@@ -279,7 +279,7 @@ const paymentMethodsDefault: ListConfig = {
  */
 const equipmentTypesDefault: ListConfig = {
   name: "Types d'équipement",
-  description: 'Catégories d\'équipements',
+  description: "Catégories d'équipements",
   allowCustom: true,
   isRequired: false,
   isSystem: false,
@@ -287,7 +287,7 @@ const equipmentTypesDefault: ListConfig = {
 };
 
 const equipmentBrandsDefault: ListConfig = {
-  name: 'Marques d\'équipement',
+  name: "Marques d'équipement",
   description: 'Marques des équipements',
   allowCustom: true,
   isRequired: false,
@@ -296,7 +296,7 @@ const equipmentBrandsDefault: ListConfig = {
 };
 
 const equipmentLocationsDefault: ListConfig = {
-  name: 'Emplacements d\'équipement',
+  name: "Emplacements d'équipement",
   description: 'Localisations des équipements',
   allowCustom: true,
   isRequired: false,
@@ -372,7 +372,7 @@ const documentTypesDefault: ListConfig = {
  */
 const staffDepartmentsDefault: ListConfig = {
   name: 'Départements du personnel',
-  description: 'Services et départements de l\'établissement',
+  description: "Services et départements de l'établissement",
   allowCustom: true,
   isRequired: false,
   isSystem: false,

@@ -83,23 +83,17 @@ export const SLADetails = ({ intervention, className = '' }: SLADetailsProps) =>
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <span className="text-gray-500 dark:text-gray-400">Temps écoulé</span>
-          <div className="font-medium">
-            {formatRemainingTime(slaInfo.elapsedMinutes)}
-          </div>
+          <div className="font-medium">{formatRemainingTime(slaInfo.elapsedMinutes)}</div>
         </div>
 
         <div>
           <span className="text-gray-500 dark:text-gray-400">Temps restant</span>
-          <div className="font-medium">
-            {formatRemainingTime(slaInfo.remainingMinutes)}
-          </div>
+          <div className="font-medium">{formatRemainingTime(slaInfo.remainingMinutes)}</div>
         </div>
 
         <div>
           <span className="text-gray-500 dark:text-gray-400">Objectif SLA</span>
-          <div className="font-medium">
-            {formatRemainingTime(slaInfo.targetMinutes)}
-          </div>
+          <div className="font-medium">{formatRemainingTime(slaInfo.targetMinutes)}</div>
         </div>
 
         <div>
@@ -117,18 +111,14 @@ export const SLADetails = ({ intervention, className = '' }: SLADetailsProps) =>
         {slaInfo.responseTime !== undefined && (
           <div>
             <span className="text-gray-500 dark:text-gray-400">Temps de réponse</span>
-            <div className="font-medium">
-              {formatRemainingTime(slaInfo.responseTime)}
-            </div>
+            <div className="font-medium">{formatRemainingTime(slaInfo.responseTime)}</div>
           </div>
         )}
 
         {slaInfo.resolutionTime !== undefined && (
           <div>
             <span className="text-gray-500 dark:text-gray-400">Temps de résolution</span>
-            <div className="font-medium">
-              {formatRemainingTime(slaInfo.resolutionTime)}
-            </div>
+            <div className="font-medium">{formatRemainingTime(slaInfo.resolutionTime)}</div>
           </div>
         )}
       </div>

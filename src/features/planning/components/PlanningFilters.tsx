@@ -112,10 +112,7 @@ export const PlanningFilters = ({
                     checked={selectedStatuses.includes(value)}
                     onCheckedChange={() => toggleStatus(value)}
                   />
-                  <label
-                    htmlFor={`status-${value}`}
-                    className="text-sm cursor-pointer"
-                  >
+                  <label htmlFor={`status-${value}`} className="text-sm cursor-pointer">
                     {label}
                   </label>
                 </div>
@@ -159,10 +156,7 @@ export const PlanningFilters = ({
                     checked={selectedPriorities.includes(value)}
                     onCheckedChange={() => togglePriority(value)}
                   />
-                  <label
-                    htmlFor={`priority-${value}`}
-                    className="text-sm cursor-pointer"
-                  >
+                  <label htmlFor={`priority-${value}`} className="text-sm cursor-pointer">
                     {label}
                   </label>
                 </div>

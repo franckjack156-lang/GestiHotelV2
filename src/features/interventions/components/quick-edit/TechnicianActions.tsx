@@ -7,14 +7,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import {
-  PlayCircle,
-  PauseCircle,
-  CheckCircle2,
-  Clock,
-  Wrench,
-  AlertCircle,
-} from 'lucide-react';
+import { PlayCircle, PauseCircle, CheckCircle2, Clock, Wrench, AlertCircle } from 'lucide-react';
 import { Badge } from '@/shared/components/ui/badge';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -54,9 +47,8 @@ export const TechnicianActions = ({
   const elapsed = getElapsedTime();
 
   // Déterminer si on dépasse le temps estimé
-  const isOvertime = elapsed && estimatedDuration
-    ? elapsed.totalMinutes > estimatedDuration
-    : false;
+  const isOvertime =
+    elapsed && estimatedDuration ? elapsed.totalMinutes > estimatedDuration : false;
 
   return (
     <Card className="border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
@@ -87,13 +79,13 @@ export const TechnicianActions = ({
               <span className="text-sm text-gray-600 dark:text-gray-400">Temps écoulé</span>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-gray-400" />
-                <span className={`font-mono text-sm ${isOvertime ? 'text-orange-600 font-semibold' : ''}`}>
+                <span
+                  className={`font-mono text-sm ${isOvertime ? 'text-orange-600 font-semibold' : ''}`}
+                >
                   {elapsed.hours > 0 && `${elapsed.hours}h `}
                   {elapsed.minutes}min
                 </span>
-                {isOvertime && (
-                  <AlertCircle className="h-4 w-4 text-orange-600" />
-                )}
+                {isOvertime && <AlertCircle className="h-4 w-4 text-orange-600" />}
               </div>
             </div>
           )}
@@ -103,7 +95,8 @@ export const TechnicianActions = ({
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600 dark:text-gray-400">Durée estimée</span>
               <span className="text-sm font-medium">
-                {Math.floor(estimatedDuration / 60) > 0 && `${Math.floor(estimatedDuration / 60)}h `}
+                {Math.floor(estimatedDuration / 60) > 0 &&
+                  `${Math.floor(estimatedDuration / 60)}h `}
                 {estimatedDuration % 60}min
               </span>
             </div>
@@ -171,7 +164,8 @@ export const TechnicianActions = ({
         {/* Aide contextuelle */}
         {status === 'in_progress' && !canComplete && (
           <div className="mt-3 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-xs text-blue-800 dark:text-blue-300">
-            💡 <strong>Astuce :</strong> Pensez à ajouter des notes de résolution avant de terminer l'intervention.
+            💡 <strong>Astuce :</strong> Pensez à ajouter des notes de résolution avant de terminer
+            l'intervention.
           </div>
         )}
 

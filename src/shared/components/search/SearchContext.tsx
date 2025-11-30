@@ -40,7 +40,7 @@ export const SearchProvider = ({ children }: SearchProviderProps) => {
     setIsOpen(false);
   };
   const toggleSearch = () => {
-    setIsOpen((prev) => !prev);
+    setIsOpen(prev => !prev);
   };
 
   return (

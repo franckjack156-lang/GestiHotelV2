@@ -182,7 +182,7 @@ export interface InventorySortOptions {
  * Labels des catégories
  */
 export const INVENTORY_CATEGORY_LABELS: Record<InventoryCategory, string> = {
-  cleaning: 'Produits d\'entretien',
+  cleaning: "Produits d'entretien",
   maintenance: 'Maintenance',
   furniture: 'Mobilier',
   electronics: 'Électronique',

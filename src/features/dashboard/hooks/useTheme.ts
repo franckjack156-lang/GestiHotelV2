@@ -246,7 +246,9 @@ export const useTheme = () => {
         await loadPreferences();
       } catch (err) {
         logger.error('Erreur updatePreferences:', err);
-        setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour des préférences');
+        setError(
+          err instanceof Error ? err.message : 'Erreur lors de la mise à jour des préférences'
+        );
         throw err;
       }
     },

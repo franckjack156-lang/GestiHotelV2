@@ -52,9 +52,7 @@ export const InventoryItemCard = ({
     }
   };
 
-  const stockPercentage = item.maxQuantity
-    ? (item.quantity / item.maxQuantity) * 100
-    : 100;
+  const stockPercentage = item.maxQuantity ? (item.quantity / item.maxQuantity) * 100 : 100;
 
   return (
     <Card className="hover:shadow-lg transition-shadow cursor-pointer">
@@ -75,7 +73,7 @@ export const InventoryItemCard = ({
           </div>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuTrigger asChild onClick={e => e.stopPropagation()}>
               <Button variant="ghost" size="sm">
                 <MoreVertical className="h-4 w-4" />
               </Button>
@@ -89,9 +87,7 @@ export const InventoryItemCard = ({
                   <DropdownMenuSeparator />
                 </>
               )}
-              {onEdit && (
-                <DropdownMenuItem onClick={() => onEdit(item)}>Modifier</DropdownMenuItem>
-              )}
+              {onEdit && <DropdownMenuItem onClick={() => onEdit(item)}>Modifier</DropdownMenuItem>}
               {onDelete && (
                 <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive">
                   Supprimer
@@ -116,9 +112,7 @@ export const InventoryItemCard = ({
               {item.quantity} {MEASUREMENT_UNIT_LABELS[item.unit]}
             </div>
             {item.minQuantity > 0 && (
-              <div className="text-xs text-muted-foreground">
-                Seuil: {item.minQuantity}
-              </div>
+              <div className="text-xs text-muted-foreground">Seuil: {item.minQuantity}</div>
             )}
           </div>
         </div>
@@ -132,8 +126,8 @@ export const InventoryItemCard = ({
                   stockPercentage > 50
                     ? 'bg-green-500'
                     : stockPercentage > 20
-                    ? 'bg-orange-500'
-                    : 'bg-red-500'
+                      ? 'bg-orange-500'
+                      : 'bg-red-500'
                 }`}
                 style={{ width: `${Math.min(stockPercentage, 100)}%` }}
               />

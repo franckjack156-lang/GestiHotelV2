@@ -74,12 +74,13 @@ export const generateMonthlyReportFromInterventions = async (
   const completedWithDuration = interventions.filter(
     i => i.actualDuration && (i.status === 'completed' || i.status === 'validated')
   );
-  const averageResolutionTime = completedWithDuration.length > 0
-    ? Math.round(
-        completedWithDuration.reduce((acc, i) => acc + (i.actualDuration || 0), 0) /
-          completedWithDuration.length
-      )
-    : 0;
+  const averageResolutionTime =
+    completedWithDuration.length > 0
+      ? Math.round(
+          completedWithDuration.reduce((acc, i) => acc + (i.actualDuration || 0), 0) /
+            completedWithDuration.length
+        )
+      : 0;
 
   // Répartition par statut
   const byStatus: Record<string, number> = {};
@@ -116,9 +117,7 @@ export const generateMonthlyReportFromInterventions = async (
   // Top localisations
   const locationStats: Record<string, number> = {};
   interventions.forEach(i => {
-    const location = i.roomNumber
-      ? `Chambre ${i.roomNumber}`
-      : i.location || 'Non spécifié';
+    const location = i.roomNumber ? `Chambre ${i.roomNumber}` : i.location || 'Non spécifié';
     locationStats[location] = (locationStats[location] || 0) + 1;
   });
 
@@ -156,7 +155,9 @@ export const generateMonthlyReportFromInterventions = async (
 // ============================================================================
 
 export const exportUrgentInterventions = async (interventions: Intervention[]) => {
-  const urgentInterventions = interventions.filter(i => i.isUrgent || i.priority === 'critical' || i.priority === 'urgent');
+  const urgentInterventions = interventions.filter(
+    i => i.isUrgent || i.priority === 'critical' || i.priority === 'urgent'
+  );
 
   const blob = await generateInterventionsPDF(urgentInterventions, {
     title: 'Interventions urgentes',
@@ -176,9 +177,7 @@ export const exportInterventionsByTechnician = async (
   interventions: Intervention[],
   technicianName: string
 ) => {
-  const technicianInterventions = interventions.filter(
-    i => i.assignedToName === technicianName
-  );
+  const technicianInterventions = interventions.filter(i => i.assignedToName === technicianName);
 
   const blob = await generateInterventionsPDF(technicianInterventions, {
     title: `Interventions - ${technicianName}`,
@@ -217,9 +216,7 @@ export const exportInterventionsByRoom = async (
   interventions: Intervention[],
   roomNumber: string
 ) => {
-  const roomInterventions = interventions.filter(
-    i => i.roomNumber === roomNumber
-  );
+  const roomInterventions = interventions.filter(i => i.roomNumber === roomNumber);
 
   const blob = await generateInterventionsPDF(roomInterventions, {
     title: `Historique des interventions - Chambre ${roomNumber}`,

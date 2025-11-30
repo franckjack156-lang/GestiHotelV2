@@ -178,7 +178,10 @@ export const AdminTicketDetailPage = () => {
           </div>
           <p className="text-sm text-gray-500">Ticket #{ticket.id.slice(0, 8)}</p>
         </div>
-        <Select value={ticket.status} onValueChange={v => handleStatusChange(v as SupportRequestStatus)}>
+        <Select
+          value={ticket.status}
+          onValueChange={v => handleStatusChange(v as SupportRequestStatus)}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue />
           </SelectTrigger>
@@ -218,7 +221,9 @@ export const AdminTicketDetailPage = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{ticket.message}</p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                {ticket.message}
+              </p>
             </CardContent>
           </Card>
 
@@ -240,7 +245,11 @@ export const AdminTicketDetailPage = () => {
                 {responses.map(response => (
                   <Card
                     key={response.id}
-                    className={response.isAdmin ? 'border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10' : ''}
+                    className={
+                      response.isAdmin
+                        ? 'border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10'
+                        : ''
+                    }
                   >
                     <CardContent className="py-4">
                       <div className="flex items-start gap-3">
@@ -252,17 +261,25 @@ export const AdminTicketDetailPage = () => {
                                 : ''
                             }
                           >
-                            {response.isAdmin ? <Shield className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                            {response.isAdmin ? (
+                              <Shield className="h-4 w-4" />
+                            ) : (
+                              <User className="h-4 w-4" />
+                            )}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium text-sm">{response.authorName}</span>
                             {response.isAdmin && (
-                              <Badge variant="secondary" className="text-xs">Support</Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                Support
+                              </Badge>
                             )}
                             <span className="text-xs text-gray-400">
-                              {format(response.createdAt.toDate(), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                              {format(response.createdAt.toDate(), 'dd/MM/yyyy HH:mm', {
+                                locale: fr,
+                              })}
                             </span>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap">
@@ -332,10 +349,7 @@ export const AdminTicketDetailPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gray-400" />
-                <a
-                  href={`mailto:${ticket.userEmail}`}
-                  className="text-indigo-600 hover:underline"
-                >
+                <a href={`mailto:${ticket.userEmail}`} className="text-indigo-600 hover:underline">
                   {ticket.userEmail}
                 </a>
               </div>

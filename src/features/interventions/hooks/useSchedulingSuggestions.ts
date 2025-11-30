@@ -48,7 +48,6 @@ export const useSchedulingSuggestions = ({
   priority,
   excludeWeekends = false,
 }: UseSchedulingSuggestionsOptions) => {
-
   // Calculer la charge par jour
   const dailyLoad = useMemo(() => {
     const loadMap = new Map<string, number>();
@@ -78,8 +77,8 @@ export const useSchedulingSuggestions = ({
     const timeSlots = [
       { hour: 8, minute: 0, label: 'Matin (8h)' },
       { hour: 10, minute: 0, label: 'Milieu de matinée (10h)' },
-      { hour: 14, minute: 0, label: 'Début d\'après-midi (14h)' },
-      { hour: 16, minute: 0, label: 'Fin d\'après-midi (16h)' },
+      { hour: 14, minute: 0, label: "Début d'après-midi (14h)" },
+      { hour: 16, minute: 0, label: "Fin d'après-midi (16h)" },
     ];
 
     for (let dayOffset = 0; dayOffset < maxDays; dayOffset++) {
@@ -143,15 +142,16 @@ export const useSchedulingSuggestions = ({
         if (priority === 'urgent' || priority === 'critical') {
           if (dayOffset === 0) {
             isRecommended = true;
-            reason = 'Intervention urgente - Aujourd\'hui';
+            reason = "Intervention urgente - Aujourd'hui";
           }
         }
 
-        const dayLabel = dayOffset === 0
-          ? 'Aujourd\'hui'
-          : dayOffset === 1
-          ? 'Demain'
-          : format(targetDate, 'EEEE d MMMM', { locale: fr });
+        const dayLabel =
+          dayOffset === 0
+            ? "Aujourd'hui"
+            : dayOffset === 1
+              ? 'Demain'
+              : format(targetDate, 'EEEE d MMMM', { locale: fr });
 
         slots.push({
           date: slotDate,

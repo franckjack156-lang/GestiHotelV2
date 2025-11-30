@@ -75,7 +75,8 @@ export const sendUserInvitationEmail = async (
     return result;
   } catch (error: unknown) {
     logger.error("Erreur lors de l'envoi de l'email d'invitation:", error);
-    const message = error instanceof Error ? error.message : "Impossible d'envoyer l'email d'invitation";
+    const message =
+      error instanceof Error ? error.message : "Impossible d'envoyer l'email d'invitation";
     throw new Error(message);
   }
 };

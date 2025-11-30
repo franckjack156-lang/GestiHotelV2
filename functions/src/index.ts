@@ -3432,8 +3432,8 @@ export const syncInterventionToGoogleCalendar = functions
 /**
  * Fonction helper pour construire la description de l'événement
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildInterventionDescription(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   intervention: any,
   interventionId: string,
   _establishmentId: string

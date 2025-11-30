@@ -5,7 +5,13 @@
 import { useState } from 'react';
 import { Save, Loader2, Bell, Mail, Smartphone, MessageSquare } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/shared/components/ui/card';
 import { Label } from '@/shared/components/ui/label';
 import { Switch } from '@/shared/components/ui/switch';
 import { Input } from '@/shared/components/ui/input';
@@ -84,7 +90,9 @@ export const NotificationPreferencesForm = ({
               <Smartphone className="h-4 w-4 text-gray-500" />
               <div>
                 <Label>Notifications push</Label>
-                <p className="text-sm text-gray-500">Notifications sur votre navigateur ou appareil</p>
+                <p className="text-sm text-gray-500">
+                  Notifications sur votre navigateur ou appareil
+                </p>
               </div>
             </div>
             <Switch
@@ -100,7 +108,9 @@ export const NotificationPreferencesForm = ({
               <Mail className="h-4 w-4 text-gray-500" />
               <div>
                 <Label>Notifications par email</Label>
-                <p className="text-sm text-gray-500">Recevoir un email pour les notifications importantes</p>
+                <p className="text-sm text-gray-500">
+                  Recevoir un email pour les notifications importantes
+                </p>
               </div>
             </div>
             <Switch
@@ -138,11 +148,31 @@ export const NotificationPreferencesForm = ({
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { key: 'interventionCreated', label: 'Nouvelle intervention', desc: 'Quand une intervention est créée' },
-              { key: 'interventionAssigned', label: 'Assignation', desc: 'Quand vous êtes assigné' },
-              { key: 'interventionStatusChanged', label: 'Changement de statut', desc: 'Quand le statut change' },
-              { key: 'interventionCompleted', label: 'Intervention terminée', desc: 'Quand une intervention est terminée' },
-              { key: 'interventionComment', label: 'Commentaires', desc: 'Nouveau commentaire sur vos interventions' },
+              {
+                key: 'interventionCreated',
+                label: 'Nouvelle intervention',
+                desc: 'Quand une intervention est créée',
+              },
+              {
+                key: 'interventionAssigned',
+                label: 'Assignation',
+                desc: 'Quand vous êtes assigné',
+              },
+              {
+                key: 'interventionStatusChanged',
+                label: 'Changement de statut',
+                desc: 'Quand le statut change',
+              },
+              {
+                key: 'interventionCompleted',
+                label: 'Intervention terminée',
+                desc: 'Quand une intervention est terminée',
+              },
+              {
+                key: 'interventionComment',
+                label: 'Commentaires',
+                desc: 'Nouveau commentaire sur vos interventions',
+              },
               { key: 'interventionOverdue', label: 'Retards', desc: 'Interventions en retard' },
               { key: 'interventionUrgent', label: 'Urgences', desc: 'Interventions urgentes' },
               { key: 'slaAtRisk', label: 'SLA à risque', desc: 'SLA bientôt dépassé' },
@@ -191,7 +221,7 @@ export const NotificationPreferencesForm = ({
                 <Input
                   type="time"
                   value={localPrefs.quietHoursStart || '22:00'}
-                  onChange={(e) => handleTimeChange('quietHoursStart', e.target.value)}
+                  onChange={e => handleTimeChange('quietHoursStart', e.target.value)}
                   className="mt-1"
                 />
               </div>
@@ -200,7 +230,7 @@ export const NotificationPreferencesForm = ({
                 <Input
                   type="time"
                   value={localPrefs.quietHoursEnd || '08:00'}
-                  onChange={(e) => handleTimeChange('quietHoursEnd', e.target.value)}
+                  onChange={e => handleTimeChange('quietHoursEnd', e.target.value)}
                   className="mt-1"
                 />
               </div>

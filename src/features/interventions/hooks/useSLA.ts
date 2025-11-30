@@ -35,7 +35,7 @@ export const useSLAList = (interventions: Intervention[]): Map<string, SLAInfo> 
   return useMemo(() => {
     const slaMap = new Map<string, SLAInfo>();
 
-    interventions.forEach((intervention) => {
+    interventions.forEach(intervention => {
       // Ignorer les interventions terminées ou annulées
       if (intervention.status === 'completed' || intervention.status === 'cancelled') {
         return;
@@ -66,7 +66,7 @@ export const useSLAStats = (interventions: Intervention[]) => {
       completed: 0,
     };
 
-    interventions.forEach((intervention) => {
+    interventions.forEach(intervention => {
       stats.total++;
 
       if (intervention.status === 'completed' || intervention.status === 'cancelled') {

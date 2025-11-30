@@ -61,7 +61,14 @@ export interface ReportConfig {
       start: Date;
       end: Date;
     };
-    relativePeriod?: 'today' | 'yesterday' | 'this_week' | 'last_week' | 'this_month' | 'last_month' | 'this_year';
+    relativePeriod?:
+      | 'today'
+      | 'yesterday'
+      | 'this_week'
+      | 'last_week'
+      | 'this_month'
+      | 'last_month'
+      | 'this_year';
     status?: string[];
     priority?: string[];
     assignedTo?: string[];
@@ -441,9 +448,9 @@ const generateSummaryCards = (summary: ReportSummary): string => {
 
 const generateTableSection = (title: string, columns: string[], rows: string[][]): string => {
   const headerCells = columns.map(col => `<th>${col}</th>`).join('');
-  const bodyRows = rows.map(row =>
-    `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
-  ).join('');
+  const bodyRows = rows
+    .map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`)
+    .join('');
 
   return `
     <div class="section">
@@ -456,12 +463,16 @@ const generateTableSection = (title: string, columns: string[], rows: string[][]
   `;
 };
 
-const generateBarChart = (title: string, data: Array<{ label: string; value: number; max?: number }>): string => {
+const generateBarChart = (
+  title: string,
+  data: Array<{ label: string; value: number; max?: number }>
+): string => {
   const maxValue = Math.max(...data.map(d => d.max || d.value));
 
-  const bars = data.map(item => {
-    const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
-    return `
+  const bars = data
+    .map(item => {
+      const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+      return `
       <div class="bar-item">
         <div class="bar-label">${item.label}</div>
         <div class="bar-track">
@@ -470,7 +481,8 @@ const generateBarChart = (title: string, data: Array<{ label: string; value: num
         <div class="bar-value">${item.value}</div>
       </div>
     `;
-  }).join('');
+    })
+    .join('');
 
   return `
     <div class="section">
@@ -542,12 +554,16 @@ export const generateReportHTML = (data: ReportData): string => {
           <div class="section">
             <h2>${section.title}</h2>
             <div class="stats-grid">
-              ${statsData.map(stat => `
+              ${statsData
+                .map(
+                  stat => `
                 <div class="stat-item">
                   <span class="stat-label">${stat.label}:</span>
                   <span class="stat-value">${stat.value}</span>
                 </div>
-              `).join('')}
+              `
+                )
+                .join('')}
             </div>
           </div>
         `;
@@ -634,9 +650,7 @@ export const deleteReportConfig = async (
   }
 };
 
-export const getReportConfigs = async (
-  establishmentId: string
-): Promise<ReportConfig[]> => {
+export const getReportConfigs = async (establishmentId: string): Promise<ReportConfig[]> => {
   try {
     const collectionRef = getReportConfigsCollection(establishmentId);
     const q = query(collectionRef, orderBy('createdAt', 'desc'));
@@ -745,9 +759,10 @@ export const generateReport = async (
       const totalCount = filteredInterventions.length;
       const completedCount = filteredInterventions.filter(i => i.status === 'completed').length;
       const slaCompliant = filteredInterventions.filter(i => i.slaStatus === 'on_track').length;
-      const avgResolutionTime = filteredInterventions
-        .filter(i => i.resolutionTime)
-        .reduce((acc, i) => acc + (i.resolutionTime || 0), 0) / (completedCount || 1);
+      const avgResolutionTime =
+        filteredInterventions
+          .filter(i => i.resolutionTime)
+          .reduce((acc, i) => acc + (i.resolutionTime || 0), 0) / (completedCount || 1);
 
       // Grouper par catégorie
       const byCategory: Record<string, number> = {};
@@ -758,10 +773,12 @@ export const generateReport = async (
 
       // Grouper par technicien
       const byTechnician: Record<string, number> = {};
-      filteredInterventions.filter(i => i.status === 'completed').forEach(i => {
-        const tech = i.assignedToName || 'Non assigné';
-        byTechnician[tech] = (byTechnician[tech] || 0) + 1;
-      });
+      filteredInterventions
+        .filter(i => i.status === 'completed')
+        .forEach(i => {
+          const tech = i.assignedToName || 'Non assigné';
+          byTechnician[tech] = (byTechnician[tech] || 0) + 1;
+        });
 
       // Construire les données du rapport
       const reportData: ReportData = {
@@ -794,14 +811,16 @@ export const generateReport = async (
           type: 'table',
           data: {
             columns: ['Titre', 'Statut', 'Priorité', 'Technicien', 'Chambre', 'Date'],
-            rows: filteredInterventions.slice(0, 100).map(i => [
-              i.title,
-              getStatusLabel(i.status),
-              getPriorityLabel(i.priority),
-              i.assignedToName || '-',
-              i.roomNumber || '-',
-              formatDate(i.createdAt),
-            ]),
+            rows: filteredInterventions
+              .slice(0, 100)
+              .map(i => [
+                i.title,
+                getStatusLabel(i.status),
+                getPriorityLabel(i.priority),
+                i.assignedToName || '-',
+                i.roomNumber || '-',
+                formatDate(i.createdAt),
+              ]),
           },
         });
       }
@@ -879,11 +898,7 @@ export const getGeneratedReports = async (
     let q;
 
     if (configId) {
-      q = query(
-        collectionRef,
-        where('configId', '==', configId),
-        orderBy('generatedAt', 'desc')
-      );
+      q = query(collectionRef, where('configId', '==', configId), orderBy('generatedAt', 'desc'));
     } else {
       q = query(collectionRef, orderBy('generatedAt', 'desc'));
     }

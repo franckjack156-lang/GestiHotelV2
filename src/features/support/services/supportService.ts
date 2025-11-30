@@ -204,7 +204,10 @@ export const hasUnreadResponsesForUser = (ticket: SupportRequest): boolean => {
 /**
  * Vérifie si un ticket a des réponses non lues pour l'admin
  */
-export const hasUnreadResponsesForAdmin = (ticket: SupportRequest, adminUserId: string): boolean => {
+export const hasUnreadResponsesForAdmin = (
+  ticket: SupportRequest,
+  adminUserId: string
+): boolean => {
   // Si pas de dernière réponse, pas de non lu
   if (!ticket.lastResponseAt) return false;
 

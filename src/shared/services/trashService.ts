@@ -175,12 +175,7 @@ export const getDeletedItems = async (
 
       let collectionRef;
       if (config.isSubcollection && config.parentCollection === 'establishments') {
-        collectionRef = collection(
-          db,
-          'establishments',
-          establishmentId,
-          config.collection
-        );
+        collectionRef = collection(db, 'establishments', establishmentId, config.collection);
       } else if (!config.isSubcollection) {
         collectionRef = collection(db, config.collection);
       } else {
@@ -245,10 +240,7 @@ export const getDeletedItems = async (
 /**
  * Restaurer un élément de la corbeille
  */
-export const restoreItem = async (
-  itemPath: string,
-  restoredBy: string
-): Promise<void> => {
+export const restoreItem = async (itemPath: string, restoredBy: string): Promise<void> => {
   try {
     const docRef = doc(db, itemPath);
 

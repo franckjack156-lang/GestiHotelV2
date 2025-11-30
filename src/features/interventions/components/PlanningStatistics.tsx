@@ -9,14 +9,7 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Progress } from '@/shared/components/ui/progress';
-import {
-  BarChart3,
-  TrendingUp,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  Users,
-} from 'lucide-react';
+import { BarChart3, TrendingUp, Clock, AlertTriangle, CheckCircle2, Users } from 'lucide-react';
 import { format, eachDayOfInterval, isSameDay } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import type { Intervention } from '../types/intervention.types';
@@ -36,7 +29,8 @@ export const PlanningStatistics = ({ interventions, period }: PlanningStatistics
       pending: interventions.filter(i => i.status === 'pending').length,
       assigned: interventions.filter(i => i.status === 'assigned').length,
       in_progress: interventions.filter(i => i.status === 'in_progress').length,
-      completed: interventions.filter(i => i.status === 'completed' || i.status === 'validated').length,
+      completed: interventions.filter(i => i.status === 'completed' || i.status === 'validated')
+        .length,
       cancelled: interventions.filter(i => i.status === 'cancelled').length,
     };
 
@@ -81,9 +75,10 @@ export const PlanningStatistics = ({ interventions, period }: PlanningStatistics
 
     // Durée moyenne estimée
     const withDuration = interventions.filter(i => i.estimatedDuration);
-    const avgDuration = withDuration.length > 0
-      ? withDuration.reduce((sum, i) => sum + (i.estimatedDuration || 0), 0) / withDuration.length
-      : 0;
+    const avgDuration =
+      withDuration.length > 0
+        ? withDuration.reduce((sum, i) => sum + (i.estimatedDuration || 0), 0) / withDuration.length
+        : 0;
 
     return {
       total,
@@ -194,11 +189,15 @@ export const PlanningStatistics = ({ interventions, period }: PlanningStatistics
                     <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-6 relative overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          count === 0 ? 'bg-gray-300 dark:bg-gray-700' :
-                          count <= 3 ? 'bg-green-500' :
-                          count <= 6 ? 'bg-blue-500' :
-                          count <= 9 ? 'bg-orange-500' :
-                          'bg-red-500'
+                          count === 0
+                            ? 'bg-gray-300 dark:bg-gray-700'
+                            : count <= 3
+                              ? 'bg-green-500'
+                              : count <= 6
+                                ? 'bg-blue-500'
+                                : count <= 9
+                                  ? 'bg-orange-500'
+                                  : 'bg-red-500'
                         }`}
                         style={{ width: `${(count / stats.maxDailyLoad) * 100}%` }}
                       />
@@ -281,9 +280,7 @@ export const PlanningStatistics = ({ interventions, period }: PlanningStatistics
                   return (
                     <div key={index} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 dark:text-gray-400 truncate">
-                          {name}
-                        </span>
+                        <span className="text-gray-600 dark:text-gray-400 truncate">{name}</span>
                         <span className="font-medium ml-2">
                           {count} ({percentage.toFixed(0)}%)
                         </span>

@@ -10,12 +10,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, AlertTriangle, Package } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,8 +39,15 @@ import type {
 export const InventoryPage = () => {
   const navigate = useNavigate();
   const { establishmentId } = useCurrentEstablishment();
-  const { items, isLoading, createItem, updateItem, deleteItem: deleteItemFn, createMovement, loadItems } =
-    useInventory(establishmentId);
+  const {
+    items,
+    isLoading,
+    createItem,
+    updateItem,
+    deleteItem: deleteItemFn,
+    createMovement,
+    loadItems,
+  } = useInventory(establishmentId);
   const { lowStock, outOfStock, totalAlerts } = useStockAlerts(establishmentId);
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -78,7 +80,12 @@ export const InventoryPage = () => {
     }
   };
 
-  const handleStockMovement = async (data: { type: 'in' | 'out' | 'transfer' | 'adjustment'; quantity: number; reason?: string; notes?: string }): Promise<boolean> => {
+  const handleStockMovement = async (data: {
+    type: 'in' | 'out' | 'transfer' | 'adjustment';
+    quantity: number;
+    reason?: string;
+    notes?: string;
+  }): Promise<boolean> => {
     if (!movementItem) return false;
     const result = await createMovement(movementItem.id, data);
     return result !== undefined;
@@ -173,7 +180,8 @@ export const InventoryPage = () => {
               <div>
                 <p className="font-medium">Alertes de stock</p>
                 <p className="text-sm text-muted-foreground">
-                  {totalAlerts} article{totalAlerts > 1 ? 's' : ''} nécessite{totalAlerts > 1 ? 'nt' : ''} votre attention
+                  {totalAlerts} article{totalAlerts > 1 ? 's' : ''} nécessite
+                  {totalAlerts > 1 ? 'nt' : ''} votre attention
                 </p>
               </div>
             </div>
@@ -197,10 +205,7 @@ export const InventoryPage = () => {
           <DialogHeader>
             <DialogTitle>Nouvel article</DialogTitle>
           </DialogHeader>
-          <InventoryItemForm
-            onSubmit={handleCreate}
-            onCancel={() => setCreateDialogOpen(false)}
-          />
+          <InventoryItemForm onSubmit={handleCreate} onCancel={() => setCreateDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
@@ -226,8 +231,8 @@ export const InventoryPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
             <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer l'article "{itemToDelete?.name}" ?
-              Cette action est irréversible.
+              Êtes-vous sûr de vouloir supprimer l'article "{itemToDelete?.name}" ? Cette action est
+              irréversible.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

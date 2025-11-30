@@ -11,11 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/shared/components/ui/tooltip';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/shared/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover';
 import { cn } from '@/shared/utils/cn';
 import { useOffline, type ConnectionStatus } from '@/shared/hooks/useOffline';
 import { formatDistanceToNow } from 'date-fns';
@@ -70,13 +66,7 @@ export const OfflineIndicator = ({
   showOnlyWhenOffline = false,
   className,
 }: OfflineIndicatorProps) => {
-  const {
-    status,
-    isSyncing,
-    pendingOperationsCount,
-    lastSyncTime,
-    forceSync,
-  } = useOffline();
+  const { status, isSyncing, pendingOperationsCount, lastSyncTime, forceSync } = useOffline();
 
   const config = STATUS_CONFIG[status];
   const Icon = config.icon;
@@ -129,11 +119,7 @@ export const OfflineIndicator = ({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn('gap-2', config.color, className)}
-        >
+        <Button variant="ghost" size="sm" className={cn('gap-2', config.color, className)}>
           <Icon size={16} />
           <span className="hidden sm:inline">{config.label}</span>
           {pendingOperationsCount > 0 && (
@@ -177,20 +163,14 @@ export const OfflineIndicator = ({
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <CheckCircle size={12} className="text-green-500" />
               <span>
-                Dernière sync{' '}
-                {formatDistanceToNow(lastSyncTime, { addSuffix: true, locale: fr })}
+                Dernière sync {formatDistanceToNow(lastSyncTime, { addSuffix: true, locale: fr })}
               </span>
             </div>
           )}
 
           {/* Actions */}
           {status !== 'offline' && pendingOperationsCount > 0 && (
-            <Button
-              onClick={forceSync}
-              disabled={isSyncing}
-              size="sm"
-              className="w-full gap-2"
-            >
+            <Button onClick={forceSync} disabled={isSyncing} size="sm" className="w-full gap-2">
               <RefreshCw size={14} className={cn(isSyncing && 'animate-spin')} />
               {isSyncing ? 'Synchronisation...' : 'Synchroniser maintenant'}
             </Button>

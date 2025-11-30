@@ -8,7 +8,15 @@ import React from 'react';
 import { Badge } from '@/shared/components/ui/badge';
 import { cn } from '@/shared/utils/cn';
 import { UserStatus } from '../types/user.types';
-import { CheckCircle2, XCircle, Clock, Pause, Ban, HelpCircle, type LucideIcon } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Pause,
+  Ban,
+  HelpCircle,
+  type LucideIcon,
+} from 'lucide-react';
 import { logger } from '@/core/utils/logger';
 
 interface StatusBadgeProps {

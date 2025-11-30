@@ -50,7 +50,12 @@ import type { SupportRequestDestination } from '@/features/support/types/support
 const REQUEST_TYPES = [
   { value: 'bug', label: 'Signaler un bug', icon: Bug, color: 'text-red-500' },
   { value: 'question', label: 'Question générale', icon: HelpCircle, color: 'text-blue-500' },
-  { value: 'feature', label: 'Suggestion de fonctionnalité', icon: Lightbulb, color: 'text-yellow-500' },
+  {
+    value: 'feature',
+    label: 'Suggestion de fonctionnalité',
+    icon: Lightbulb,
+    color: 'text-yellow-500',
+  },
   { value: 'urgent', label: 'Problème urgent', icon: AlertTriangle, color: 'text-orange-500' },
   { value: 'other', label: 'Autre', icon: MessageSquare, color: 'text-gray-500' },
 ] as const;

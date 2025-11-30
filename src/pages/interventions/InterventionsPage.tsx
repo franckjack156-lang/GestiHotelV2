@@ -606,17 +606,18 @@ const InterventionsPageComponent = () => {
             </Button>
 
             {/* Bouton Editor/SuperAdmin pour supprimer toutes les interventions */}
-            {(user?.role === 'editor' || user?.role === 'super_admin') && interventions.length > 0 && (
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowDeleteAllDialog(true)}
-                className="bg-red-600 hover:bg-red-700 hidden md:flex"
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer tout ({interventions.length})
-              </Button>
-            )}
+            {(user?.role === 'editor' || user?.role === 'super_admin') &&
+              interventions.length > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setShowDeleteAllDialog(true)}
+                  className="bg-red-600 hover:bg-red-700 hidden md:flex"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer tout ({interventions.length})
+                </Button>
+              )}
 
             {canCreateInterventions && (
               <>
@@ -900,7 +901,9 @@ const InterventionsPageComponent = () => {
             ) : (
               <div className="space-y-3">
                 {deletedInterventions.map(intervention => {
-                  const interventionWithDeleted = intervention as Intervention & { deletedAt?: Timestamp };
+                  const interventionWithDeleted = intervention as Intervention & {
+                    deletedAt?: Timestamp;
+                  };
                   const deletedAt = interventionWithDeleted.deletedAt?.toDate?.();
                   return (
                     <div
@@ -1293,11 +1296,18 @@ const KanbanCardComponent = ({
   const { user } = useAuth();
 
   const canEdit = useMemo(
-    () => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin' || user?.id === intervention.createdBy,
+    () =>
+      user?.role === 'editor' ||
+      user?.role === 'super_admin' ||
+      user?.role === 'admin' ||
+      user?.id === intervention.createdBy,
     [user?.role, user?.id, intervention.createdBy]
   );
 
-  const canDelete = useMemo(() => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin', [user?.role]);
+  const canDelete = useMemo(
+    () => user?.role === 'editor' || user?.role === 'super_admin' || user?.role === 'admin',
+    [user?.role]
+  );
 
   const timeAgo = useMemo(
     () =>
@@ -1657,7 +1667,8 @@ const TableViewComponent = ({
                 user?.role === 'admin' ||
                 user?.role === 'super_admin' ||
                 user?.id === intervention.createdBy;
-              const canDelete = user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
+              const canDelete =
+                user?.role === 'editor' || user?.role === 'admin' || user?.role === 'super_admin';
 
               const getStatusBorderColor = () => {
                 switch (intervention.status) {

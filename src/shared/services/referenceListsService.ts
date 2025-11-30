@@ -663,8 +663,10 @@ export const importFromFile = async (
           row: i + 2,
           field: 'parse',
           value: row,
-          error: error instanceof Error ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (error as any).message : 'Erreur inconnue',
+          error:
+            error instanceof Error // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ? (error as any).message
+              : 'Erreur inconnue',
         });
         itemsSkipped++;
       }

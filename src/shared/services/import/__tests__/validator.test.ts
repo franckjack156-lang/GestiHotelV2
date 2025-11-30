@@ -4,12 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { detectMissingValues } from '../validator';
-import type {
-  InterventionImportRow,
-  ExistingLists,
-  UserInfo,
-  ReferenceItem,
-} from '../types';
+import type { InterventionImportRow, ExistingLists, UserInfo, ReferenceItem } from '../types';
 
 describe('validator', () => {
   describe('detectMissingValues', () => {

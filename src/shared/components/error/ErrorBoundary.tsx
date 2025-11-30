@@ -102,9 +102,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               {/* Message d'erreur */}
               {this.state.error && (
                 <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm font-medium text-red-900 dark:text-red-200 mb-1">
-                    Erreur
-                  </p>
+                  <p className="text-sm font-medium text-red-900 dark:text-red-200 mb-1">Erreur</p>
                   <p className="text-sm text-red-700 dark:text-red-300 font-mono">
                     {this.state.error.message}
                   </p>

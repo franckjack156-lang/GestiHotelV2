@@ -182,7 +182,16 @@ const getDeliveriesCollection = (establishmentId: string) =>
 export const createWebhook = async (
   establishmentId: string,
   userId: string,
-  data: Omit<WebhookConfig, 'id' | 'establishmentId' | 'createdBy' | 'createdAt' | 'updatedAt' | 'successCount' | 'failureCount'>
+  data: Omit<
+    WebhookConfig,
+    | 'id'
+    | 'establishmentId'
+    | 'createdBy'
+    | 'createdAt'
+    | 'updatedAt'
+    | 'successCount'
+    | 'failureCount'
+  >
 ): Promise<string> => {
   try {
     const collectionRef = getWebhooksCollection(establishmentId);
@@ -231,10 +240,7 @@ export const updateWebhook = async (
 /**
  * Supprimer un webhook
  */
-export const deleteWebhook = async (
-  establishmentId: string,
-  webhookId: string
-): Promise<void> => {
+export const deleteWebhook = async (establishmentId: string, webhookId: string): Promise<void> => {
   try {
     const docRef = doc(getWebhooksCollection(establishmentId), webhookId);
     await deleteDoc(docRef);
@@ -248,9 +254,7 @@ export const deleteWebhook = async (
 /**
  * Récupérer tous les webhooks
  */
-export const getWebhooks = async (
-  establishmentId: string
-): Promise<WebhookConfig[]> => {
+export const getWebhooks = async (establishmentId: string): Promise<WebhookConfig[]> => {
   try {
     const collectionRef = getWebhooksCollection(establishmentId);
     const snapshot = await getDocs(collectionRef);
@@ -333,14 +337,16 @@ const buildPayload = (
 /**
  * Remplacer les variables dans un template
  */
-const replaceTemplateVars = (
-  template: unknown,
-  data: Record<string, unknown>
-): unknown => {
+const replaceTemplateVars = (template: unknown, data: Record<string, unknown>): unknown => {
   if (typeof template === 'string') {
     // Remplacer {{variable}} par la valeur
     return template.replace(/\{\{(\w+(?:\.\w+)*)\}\}/g, (_, path) => {
-      const value = path.split('.').reduce((obj: Record<string, unknown>, key: string) => obj?.[key] as Record<string, unknown>, data);
+      const value = path
+        .split('.')
+        .reduce(
+          (obj: Record<string, unknown>, key: string) => obj?.[key] as Record<string, unknown>,
+          data
+        );
       return value !== undefined ? String(value) : '';
     });
   }
@@ -365,11 +371,12 @@ const replaceTemplateVars = (
  */
 const buildHeaders = (webhook: WebhookConfig): Record<string, string> => {
   const headers: Record<string, string> = {
-    'Content-Type': webhook.payloadFormat === 'json'
-      ? 'application/json'
-      : webhook.payloadFormat === 'xml'
-        ? 'application/xml'
-        : 'application/x-www-form-urlencoded',
+    'Content-Type':
+      webhook.payloadFormat === 'json'
+        ? 'application/json'
+        : webhook.payloadFormat === 'xml'
+          ? 'application/xml'
+          : 'application/x-www-form-urlencoded',
     'User-Agent': 'GestiHotel-Webhook/1.0',
     ...webhook.headers,
   };
@@ -409,10 +416,7 @@ const buildHeaders = (webhook: WebhookConfig): Record<string, string> => {
 /**
  * Calculer la signature HMAC
  */
-const calculateHmacSignature = async (
-  secret: string,
-  payload: string
-): Promise<string> => {
+const calculateHmacSignature = async (secret: string, payload: string): Promise<string> => {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',
@@ -579,9 +583,7 @@ export const triggerWebhooks = async (
     }
 
     const deliveries = await Promise.all(
-      webhooks.map(webhook =>
-        sendWebhook(webhook, eventType, data, sourceId, sourceType)
-      )
+      webhooks.map(webhook => sendWebhook(webhook, eventType, data, sourceId, sourceType))
     );
 
     logger.info('Webhooks déclenchés:', {
@@ -677,7 +679,13 @@ export const retryDelivery = async (
  */
 export const testWebhook = async (
   webhook: WebhookConfig
-): Promise<{ success: boolean; status?: number; response?: string; error?: string; duration: number }> => {
+): Promise<{
+  success: boolean;
+  status?: number;
+  response?: string;
+  error?: string;
+  duration: number;
+}> => {
   const testData = {
     test: true,
     message: 'Test webhook depuis GestiHotel',
@@ -738,11 +746,11 @@ export const EVENT_LABELS: Record<WebhookEventType, string> = {
   'message.received': 'Message reçu',
   'notification.created': 'Notification créée',
   'export.completed': 'Export terminé',
-  'custom': 'Événement personnalisé',
+  custom: 'Événement personnalisé',
 };
 
 export const EVENT_TYPE_CATEGORIES: Record<string, WebhookEventType[]> = {
-  'Interventions': [
+  Interventions: [
     'intervention.created',
     'intervention.updated',
     'intervention.status_changed',
@@ -751,21 +759,9 @@ export const EVENT_TYPE_CATEGORIES: Record<string, WebhookEventType[]> = {
     'intervention.deleted',
     'intervention.sla_breached',
   ],
-  'Chambres': [
-    'room.status_changed',
-    'room.blocked',
-    'room.unblocked',
-  ],
-  'Utilisateurs': [
-    'user.created',
-    'user.updated',
-  ],
-  'Autres': [
-    'message.received',
-    'notification.created',
-    'export.completed',
-    'custom',
-  ],
+  Chambres: ['room.status_changed', 'room.blocked', 'room.unblocked'],
+  Utilisateurs: ['user.created', 'user.updated'],
+  Autres: ['message.received', 'notification.created', 'export.completed', 'custom'],
 };
 
 /**

@@ -7,6 +7,7 @@ Ce fichier explique comment utiliser les fonctions de logging pour déboguer et 
 ### 1. `logListsSummary(establishmentId)`
 
 Affiche un résumé **détaillé** de toutes les listes avec :
+
 - Nombre total de listes
 - Statistiques globales (items totaux, actifs, inactifs)
 - Détail par liste avec badges (système, personnalisable, vide)
@@ -50,6 +51,7 @@ await service.logListsSummary('your-establishment-id');
 ### 2. `logListsCompact(establishmentId)`
 
 Affiche une vue **compacte** (une ligne par liste) avec :
+
 - Nom de la clé
 - Nombre d'items
 - Badges (🔒 système, ✏️ personnalisable, 📭 vide)
@@ -93,7 +95,7 @@ await referenceListsService.logListsCompact('establishment-2');
 
 ```javascript
 // Dans la console du navigateur (F12)
-window.debugReferenceLists = async (estId) => {
+window.debugReferenceLists = async estId => {
   const service = await import('/src/shared/services/referenceListsService.ts');
   await service.default.logListsSummary(estId);
 };

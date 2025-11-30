@@ -247,7 +247,10 @@ export const interventionToCalendarEvent = (
     ]
       .filter(Boolean)
       .join('\n'),
-    location: [intervention.location, intervention.roomNumber && `Chambre ${intervention.roomNumber}`]
+    location: [
+      intervention.location,
+      intervention.roomNumber && `Chambre ${intervention.roomNumber}`,
+    ]
       .filter(Boolean)
       .join(' - '),
     startTime,
@@ -277,16 +280,18 @@ const getPriorityColor = (priority: string): string => {
  * Générer un fichier iCalendar (.ics)
  */
 export const generateICalFile = (events: CalendarEvent[]): string => {
-  const icalEvents = events.map(event => formatICalEvent({
-    uid: event.id,
-    summary: event.title,
-    description: event.description,
-    location: event.location,
-    dtstart: formatICalDate(event.startTime),
-    dtend: formatICalDate(event.endTime),
-    dtstamp: formatICalDate(new Date()),
-    status: event.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED',
-  }));
+  const icalEvents = events.map(event =>
+    formatICalEvent({
+      uid: event.id,
+      summary: event.title,
+      description: event.description,
+      location: event.location,
+      dtstart: formatICalDate(event.startTime),
+      dtend: formatICalDate(event.endTime),
+      dtstamp: formatICalDate(new Date()),
+      status: event.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED',
+    })
+  );
 
   return [
     'BEGIN:VCALENDAR',
@@ -345,11 +350,7 @@ const formatICalEvent = (event: ICalEvent): string => {
  * Échapper les caractères spéciaux iCal
  */
 const escapeICalString = (str: string): string => {
-  return str
-    .replace(/\\/g, '\\\\')
-    .replace(/;/g, '\\;')
-    .replace(/,/g, '\\,')
-    .replace(/\n/g, '\\n');
+  return str.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 };
 
 /**
@@ -501,11 +502,7 @@ const parseICalDate = (dateStr: string): Date => {
  * Déchapper les caractères iCal
  */
 const unescapeICalString = (str: string): string => {
-  return str
-    .replace(/\\n/g, '\n')
-    .replace(/\\,/g, ',')
-    .replace(/\\;/g, ';')
-    .replace(/\\\\/g, '\\');
+  return str.replace(/\\n/g, '\n').replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\');
 };
 
 /**

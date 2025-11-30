@@ -12,10 +12,7 @@ import type { RecurrenceConfig } from '../types/intervention.types';
 /**
  * Génère les dates des occurrences récurrentes
  */
-export const generateRecurrenceDates = (
-  startDate: Date,
-  config: RecurrenceConfig
-): Date[] => {
+export const generateRecurrenceDates = (startDate: Date, config: RecurrenceConfig): Date[] => {
   const dates: Date[] = [];
   let currentDate = new Date(startDate);
   let occurrenceCount = 0;
@@ -149,15 +146,15 @@ export const validateRecurrenceConfig = (config: RecurrenceConfig): string[] => 
   }
 
   if (!config.interval || config.interval < 1) {
-    errors.push('L\'intervalle doit être supérieur à 0');
+    errors.push("L'intervalle doit être supérieur à 0");
   }
 
   if (config.count && config.count < 1) {
-    errors.push('Le nombre d\'occurrences doit être supérieur à 0');
+    errors.push("Le nombre d'occurrences doit être supérieur à 0");
   }
 
   if (config.count && config.count > 365) {
-    errors.push('Le nombre d\'occurrences ne peut pas dépasser 365');
+    errors.push("Le nombre d'occurrences ne peut pas dépasser 365");
   }
 
   if (config.frequency === 'weekly' && config.daysOfWeek) {
@@ -177,12 +174,14 @@ export const validateRecurrenceConfig = (config: RecurrenceConfig): string[] => 
 
   if (config.frequency === 'yearly' && config.monthOfYear) {
     if (config.monthOfYear < 1 || config.monthOfYear > 12) {
-      errors.push('Le mois de l\'année doit être entre 1 et 12');
+      errors.push("Le mois de l'année doit être entre 1 et 12");
     }
   }
 
   if (config.endDate && config.count) {
-    errors.push('Vous devez choisir soit une date de fin, soit un nombre d\'occurrences, pas les deux');
+    errors.push(
+      "Vous devez choisir soit une date de fin, soit un nombre d'occurrences, pas les deux"
+    );
   }
 
   return errors;

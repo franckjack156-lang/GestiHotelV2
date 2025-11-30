@@ -112,9 +112,7 @@ export const NotificationList = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{stats.total} notifications</Badge>
-          {stats.unread > 0 && (
-            <Badge variant="destructive">{stats.unread} non lues</Badge>
-          )}
+          {stats.unread > 0 && <Badge variant="destructive">{stats.unread} non lues</Badge>}
         </div>
 
         {stats.unread > 0 && (
@@ -126,7 +124,7 @@ export const NotificationList = ({
       </div>
 
       {/* Onglets de filtrage rapide */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)}>
+      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as FilterTab)}>
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all" className="gap-2">
             <Bell size={14} />

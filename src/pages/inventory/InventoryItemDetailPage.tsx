@@ -53,9 +53,7 @@ export const InventoryItemDetailPage = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">{item.name}</h1>
-            {item.sku && (
-              <p className="text-muted-foreground mt-1">SKU: {item.sku}</p>
-            )}
+            {item.sku && <p className="text-muted-foreground mt-1">SKU: {item.sku}</p>}
           </div>
         </div>
         <div className="flex gap-2">
@@ -98,7 +96,9 @@ export const InventoryItemDetailPage = () => {
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Seuil d'alerte</div>
-                  <div className="font-medium">{item.minQuantity} {MEASUREMENT_UNIT_LABELS[item.unit]}</div>
+                  <div className="font-medium">
+                    {item.minQuantity} {MEASUREMENT_UNIT_LABELS[item.unit]}
+                  </div>
                 </div>
                 {item.unitPrice !== undefined && (
                   <>
@@ -148,7 +148,9 @@ export const InventoryItemDetailPage = () => {
                   <div className="text-sm text-muted-foreground mb-2">Tags</div>
                   <div className="flex flex-wrap gap-2">
                     {item.tags.map(tag => (
-                      <Badge key={tag} variant="secondary">{tag}</Badge>
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -170,13 +172,14 @@ export const InventoryItemDetailPage = () => {
             </CardHeader>
             <CardContent>
               {movements.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Aucun mouvement de stock
-                </p>
+                <p className="text-muted-foreground text-center py-8">Aucun mouvement de stock</p>
               ) : (
                 <div className="space-y-4">
                   {movements.map(movement => (
-                    <div key={movement.id} className="flex items-start gap-4 pb-4 border-b last:border-0">
+                    <div
+                      key={movement.id}
+                      className="flex items-start gap-4 pb-4 border-b last:border-0"
+                    >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant={getMovementTypeColor(movement.type) as any}>
@@ -190,19 +193,16 @@ export const InventoryItemDetailPage = () => {
                         <div className="text-sm text-muted-foreground">
                           {movement.quantityBefore} → {movement.quantityAfter}
                         </div>
-                        {movement.reason && (
-                          <p className="text-sm mt-1">{movement.reason}</p>
-                        )}
+                        {movement.reason && <p className="text-sm mt-1">{movement.reason}</p>}
                         {movement.reference && (
                           <p className="text-xs text-muted-foreground">Ref: {movement.reference}</p>
                         )}
                       </div>
                       <div className="text-right text-sm">
-                        <div className="text-muted-foreground">
-                          {movement.userName}
-                        </div>
+                        <div className="text-muted-foreground">{movement.userName}</div>
                         <div className="text-xs text-muted-foreground">
-                          {movement.createdAt && format(movement.createdAt.toDate(), 'Pp', { locale: fr })}
+                          {movement.createdAt &&
+                            format(movement.createdAt.toDate(), 'Pp', { locale: fr })}
                         </div>
                       </div>
                     </div>

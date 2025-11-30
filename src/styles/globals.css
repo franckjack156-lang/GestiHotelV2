@@ -71,7 +71,7 @@ img {
 }
 
 /* Images critiques - chargement eager */
-img[data-priority="high"],
+img[data-priority='high'],
 img.eager {
   loading: eager;
 }

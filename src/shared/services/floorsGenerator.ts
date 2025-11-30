@@ -85,11 +85,12 @@ export const generateFloors = (options: FloorGenerationOptions): ReferenceItem[]
 
   // Étages (de 1 à N)
   for (let i = 1; i <= totalFloors; i++) {
-    const label = format === 'ordinal' && i === 1
-      ? `${prefix ? `${prefix} ` : ''}1er`.trim()
-      : prefix
-        ? `${prefix} ${i}`
-        : i.toString();
+    const label =
+      format === 'ordinal' && i === 1
+        ? `${prefix ? `${prefix} ` : ''}1er`.trim()
+        : prefix
+          ? `${prefix} ${i}`
+          : i.toString();
 
     floors.push({
       id: `floor_${i}_${Date.now()}`,

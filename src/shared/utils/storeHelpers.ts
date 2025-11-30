@@ -50,8 +50,7 @@ export const withLoading = async <T>(
     return result;
   } catch (error) {
     const errorMessage =
-      options?.errorMessage ||
-      (error instanceof Error ? error.message : 'Une erreur est survenue');
+      options?.errorMessage || (error instanceof Error ? error.message : 'Une erreur est survenue');
 
     store.setError(errorMessage);
 
@@ -115,7 +114,7 @@ export const withRetry = async <T>(
       });
 
       // Attendre avant de retry
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));
 
       // Augmenter le délai avec backoff exponentiel
       delay = Math.min(delay * backoffMultiplier, maxDelay);

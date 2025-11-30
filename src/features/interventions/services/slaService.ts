@@ -62,10 +62,7 @@ export const calculateDueDate = (
 /**
  * Détermine le statut SLA en fonction du pourcentage de temps écoulé
  */
-export const calculateSLAStatus = (
-  percentageUsed: number,
-  isCompleted: boolean
-): SLAStatus => {
+export const calculateSLAStatus = (percentageUsed: number, isCompleted: boolean): SLAStatus => {
   if (isCompleted) {
     return percentageUsed > 100 ? 'breached' : 'on_track';
   }
@@ -91,14 +88,11 @@ export const calculateSLA = (intervention: Intervention): SLAInfo => {
   }
 
   // Déterminer la date limite
-  const customDueDate = intervention.dueDate
-    ? timestampToDate(intervention.dueDate)
-    : undefined;
+  const customDueDate = intervention.dueDate ? timestampToDate(intervention.dueDate) : undefined;
   const dueDate = calculateDueDate(createdAt, intervention.priority, customDueDate);
 
   // Calculer l'objectif SLA (peut être personnalisé)
-  const targetMinutes =
-    intervention.slaTarget || SLA_TARGETS[intervention.priority];
+  const targetMinutes = intervention.slaTarget || SLA_TARGETS[intervention.priority];
 
   // Calculer le temps écoulé
   const now = new Date();
@@ -216,7 +210,7 @@ export const hasBreachedSLA = (intervention: Intervention): boolean => {
  */
 export const getInterventionsAtRisk = (interventions: Intervention[]): Intervention[] => {
   return interventions.filter(
-    (intervention) =>
+    intervention =>
       intervention.status !== 'completed' &&
       intervention.status !== 'cancelled' &&
       isApproachingSLA(intervention)
@@ -228,7 +222,7 @@ export const getInterventionsAtRisk = (interventions: Intervention[]): Intervent
  */
 export const getBreachedInterventions = (interventions: Intervention[]): Intervention[] => {
   return interventions.filter(
-    (intervention) =>
+    intervention =>
       intervention.status !== 'completed' &&
       intervention.status !== 'cancelled' &&
       hasBreachedSLA(intervention)

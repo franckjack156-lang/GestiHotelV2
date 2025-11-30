@@ -128,7 +128,14 @@ const SortableItem: React.FC<{
     transition,
   };
 
-  const Icon = item.icon ? ((LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[item.icon]) : undefined;
+  const Icon = item.icon
+    ? (
+        LucideIcons as unknown as Record<
+          string,
+          React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+        >
+      )[item.icon]
+    : undefined;
   const colorStyles = item.color ? getColorStyles(item.color) : null;
 
   return (
@@ -274,7 +281,14 @@ const ItemFormDialog: React.FC<{
     }
   };
 
-  const Icon = formData.icon ? ((LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[formData.icon]) : undefined;
+  const Icon = formData.icon
+    ? (
+        LucideIcons as unknown as Record<
+          string,
+          React.ComponentType<{ className?: string; style?: React.CSSProperties }>
+        >
+      )[formData.icon]
+    : undefined;
   const colorStyles = getColorStyles(formData.color);
 
   return (
@@ -602,7 +616,10 @@ export const ReferenceListsManager: React.FC = () => {
     })
   );
 
-  const handleDragEnd = async (event: { active: { id: string | number }; over: { id: string | number } | null }) => {
+  const handleDragEnd = async (event: {
+    active: { id: string | number };
+    over: { id: string | number } | null;
+  }) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 

@@ -191,12 +191,7 @@ export async function batchProcess<T, R>(
   processor: (item: T, index: number) => Promise<R>,
   options: BatchProcessorOptions<T> = {}
 ): Promise<BatchResult<T, R>> {
-  const {
-    batchSize = 10,
-    batchDelay = 100,
-    onProgress,
-    abortSignal,
-  } = options;
+  const { batchSize = 10, batchDelay = 100, onProgress, abortSignal } = options;
 
   const startTime = Date.now();
   const totalBatches = Math.ceil(items.length / batchSize);
@@ -209,7 +204,7 @@ export async function batchProcess<T, R>(
   for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
     // Vérifier l'annulation
     if (abortSignal?.aborted) {
-      logger.info('Traitement annulé par l\'utilisateur');
+      logger.info("Traitement annulé par l'utilisateur");
       break;
     }
 

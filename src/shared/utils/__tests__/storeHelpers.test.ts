@@ -127,9 +127,9 @@ describe('storeHelpers', () => {
       const fn = vi.fn().mockRejectedValue(new Error('Always fails'));
 
       // Utiliser un délai très court pour accélérer le test
-      await expect(
-        withRetry(fn, { maxRetries: 2, initialDelay: 1, maxDelay: 5 })
-      ).rejects.toThrow('Always fails');
+      await expect(withRetry(fn, { maxRetries: 2, initialDelay: 1, maxDelay: 5 })).rejects.toThrow(
+        'Always fails'
+      );
 
       expect(fn).toHaveBeenCalledTimes(3); // initial + 2 retries
 
@@ -140,9 +140,7 @@ describe('storeHelpers', () => {
       const fn = vi.fn().mockRejectedValue(new Error('Non-retriable'));
       const shouldRetry = vi.fn().mockReturnValue(false);
 
-      await expect(
-        withRetry(fn, { maxRetries: 3, shouldRetry })
-      ).rejects.toThrow('Non-retriable');
+      await expect(withRetry(fn, { maxRetries: 3, shouldRetry })).rejects.toThrow('Non-retriable');
 
       expect(fn).toHaveBeenCalledTimes(1);
       expect(shouldRetry).toHaveBeenCalled();
@@ -177,9 +175,7 @@ describe('storeHelpers', () => {
     it('should rethrow error when rethrow is true', async () => {
       const errorFn = vi.fn().mockRejectedValue(new Error('Rethrown'));
 
-      await expect(
-        withErrorHandling(errorFn, { rethrow: true })
-      ).rejects.toThrow('Rethrown');
+      await expect(withErrorHandling(errorFn, { rethrow: true })).rejects.toThrow('Rethrown');
     });
   });
 

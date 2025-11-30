@@ -154,7 +154,7 @@ export const generateInterventionsTemplate = (): Blob => {
     { wch: 12 }, // priorite
     { wch: 30 }, // localisation
     { wch: 15 }, // numero_chambre
-    { wch: 8 },  // etage
+    { wch: 8 }, // etage
     { wch: 20 }, // batiment
     { wch: 25 }, // technicien (Prenom Nom)
     { wch: 25 }, // createur (Prenom Nom)
@@ -174,27 +174,104 @@ export const generateInterventionsTemplate = (): Blob => {
 
   // Ajouter une feuille d'aide (21 champs)
   const helpData = [
-    { Champ: 'TITRE *', Description: 'Titre court et descriptif de intervention (OBLIGATOIRE)', Exemple: 'Fuite eau chambre 301' },
-    { Champ: 'DESCRIPTION', Description: 'Description détaillée du problème (recommandé)', Exemple: 'Fuite importante au niveau du lavabo' },
-    { Champ: 'STATUT *', Description: 'Statut de intervention (OBLIGATOIRE)', Exemple: 'nouveau, en_attente, assigne, en_cours, en_pause, termine, annule, reporte' },
-    { Champ: 'TYPE', Description: 'Type intervention (optionnel)', Exemple: 'plumbing, electricity, heating, air_conditioning, carpentry, painting, cleaning, etc.' },
-    { Champ: 'CATEGORIE', Description: 'Catégorie intervention (optionnel)', Exemple: 'maintenance, repair, installation, inspection, emergency' },
-    { Champ: 'PRIORITE', Description: 'Niveau de priorité (optionnel)', Exemple: 'low, normal, high, urgent, critical' },
-    { Champ: 'LOCALISATION', Description: 'Lieu de intervention (optionnel)', Exemple: 'Chambre 301, Couloir 2e étage, Hall' },
-    { Champ: 'NUMERO CHAMBRE', Description: 'Numéro de chambre si applicable', Exemple: '301, 205' },
+    {
+      Champ: 'TITRE *',
+      Description: 'Titre court et descriptif de intervention (OBLIGATOIRE)',
+      Exemple: 'Fuite eau chambre 301',
+    },
+    {
+      Champ: 'DESCRIPTION',
+      Description: 'Description détaillée du problème (recommandé)',
+      Exemple: 'Fuite importante au niveau du lavabo',
+    },
+    {
+      Champ: 'STATUT *',
+      Description: 'Statut de intervention (OBLIGATOIRE)',
+      Exemple: 'nouveau, en_attente, assigne, en_cours, en_pause, termine, annule, reporte',
+    },
+    {
+      Champ: 'TYPE',
+      Description: 'Type intervention (optionnel)',
+      Exemple:
+        'plumbing, electricity, heating, air_conditioning, carpentry, painting, cleaning, etc.',
+    },
+    {
+      Champ: 'CATEGORIE',
+      Description: 'Catégorie intervention (optionnel)',
+      Exemple: 'maintenance, repair, installation, inspection, emergency',
+    },
+    {
+      Champ: 'PRIORITE',
+      Description: 'Niveau de priorité (optionnel)',
+      Exemple: 'low, normal, high, urgent, critical',
+    },
+    {
+      Champ: 'LOCALISATION',
+      Description: 'Lieu de intervention (optionnel)',
+      Exemple: 'Chambre 301, Couloir 2e étage, Hall',
+    },
+    {
+      Champ: 'NUMERO CHAMBRE',
+      Description: 'Numéro de chambre si applicable',
+      Exemple: '301, 205',
+    },
     { Champ: 'ETAGE', Description: 'Numéro étage (nombre)', Exemple: '1, 2, 3' },
-    { Champ: 'BATIMENT', Description: 'Nom du bâtiment si plusieurs', Exemple: 'Principal, Annexe A' },
-    { Champ: 'TECHNICIEN', Description: 'Prénom et nom du technicien à assigner', Exemple: 'Jean Dupont, Marie Martin' },
-    { Champ: 'CREATEUR', Description: 'Prénom et nom du créateur (si vide = utilisateur connecté)', Exemple: 'Sophie Dubois' },
-    { Champ: 'DATE CREATION', Description: 'Date de création (JJ/MM/AAAA) - si vide = aujourd\'hui', Exemple: '15/11/2025' },
-    { Champ: 'DATE PLANIFIEE', Description: 'Date de planification (JJ/MM/AAAA)', Exemple: '25/12/2025' },
+    {
+      Champ: 'BATIMENT',
+      Description: 'Nom du bâtiment si plusieurs',
+      Exemple: 'Principal, Annexe A',
+    },
+    {
+      Champ: 'TECHNICIEN',
+      Description: 'Prénom et nom du technicien à assigner',
+      Exemple: 'Jean Dupont, Marie Martin',
+    },
+    {
+      Champ: 'CREATEUR',
+      Description: 'Prénom et nom du créateur (si vide = utilisateur connecté)',
+      Exemple: 'Sophie Dubois',
+    },
+    {
+      Champ: 'DATE CREATION',
+      Description: "Date de création (JJ/MM/AAAA) - si vide = aujourd'hui",
+      Exemple: '15/11/2025',
+    },
+    {
+      Champ: 'DATE PLANIFIEE',
+      Description: 'Date de planification (JJ/MM/AAAA)',
+      Exemple: '25/12/2025',
+    },
     { Champ: 'HEURE PLANIFIEE', Description: 'Heure de planification (HH:MM)', Exemple: '14:30' },
-    { Champ: 'DUREE ESTIMEE', Description: 'Durée estimée en minutes (nombre)', Exemple: '60, 90, 120' },
-    { Champ: 'NOTES INTERNES', Description: 'Notes visibles uniquement par équipe', Exemple: 'Chambre occupée - prévoir clé' },
-    { Champ: 'NOTES RESOLUTION', Description: 'Notes de résolution après clôture', Exemple: 'Problème résolu, pièce remplacée' },
-    { Champ: 'DATE LIMITE', Description: 'Date limite personnalisée (JJ/MM/AAAA)', Exemple: '30/11/2025' },
-    { Champ: 'TAGS', Description: 'Tags séparés par virgules', Exemple: 'Urgent,Client VIP,Maintenance' },
-    { Champ: 'REFERENCE EXTERNE', Description: 'Référence externe (PMS, autre système)', Exemple: 'PMS-2025-1234' },
+    {
+      Champ: 'DUREE ESTIMEE',
+      Description: 'Durée estimée en minutes (nombre)',
+      Exemple: '60, 90, 120',
+    },
+    {
+      Champ: 'NOTES INTERNES',
+      Description: 'Notes visibles uniquement par équipe',
+      Exemple: 'Chambre occupée - prévoir clé',
+    },
+    {
+      Champ: 'NOTES RESOLUTION',
+      Description: 'Notes de résolution après clôture',
+      Exemple: 'Problème résolu, pièce remplacée',
+    },
+    {
+      Champ: 'DATE LIMITE',
+      Description: 'Date limite personnalisée (JJ/MM/AAAA)',
+      Exemple: '30/11/2025',
+    },
+    {
+      Champ: 'TAGS',
+      Description: 'Tags séparés par virgules',
+      Exemple: 'Urgent,Client VIP,Maintenance',
+    },
+    {
+      Champ: 'REFERENCE EXTERNE',
+      Description: 'Référence externe (PMS, autre système)',
+      Exemple: 'PMS-2025-1234',
+    },
   ];
 
   const wsHelp = XLSX.utils.json_to_sheet(helpData);
@@ -202,7 +279,9 @@ export const generateInterventionsTemplate = (): Blob => {
   XLSX.utils.book_append_sheet(wb, wsHelp, 'Aide');
 
   const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  return new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  return new Blob([wbout], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 };
 
 /**

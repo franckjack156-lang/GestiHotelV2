@@ -186,15 +186,9 @@ export const TrashPage = () => {
     const isExpiringSoon = item.daysUntilPermanentDelete <= 7;
 
     return (
-      <TableRow
-        key={item.id}
-        className={cn(isSelected && 'bg-indigo-50 dark:bg-indigo-900/10')}
-      >
+      <TableRow key={item.id} className={cn(isSelected && 'bg-indigo-50 dark:bg-indigo-900/10')}>
         <TableCell className="w-12">
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={() => toggleSelection(item.id)}
-          />
+          <Checkbox checked={isSelected} onCheckedChange={() => toggleSelection(item.id)} />
         </TableCell>
 
         <TableCell>
@@ -241,9 +235,7 @@ export const TrashPage = () => {
                 <div
                   className={cn(
                     'flex items-center gap-1 text-sm',
-                    isExpiringSoon
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-gray-500'
+                    isExpiringSoon ? 'text-red-600 dark:text-red-400' : 'text-gray-500'
                   )}
                 >
                   <Clock size={14} />
@@ -294,9 +286,7 @@ export const TrashPage = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() =>
-                    setConfirmDialog({ open: true, type: 'delete', item })
-                  }
+                  onClick={() => setConfirmDialog({ open: true, type: 'delete', item })}
                 >
                   <Trash size={14} className="mr-2" />
                   Supprimer définitivement
@@ -319,17 +309,12 @@ export const TrashPage = () => {
             Corbeille
           </h1>
           <p className="text-gray-500 mt-1">
-            Les éléments sont conservés pendant 30 jours avant suppression
-            automatique
+            Les éléments sont conservés pendant 30 jours avant suppression automatique
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={loadItems}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={loadItems} disabled={isLoading}>
             <History size={16} className="mr-2" />
             Actualiser
           </Button>
@@ -425,9 +410,7 @@ export const TrashPage = () => {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={() =>
-                  setConfirmDialog({ open: true, type: 'deleteSelected' })
-                }
+                onClick={() => setConfirmDialog({ open: true, type: 'deleteSelected' })}
               >
                 <Trash size={14} className="mr-2" />
                 Supprimer définitivement
@@ -458,10 +441,7 @@ export const TrashPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">
-                    <Checkbox
-                      checked={isAllSelected}
-                      onCheckedChange={toggleSelectAll}
-                    />
+                    <Checkbox checked={isAllSelected} onCheckedChange={toggleSelectAll} />
                   </TableHead>
                   <TableHead>Élément</TableHead>
                   <TableHead>Type</TableHead>
@@ -490,19 +470,17 @@ export const TrashPage = () => {
             <AlertDialogDescription>
               {confirmDialog.type === 'empty' ? (
                 <>
-                  Cette action supprimera <strong>tous les éléments</strong> de la
-                  corbeille de façon permanente. Cette action est irréversible.
+                  Cette action supprimera <strong>tous les éléments</strong> de la corbeille de
+                  façon permanente. Cette action est irréversible.
                 </>
               ) : confirmDialog.type === 'deleteSelected' ? (
                 <>
-                  Cette action supprimera{' '}
-                  <strong>{selectedItems.size} élément(s)</strong> de façon
+                  Cette action supprimera <strong>{selectedItems.size} élément(s)</strong> de façon
                   permanente. Cette action est irréversible.
                 </>
               ) : (
                 <>
-                  Cette action supprimera{' '}
-                  <strong>"{confirmDialog.item?.title}"</strong> de façon
+                  Cette action supprimera <strong>"{confirmDialog.item?.title}"</strong> de façon
                   permanente. Cette action est irréversible.
                 </>
               )}

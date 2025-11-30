@@ -233,18 +233,21 @@ export const useAllReferenceLists = (options?: { realtime?: boolean; autoLoad?: 
             lastModified: data.lastModified?.toDate
               ? data.lastModified.toDate()
               : data.lastModified || new Date(),
-            lists: Object.entries(data.lists || {}).reduce((acc, [key, config]: [string, any]) => {
-              acc[key] = {
-                ...config,
-                items: ((config.items as any[]) || []).map((item: any) => ({
-                  ...item,
-                  createdAt: item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt,
-                  updatedAt: item.updatedAt?.toDate ? item.updatedAt.toDate() : item.updatedAt,
-                  lastUsed: item.lastUsed?.toDate ? item.lastUsed.toDate() : item.lastUsed,
-                })),
-              } as ListConfig;
-              return acc;
-            }, {} as Record<string, ListConfig>),
+            lists: Object.entries(data.lists || {}).reduce(
+              (acc, [key, config]: [string, any]) => {
+                acc[key] = {
+                  ...config,
+                  items: ((config.items as any[]) || []).map((item: any) => ({
+                    ...item,
+                    createdAt: item.createdAt?.toDate ? item.createdAt.toDate() : item.createdAt,
+                    updatedAt: item.updatedAt?.toDate ? item.updatedAt.toDate() : item.updatedAt,
+                    lastUsed: item.lastUsed?.toDate ? item.lastUsed.toDate() : item.lastUsed,
+                  })),
+                } as ListConfig;
+                return acc;
+              },
+              {} as Record<string, ListConfig>
+            ),
           } as EstablishmentReferenceLists);
         }
       },

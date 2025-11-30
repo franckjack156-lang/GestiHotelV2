@@ -239,11 +239,7 @@ export const useInterventionActions = () => {
 
           // ✅ Incrémenter le compteur de vues
           if (userId) {
-            interventionService.incrementViewCount(
-              establishmentId,
-              interventionId,
-              userId
-            );
+            interventionService.incrementViewCount(establishmentId, interventionId, userId);
           }
         }
 
@@ -316,7 +312,7 @@ export const useInterventionActions = () => {
         }
 
         // Trouver la photo pour obtenir son URL
-        const photo = intervention.photos?.find((p) => p.id === photoId);
+        const photo = intervention.photos?.find(p => p.id === photoId);
         if (!photo) {
           throw new Error('Photo non trouvée');
         }

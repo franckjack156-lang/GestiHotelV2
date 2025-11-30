@@ -34,7 +34,14 @@ import {
 } from '@/shared/components/ui/accordion';
 import type { BatchProgress, BatchError } from '@/shared/services/import/batchProcessor';
 
-type ImportState = 'idle' | 'parsing' | 'validating' | 'importing' | 'completed' | 'error' | 'paused';
+type ImportState =
+  | 'idle'
+  | 'parsing'
+  | 'validating'
+  | 'importing'
+  | 'completed'
+  | 'error'
+  | 'paused';
 
 interface ImportProgressDialogProps {
   isOpen: boolean;
@@ -80,7 +87,7 @@ export const ImportProgressDialog = ({
   isOpen,
   onClose,
   title = 'Import de données',
-  description = 'Progression de l\'import en cours',
+  description = "Progression de l'import en cours",
   state,
   progress,
   errors = [],
@@ -91,7 +98,8 @@ export const ImportProgressDialog = ({
   onCancel,
   onDownloadReport,
 }: ImportProgressDialogProps) => {
-  const isInProgress = state === 'parsing' || state === 'validating' || state === 'importing' || state === 'paused';
+  const isInProgress =
+    state === 'parsing' || state === 'validating' || state === 'importing' || state === 'paused';
   const isCompleted = state === 'completed';
   const hasErrors = errors.length > 0;
   const hasWarnings = warnings.length > 0;
@@ -126,9 +134,7 @@ export const ImportProgressDialog = ({
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">{STATE_LABELS[state]}</span>
             {progress && (
-              <Badge variant={isCompleted ? 'default' : 'secondary'}>
-                {progress.percentage}%
-              </Badge>
+              <Badge variant={isCompleted ? 'default' : 'secondary'}>{progress.percentage}%</Badge>
             )}
           </div>
 

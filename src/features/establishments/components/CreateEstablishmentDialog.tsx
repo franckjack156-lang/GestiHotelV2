@@ -217,7 +217,9 @@ export const CreateEstablishmentDialog = ({
         <Label htmlFor="category">Catégorie (étoiles)</Label>
         <Select
           value={formData.category?.toString() || ''}
-          onValueChange={value => updateFormData('category', parseInt(value) as EstablishmentCategory)}
+          onValueChange={value =>
+            updateFormData('category', parseInt(value) as EstablishmentCategory)
+          }
         >
           <SelectTrigger id="category">
             <SelectValue placeholder="Non classé" />
@@ -448,11 +450,7 @@ export const CreateEstablishmentDialog = ({
                         : 'bg-gray-200 text-gray-500'
                   }`}
                 >
-                  {currentStep > step.id ? (
-                    <CheckCircle2 size={20} />
-                  ) : (
-                    <span>{step.id}</span>
-                  )}
+                  {currentStep > step.id ? <CheckCircle2 size={20} /> : <span>{step.id}</span>}
                 </div>
                 <span
                   className={`text-xs mt-2 font-medium ${
@@ -479,7 +477,11 @@ export const CreateEstablishmentDialog = ({
         {/* Actions */}
         {currentStep !== 4 && (
           <div className="flex items-center justify-between pt-4 border-t">
-            <Button variant="outline" onClick={handleBack} disabled={currentStep === 1 || isLoading}>
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 1 || isLoading}
+            >
               Retour
             </Button>
 
