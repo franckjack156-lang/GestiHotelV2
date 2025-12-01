@@ -122,7 +122,7 @@ jobs:
 
       - name: Create GitHub Release
         continue-on-error: true
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.deployment-info.outputs.version }}
           name: Release v${{ steps.deployment-info.outputs.version }}
